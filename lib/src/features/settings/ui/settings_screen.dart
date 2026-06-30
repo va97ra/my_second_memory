@@ -15,7 +15,7 @@ class SettingsScreen extends ConsumerWidget {
     final locale = ref.watch(appLocaleControllerProvider);
 
     return AppShell(
-      currentIndex: 4,
+      currentIndex: 2,
       child: ListView(
         children: [
           AppBar(title: Text(strings.settings)),

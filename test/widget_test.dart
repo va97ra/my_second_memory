@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_second_memory/src/app.dart';
@@ -14,6 +15,10 @@ class _UnlockedSecurityService extends SecurityService {
 }
 
 class _FeedMemoryRepository implements MemoryRepository {
+  _FeedMemoryRepository();
+
+  List<MemoryItem> savedItems = const [];
+
   @override
   Future<List<MemoryItem>> loadItems() async {
     final now = DateTime.now();
@@ -40,16 +45,20 @@ class _FeedMemoryRepository implements MemoryRepository {
   }
 
   @override
-  Future<void> saveItems(List<MemoryItem> items) async {}
+  Future<void> saveItems(List<MemoryItem> items) async {
+    savedItems = items;
+  }
 }
 
 void main() {
   testWidgets('shows the home feed when app is unlocked', (tester) async {
+    final repository = _FeedMemoryRepository();
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          memoryRepositoryProvider.overrideWithValue(repository),
         ],
         child: const MySecondMemoryApp(),
       ),
@@ -58,7 +67,53 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Сегодня'), findsWidgets);
+    expect(find.text('Лента'), findsOneWidget);
+    expect(find.text('Календарь'), findsOneWidget);
+    expect(find.text('Настройки'), findsOneWidget);
+    expect(find.text('Люди'), findsNothing);
+    expect(find.text('Проекты'), findsNothing);
     expect(find.text('План на сегодня'), findsOneWidget);
     expect(find.text('Моя вторая память'), findsWidgets);
+  });
+
+  testWidgets('calendar date opens day editor and saves on selected date',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _FeedMemoryRepository();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Календарь'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('${today.day}').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Записи дня'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Название'), 'Фото дня');
+    await tester.ensureVisible(find.text('Сохранить').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Сохранить').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Фото дня'), findsOneWidget);
+    expect(
+      repository.savedItems.any(
+        (item) => item.title == 'Фото дня' && item.memoryDate == today,
+      ),
+      isTrue,
+    );
   });
 }

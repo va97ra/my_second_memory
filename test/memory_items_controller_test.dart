@@ -1,0 +1,50 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_second_memory/src/features/memory_items/data/memory_repository.dart';
+import 'package:my_second_memory/src/features/memory_items/domain/memory_item.dart';
+import 'package:my_second_memory/src/features/memory_items/domain/memory_type.dart';
+import 'package:my_second_memory/src/features/memory_items/state/memory_items_controller.dart';
+
+class _MemoryRepository implements MemoryRepository {
+  _MemoryRepository(this.items);
+
+  List<MemoryItem> items;
+
+  @override
+  Future<List<MemoryItem>> loadItems() async => items;
+
+  @override
+  Future<void> saveItems(List<MemoryItem> items) async {
+    this.items = items;
+  }
+}
+
+void main() {
+  test('delete removes item from state and repository', () async {
+    final date = DateTime(2026, 6, 30);
+    final repository = _MemoryRepository([
+      MemoryItem(
+        id: 'keep',
+        type: MemoryType.note,
+        title: 'Keep',
+        memoryDate: date,
+        createdAt: date,
+        updatedAt: date,
+      ),
+      MemoryItem(
+        id: 'delete',
+        type: MemoryType.note,
+        title: 'Delete',
+        memoryDate: date,
+        createdAt: date,
+        updatedAt: date,
+      ),
+    ]);
+    final controller = MemoryItemsController(repository);
+
+    await controller.load();
+    await controller.delete('delete');
+
+    expect(controller.state.map((item) => item.id), ['keep']);
+    expect(repository.items.map((item) => item.id), ['keep']);
+  });
+}

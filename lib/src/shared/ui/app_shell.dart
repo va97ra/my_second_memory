@@ -33,12 +33,6 @@ class AppShell extends StatelessWidget {
               context.go('/calendar');
               break;
             case 2:
-              context.go('/people');
-              break;
-            case 3:
-              context.go('/projects');
-              break;
-            case 4:
               context.go('/settings');
               break;
           }
@@ -47,22 +41,12 @@ class AppShell extends StatelessWidget {
           NavigationDestination(
             icon: const Icon(Icons.today_outlined),
             selectedIcon: const Icon(Icons.today),
-            label: strings.today,
+            label: strings.feed,
           ),
           NavigationDestination(
             icon: const Icon(Icons.calendar_month_outlined),
             selectedIcon: const Icon(Icons.calendar_month),
             label: strings.calendar,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.people_outline),
-            selectedIcon: const Icon(Icons.people),
-            label: strings.people,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.folder_outlined),
-            selectedIcon: const Icon(Icons.folder),
-            label: strings.projects,
           ),
           NavigationDestination(
             icon: const Icon(Icons.settings_outlined),

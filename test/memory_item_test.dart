@@ -14,6 +14,7 @@ void main() {
       updatedAt: date,
       audioPath: '/local/voice.m4a',
       audioDurationSeconds: 12,
+      imagePaths: const ['/local/photo.jpg'],
     );
 
     final restored = MemoryItem.fromJson(item.toJson());
@@ -22,5 +23,6 @@ void main() {
     expect(restored.type, MemoryType.voiceNote);
     expect(restored.audioPath, '/local/voice.m4a');
     expect(restored.audioDurationSeconds, 12);
+    expect(restored.imagePaths, ['/local/photo.jpg']);
   });
 }

@@ -14,6 +14,7 @@ class AppStrings {
   bool get isRu => locale.languageCode == 'ru';
 
   String get appTitle => isRu ? 'Моя вторая память' : 'My Second Memory';
+  String get feed => isRu ? 'Лента' : 'Feed';
   String get today => isRu ? 'Сегодня' : 'Today';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
   String get add => isRu ? 'Добавить' : 'Add';
@@ -32,6 +33,12 @@ class AppStrings {
   String get startRecording => isRu ? 'Начать запись' : 'Start recording';
   String get stopRecording => isRu ? 'Остановить' : 'Stop';
   String get play => isRu ? 'Воспроизвести' : 'Play';
+  String get delete => isRu ? 'Удалить' : 'Delete';
+  String get cancel => isRu ? 'Отмена' : 'Cancel';
+  String get deleteRecordQuestion =>
+      isRu ? 'Удалить эту запись?' : 'Delete this record?';
+  String get addImage => isRu ? 'Добавить фото' : 'Add image';
+  String get dayRecords => isRu ? 'Записи дня' : 'Day records';
   String get pinSecurity => isRu ? 'PIN и биометрия' : 'PIN and biometrics';
   String get language => isRu ? 'Язык' : 'Language';
   String get unlock => isRu ? 'Открыть' : 'Unlock';

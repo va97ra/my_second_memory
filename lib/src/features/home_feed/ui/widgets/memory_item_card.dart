@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/localization/app_strings.dart';
 import '../../../memory_items/domain/memory_item.dart';
 import '../../../memory_items/domain/memory_type.dart';
 import '../../../voice_notes/ui/widgets/voice_note_player.dart';
+import 'memory_image_preview.dart';
 
 class MemoryItemCard extends StatelessWidget {
   const MemoryItemCard({
     required this.item,
-    this.onArchive,
+    this.onDelete,
     super.key,
   });
 
   final MemoryItem item;
-  final VoidCallback? onArchive;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -48,11 +50,11 @@ class MemoryItemCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (onArchive != null)
+                if (onDelete != null)
                   IconButton(
-                    tooltip: 'Archive',
-                    onPressed: onArchive,
-                    icon: const Icon(Icons.archive_outlined),
+                    tooltip: AppStrings.of(context).delete,
+                    onPressed: () => _confirmDelete(context),
+                    icon: const Icon(Icons.delete_outline),
                   ),
               ],
             ),
@@ -64,10 +66,39 @@ class MemoryItemCard extends StatelessWidget {
               const SizedBox(height: 12),
               VoiceNotePlayer(path: item.audioPath!),
             ],
+            if (item.imagePaths.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _ImageStrip(paths: item.imagePaths),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final strings = AppStrings.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(strings.deleteRecordQuestion),
+        content: Text(item.title),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(strings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(strings.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      onDelete?.call();
+    }
   }
 
   IconData _iconFor(MemoryType type) {
@@ -84,5 +115,34 @@ class MemoryItemCard extends StatelessWidget {
       MemoryType.document => Icons.description_outlined,
       MemoryType.place => Icons.place_outlined,
     };
+  }
+}
+
+class _ImageStrip extends StatelessWidget {
+  const _ImageStrip({required this.paths});
+
+  final List<String> paths;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 92,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: paths.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final path = paths[index];
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 128,
+              height: 92,
+              child: MemoryImagePreview(path: path),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

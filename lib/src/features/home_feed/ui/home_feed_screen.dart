@@ -35,10 +35,10 @@ class HomeFeedScreen extends ConsumerWidget {
                 final item = feed[index];
                 return MemoryItemCard(
                   item: item,
-                  onArchive: () {
+                  onDelete: () {
                     ref
                         .read(memoryItemsControllerProvider.notifier)
-                        .archive(item.id);
+                        .delete(item.id);
                   },
                 );
               },

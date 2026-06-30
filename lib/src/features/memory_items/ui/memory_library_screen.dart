@@ -64,10 +64,10 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
               itemCount: items.length,
               itemBuilder: (context, index) => MemoryItemCard(
                 item: items[index],
-                onArchive: () {
+                onDelete: () {
                   ref
                       .read(memoryItemsControllerProvider.notifier)
-                      .archive(items[index].id);
+                      .delete(items[index].id);
                 },
               ),
             ),

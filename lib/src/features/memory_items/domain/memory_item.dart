@@ -20,6 +20,7 @@ class MemoryItem {
     this.placeId,
     this.audioPath,
     this.audioDurationSeconds,
+    this.imagePaths = const [],
     this.transcript,
   });
 
@@ -40,6 +41,7 @@ class MemoryItem {
   final String? placeId;
   final String? audioPath;
   final int? audioDurationSeconds;
+  final List<String> imagePaths;
   final String? transcript;
 
   bool get isArchived => status == MemoryStatus.archived;
@@ -66,6 +68,7 @@ class MemoryItem {
     String? placeId,
     String? audioPath,
     int? audioDurationSeconds,
+    List<String>? imagePaths,
     String? transcript,
   }) {
     return MemoryItem(
@@ -87,6 +90,7 @@ class MemoryItem {
       audioPath: audioPath ?? this.audioPath,
       audioDurationSeconds:
           audioDurationSeconds ?? this.audioDurationSeconds,
+      imagePaths: imagePaths ?? this.imagePaths,
       transcript: transcript ?? this.transcript,
     );
   }
@@ -110,6 +114,7 @@ class MemoryItem {
       'placeId': placeId,
       'audioPath': audioPath,
       'audioDurationSeconds': audioDurationSeconds,
+      'imagePaths': imagePaths,
       'transcript': transcript,
     };
   }
@@ -137,6 +142,8 @@ class MemoryItem {
       placeId: json['placeId'] as String?,
       audioPath: json['audioPath'] as String?,
       audioDurationSeconds: json['audioDurationSeconds'] as int?,
+      imagePaths:
+          (json['imagePaths'] as List<dynamic>? ?? const []).cast<String>(),
       transcript: json['transcript'] as String?,
     );
   }
