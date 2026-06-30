@@ -19,15 +19,17 @@ class HomeFeedScreen extends ConsumerWidget {
 
     return AppShell(
       currentIndex: 0,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go('/add'),
-        icon: const Icon(Icons.add),
-        label: Text(strings.add),
-      ),
       child: CustomScrollView(
         slivers: [
           SliverAppBar.large(
             title: Text(strings.today),
+            actions: [
+              IconButton(
+                tooltip: strings.add,
+                onPressed: () => context.go('/add'),
+                icon: const Icon(Icons.add),
+              ),
+            ],
           ),
           if (feed.isEmpty)
             SliverFillRemaining(
