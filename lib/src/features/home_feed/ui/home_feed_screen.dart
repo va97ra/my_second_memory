@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
@@ -23,13 +22,6 @@ class HomeFeedScreen extends ConsumerWidget {
         slivers: [
           SliverAppBar.large(
             title: Text(strings.today),
-            actions: [
-              IconButton(
-                tooltip: strings.add,
-                onPressed: () => context.go('/add'),
-                icon: const Icon(Icons.add),
-              ),
-            ],
           ),
           if (feed.isEmpty)
             SliverFillRemaining(
