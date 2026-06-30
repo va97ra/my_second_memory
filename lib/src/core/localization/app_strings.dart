@@ -39,6 +39,11 @@ class AppStrings {
       isRu ? 'Удалить эту запись?' : 'Delete this record?';
   String get addImage => isRu ? 'Добавить фото' : 'Add image';
   String get dayRecords => isRu ? 'Записи дня' : 'Day records';
+  String get messageHint => isRu ? 'Сообщение' : 'Message';
+  String get photo => isRu ? 'Фото' : 'Photo';
+  String get voiceMessage => isRu ? 'Голосовое сообщение' : 'Voice message';
+  String get noMessagesForDay =>
+      isRu ? 'За этот день пока ничего нет' : 'No messages for this day yet';
   String get pinSecurity => isRu ? 'PIN и биометрия' : 'PIN and biometrics';
   String get language => isRu ? 'Язык' : 'Language';
   String get unlock => isRu ? 'Открыть' : 'Unlock';

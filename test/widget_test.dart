@@ -76,7 +76,7 @@ void main() {
     expect(find.text('Моя вторая память'), findsWidgets);
   });
 
-  testWidgets('calendar date opens day editor and saves on selected date',
+  testWidgets('calendar date opens day chat and sends text on selected date',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -101,11 +101,11 @@ void main() {
     await tester.tap(find.text('${today.day}').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Записи дня'), findsOneWidget);
-    await tester.enterText(find.widgetWithText(TextFormField, 'Название'), 'Фото дня');
-    await tester.ensureVisible(find.text('Сохранить').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Сохранить').last);
+    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    expect(find.text('План на сегодня'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextField, 'Сообщение'), 'Фото дня');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.send));
     await tester.pumpAndSettle();
 
     expect(find.text('Фото дня'), findsOneWidget);

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/calendar/ui/calendar_screen.dart';
+import '../../features/calendar/ui/calendar_day_screen.dart';
 import '../../features/home_feed/ui/home_feed_screen.dart';
 import '../../features/memory_items/ui/add_memory_item_screen.dart';
 import '../../features/memory_items/ui/memory_library_screen.dart';
@@ -29,6 +30,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/calendar',
         builder: (context, state) => const CalendarScreen(),
+      ),
+      GoRoute(
+        path: '/calendar/day',
+        builder: (context, state) {
+          final rawDate = state.uri.queryParameters['date'];
+          final date = rawDate == null
+              ? DateTime.now()
+              : DateTime.tryParse(rawDate) ?? DateTime.now();
+          return CalendarDayScreen(date: DateTime(date.year, date.month, date.day));
+        },
       ),
       GoRoute(
         path: '/people',
