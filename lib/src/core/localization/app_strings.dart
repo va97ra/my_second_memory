@@ -15,7 +15,11 @@ class AppStrings {
 
   String get appTitle => isRu ? 'Моя вторая память' : 'My Second Memory';
   String get feed => isRu ? 'Лента' : 'Feed';
+  String get dayFeed => isRu ? 'Лента дня' : 'Day feed';
   String get today => isRu ? 'Сегодня' : 'Today';
+  String get yesterdaySection => isRu ? 'Это было вчера' : 'This was yesterday';
+  String get dayBeforeYesterdaySection =>
+      isRu ? 'Это было позавчера' : 'This was two days ago';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
   String get add => isRu ? 'Добавить' : 'Add';
   String get people => isRu ? 'Люди' : 'People';
@@ -29,6 +33,7 @@ class AppStrings {
   String get requiredDate => isRu ? 'Дата обязательна' : 'Date is required';
   String get emptyFeed =>
       isRu ? 'На этот день пока ничего нет' : 'Nothing for this day yet';
+  String get noRecords => isRu ? 'Записей нет' : 'No records';
   String get voice => isRu ? 'Голос' : 'Voice';
   String get startRecording => isRu ? 'Начать запись' : 'Start recording';
   String get stopRecording => isRu ? 'Остановить' : 'Stop';

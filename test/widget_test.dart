@@ -23,6 +23,8 @@ class _FeedMemoryRepository implements MemoryRepository {
   Future<List<MemoryItem>> loadItems() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final dayBeforeYesterday = today.subtract(const Duration(days: 2));
 
     return [
       MemoryItem(
@@ -41,6 +43,22 @@ class _FeedMemoryRepository implements MemoryRepository {
         createdAt: now,
         updatedAt: now,
       ),
+      MemoryItem(
+        id: 'yesterday-note',
+        type: MemoryType.note,
+        title: 'Вчерашняя заметка',
+        memoryDate: yesterday,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      MemoryItem(
+        id: 'day-before-note',
+        type: MemoryType.note,
+        title: 'Позавчерашняя заметка',
+        memoryDate: dayBeforeYesterday,
+        createdAt: now,
+        updatedAt: now,
+      ),
     ];
   }
 
@@ -52,6 +70,9 @@ class _FeedMemoryRepository implements MemoryRepository {
 
 void main() {
   testWidgets('shows the home feed when app is unlocked', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     final repository = _FeedMemoryRepository();
 
     await tester.pumpWidget(
@@ -66,7 +87,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Сегодня'), findsWidgets);
+    expect(find.text('Лента дня'), findsWidgets);
     expect(find.text('Лента'), findsOneWidget);
     expect(find.text('Календарь'), findsOneWidget);
     expect(find.text('Настройки'), findsOneWidget);
@@ -74,6 +95,10 @@ void main() {
     expect(find.text('Проекты'), findsNothing);
     expect(find.text('План на сегодня'), findsOneWidget);
     expect(find.text('Моя вторая память'), findsWidgets);
+    expect(find.text('Это было вчера'), findsOneWidget);
+    expect(find.text('Вчерашняя заметка'), findsOneWidget);
+    expect(find.text('Это было позавчера'), findsOneWidget);
+    expect(find.text('Позавчерашняя заметка'), findsOneWidget);
   });
 
   testWidgets('calendar date opens day chat and sends text on selected date',
