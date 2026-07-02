@@ -23,9 +23,13 @@ class MemoryItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
     final date = DateFormat.yMMMd(locale).format(item.memoryDate);
-    final colors = Theme.of(context).colorScheme;
     const doneColor = Color(0xFF16A34A);
     final isDone = item.isDone;
+    final typeColor = _typeColor(item.type);
+    final cardColor =
+        isDone ? const Color(0xFFEAF8EF) : typeColor.withValues(alpha: 0.075);
+    final borderColor =
+        isDone ? const Color(0xFF86EFAC) : typeColor.withValues(alpha: 0.28);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
@@ -36,16 +40,13 @@ class MemoryItemCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: Ink(
             decoration: BoxDecoration(
-              color: isDone ? const Color(0xFFEAF8EF) : colors.surface,
+              color: cardColor,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color:
-                    isDone ? const Color(0xFF86EFAC) : const Color(0xFFDDE3EA),
-              ),
+              border: Border.all(color: borderColor),
               boxShadow: [
                 BoxShadow(
-                  color: (isDone ? doneColor : Colors.black)
-                      .withValues(alpha: isDone ? 0.08 : 0.035),
+                  color: (isDone ? doneColor : typeColor)
+                      .withValues(alpha: isDone ? 0.08 : 0.075),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -61,11 +62,11 @@ class MemoryItemCard extends StatelessWidget {
                     children: [
                       DecoratedBox(
                         decoration: BoxDecoration(
-                          color: (isDone ? doneColor : _typeColor(item.type))
+                          color: (isDone ? doneColor : typeColor)
                               .withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: (isDone ? doneColor : _typeColor(item.type))
+                            color: (isDone ? doneColor : typeColor)
                                 .withValues(alpha: 0.28),
                           ),
                         ),
@@ -75,7 +76,7 @@ class MemoryItemCard extends StatelessWidget {
                           child: Icon(
                             isDone ? Icons.check_circle : _iconFor(item.type),
                             size: 19,
-                            color: isDone ? doneColor : _typeColor(item.type),
+                            color: isDone ? doneColor : typeColor,
                           ),
                         ),
                       ),
@@ -105,9 +106,7 @@ class MemoryItemCard extends StatelessWidget {
                               children: [
                                 _MetaPill(
                                   text: item.type.label(locale),
-                                  color: isDone
-                                      ? doneColor
-                                      : _typeColor(item.type),
+                                  color: isDone ? doneColor : typeColor,
                                 ),
                                 _MetaPill(text: date),
                                 if (isDone)

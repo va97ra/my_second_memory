@@ -142,6 +142,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Редактировать запись'), findsOneWidget);
+    await tester.tap(find.text('Событие'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).last, const Offset(0, -320));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Покупка'));
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Название'),
       'Обновлённый план',
@@ -164,6 +170,7 @@ void main() {
       (item) => item.id == 'today-plan',
     );
     expect(saved.title, 'Обновлённый план');
+    expect(saved.type, MemoryType.purchase);
     expect(saved.memoryDate, targetDate);
     expect(saved.status, MemoryStatus.done);
   });

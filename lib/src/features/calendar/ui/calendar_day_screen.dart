@@ -275,6 +275,11 @@ class _ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = item.body.isNotEmpty ? item.body : item.title;
+    final color = _typeColor(item.type);
+    final bubbleColor =
+        item.isDone ? const Color(0xFFEAF8EF) : color.withValues(alpha: 0.12);
+    final borderColor =
+        item.isDone ? const Color(0xFF86EFAC) : color.withValues(alpha: 0.28);
 
     return Align(
       alignment: Alignment.centerRight,
@@ -290,12 +295,12 @@ class _ChatBubble extends StatelessWidget {
               child: Ink(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDFF0FF),
+                  color: bubbleColor,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFBADBFF)),
+                  border: Border.all(color: borderColor),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                      color: color.withValues(alpha: 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 5),
                     ),
@@ -330,6 +335,22 @@ class _ChatBubble extends StatelessWidget {
       ),
     );
   }
+}
+
+Color _typeColor(MemoryType type) {
+  return switch (type) {
+    MemoryType.task => const Color(0xFF16A34A),
+    MemoryType.note => const Color(0xFF2563EB),
+    MemoryType.voiceNote => const Color(0xFFDB2777),
+    MemoryType.event => const Color(0xFF7C3AED),
+    MemoryType.person => const Color(0xFF0891B2),
+    MemoryType.habit => const Color(0xFF059669),
+    MemoryType.goal => const Color(0xFFEA580C),
+    MemoryType.project => const Color(0xFF4F46E5),
+    MemoryType.purchase => const Color(0xFFCA8A04),
+    MemoryType.document => const Color(0xFF475569),
+    MemoryType.place => const Color(0xFFDC2626),
+  };
 }
 
 class _BubbleImageGrid extends StatelessWidget {

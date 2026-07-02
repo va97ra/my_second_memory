@@ -27,6 +27,7 @@ class AppStrings {
   String get memoryBase => isRu ? 'База памяти' : 'Memory base';
   String get settings => isRu ? 'Настройки' : 'Settings';
   String get title => isRu ? 'Название' : 'Title';
+  String get recordType => isRu ? 'Тип записи' : 'Record type';
   String get description => isRu ? 'Описание' : 'Description';
   String get date => isRu ? 'Дата' : 'Date';
   String get save => isRu ? 'Сохранить' : 'Save';
