@@ -126,19 +126,26 @@ class _CalendarPanel extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFFFFFFFF),
+            Color(0xFFF8FBFF),
+          ],
+        ),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE3EA)),
+        border: Border.all(color: const Color(0xFFD6E2EF)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Column(
           children: [
             _CalendarMonthHeader(
@@ -148,35 +155,47 @@ class _CalendarPanel extends StatelessWidget {
               onNextMonth: onNextMonth,
               onToday: onToday,
             ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                for (var index = 0; index < weekDays.length; index++)
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        weekDays[index],
-                        style:
-                            Theme.of(context).textTheme.labelMedium?.copyWith(
+            _CalendarShiftLegend(schedules: shiftSchedules),
+            const SizedBox(height: 10),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                child: Row(
+                  children: [
+                    for (var index = 0; index < weekDays.length; index++)
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            weekDays[index],
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
                                   color: index >= 5
                                       ? const Color(0xFFEA580C)
                                       : const Color(0xFF475569),
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w900,
                                   letterSpacing: 0,
                                 ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-              ],
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 7),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
-                mainAxisSpacing: 7,
-                crossAxisSpacing: 7,
+                mainAxisSpacing: 6,
+                crossAxisSpacing: 6,
               ),
               itemCount: days.length,
               itemBuilder: (context, index) {
@@ -395,6 +414,102 @@ class _CalendarMonthHeader extends StatelessWidget {
   }
 }
 
+class _CalendarShiftLegend extends StatelessWidget {
+  const _CalendarShiftLegend({required this.schedules});
+
+  final List<ShiftSchedule> schedules;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabledSchedules = [
+      for (final schedule in schedules)
+        if (schedule.isEnabled) schedule,
+    ];
+
+    if (enabledSchedules.isEmpty) {
+      return const SizedBox(height: 14);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final schedule in enabledSchedules)
+              _ShiftLegendChip(schedule: schedule),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShiftLegendChip extends StatelessWidget {
+  const _ShiftLegendChip({required this.schedule});
+
+  final ShiftSchedule schedule;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Color(schedule.colorValue);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: const SizedBox(width: 12, height: 12),
+            ),
+            const SizedBox(width: 7),
+            Text(
+              schedule.organizationName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: const Color(0xFF172033),
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+            ),
+            const SizedBox(width: 6),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.82),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+                child: Text(
+                  '${schedule.workDays}/${schedule.restDays}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFF475569),
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _MonthIconButton extends StatelessWidget {
   const _MonthIconButton({
     required this.tooltip,
@@ -468,7 +583,7 @@ class _CalendarDayCell extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
-                ? colors.primary
+                ? const Color(0xFF0F172A)
                 : isToday
                     ? const Color(0xFF2563EB)
                     : hasItems && isInVisibleMonth
@@ -476,14 +591,18 @@ class _CalendarDayCell extends StatelessWidget {
                         : isInVisibleMonth
                             ? const Color(0xFFE2E8F0)
                             : Colors.transparent,
-            width: isToday || isSelected ? 1.5 : 1,
+            width: isSelected
+                ? 2
+                : isToday
+                    ? 1.5
+                    : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: colors.primary.withValues(alpha: 0.28),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.16),
+                    blurRadius: 14,
+                    offset: const Offset(0, 7),
                   ),
                 ]
               : null,
@@ -506,7 +625,7 @@ class _CalendarDayCell extends StatelessWidget {
                 '${date.day}',
                 style: TextStyle(
                   color: foreground,
-                  fontSize: 14,
+                  fontSize: 14.5,
                   fontWeight:
                       isSelected || isToday ? FontWeight.w900 : FontWeight.w700,
                 ),
@@ -620,11 +739,11 @@ class _ShiftFill extends StatelessWidget {
   Widget build(BuildContext context) {
     final alpha = colors.length == 1
         ? isSelected
-            ? 0.48
-            : 0.4
+            ? 0.54
+            : 0.44
         : isSelected
-            ? 0.78
-            : 0.62;
+            ? 0.86
+            : 0.68;
 
     return Row(
       children: [
