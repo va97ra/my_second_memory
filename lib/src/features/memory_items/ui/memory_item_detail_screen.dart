@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:record/record.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
+import '../../voice_notes/data/voice_note_storage.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
 import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
@@ -32,16 +34,23 @@ class _MemoryItemDetailScreenState
     extends ConsumerState<MemoryItemDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _bodyController = TextEditingController();
+  final _recorder = AudioRecorder();
+  final _voiceStorage = VoiceNoteStorage();
   final _imagePaths = <String>[];
 
   String? _loadedItemId;
   DateTime _memoryDate = DateTime.now();
   MemoryStatus _status = MemoryStatus.active;
   MemoryType _type = MemoryType.note;
+  String? _audioPath;
+  int? _audioDurationSeconds;
+  DateTime? _recordingStartedAt;
+  bool _isRecording = false;
 
   @override
   void dispose() {
     _bodyController.dispose();
+    _recorder.dispose();
     super.dispose();
   }
 
@@ -102,15 +111,6 @@ class _MemoryItemDetailScreenState
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: [
-              _DonePanel(
-                value: _status == MemoryStatus.done,
-                onChanged: (value) {
-                  setState(() {
-                    _status = value ? MemoryStatus.done : MemoryStatus.active;
-                  });
-                },
-              ),
-              const SizedBox(height: 14),
               _TypeEditor(
                 selectedType: _type,
                 onTypeChanged: (type) {
@@ -118,11 +118,16 @@ class _MemoryItemDetailScreenState
                 },
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              _RecordEditor(
                 controller: _bodyController,
-                decoration: InputDecoration(labelText: strings.description),
-                minLines: 4,
-                maxLines: 10,
+                imagePaths: _imagePaths,
+                audioPath: _audioPath,
+                isRecording: _isRecording,
+                onPickImage: _pickImage,
+                onRemoveImage: (path) => setState(() {
+                  _imagePaths.remove(path);
+                }),
+                onVoicePressed: _isRecording ? _stopAndSaveVoice : _startVoice,
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -132,16 +137,10 @@ class _MemoryItemDetailScreenState
                   '${strings.date}: ${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(_memoryDate)}',
                 ),
               ),
-              if (item.audioPath != null) ...[
+              if (_audioPath != null) ...[
                 const SizedBox(height: 16),
-                VoiceNotePlayer(path: item.audioPath!),
+                VoiceNotePlayer(path: _audioPath!),
               ],
-              const SizedBox(height: 18),
-              _ImagesEditor(
-                imagePaths: _imagePaths,
-                onAdd: _pickImage,
-                onRemove: (path) => setState(() => _imagePaths.remove(path)),
-              ),
             ],
           ),
         ),
@@ -169,6 +168,8 @@ class _MemoryItemDetailScreenState
     _status = item.status;
     _type =
         editableMemoryTypes.contains(item.type) ? item.type : MemoryType.note;
+    _audioPath = item.audioPath;
+    _audioDurationSeconds = item.audioDurationSeconds;
     _imagePaths
       ..clear()
       ..addAll(item.imagePaths);
@@ -208,6 +209,36 @@ class _MemoryItemDetailScreenState
     setState(() => _imagePaths.add(file.path));
   }
 
+  Future<void> _startVoice() async {
+    final hasPermission = await _recorder.hasPermission();
+    if (!hasPermission) {
+      return;
+    }
+
+    final path = await _voiceStorage.buildNewPath();
+    await _recorder.start(const RecordConfig(), path: path);
+    setState(() {
+      _recordingStartedAt = DateTime.now();
+      _isRecording = true;
+    });
+  }
+
+  Future<void> _stopAndSaveVoice() async {
+    final path = await _recorder.stop();
+    final startedAt = _recordingStartedAt;
+    final duration =
+        startedAt == null ? 0 : DateTime.now().difference(startedAt).inSeconds;
+
+    setState(() {
+      _recordingStartedAt = null;
+      _isRecording = false;
+      if (path != null) {
+        _audioPath = path;
+        _audioDurationSeconds = duration;
+      }
+    });
+  }
+
   String _mimeTypeForName(String name) {
     final lower = name.toLowerCase();
     if (lower.endsWith('.png')) {
@@ -241,6 +272,8 @@ class _MemoryItemDetailScreenState
         _memoryDate.day,
       ),
       status: _status,
+      audioPath: _audioPath,
+      audioDurationSeconds: _audioDurationSeconds,
       imagePaths: List.unmodifiable(_imagePaths),
       updatedAt: DateTime.now(),
     );
@@ -308,43 +341,157 @@ class _MemoryItemDetailScreenState
   }
 }
 
-class _DonePanel extends StatelessWidget {
-  const _DonePanel({
-    required this.value,
-    required this.onChanged,
+class _RecordEditor extends StatelessWidget {
+  const _RecordEditor({
+    required this.controller,
+    required this.imagePaths,
+    required this.audioPath,
+    required this.isRecording,
+    required this.onPickImage,
+    required this.onRemoveImage,
+    required this.onVoicePressed,
   });
 
-  final bool value;
-  final ValueChanged<bool> onChanged;
+  final TextEditingController controller;
+  final List<String> imagePaths;
+  final String? audioPath;
+  final bool isRecording;
+  final VoidCallback onPickImage;
+  final ValueChanged<String> onRemoveImage;
+  final VoidCallback onVoicePressed;
 
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    const color = Color(0xFF16A34A);
 
-    return Material(
-      color: value ? const Color(0xFFEAF8EF) : const Color(0xFFF8FAFC),
-      shape: RoundedRectangleBorder(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: value ? const Color(0xFF86EFAC) : const Color(0xFFDDE3EA),
+        border: Border.all(color: const Color(0xFFDDE3EA)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: strings.description,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              minLines: 4,
+              maxLines: 10,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _SquareActionButton(
+                  tooltip: strings.addImage,
+                  icon: Icons.photo_camera_outlined,
+                  color: const Color(0xFF2563EB),
+                  onPressed: onPickImage,
+                ),
+                const SizedBox(width: 8),
+                _SquareActionButton(
+                  tooltip: isRecording ? strings.stopRecording : strings.voice,
+                  icon: isRecording ? Icons.stop : Icons.mic_none,
+                  color: isRecording
+                      ? const Color(0xFFDC2626)
+                      : const Color(0xFFDB2777),
+                  onPressed: onVoicePressed,
+                ),
+                if (audioPath != null) ...[
+                  const SizedBox(width: 10),
+                  Icon(
+                    Icons.graphic_eq,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      strings.voiceMessage,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            if (imagePaths.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final path in imagePaths)
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: SizedBox(
+                            width: 96,
+                            height: 72,
+                            child: MemoryImagePreview(path: path),
+                          ),
+                        ),
+                        Positioned(
+                          right: 2,
+                          top: 2,
+                          child: IconButton.filledTonal(
+                            constraints: const BoxConstraints.tightFor(
+                              width: 24,
+                              height: 24,
+                            ),
+                            padding: EdgeInsets.zero,
+                            tooltip: strings.delete,
+                            onPressed: () => onRemoveImage(path),
+                            icon: const Icon(Icons.close, size: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ],
+          ],
         ),
       ),
-      child: SwitchListTile(
-        value: value,
-        onChanged: onChanged,
-        activeThumbColor: color,
-        secondary: Icon(
-          value ? Icons.check_circle : Icons.check_circle_outline,
-          color: color,
-        ),
-        title: Text(
-          strings.completed,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: value ? const Color(0xFF14532D) : null,
-              ),
-        ),
+    );
+  }
+}
+
+class _SquareActionButton extends StatelessWidget {
+  const _SquareActionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon),
+      style: IconButton.styleFrom(
+        fixedSize: const Size(42, 42),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        foregroundColor: color,
+        backgroundColor: color.withValues(alpha: 0.12),
+        side: BorderSide(color: color.withValues(alpha: 0.22)),
       ),
     );
   }
@@ -516,92 +663,6 @@ class _TypePickerRow extends StatelessWidget {
                 ),
           ),
           trailing: selected ? Icon(Icons.check_circle, color: color) : null,
-        ),
-      ),
-    );
-  }
-}
-
-class _ImagesEditor extends StatelessWidget {
-  const _ImagesEditor({
-    required this.imagePaths,
-    required this.onAdd,
-    required this.onRemove,
-  });
-
-  final List<String> imagePaths;
-  final VoidCallback onAdd;
-  final ValueChanged<String> onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final strings = AppStrings.of(context);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE3EA)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    strings.photo,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ),
-                FilledButton.icon(
-                  onPressed: onAdd,
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  label: Text(strings.addImage),
-                ),
-              ],
-            ),
-            if (imagePaths.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final path in imagePaths)
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox(
-                            width: 148,
-                            height: 108,
-                            child: MemoryImagePreview(path: path),
-                          ),
-                        ),
-                        Positioned(
-                          right: 4,
-                          top: 4,
-                          child: IconButton.filledTonal(
-                            constraints: const BoxConstraints.tightFor(
-                              width: 28,
-                              height: 28,
-                            ),
-                            padding: EdgeInsets.zero,
-                            tooltip: strings.delete,
-                            onPressed: () => onRemove(path),
-                            icon: const Icon(Icons.close, size: 16),
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ],
-          ],
         ),
       ),
     );

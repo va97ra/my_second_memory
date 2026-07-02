@@ -192,6 +192,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Редактировать запись'), findsOneWidget);
+    expect(find.text('Выполнено'), findsNothing);
+    expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.mic_none), findsOneWidget);
     await tester.tap(find.text('Событие'));
     await tester.pumpAndSettle();
     expect(find.text('Голос'), findsNothing);
