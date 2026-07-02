@@ -90,7 +90,7 @@ class _MemoryItemDetailScreenState
         actions: [
           IconButton(
             tooltip: strings.save,
-            onPressed: () => _save(item),
+            onPressed: _isRecording ? null : () => _save(item),
             icon: const Icon(Icons.save_outlined),
           ),
           PopupMenuButton<String>(
@@ -112,32 +112,21 @@ class _MemoryItemDetailScreenState
       body: SafeArea(
         child: Form(
           key: _formKey,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: Column(
-              children: [
-                _TypeEditor(
-                  selectedType: _type,
-                  onTypeChanged: (type) {
-                    setState(() => _type = type);
-                  },
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: _RecordEditor(
-                    controller: _bodyController,
-                    imagePaths: _imagePaths,
-                    audioPath: _audioPath,
-                    isRecording: _isRecording,
-                    onPickImage: _pickImage,
-                    onRemoveImage: (path) => setState(() {
-                      _imagePaths.remove(path);
-                    }),
-                    onVoicePressed:
-                        _isRecording ? _stopAndSaveVoice : _startVoice,
-                  ),
-                ),
-              ],
+          child: _EditorBody(
+            selectedType: _type,
+            onTypeChanged: (type) {
+              setState(() => _type = type);
+            },
+            recordEditor: _RecordEditor(
+              controller: _bodyController,
+              imagePaths: _imagePaths,
+              audioPath: _audioPath,
+              isRecording: _isRecording,
+              onPickImage: _pickImage,
+              onRemoveImage: (path) => setState(() {
+                _imagePaths.remove(path);
+              }),
+              onVoicePressed: _isRecording ? _stopAndSaveVoice : _startVoice,
             ),
           ),
         ),
@@ -343,6 +332,51 @@ class _MemoryItemDetailScreenState
   }
 }
 
+class _EditorBody extends StatelessWidget {
+  const _EditorBody({
+    required this.selectedType,
+    required this.onTypeChanged,
+    required this.recordEditor,
+  });
+
+  final MemoryType selectedType;
+  final ValueChanged<MemoryType> onTypeChanged;
+  final Widget recordEditor;
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = keyboardVisible || constraints.maxHeight < 520;
+        final bottomPadding = keyboardVisible ? 8.0 : 24.0;
+
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPadding),
+              child: Column(
+                children: [
+                  _TypeEditor(
+                    selectedType: selectedType,
+                    compact: compact,
+                    onTypeChanged: onTypeChanged,
+                  ),
+                  SizedBox(height: compact ? 8 : 12),
+                  Expanded(child: recordEditor),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _EditorTitle extends StatelessWidget {
   const _EditorTitle({
     required this.title,
@@ -407,103 +441,161 @@ class _RecordEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE3EA)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: controller,
-                expands: true,
-                maxLines: null,
-                minLines: null,
-                textAlignVertical: TextAlignVertical.top,
-                decoration: InputDecoration(
-                  labelText: strings.description,
-                  alignLabelWithHint: true,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ),
-            if (audioPath != null) ...[
-              const SizedBox(height: 10),
-              VoiceNotePlayer(path: audioPath!),
-            ],
-            if (imagePaths.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 72,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: imagePaths.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final path = imagePaths[index];
-                    return Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox(
-                            width: 96,
-                            height: 72,
-                            child: MemoryImagePreview(path: path),
-                          ),
-                        ),
-                        Positioned(
-                          right: 2,
-                          top: 2,
-                          child: IconButton.filledTonal(
-                            constraints: const BoxConstraints.tightFor(
-                              width: 24,
-                              height: 24,
-                            ),
-                            padding: EdgeInsets.zero,
-                            tooltip: strings.delete,
-                            onPressed: () => onRemoveImage(path),
-                            icon: const Icon(Icons.close, size: 14),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _SquareActionButton(
-                    tooltip: strings.addImage,
-                    icon: Icons.photo_camera_outlined,
-                    color: const Color(0xFF2563EB),
-                    onPressed: onPickImage,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxHeight < 360;
+        final imageHeight = compact ? 56.0 : 72.0;
+        final imageWidth = compact ? 76.0 : 96.0;
+        final buttonSize = compact ? 38.0 : 42.0;
+
+        return DecoratedBox(
+          key: const ValueKey('record_editor_panel'),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFDDE3EA)),
+          ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(12, 8, 12, compact ? 8 : 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    key: const ValueKey('record_editor_text'),
+                    controller: controller,
+                    expands: true,
+                    maxLines: null,
+                    minLines: null,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    textAlignVertical: TextAlignVertical.top,
+                    scrollPadding: const EdgeInsets.only(bottom: 120),
+                    decoration: InputDecoration(
+                      labelText: strings.description,
+                      alignLabelWithHint: true,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  _SquareActionButton(
-                    tooltip:
-                        isRecording ? strings.stopRecording : strings.voice,
-                    icon: isRecording ? Icons.stop : Icons.mic_none,
-                    color: isRecording
-                        ? const Color(0xFFDC2626)
-                        : const Color(0xFFDB2777),
-                    onPressed: onVoicePressed,
+                ),
+                if (audioPath != null) ...[
+                  SizedBox(height: compact ? 8 : 10),
+                  VoiceNotePlayer(path: audioPath!),
+                ] else if (isRecording) ...[
+                  SizedBox(height: compact ? 8 : 10),
+                  _RecordingPill(text: strings.recordingNow),
+                ],
+                if (imagePaths.isNotEmpty) ...[
+                  SizedBox(height: compact ? 8 : 12),
+                  SizedBox(
+                    height: imageHeight,
+                    child: ListView.separated(
+                      key: const ValueKey('record_editor_images'),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: imagePaths.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final path = imagePaths[index];
+                        return Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: SizedBox(
+                                width: imageWidth,
+                                height: imageHeight,
+                                child: MemoryImagePreview(path: path),
+                              ),
+                            ),
+                            Positioned(
+                              right: 2,
+                              top: 2,
+                              child: IconButton.filledTonal(
+                                constraints: const BoxConstraints.tightFor(
+                                  width: 24,
+                                  height: 24,
+                                ),
+                                padding: EdgeInsets.zero,
+                                tooltip: strings.delete,
+                                onPressed: () => onRemoveImage(path),
+                                icon: const Icon(Icons.close, size: 14),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ],
-              ),
+                SizedBox(height: compact ? 8 : 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _SquareActionButton(
+                        tooltip: strings.addImage,
+                        icon: Icons.photo_camera_outlined,
+                        color: const Color(0xFF2563EB),
+                        size: buttonSize,
+                        onPressed: onPickImage,
+                      ),
+                      const SizedBox(width: 8),
+                      _SquareActionButton(
+                        tooltip:
+                            isRecording ? strings.stopRecording : strings.voice,
+                        icon: isRecording ? Icons.stop : Icons.mic_none,
+                        color: isRecording
+                            ? const Color(0xFFDC2626)
+                            : const Color(0xFFDB2777),
+                        size: buttonSize,
+                        onPressed: onVoicePressed,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RecordingPill extends StatelessWidget {
+  const _RecordingPill({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEE2E2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFCA5A5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.fiber_manual_record,
+              size: 12,
+              color: Color(0xFFDC2626),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              text,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: const Color(0xFF991B1B),
+                    fontWeight: FontWeight.w800,
+                  ),
             ),
           ],
         ),
@@ -518,12 +610,14 @@ class _SquareActionButton extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.onPressed,
+    this.size = 42,
   });
 
   final String tooltip;
   final IconData icon;
   final Color color;
   final VoidCallback onPressed;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -532,7 +626,7 @@ class _SquareActionButton extends StatelessWidget {
       onPressed: onPressed,
       icon: Icon(icon),
       style: IconButton.styleFrom(
-        fixedSize: const Size(42, 42),
+        fixedSize: Size.square(size),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         foregroundColor: color,
         backgroundColor: color.withValues(alpha: 0.12),
@@ -546,15 +640,18 @@ class _TypeEditor extends StatelessWidget {
   const _TypeEditor({
     required this.selectedType,
     required this.onTypeChanged,
+    this.compact = false,
   });
 
   final MemoryType selectedType;
   final ValueChanged<MemoryType> onTypeChanged;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).languageCode;
+    final label = selectedType.label(locale);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -563,24 +660,30 @@ class _TypeEditor extends StatelessWidget {
         border: Border.all(color: const Color(0xFFDDE3EA)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              strings.recordType,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+        padding: EdgeInsets.fromLTRB(12, compact ? 6 : 8, 12, compact ? 6 : 12),
+        child: compact
+            ? _TypeSelectorTile(
+                type: selectedType,
+                label: label,
+                onTap: () => _showTypePicker(context),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    strings.recordType,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                   ),
-            ),
-            const SizedBox(height: 8),
-            _TypeSelectorTile(
-              type: selectedType,
-              label: selectedType.label(locale),
-              onTap: () => _showTypePicker(context),
-            ),
-          ],
-        ),
+                  const SizedBox(height: 8),
+                  _TypeSelectorTile(
+                    type: selectedType,
+                    label: label,
+                    onTap: () => _showTypePicker(context),
+                  ),
+                ],
+              ),
       ),
     );
   }

@@ -54,6 +54,7 @@ class AppStrings {
   String get messageHint => isRu ? 'Сообщение' : 'Message';
   String get photo => isRu ? 'Фото' : 'Photo';
   String get voiceMessage => isRu ? 'Голосовое сообщение' : 'Voice message';
+  String get recordingNow => isRu ? 'Идёт запись' : 'Recording';
   String get noMessagesForDay =>
       isRu ? 'За этот день пока ничего нет' : 'No messages for this day yet';
   String get pinSecurity => isRu ? 'PIN и биометрия' : 'PIN and biometrics';

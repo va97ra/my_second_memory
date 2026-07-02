@@ -95,6 +95,38 @@ class _TodayOnlyMemoryRepository implements MemoryRepository {
   }
 }
 
+class _RichEditorMemoryRepository implements MemoryRepository {
+  List<MemoryItem> savedItems = const [];
+
+  @override
+  Future<List<MemoryItem>> loadItems() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    const pixel =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
+        'AAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+    return [
+      MemoryItem(
+        id: 'rich-editor',
+        type: MemoryType.note,
+        title: 'Длинная запись',
+        body: List.filled(18, 'Длинная строка записи для проверки прокрутки')
+            .join('\n'),
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+        imagePaths: const [pixel, pixel, pixel],
+      ),
+    ];
+  }
+
+  @override
+  Future<void> saveItems(List<MemoryItem> items) async {
+    savedItems = items;
+  }
+}
+
 void main() {
   testWidgets('shows the home feed when app is unlocked', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
@@ -232,6 +264,39 @@ void main() {
     expect(saved.type, MemoryType.purchase);
     expect(saved.memoryDate, targetDate);
     expect(saved.status, MemoryStatus.done);
+  });
+
+  testWidgets('editor keeps record field large with long text and images',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 560));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _RichEditorMemoryRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Длинная запись'));
+    await tester.pumpAndSettle();
+
+    final panelSize =
+        tester.getSize(find.byKey(const ValueKey('record_editor_panel')));
+    final textSize =
+        tester.getSize(find.byKey(const ValueKey('record_editor_text')));
+
+    expect(panelSize.height, greaterThan(290));
+    expect(textSize.height, greaterThan(120));
+    expect(find.byKey(const ValueKey('record_editor_images')), findsOneWidget);
+    expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.mic_none), findsOneWidget);
   });
 
   testWidgets('calendar date opens day chat and sends text on selected date',
