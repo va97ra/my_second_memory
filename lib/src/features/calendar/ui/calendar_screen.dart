@@ -483,45 +483,49 @@ class _CalendarDayCell extends StatelessWidget {
                 left: 5,
                 right: 5,
                 bottom: 5,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (final color in markerColors)
-                      Container(
-                        width: 5,
-                        height: 5,
-                        margin: const EdgeInsets.symmetric(horizontal: 1.2),
-                        decoration: BoxDecoration(
-                          color: isSelected ? colors.onPrimary : color,
-                          shape: BoxShape.circle,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (final color in markerColors)
+                        Container(
+                          width: 5,
+                          height: 5,
+                          margin: const EdgeInsets.symmetric(horizontal: 1.2),
+                          decoration: BoxDecoration(
+                            color: isSelected ? colors.onPrimary : color,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    if (itemCount > 1)
-                      Container(
-                        margin: const EdgeInsets.only(left: 2),
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? colors.onPrimary
-                              : const Color(0xFF2563EB),
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: Center(
-                          child: Text(
-                            itemCount > 9 ? '9+' : '$itemCount',
-                            style: TextStyle(
-                              color: isSelected
-                                  ? const Color(0xFF2563EB)
-                                  : colors.onPrimary,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w900,
-                              height: 1,
+                      if (itemCount > 1)
+                        Container(
+                          margin: const EdgeInsets.only(left: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? colors.onPrimary
+                                : const Color(0xFF2563EB),
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          child: Center(
+                            child: Text(
+                              itemCount > 9 ? '9+' : '$itemCount',
+                              style: TextStyle(
+                                color: isSelected
+                                    ? const Color(0xFF2563EB)
+                                    : colors.onPrimary,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                height: 1,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             if (isToday && !isSelected)

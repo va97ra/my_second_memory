@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -135,7 +138,30 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
     if (file == null) {
       return;
     }
+
+    if (kIsWeb) {
+      final bytes = await file.readAsBytes();
+      final mimeType = file.mimeType ?? _mimeTypeForName(file.name);
+      final dataUrl = 'data:$mimeType;base64,${base64Encode(bytes)}';
+      setState(() => _imagePaths.add(dataUrl));
+      return;
+    }
+
     setState(() => _imagePaths.add(file.path));
+  }
+
+  String _mimeTypeForName(String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) {
+      return 'image/png';
+    }
+    if (lower.endsWith('.gif')) {
+      return 'image/gif';
+    }
+    if (lower.endsWith('.webp')) {
+      return 'image/webp';
+    }
+    return 'image/jpeg';
   }
 
   Future<void> _sendTextAndImages() async {
