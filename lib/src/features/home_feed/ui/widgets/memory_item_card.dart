@@ -22,7 +22,8 @@ class MemoryItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
-    final date = DateFormat.yMMMd(locale).format(item.memoryDate);
+    final day = DateFormat.d(locale).format(item.memoryDate);
+    final month = DateFormat.MMM(locale).format(item.memoryDate);
     const doneColor = Color(0xFF16A34A);
     final isDone = item.isDone;
     final typeColor = _typeColor(item.type);
@@ -60,24 +61,57 @@ class MemoryItemCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: (isDone ? doneColor : typeColor)
-                              .withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: (isDone ? doneColor : typeColor)
-                                .withValues(alpha: 0.28),
-                          ),
-                        ),
-                        child: SizedBox(
-                          width: 34,
-                          height: 34,
-                          child: Icon(
-                            isDone ? Icons.check_circle : _iconFor(item.type),
-                            size: 19,
-                            color: isDone ? doneColor : typeColor,
-                          ),
+                      SizedBox(
+                        width: 40,
+                        child: Column(
+                          children: [
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: typeColor.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: typeColor.withValues(alpha: 0.28),
+                                ),
+                              ),
+                              child: SizedBox(
+                                width: 34,
+                                height: 34,
+                                child: Icon(
+                                  _iconFor(item.type),
+                                  size: 19,
+                                  color: typeColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              day,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium
+                                  ?.copyWith(
+                                    color: isDone
+                                        ? const Color(0xFF166534)
+                                        : typeColor,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
+                                  ),
+                            ),
+                            Text(
+                              month,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: const Color(0xFF64748B),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.1,
+                                  ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -99,23 +133,13 @@ class MemoryItemCard extends StatelessWidget {
                                         isDone ? const Color(0xFF14532D) : null,
                                   ),
                             ),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: [
-                                _MetaPill(
-                                  text: item.type.label(locale),
-                                  color: isDone ? doneColor : typeColor,
-                                ),
-                                _MetaPill(text: date),
-                                if (isDone)
-                                  _MetaPill(
-                                    text: AppStrings.of(context).completed,
-                                    color: doneColor,
-                                  ),
-                              ],
-                            ),
+                            if (isDone) ...[
+                              const SizedBox(height: 6),
+                              _StatusPill(
+                                text: AppStrings.of(context).completed,
+                                color: doneColor,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -132,28 +156,16 @@ class MemoryItemCard extends StatelessWidget {
                         ),
                         style: IconButton.styleFrom(
                           foregroundColor:
-                              isDone ? Colors.white : const Color(0xFF16A34A),
+                              isDone ? Colors.white : const Color(0xFF94A3B8),
                           backgroundColor: isDone
                               ? const Color(0xFF16A34A)
-                              : const Color(0xFFEAF8EF),
+                              : const Color(0xFFF1F5F9),
                           minimumSize: const Size(36, 36),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
                     ],
                   ),
-                  if (item.body.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      item.body,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            height: 1.35,
-                            color: isDone
-                                ? const Color(0xFF166534)
-                                : const Color(0xFF334155),
-                          ),
-                    ),
-                  ],
                   if (item.audioPath != null) ...[
                     const SizedBox(height: 12),
                     VoiceNotePlayer(path: item.audioPath!),
@@ -204,10 +216,10 @@ class MemoryItemCard extends StatelessWidget {
   }
 }
 
-class _MetaPill extends StatelessWidget {
-  const _MetaPill({
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
     required this.text,
-    this.color = const Color(0xFF64748B),
+    required this.color,
   });
 
   final String text;
