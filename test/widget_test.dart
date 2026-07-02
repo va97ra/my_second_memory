@@ -264,6 +264,9 @@ void main() {
 
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     expect(find.text('План на сегодня'), findsOneWidget);
+    expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.mic_none), findsOneWidget);
+    expect(find.byIcon(Icons.attach_file), findsNothing);
     await tester.enterText(
         find.widgetWithText(TextField, 'Сообщение'), 'Фото дня');
     await tester.pump();

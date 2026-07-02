@@ -478,15 +478,13 @@ class _MessageComposerState extends State<_MessageComposer> {
               ),
             Row(
               children: [
-                IconButton(
+                _ComposerActionButton(
                   tooltip: strings.addImage,
+                  icon: Icons.photo_camera_outlined,
+                  color: const Color(0xFF2563EB),
                   onPressed: widget.onAttachImage,
-                  icon: const Icon(Icons.attach_file),
-                  style: IconButton.styleFrom(
-                    foregroundColor: const Color(0xFF0891B2),
-                    backgroundColor: const Color(0xFFE0F7FA),
-                  ),
                 ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: widget.controller,
@@ -502,20 +500,19 @@ class _MessageComposerState extends State<_MessageComposer> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton.filled(
+                _ComposerActionButton(
                   tooltip: canSend ? strings.save : strings.voice,
+                  icon: canSend
+                      ? Icons.send
+                      : widget.isRecording
+                          ? Icons.stop
+                          : Icons.mic_none,
+                  color: canSend
+                      ? const Color(0xFF2563EB)
+                      : widget.isRecording
+                          ? const Color(0xFFDC2626)
+                          : const Color(0xFFDB2777),
                   onPressed: canSend ? widget.onSubmit : widget.onVoicePressed,
-                  style: IconButton.styleFrom(
-                    backgroundColor:
-                        widget.isRecording ? const Color(0xFFDC2626) : null,
-                  ),
-                  icon: Icon(
-                    canSend
-                        ? Icons.send
-                        : widget.isRecording
-                            ? Icons.stop
-                            : Icons.mic,
-                  ),
                 ),
               ],
             ),
@@ -526,4 +523,34 @@ class _MessageComposerState extends State<_MessageComposer> {
   }
 
   void _onTextChanged() => setState(() {});
+}
+
+class _ComposerActionButton extends StatelessWidget {
+  const _ComposerActionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon),
+      style: IconButton.styleFrom(
+        fixedSize: const Size(42, 42),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        foregroundColor: color,
+        backgroundColor: color.withValues(alpha: 0.12),
+        side: BorderSide(color: color.withValues(alpha: 0.22)),
+      ),
+    );
+  }
 }
