@@ -39,6 +39,7 @@ class HomeFeedScreen extends ConsumerWidget {
           SliverAppBar.large(
             title: Text(strings.dayFeed),
           ),
+          const SliverToBoxAdapter(child: _MemoryBanner()),
           if (isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
@@ -82,6 +83,48 @@ class HomeFeedScreen extends ConsumerWidget {
         }
         return a.createdAt.compareTo(b.createdAt);
       });
+  }
+}
+
+class _MemoryBanner extends StatelessWidget {
+  const _MemoryBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Stack(
+          children: [
+            AspectRatio(
+              aspectRatio: 2.45,
+              child: Image.asset(
+                'assets/images/memory_banner.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      const Color(0xFF0F172A).withValues(alpha: 0.12),
+                      Colors.transparent,
+                    ],
+                  ),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.55),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

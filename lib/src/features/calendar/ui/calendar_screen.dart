@@ -42,9 +42,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: CustomScrollView(
         slivers: [
           SliverAppBar.large(title: Text(strings.calendar)),
+          const SliverToBoxAdapter(child: _CalendarHero()),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: _CalendarPanel(
                 locale: locale,
                 visibleMonth: _visibleMonth,
@@ -78,7 +79,75 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       _visibleMonth = DateTime(selected.year, selected.month);
     });
 
-    context.go('/calendar/day?date=${DateFormat('yyyy-MM-dd').format(selected)}');
+    context
+        .go('/calendar/day?date=${DateFormat('yyyy-MM-dd').format(selected)}');
+  }
+}
+
+class _CalendarHero extends StatelessWidget {
+  const _CalendarHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFC7DDFF)),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: SizedBox(
+            height: 108,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/images/memory_banner.png',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.centerRight,
+                  ),
+                ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFEFF6FF).withValues(alpha: 0.92),
+                          const Color(0xFFEFF6FF).withValues(alpha: 0.30),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  top: 14,
+                  bottom: 14,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.78),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white),
+                    ),
+                    child: const SizedBox(
+                      width: 56,
+                      child: Icon(
+                        Icons.calendar_month,
+                        color: Color(0xFF2563EB),
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -110,10 +179,17 @@ class _CalendarPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0xFFDDE3EA)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.035),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         child: Column(
           children: [
             Row(
@@ -127,7 +203,9 @@ class _CalendarPanel extends StatelessWidget {
                   child: Text(
                     _capitalize(DateFormat.yMMMM(locale).format(visibleMonth)),
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 IconButton(
@@ -145,7 +223,11 @@ class _CalendarPanel extends StatelessWidget {
                     child: Center(
                       child: Text(
                         label,
-                        style: Theme.of(context).textTheme.labelMedium,
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: const Color(0xFF64748B),
+                                  fontWeight: FontWeight.w700,
+                                ),
                       ),
                     ),
                   ),
@@ -244,14 +326,18 @@ class _CalendarDayCell extends StatelessWidget {
               ? colors.primary
               : isToday
                   ? const Color(0xFFEAF3FF)
-                  : Colors.transparent,
+                  : isInVisibleMonth
+                      ? const Color(0xFFF8FAFC)
+                      : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
                 ? colors.primary
                 : isToday
                     ? const Color(0xFF93C5FD)
-                    : Colors.transparent,
+                    : isInVisibleMonth
+                        ? const Color(0xFFE2E8F0)
+                        : Colors.transparent,
           ),
         ),
         child: Stack(
@@ -261,9 +347,8 @@ class _CalendarDayCell extends StatelessWidget {
                 '${date.day}',
                 style: TextStyle(
                   color: foreground,
-                  fontWeight: isSelected || isToday
-                      ? FontWeight.w700
-                      : FontWeight.w500,
+                  fontWeight:
+                      isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
             ),

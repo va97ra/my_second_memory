@@ -21,56 +21,113 @@ class MemoryItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
     final date = DateFormat.yMMMd(locale).format(item.memoryDate);
+    final colors = Theme.of(context).colorScheme;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(_iconFor(item.type), size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${item.type.label(locale)} · $date',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                if (onDelete != null)
-                  IconButton(
-                    tooltip: AppStrings.of(context).delete,
-                    onPressed: () => _confirmDelete(context),
-                    icon: const Icon(Icons.delete_outline),
-                  ),
-              ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFDDE3EA)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.035),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
-            if (item.body.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(item.body),
-            ],
-            if (item.audioPath != null) ...[
-              const SizedBox(height: 12),
-              VoiceNotePlayer(path: item.audioPath!),
-            ],
-            if (item.imagePaths.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _ImageStrip(paths: item.imagePaths),
-            ],
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: _typeColor(item.type).withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _typeColor(item.type).withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: SizedBox(
+                      width: 34,
+                      height: 34,
+                      child: Icon(
+                        _iconFor(item.type),
+                        size: 19,
+                        color: _typeColor(item.type),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.18,
+                                  ),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            _MetaPill(
+                              text: item.type.label(locale),
+                              color: _typeColor(item.type),
+                            ),
+                            _MetaPill(text: date),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (onDelete != null)
+                    IconButton(
+                      tooltip: AppStrings.of(context).delete,
+                      onPressed: () => _confirmDelete(context),
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      style: IconButton.styleFrom(
+                        foregroundColor: const Color(0xFF64748B),
+                        backgroundColor: const Color(0xFFF8FAFC),
+                        minimumSize: const Size(34, 34),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                ],
+              ),
+              if (item.body.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  item.body,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        height: 1.35,
+                        color: const Color(0xFF334155),
+                      ),
+                ),
+              ],
+              if (item.audioPath != null) ...[
+                const SizedBox(height: 12),
+                VoiceNotePlayer(path: item.audioPath!),
+              ],
+              if (item.imagePaths.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _ImageStrip(paths: item.imagePaths),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -115,6 +172,54 @@ class MemoryItemCard extends StatelessWidget {
       MemoryType.document => Icons.description_outlined,
       MemoryType.place => Icons.place_outlined,
     };
+  }
+
+  Color _typeColor(MemoryType type) {
+    return switch (type) {
+      MemoryType.task => const Color(0xFF16A34A),
+      MemoryType.note => const Color(0xFF2563EB),
+      MemoryType.voiceNote => const Color(0xFFDB2777),
+      MemoryType.event => const Color(0xFF7C3AED),
+      MemoryType.person => const Color(0xFF0891B2),
+      MemoryType.habit => const Color(0xFF059669),
+      MemoryType.goal => const Color(0xFFEA580C),
+      MemoryType.project => const Color(0xFF4F46E5),
+      MemoryType.purchase => const Color(0xFFCA8A04),
+      MemoryType.document => const Color(0xFF475569),
+      MemoryType.place => const Color(0xFFDC2626),
+    };
+  }
+}
+
+class _MetaPill extends StatelessWidget {
+  const _MetaPill({
+    required this.text,
+    this.color = const Color(0xFF64748B),
+  });
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0,
+              ),
+        ),
+      ),
+    );
   }
 }
 

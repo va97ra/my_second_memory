@@ -123,12 +123,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Календарь'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('${today.day}').first);
+    final todayCell = find.text('${today.day}').first;
+    await tester.ensureVisible(todayCell);
+    await tester.pumpAndSettle();
+    await tester.tap(todayCell);
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     expect(find.text('План на сегодня'), findsOneWidget);
-    await tester.enterText(find.widgetWithText(TextField, 'Сообщение'), 'Фото дня');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Сообщение'), 'Фото дня');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.send));
     await tester.pumpAndSettle();
