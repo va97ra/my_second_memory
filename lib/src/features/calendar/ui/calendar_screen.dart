@@ -7,6 +7,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
 import '../../home_feed/domain/feed_rules.dart';
 import '../../memory_items/domain/memory_item.dart';
+import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -42,7 +43,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: CustomScrollView(
         slivers: [
           SliverAppBar.large(title: Text(strings.calendar)),
-          const SliverToBoxAdapter(child: _CalendarHero()),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -63,6 +63,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     _visibleMonth.month + 1,
                   );
                 }),
+                onToday: () {
+                  final now = DateTime.now();
+                  final today = DateTime(now.year, now.month, now.day);
+                  setState(() {
+                    _selectedDate = today;
+                    _visibleMonth = DateTime(today.year, today.month);
+                  });
+                },
                 onSelectDate: _openDayDialog,
               ),
             ),
@@ -84,73 +92,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 }
 
-class _CalendarHero extends StatelessWidget {
-  const _CalendarHero();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xFFEFF6FF),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFC7DDFF)),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: SizedBox(
-            height: 108,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/images/memory_banner.png',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.centerRight,
-                  ),
-                ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFFEFF6FF).withValues(alpha: 0.92),
-                          const Color(0xFFEFF6FF).withValues(alpha: 0.30),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  top: 14,
-                  bottom: 14,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.78),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.white),
-                    ),
-                    child: const SizedBox(
-                      width: 56,
-                      child: Icon(
-                        Icons.calendar_month,
-                        color: Color(0xFF2563EB),
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _CalendarPanel extends StatelessWidget {
   const _CalendarPanel({
     required this.locale,
@@ -159,6 +100,7 @@ class _CalendarPanel extends StatelessWidget {
     required this.items,
     required this.onPreviousMonth,
     required this.onNextMonth,
+    required this.onToday,
     required this.onSelectDate,
   });
 
@@ -168,6 +110,7 @@ class _CalendarPanel extends StatelessWidget {
   final List<MemoryItem> items;
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
+  final VoidCallback onToday;
   final ValueChanged<DateTime> onSelectDate;
 
   @override
@@ -192,65 +135,54 @@ class _CalendarPanel extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            Row(
-              children: [
-                IconButton(
-                  tooltip: 'Previous month',
-                  onPressed: onPreviousMonth,
-                  icon: const Icon(Icons.chevron_left),
-                ),
-                Expanded(
-                  child: Text(
-                    _capitalize(DateFormat.yMMMM(locale).format(visibleMonth)),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Next month',
-                  onPressed: onNextMonth,
-                  icon: const Icon(Icons.chevron_right),
-                ),
-              ],
+            _CalendarMonthHeader(
+              locale: locale,
+              visibleMonth: visibleMonth,
+              onPreviousMonth: onPreviousMonth,
+              onNextMonth: onNextMonth,
+              onToday: onToday,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 14),
             Row(
               children: [
-                for (final label in weekDays)
+                for (var index = 0; index < weekDays.length; index++)
                   Expanded(
                     child: Center(
                       child: Text(
-                        label,
+                        weekDays[index],
                         style:
                             Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: const Color(0xFF64748B),
-                                  fontWeight: FontWeight.w700,
+                                  color: index >= 5
+                                      ? const Color(0xFFEA580C)
+                                      : const Color(0xFF475569),
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0,
                                 ),
                       ),
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
-                mainAxisSpacing: 4,
-                crossAxisSpacing: 4,
+                mainAxisSpacing: 7,
+                crossAxisSpacing: 7,
               ),
               itemCount: days.length,
               itemBuilder: (context, index) {
                 final day = days[index];
+                final dayItems = _itemsForDay(day);
                 return _CalendarDayCell(
                   date: day,
                   isInVisibleMonth: day.month == visibleMonth.month,
                   isSelected: isSameDay(day, selectedDate),
                   isToday: isSameDay(day, DateTime.now()),
-                  itemCount: _itemsForDay(day).length,
+                  itemCount: dayItems.length,
+                  markerColors: _markerColorsFor(dayItems),
                   onTap: () => onSelectDate(day),
                 );
               },
@@ -263,6 +195,20 @@ class _CalendarPanel extends StatelessWidget {
 
   List<MemoryItem> _itemsForDay(DateTime date) {
     return items.where((item) => isSameDay(item.memoryDate, date)).toList();
+  }
+
+  List<Color> _markerColorsFor(List<MemoryItem> dayItems) {
+    final colors = <Color>[];
+    for (final item in dayItems) {
+      final color = _colorForType(item.type);
+      if (!colors.contains(color)) {
+        colors.add(color);
+      }
+      if (colors.length == 3) {
+        break;
+      }
+    }
+    return colors;
   }
 
   List<DateTime> _daysForMonth(DateTime month) {
@@ -283,11 +229,170 @@ class _CalendarPanel extends StatelessWidget {
     return const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   }
 
+  Color _colorForType(MemoryType type) {
+    return switch (type) {
+      MemoryType.task => const Color(0xFF16A34A),
+      MemoryType.note => const Color(0xFF2563EB),
+      MemoryType.voiceNote => const Color(0xFFDB2777),
+      MemoryType.event => const Color(0xFF7C3AED),
+      MemoryType.person => const Color(0xFF0891B2),
+      MemoryType.habit => const Color(0xFF059669),
+      MemoryType.goal => const Color(0xFFEA580C),
+      MemoryType.project => const Color(0xFF4F46E5),
+      MemoryType.purchase => const Color(0xFFCA8A04),
+      MemoryType.document => const Color(0xFF475569),
+      MemoryType.place => const Color(0xFFDC2626),
+    };
+  }
+}
+
+class _CalendarMonthHeader extends StatelessWidget {
+  const _CalendarMonthHeader({
+    required this.locale,
+    required this.visibleMonth,
+    required this.onPreviousMonth,
+    required this.onNextMonth,
+    required this.onToday,
+  });
+
+  final String locale;
+  final DateTime visibleMonth;
+  final VoidCallback onPreviousMonth;
+  final VoidCallback onNextMonth;
+  final VoidCallback onToday;
+
+  @override
+  Widget build(BuildContext context) {
+    final month = DateFormat.yMMMM(locale).format(visibleMonth);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        height: 132,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/memory_banner.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+              ),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFDBEAFE).withValues(alpha: 0.96),
+                      const Color(0xFFE0F2FE).withValues(alpha: 0.72),
+                      Colors.white.withValues(alpha: 0.24),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        _MonthIconButton(
+                          tooltip: 'Предыдущий месяц',
+                          icon: Icons.chevron_left,
+                          onPressed: onPreviousMonth,
+                        ),
+                        const Spacer(),
+                        _MonthIconButton(
+                          tooltip: 'Следующий месяц',
+                          icon: Icons.chevron_right,
+                          onPressed: onNextMonth,
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _capitalize(month),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                  color: const Color(0xFF0F172A),
+                                  fontWeight: FontWeight.w900,
+                                  height: 1,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        FilledButton.tonalIcon(
+                          onPressed: onToday,
+                          icon: const Icon(Icons.today, size: 18),
+                          label: const Text('Сегодня'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.88),
+                            foregroundColor: const Color(0xFF2563EB),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _capitalize(String value) {
     if (value.isEmpty) {
       return value;
     }
     return '${value[0].toUpperCase()}${value.substring(1)}';
+  }
+}
+
+class _MonthIconButton extends StatelessWidget {
+  const _MonthIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.filledTonal(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon),
+      style: IconButton.styleFrom(
+        fixedSize: const Size(42, 42),
+        backgroundColor: Colors.white.withValues(alpha: 0.88),
+        foregroundColor: const Color(0xFF2563EB),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 }
 
@@ -298,6 +403,7 @@ class _CalendarDayCell extends StatelessWidget {
     required this.isSelected,
     required this.isToday,
     required this.itemCount,
+    required this.markerColors,
     required this.onTap,
   });
 
@@ -306,11 +412,13 @@ class _CalendarDayCell extends StatelessWidget {
   final bool isSelected;
   final bool isToday;
   final int itemCount;
+  final List<Color> markerColors;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final hasItems = itemCount > 0;
     final foreground = isSelected
         ? colors.onPrimary
         : isInVisibleMonth
@@ -320,25 +428,40 @@ class _CalendarDayCell extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
-      child: DecoratedBox(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
         decoration: BoxDecoration(
           color: isSelected
               ? colors.primary
               : isToday
                   ? const Color(0xFFEAF3FF)
-                  : isInVisibleMonth
-                      ? const Color(0xFFF8FAFC)
-                      : Colors.transparent,
+                  : hasItems && isInVisibleMonth
+                      ? const Color(0xFFF0F7FF)
+                      : isInVisibleMonth
+                          ? const Color(0xFFF8FAFC)
+                          : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
                 ? colors.primary
                 : isToday
-                    ? const Color(0xFF93C5FD)
-                    : isInVisibleMonth
-                        ? const Color(0xFFE2E8F0)
-                        : Colors.transparent,
+                    ? const Color(0xFF2563EB)
+                    : hasItems && isInVisibleMonth
+                        ? const Color(0xFFBFDBFE)
+                        : isInVisibleMonth
+                            ? const Color(0xFFE2E8F0)
+                            : Colors.transparent,
+            width: isToday || isSelected ? 1.5 : 1,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: 0.28),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : null,
         ),
         child: Stack(
           children: [
@@ -347,38 +470,68 @@ class _CalendarDayCell extends StatelessWidget {
                 '${date.day}',
                 style: TextStyle(
                   color: foreground,
+                  fontSize: 14,
                   fontWeight:
-                      isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
+                      isSelected || isToday ? FontWeight.w900 : FontWeight.w700,
                 ),
               ),
             ),
             if (itemCount > 0)
               Positioned(
+                left: 5,
                 right: 5,
                 bottom: 5,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (final color in markerColors)
+                      Container(
+                        width: 5,
+                        height: 5,
+                        margin: const EdgeInsets.symmetric(horizontal: 1.2),
+                        decoration: BoxDecoration(
+                          color: isSelected ? colors.onPrimary : color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    if (itemCount > 1)
+                      Container(
+                        margin: const EdgeInsets.only(left: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colors.onPrimary
+                              : const Color(0xFF2563EB),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Center(
+                          child: Text(
+                            itemCount > 9 ? '9+' : '$itemCount',
+                            style: TextStyle(
+                              color: isSelected
+                                  ? const Color(0xFF2563EB)
+                                  : colors.onPrimary,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            if (isToday && !isSelected)
+              Positioned(
+                top: 4,
+                right: 4,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: isSelected ? colors.onPrimary : colors.primary,
+                    color: const Color(0xFF2563EB),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: SizedBox(
-                    width: 6,
-                    height: 6,
-                    child: itemCount > 1
-                        ? Center(
-                            child: Text(
-                              itemCount > 9 ? '9' : '$itemCount',
-                              style: TextStyle(
-                                color: isSelected
-                                    ? colors.primary
-                                    : colors.onPrimary,
-                                fontSize: 6,
-                                height: 1,
-                              ),
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
+                  child: const SizedBox(width: 6, height: 6),
                 ),
               ),
           ],

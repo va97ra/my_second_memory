@@ -16,16 +16,56 @@ ThemeData buildAppTheme() {
     ),
     scaffoldBackgroundColor: background,
     canvasColor: background,
-    fontFamily: 'Segoe UI',
+    fontFamily: 'Manrope',
     dividerTheme: const DividerThemeData(
       color: border,
       thickness: 1,
       space: 1,
     ),
-    textTheme: ThemeData.light().textTheme.apply(
-          fontFamily: 'Segoe UI',
+    textTheme: ThemeData.light()
+        .textTheme
+        .apply(
+          fontFamily: 'Manrope',
           bodyColor: onSurface,
           displayColor: onSurface,
+        )
+        .copyWith(
+          headlineLarge: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0,
+          ),
+          headlineMedium: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0,
+          ),
+          headlineSmall: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0,
+          ),
+          titleLarge: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0,
+          ),
+          titleMedium: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0,
+          ),
+          bodyMedium: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0,
+          ),
         ),
     appBarTheme: const AppBarTheme(
       centerTitle: false,
@@ -36,9 +76,9 @@ ThemeData buildAppTheme() {
       scrolledUnderElevation: 0,
       titleTextStyle: TextStyle(
         color: onSurface,
-        fontFamily: 'Segoe UI',
+        fontFamily: 'Manrope',
         fontSize: 20,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(
@@ -50,6 +90,7 @@ ThemeData buildAppTheme() {
         const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
+          fontFamily: 'Manrope',
           letterSpacing: 0,
         ),
       ),
@@ -92,7 +133,11 @@ ThemeData buildAppTheme() {
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(
+          fontFamily: 'Manrope',
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0,
+        ),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -111,13 +156,13 @@ ThemeData buildAppTheme() {
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       titleTextStyle: TextStyle(
         color: onSurface,
-        fontFamily: 'Segoe UI',
+        fontFamily: 'Manrope',
         fontSize: 15,
         fontWeight: FontWeight.w600,
       ),
       subtitleTextStyle: TextStyle(
         color: Color(0xFF64748B),
-        fontFamily: 'Segoe UI',
+        fontFamily: 'Manrope',
         fontSize: 13,
       ),
     ),

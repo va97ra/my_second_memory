@@ -123,6 +123,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Календарь'));
     await tester.pumpAndSettle();
+    expect(find.text('Сегодня'), findsOneWidget);
+
     final todayCell = find.text('${today.day}').first;
     await tester.ensureVisible(todayCell);
     await tester.pumpAndSettle();
