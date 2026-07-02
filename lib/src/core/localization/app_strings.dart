@@ -28,7 +28,7 @@ class AppStrings {
   String get settings => isRu ? 'Настройки' : 'Settings';
   String get title => isRu ? 'Название' : 'Title';
   String get recordType => isRu ? 'Тип записи' : 'Record type';
-  String get description => isRu ? 'Описание' : 'Description';
+  String get description => isRu ? 'Запись' : 'Record';
   String get date => isRu ? 'Дата' : 'Date';
   String get save => isRu ? 'Сохранить' : 'Save';
   String get saved => isRu ? 'Сохранено' : 'Saved';

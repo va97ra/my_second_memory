@@ -28,3 +28,14 @@ enum MemoryType {
     };
   }
 }
+
+const editableMemoryTypes = [
+  MemoryType.task,
+  MemoryType.note,
+  MemoryType.event,
+  MemoryType.goal,
+  MemoryType.project,
+  MemoryType.purchase,
+  MemoryType.document,
+  MemoryType.place,
+];

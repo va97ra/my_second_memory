@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../shared/ui/app_shell.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
 import '../domain/memory_type.dart';
 import '../state/memory_items_controller.dart';
@@ -28,10 +29,11 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
           (_selectedType == null || item.type == _selectedType);
     }).toList();
 
-    return Scaffold(
-      appBar: AppBar(title: Text(strings.memoryBase)),
-      body: CustomScrollView(
+    return AppShell(
+      currentIndex: 0,
+      child: CustomScrollView(
         slivers: [
+          SliverAppBar.large(title: Text(strings.memoryBase)),
           SliverToBoxAdapter(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -44,7 +46,7 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
                     onSelected: (_) => setState(() => _selectedType = null),
                   ),
                   const SizedBox(width: 8),
-                  for (final type in MemoryType.values) ...[
+                  for (final type in editableMemoryTypes) ...[
                     FilterChip(
                       label: Text(type.label(locale)),
                       selected: _selectedType == type,

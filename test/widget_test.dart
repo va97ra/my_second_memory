@@ -144,13 +144,16 @@ void main() {
     expect(find.text('Редактировать запись'), findsOneWidget);
     await tester.tap(find.text('Событие'));
     await tester.pumpAndSettle();
+    expect(find.text('Голос'), findsNothing);
+    expect(find.text('Человек'), findsNothing);
+    expect(find.text('Привычка'), findsNothing);
     await tester.drag(find.byType(ListView).last, const Offset(0, -320));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Покупка'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Название'),
-      'Обновлённый план',
+      find.widgetWithText(TextFormField, 'Запись'),
+      'Обновлённый план из первых строк записи',
     );
     await tester.tap(find.byIcon(Icons.calendar_month));
     await tester.pumpAndSettle();
@@ -169,7 +172,8 @@ void main() {
     final saved = repository.savedItems.firstWhere(
       (item) => item.id == 'today-plan',
     );
-    expect(saved.title, 'Обновлённый план');
+    expect(saved.title, 'Обновлённый план из первых строк записи');
+    expect(saved.body, 'Обновлённый план из первых строк записи');
     expect(saved.type, MemoryType.purchase);
     expect(saved.memoryDate, targetDate);
     expect(saved.status, MemoryStatus.done);
@@ -250,6 +254,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Редактировать запись'), findsOneWidget);
-    expect(find.text('План на сегодня'), findsWidgets);
+    expect(find.text('Запись'), findsOneWidget);
+    expect(find.text('Название'), findsNothing);
   });
 }

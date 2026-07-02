@@ -31,7 +31,6 @@ class MemoryItemDetailScreen extends ConsumerStatefulWidget {
 class _MemoryItemDetailScreenState
     extends ConsumerState<MemoryItemDetailScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
   final _imagePaths = <String>[];
 
@@ -42,7 +41,6 @@ class _MemoryItemDetailScreenState
 
   @override
   void dispose() {
-    _titleController.dispose();
     _bodyController.dispose();
     super.dispose();
   }
@@ -113,17 +111,10 @@ class _MemoryItemDetailScreenState
                 },
               ),
               const SizedBox(height: 14),
-              _TypeAndTitleEditor(
+              _TypeEditor(
                 selectedType: _type,
-                titleController: _titleController,
                 onTypeChanged: (type) {
                   setState(() => _type = type);
-                },
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return strings.title;
-                  }
-                  return null;
                 },
               ),
               const SizedBox(height: 12),
@@ -173,11 +164,11 @@ class _MemoryItemDetailScreenState
       return;
     }
     _loadedItemId = item.id;
-    _titleController.text = item.title;
     _bodyController.text = item.body;
     _memoryDate = item.memoryDate;
     _status = item.status;
-    _type = item.type;
+    _type =
+        editableMemoryTypes.contains(item.type) ? item.type : MemoryType.note;
     _imagePaths
       ..clear()
       ..addAll(item.imagePaths);
@@ -238,7 +229,11 @@ class _MemoryItemDetailScreenState
 
     final updated = item.copyWith(
       type: _type,
-      title: _titleController.text.trim(),
+      title: _titleFromRecord(
+        _bodyController.text,
+        _type,
+        Localizations.localeOf(context).languageCode,
+      ),
       body: _bodyController.text.trim(),
       memoryDate: DateTime(
         _memoryDate.year,
@@ -287,6 +282,21 @@ class _MemoryItemDetailScreenState
     if (mounted) {
       _goBack();
     }
+  }
+
+  String _titleFromRecord(
+    String body,
+    MemoryType type,
+    String languageCode,
+  ) {
+    final compact = body.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (compact.isEmpty) {
+      return type.label(languageCode);
+    }
+    if (compact.length <= 48) {
+      return compact;
+    }
+    return '${compact.substring(0, 48)}...';
   }
 
   void _goBack() {
@@ -340,18 +350,14 @@ class _DonePanel extends StatelessWidget {
   }
 }
 
-class _TypeAndTitleEditor extends StatelessWidget {
-  const _TypeAndTitleEditor({
+class _TypeEditor extends StatelessWidget {
+  const _TypeEditor({
     required this.selectedType,
-    required this.titleController,
     required this.onTypeChanged,
-    required this.validator,
   });
 
   final MemoryType selectedType;
-  final TextEditingController titleController;
   final ValueChanged<MemoryType> onTypeChanged;
-  final FormFieldValidator<String> validator;
 
   @override
   Widget build(BuildContext context) {
@@ -383,12 +389,6 @@ class _TypeAndTitleEditor extends StatelessWidget {
               label: selectedType.label(locale),
               onTap: () => _showTypePicker(context),
             ),
-            const SizedBox(height: 14),
-            TextFormField(
-              controller: titleController,
-              decoration: InputDecoration(labelText: strings.title),
-              validator: validator,
-            ),
           ],
         ),
       ),
@@ -417,7 +417,7 @@ class _TypeAndTitleEditor extends StatelessWidget {
                       ),
                 ),
               ),
-              for (final type in MemoryType.values)
+              for (final type in editableMemoryTypes)
                 _TypePickerRow(
                   type: type,
                   label: type.label(locale),

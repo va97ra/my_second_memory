@@ -6,7 +6,6 @@ import '../../features/calendar/ui/calendar_day_screen.dart';
 import '../../features/home_feed/ui/home_feed_screen.dart';
 import '../../features/memory_items/ui/add_memory_item_screen.dart';
 import '../../features/memory_items/ui/memory_item_detail_screen.dart';
-import '../../features/memory_items/ui/memory_library_screen.dart';
 import '../../features/people/ui/people_screen.dart';
 import '../../features/projects/ui/projects_screen.dart';
 import '../../features/security/ui/security_screen.dart';
@@ -26,7 +25,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/memory',
-        builder: (context, state) => const MemoryLibraryScreen(),
+        redirect: (context, state) => '/',
       ),
       GoRoute(
         path: '/memory/item/:id',
