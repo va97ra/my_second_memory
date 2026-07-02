@@ -14,6 +14,8 @@ import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
+import '../../shift_schedules/domain/shift_schedule.dart';
+import '../../shift_schedules/state/shift_schedules_controller.dart';
 import '../../voice_notes/data/voice_note_storage.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
 
@@ -54,6 +56,10 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
             !item.isArchived && isSameDay(item.memoryDate, widget.date))
         .toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    final workingSchedules = ref
+        .watch(shiftSchedulesControllerProvider)
+        .where((schedule) => schedule.isWorkday(widget.date))
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -82,6 +88,8 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
           top: false,
           child: Column(
             children: [
+              if (workingSchedules.isNotEmpty)
+                _WorkingShiftChips(schedules: workingSchedules),
               Expanded(
                 child: dayItems.isEmpty
                     ? Center(
@@ -260,6 +268,61 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
       return compact;
     }
     return '${compact.substring(0, 48)}...';
+  }
+}
+
+class _WorkingShiftChips extends StatelessWidget {
+  const _WorkingShiftChips({required this.schedules});
+
+  final List<ShiftSchedule> schedules;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final schedule in schedules)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Color(schedule.colorValue).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Color(schedule.colorValue).withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Color(schedule.colorValue),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const SizedBox(width: 10, height: 10),
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        '${strings.workingToday}: ${schedule.organizationName}',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

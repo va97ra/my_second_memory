@@ -10,6 +10,7 @@ import '../../features/people/ui/people_screen.dart';
 import '../../features/projects/ui/projects_screen.dart';
 import '../../features/security/ui/security_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
+import '../../features/shift_schedules/ui/shift_schedules_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -62,6 +63,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/shifts',
+        builder: (context, state) => const ShiftSchedulesScreen(),
       ),
       GoRoute(
         path: '/security',

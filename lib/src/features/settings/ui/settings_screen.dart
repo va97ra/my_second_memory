@@ -73,6 +73,14 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       const Divider(),
                       _SettingsTile(
+                        icon: Icons.work_history_outlined,
+                        iconColor: const Color(0xFF16A34A),
+                        title: strings.shiftSchedules,
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.go('/settings/shifts'),
+                      ),
+                      const Divider(),
+                      _SettingsTile(
                         icon: Icons.inventory_2_outlined,
                         iconColor: const Color(0xFFEA580C),
                         title: strings.memoryBase,

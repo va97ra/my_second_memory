@@ -9,6 +9,8 @@ import '../../home_feed/domain/feed_rules.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
+import '../../shift_schedules/domain/shift_schedule.dart';
+import '../../shift_schedules/state/shift_schedules_controller.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -37,6 +39,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         .watch(memoryItemsControllerProvider)
         .where((item) => !item.isArchived)
         .toList();
+    final shiftSchedules = ref.watch(shiftSchedulesControllerProvider);
 
     return AppShell(
       currentIndex: 1,
@@ -51,6 +54,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 visibleMonth: _visibleMonth,
                 selectedDate: _selectedDate,
                 items: items,
+                shiftSchedules: shiftSchedules,
                 onPreviousMonth: () => setState(() {
                   _visibleMonth = DateTime(
                     _visibleMonth.year,
@@ -98,6 +102,7 @@ class _CalendarPanel extends StatelessWidget {
     required this.visibleMonth,
     required this.selectedDate,
     required this.items,
+    required this.shiftSchedules,
     required this.onPreviousMonth,
     required this.onNextMonth,
     required this.onToday,
@@ -108,6 +113,7 @@ class _CalendarPanel extends StatelessWidget {
   final DateTime visibleMonth;
   final DateTime selectedDate;
   final List<MemoryItem> items;
+  final List<ShiftSchedule> shiftSchedules;
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
   final VoidCallback onToday;
@@ -178,13 +184,18 @@ class _CalendarPanel extends StatelessWidget {
                 final isInVisibleMonth = day.month == visibleMonth.month;
                 final dayItems =
                     isInVisibleMonth ? _itemsForDay(day) : <MemoryItem>[];
+                final dayShiftSchedules = isInVisibleMonth
+                    ? _shiftSchedulesForDay(day)
+                    : <ShiftSchedule>[];
                 return _CalendarDayCell(
+                  key: ValueKey('calendar_day_${_dateKey(day)}'),
                   date: day,
                   isInVisibleMonth: isInVisibleMonth,
                   isSelected: isSameDay(day, selectedDate),
                   isToday: isSameDay(day, DateTime.now()),
                   itemCount: dayItems.length,
                   markerColors: _markerColorsFor(dayItems),
+                  shiftSchedules: dayShiftSchedules,
                   onTap: () => onSelectDate(day),
                 );
               },
@@ -197,6 +208,13 @@ class _CalendarPanel extends StatelessWidget {
 
   List<MemoryItem> _itemsForDay(DateTime date) {
     return items.where((item) => isSameDay(item.memoryDate, date)).toList();
+  }
+
+  List<ShiftSchedule> _shiftSchedulesForDay(DateTime date) {
+    return [
+      for (final schedule in shiftSchedules)
+        if (schedule.isWorkday(date)) schedule,
+    ];
   }
 
   List<Color> _markerColorsFor(List<MemoryItem> dayItems) {
@@ -245,6 +263,12 @@ class _CalendarPanel extends StatelessWidget {
       MemoryType.document => const Color(0xFF475569),
       MemoryType.place => const Color(0xFFDC2626),
     };
+  }
+
+  String _dateKey(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 }
 
@@ -400,12 +424,14 @@ class _MonthIconButton extends StatelessWidget {
 
 class _CalendarDayCell extends StatelessWidget {
   const _CalendarDayCell({
+    super.key,
     required this.date,
     required this.isInVisibleMonth,
     required this.isSelected,
     required this.isToday,
     required this.itemCount,
     required this.markerColors,
+    required this.shiftSchedules,
     required this.onTap,
   });
 
@@ -415,12 +441,17 @@ class _CalendarDayCell extends StatelessWidget {
   final bool isToday;
   final int itemCount;
   final List<Color> markerColors;
+  final List<ShiftSchedule> shiftSchedules;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final hasItems = itemCount > 0;
+    final shiftColors = [
+      for (final schedule in shiftSchedules) Color(schedule.colorValue),
+    ];
+    final hasShift = shiftColors.isNotEmpty && isInVisibleMonth;
     final foreground = isSelected
         ? colors.onPrimary
         : isInVisibleMonth
@@ -433,15 +464,8 @@ class _CalendarDayCell extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         decoration: BoxDecoration(
-          color: isSelected
-              ? colors.primary
-              : isToday
-                  ? const Color(0xFFEAF3FF)
-                  : hasItems && isInVisibleMonth
-                      ? const Color(0xFFF0F7FF)
-                      : isInVisibleMonth
-                          ? const Color(0xFFF8FAFC)
-                          : Colors.transparent,
+          color: _cellColor(colors, hasItems, hasShift),
+          gradient: _shiftGradient(shiftColors),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
@@ -467,6 +491,15 @@ class _CalendarDayCell extends StatelessWidget {
         ),
         child: Stack(
           children: [
+            if (hasShift)
+              Positioned(
+                top: 4,
+                left: 4,
+                right: 4,
+                child: _ShiftStripe(
+                  colors: isSelected ? shiftColors : const [],
+                ),
+              ),
             Center(
               child: Text(
                 '${date.day}',
@@ -543,6 +576,78 @@ class _CalendarDayCell extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Color _cellColor(ColorScheme colors, bool hasItems, bool hasShift) {
+    if (isSelected) {
+      return colors.primary;
+    }
+    if (hasShift) {
+      return shiftSchedules.length == 1
+          ? Color(shiftSchedules.first.colorValue).withValues(alpha: 0.18)
+          : Colors.transparent;
+    }
+    if (isToday) {
+      return const Color(0xFFEAF3FF);
+    }
+    if (hasItems && isInVisibleMonth) {
+      return const Color(0xFFF0F7FF);
+    }
+    if (isInVisibleMonth) {
+      return const Color(0xFFF8FAFC);
+    }
+    return Colors.transparent;
+  }
+
+  Gradient? _shiftGradient(List<Color> shiftColors) {
+    if (isSelected || !isInVisibleMonth || shiftColors.length < 2) {
+      return null;
+    }
+
+    final colors = <Color>[];
+    final stops = <double>[];
+    for (var index = 0; index < shiftColors.length; index++) {
+      final start = index / shiftColors.length;
+      final end = (index + 1) / shiftColors.length;
+      final color = shiftColors[index].withValues(alpha: 0.2);
+      colors
+        ..add(color)
+        ..add(color);
+      stops
+        ..add(start)
+        ..add(end);
+    }
+
+    return LinearGradient(colors: colors, stops: stops);
+  }
+}
+
+class _ShiftStripe extends StatelessWidget {
+  const _ShiftStripe({required this.colors});
+
+  final List<Color> colors;
+
+  @override
+  Widget build(BuildContext context) {
+    if (colors.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Row(
+      children: [
+        for (final color in colors.take(4))
+          Expanded(
+            child: Container(
+              height: 3,
+              margin: const EdgeInsets.symmetric(horizontal: 0.5),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

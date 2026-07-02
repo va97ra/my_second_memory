@@ -9,6 +9,9 @@ import 'package:my_second_memory/src/features/memory_items/domain/memory_type.da
 import 'package:my_second_memory/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:my_second_memory/src/features/security/data/security_service.dart';
 import 'package:my_second_memory/src/features/security/state/security_provider.dart';
+import 'package:my_second_memory/src/features/shift_schedules/data/shift_schedule_repository.dart';
+import 'package:my_second_memory/src/features/shift_schedules/domain/shift_schedule.dart';
+import 'package:my_second_memory/src/features/shift_schedules/state/shift_schedules_controller.dart';
 
 class _UnlockedSecurityService extends SecurityService {
   @override
@@ -127,6 +130,23 @@ class _RichEditorMemoryRepository implements MemoryRepository {
   }
 }
 
+class _FakeShiftScheduleRepository implements ShiftScheduleRepository {
+  _FakeShiftScheduleRepository([this.initialSchedules = const []]);
+
+  final List<ShiftSchedule> initialSchedules;
+  List<ShiftSchedule> savedSchedules = const [];
+
+  @override
+  Future<List<ShiftSchedule>> loadSchedules() async {
+    return initialSchedules;
+  }
+
+  @override
+  Future<void> saveSchedules(List<ShiftSchedule> schedules) async {
+    savedSchedules = schedules;
+  }
+}
+
 void main() {
   testWidgets('shows the home feed when app is unlocked', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
@@ -139,6 +159,9 @@ void main() {
         overrides: [
           securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
         ],
         child: const MySecondMemoryApp(),
       ),
@@ -173,6 +196,9 @@ void main() {
           memoryRepositoryProvider.overrideWithValue(
             _TodayOnlyMemoryRepository(),
           ),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
         ],
         child: const MySecondMemoryApp(),
       ),
@@ -202,6 +228,9 @@ void main() {
         overrides: [
           securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
         ],
         child: const MySecondMemoryApp(),
       ),
@@ -278,6 +307,9 @@ void main() {
         overrides: [
           securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
         ],
         child: const MySecondMemoryApp(),
       ),
@@ -313,6 +345,9 @@ void main() {
         overrides: [
           securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
         ],
         child: const MySecondMemoryApp(),
       ),
@@ -363,6 +398,9 @@ void main() {
         overrides: [
           securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
         ],
         child: const MySecondMemoryApp(),
       ),
@@ -379,5 +417,116 @@ void main() {
     expect(find.text('Редактировать запись'), findsOneWidget);
     expect(find.text('Запись'), findsOneWidget);
     expect(find.text('Название'), findsNothing);
+  });
+
+  testWidgets('settings opens shift schedules and saves preset',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final memoryRepository = _FeedMemoryRepository();
+    final shiftRepository = _FakeShiftScheduleRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(memoryRepository),
+          shiftScheduleRepositoryProvider.overrideWithValue(shiftRepository),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Настройки'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Графики смен'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Графики смен'), findsWidgets);
+    expect(find.text('Графиков пока нет'), findsOneWidget);
+
+    await tester.tap(find.text('Добавить график'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Организация'),
+      'Завод',
+    );
+    await tester.tap(find.text('2/2'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect(shiftRepository.savedSchedules, hasLength(1));
+    expect(shiftRepository.savedSchedules.single.organizationName, 'Завод');
+    expect(shiftRepository.savedSchedules.single.workDays, 2);
+    expect(shiftRepository.savedSchedules.single.restDays, 2);
+  });
+
+  testWidgets('calendar shows shift colors and opens selected day',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final memoryRepository = _FeedMemoryRepository();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final targetDate = today.day < 25
+        ? today.add(const Duration(days: 1))
+        : today.subtract(const Duration(days: 1));
+    final dayKey =
+        '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-'
+        '${targetDate.day.toString().padLeft(2, '0')}';
+    final shiftRepository = _FakeShiftScheduleRepository([
+      ShiftSchedule(
+        id: 'factory',
+        organizationName: 'Завод',
+        colorValue: 0xFF2563EB,
+        startDate: targetDate,
+        workDays: 5,
+        restDays: 2,
+      ),
+      ShiftSchedule(
+        id: 'watch',
+        organizationName: 'Вахта',
+        colorValue: 0xFF16A34A,
+        startDate: targetDate,
+        workDays: 1,
+        restDays: 3,
+      ),
+    ]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(memoryRepository),
+          shiftScheduleRepositoryProvider.overrideWithValue(shiftRepository),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Календарь'));
+    await tester.pumpAndSettle();
+
+    final cell = find.byKey(ValueKey('calendar_day_$dayKey'));
+    expect(cell, findsOneWidget);
+    final animatedCell = find.descendant(
+      of: cell,
+      matching: find.byType(AnimatedContainer),
+    );
+    final widget = tester.widget<AnimatedContainer>(animatedCell.first);
+    final decoration = widget.decoration! as BoxDecoration;
+    expect(decoration.gradient, isNotNull);
+
+    await tester.tap(cell);
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    expect(find.textContaining('Завод'), findsOneWidget);
+    expect(find.textContaining('Вахта'), findsOneWidget);
   });
 }

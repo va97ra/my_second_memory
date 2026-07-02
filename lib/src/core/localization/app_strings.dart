@@ -58,6 +58,22 @@ class AppStrings {
   String get noMessagesForDay =>
       isRu ? 'За этот день пока ничего нет' : 'No messages for this day yet';
   String get pinSecurity => isRu ? 'PIN и биометрия' : 'PIN and biometrics';
+  String get shiftSchedules => isRu ? 'Графики смен' : 'Shift schedules';
+  String get addShiftSchedule => isRu ? 'Добавить график' : 'Add schedule';
+  String get editShiftSchedule =>
+      isRu ? 'Редактировать график' : 'Edit schedule';
+  String get organization => isRu ? 'Организация' : 'Organization';
+  String get startDate => isRu ? 'Дата начала' : 'Start date';
+  String get workDays => isRu ? 'Рабочих дней' : 'Work days';
+  String get restDays => isRu ? 'Выходных дней' : 'Rest days';
+  String get schedulePreset => isRu ? 'Шаблон' : 'Pattern';
+  String get customSchedule => isRu ? 'Свой' : 'Custom';
+  String get enabled => isRu ? 'Включен' : 'Enabled';
+  String get noShiftSchedules =>
+      isRu ? 'Графиков пока нет' : 'No schedules yet';
+  String get deleteShiftScheduleQuestion =>
+      isRu ? 'Удалить этот график?' : 'Delete this schedule?';
+  String get workingToday => isRu ? 'Рабочий день' : 'Workday';
   String get language => isRu ? 'Язык' : 'Language';
   String get unlock => isRu ? 'Открыть' : 'Unlock';
   String get biometrics => isRu ? 'Биометрия' : 'Biometrics';
