@@ -62,15 +62,29 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
         .toList();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F7FB),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFEFF6FF),
+        backgroundColor: const Color(0xFFF6FAFF),
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: () => context.go('/calendar'),
           icon: const Icon(Icons.arrow_back),
         ),
         titleSpacing: 0,
-        title: Text(DateFormat.yMMMMEEEEd(locale).format(widget.date)),
+        title: Text(
+          DateFormat.yMMMMEEEEd(locale).format(widget.date),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF172033),
+              ),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: Color(0xFFDDE7F3)),
+        ),
       ),
       body: DecoratedBox(
         decoration: const BoxDecoration(
@@ -78,9 +92,9 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFEFF6FF),
-              Color(0xFFF8FAFC),
-              Color(0xFFF5F7FA),
+              Color(0xFFF6FAFF),
+              Color(0xFFF2F6FB),
+              Color(0xFFF7F9FC),
             ],
           ),
         ),
@@ -93,23 +107,10 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
               Expanded(
                 child: dayItems.isEmpty
                     ? Center(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.78),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFDDE3EA)),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 14,
-                            ),
-                            child: Text(strings.noMessagesForDay),
-                          ),
-                        ),
+                        child: _EmptyDayMessage(text: strings.noMessagesForDay),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+                        padding: const EdgeInsets.fromLTRB(12, 14, 12, 18),
                         itemCount: dayItems.length,
                         itemBuilder: (context, index) {
                           final item = dayItems[index];
@@ -281,7 +282,7 @@ class _WorkingShiftChips extends StatelessWidget {
     final strings = AppStrings.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 2),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Wrap(
@@ -291,15 +292,15 @@ class _WorkingShiftChips extends StatelessWidget {
             for (final schedule in schedules)
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Color(schedule.colorValue).withValues(alpha: 0.12),
+                  color: Color(schedule.colorValue).withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Color(schedule.colorValue).withValues(alpha: 0.28),
+                    color: Color(schedule.colorValue).withValues(alpha: 0.34),
                   ),
                 ),
                 child: Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                      const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -313,12 +314,71 @@ class _WorkingShiftChips extends StatelessWidget {
                       const SizedBox(width: 7),
                       Text(
                         '${strings.workingToday}: ${schedule.organizationName}',
-                        style: Theme.of(context).textTheme.labelMedium,
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: const Color(0xFF172033),
+                                  fontWeight: FontWeight.w800,
+                                ),
                       ),
                     ],
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyDayMessage extends StatelessWidget {
+  const _EmptyDayMessage({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFDDE7F3)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const SizedBox(
+                width: 34,
+                height: 34,
+                child: Icon(
+                  Icons.chat_bubble_outline,
+                  color: Color(0xFF2563EB),
+                  size: 19,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              text,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF475569),
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
           ],
         ),
       ),
@@ -340,32 +400,37 @@ class _ChatBubble extends StatelessWidget {
     final text = item.body.isNotEmpty ? item.body : item.title;
     final color = _typeColor(item.type);
     final bubbleColor =
-        item.isDone ? const Color(0xFFEAF8EF) : color.withValues(alpha: 0.12);
+        item.isDone ? const Color(0xFFEAF8EF) : color.withValues(alpha: 0.11);
     final borderColor =
-        item.isDone ? const Color(0xFF86EFAC) : color.withValues(alpha: 0.28);
+        item.isDone ? const Color(0xFF86EFAC) : color.withValues(alpha: 0.24);
 
     return Align(
       alignment: Alignment.centerRight,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 9),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: onOpen,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
               child: Ink(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                padding: const EdgeInsets.fromLTRB(12, 9, 12, 8),
                 decoration: BoxDecoration(
                   color: bubbleColor,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(3),
+                  ),
                   border: Border.all(color: borderColor),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withValues(alpha: 0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 5),
+                      color: color.withValues(alpha: 0.07),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -380,13 +445,22 @@ class _ChatBubble extends StatelessWidget {
                     if (item.audioPath != null)
                       VoiceNotePlayer(path: item.audioPath!),
                     if (text.isNotEmpty && item.type != MemoryType.voiceNote)
-                      Text(text),
-                    const SizedBox(height: 2),
+                      Text(
+                        text,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF172033),
+                              height: 1.28,
+                            ),
+                      ),
+                    const SizedBox(height: 4),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
                         DateFormat.Hm().format(item.createdAt),
-                        style: Theme.of(context).textTheme.labelSmall,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: const Color(0xFF64748B),
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                     ),
                   ],
@@ -486,18 +560,18 @@ class _MessageComposerState extends State<_MessageComposer> {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: const Border(top: BorderSide(color: Color(0xFFDDE3EA))),
+        color: Colors.white.withValues(alpha: 0.96),
+        border: const Border(top: BorderSide(color: Color(0xFFDDE7F3))),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, -6),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -7),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 9),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -555,6 +629,21 @@ class _MessageComposerState extends State<_MessageComposer> {
                     maxLines: 4,
                     decoration: InputDecoration(
                       hintText: strings.messageHint,
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFD6E2EF),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF2563EB),
+                          width: 1.4,
+                        ),
+                      ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 10,
@@ -608,11 +697,11 @@ class _ComposerActionButton extends StatelessWidget {
       onPressed: onPressed,
       icon: Icon(icon),
       style: IconButton.styleFrom(
-        fixedSize: const Size(42, 42),
+        fixedSize: const Size(44, 44),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         foregroundColor: color,
-        backgroundColor: color.withValues(alpha: 0.12),
-        side: BorderSide(color: color.withValues(alpha: 0.22)),
+        backgroundColor: color.withValues(alpha: 0.13),
+        side: BorderSide(color: color.withValues(alpha: 0.28)),
       ),
     );
   }
