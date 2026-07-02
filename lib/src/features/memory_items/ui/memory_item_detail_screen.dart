@@ -82,7 +82,11 @@ class _MemoryItemDetailScreenState
           onPressed: _goBack,
           icon: const Icon(Icons.arrow_back),
         ),
-        title: Text(strings.editRecord),
+        title: _EditorTitle(
+          title: strings.editRecord,
+          dateText: _formattedDate(context),
+          onDateTap: _pickDate,
+        ),
         actions: [
           IconButton(
             tooltip: strings.save,
@@ -128,14 +132,6 @@ class _MemoryItemDetailScreenState
                   _imagePaths.remove(path);
                 }),
                 onVoicePressed: _isRecording ? _stopAndSaveVoice : _startVoice,
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _pickDate,
-                icon: const Icon(Icons.calendar_month),
-                label: Text(
-                  '${strings.date}: ${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(_memoryDate)}',
-                ),
               ),
               if (_audioPath != null) ...[
                 const SizedBox(height: 16),
@@ -186,6 +182,11 @@ class _MemoryItemDetailScreenState
       return;
     }
     setState(() => _memoryDate = DateTime(date.year, date.month, date.day));
+  }
+
+  String _formattedDate(BuildContext context) {
+    return DateFormat.yMMMd(Localizations.localeOf(context).languageCode)
+        .format(_memoryDate);
   }
 
   Future<void> _pickImage() async {
@@ -338,6 +339,47 @@ class _MemoryItemDetailScreenState
       return;
     }
     context.go('/');
+  }
+}
+
+class _EditorTitle extends StatelessWidget {
+  const _EditorTitle({
+    required this.title,
+    required this.dateText,
+    required this.onDateTap,
+  });
+
+  final String title;
+  final String dateText;
+  final VoidCallback onDateTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title),
+        const SizedBox(height: 2),
+        InkWell(
+          key: const ValueKey('memory_date_picker'),
+          onTap: onDateTap,
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+            child: Text(
+              dateText,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -510,27 +552,25 @@ class _TypeEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).languageCode;
-    final color = _typeColor(selectedType);
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.32)),
+        border: Border.all(color: const Color(0xFFDDE3EA)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               strings.recordType,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w800,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             _TypeSelectorTile(
               type: selectedType,
               label: selectedType.label(locale),
@@ -599,23 +639,29 @@ class _TypeSelectorTile extends StatelessWidget {
     final color = _typeColor(type);
 
     return Material(
-      color: Colors.white.withValues(alpha: 0.76),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: color.withValues(alpha: 0.26)),
-      ),
-      child: ListTile(
+      color: Colors.transparent,
+      child: InkWell(
         onTap: onTap,
-        leading: Icon(_iconFor(type), color: color),
-        title: Text(
-          label,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w800,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Icon(_iconFor(type), color: color),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
               ),
+              Icon(Icons.expand_more, color: color),
+            ],
+          ),
         ),
-        trailing: Icon(Icons.expand_more, color: color),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
       ),
     );
   }

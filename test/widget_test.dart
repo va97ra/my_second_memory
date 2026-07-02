@@ -195,6 +195,8 @@ void main() {
     expect(find.text('Выполнено'), findsNothing);
     expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
     expect(find.byIcon(Icons.mic_none), findsOneWidget);
+    expect(find.byIcon(Icons.calendar_month), findsNothing);
+    expect(find.textContaining('Дата:'), findsNothing);
     await tester.tap(find.text('Событие'));
     await tester.pumpAndSettle();
     expect(find.text('Голос'), findsNothing);
@@ -208,7 +210,7 @@ void main() {
       find.widgetWithText(TextFormField, 'Запись'),
       'Обновлённый план из первых строк записи',
     );
-    await tester.tap(find.byIcon(Icons.calendar_month));
+    await tester.tap(find.byKey(const ValueKey('memory_date_picker')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('$targetDay').last);
     await tester.pumpAndSettle();
