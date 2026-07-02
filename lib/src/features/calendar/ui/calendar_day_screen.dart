@@ -372,12 +372,14 @@ class _EmptyDayMessage extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              text,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF475569),
-                    fontWeight: FontWeight.w700,
-                  ),
+            Flexible(
+              child: Text(
+                text,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF475569),
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
             ),
           ],
         ),

@@ -35,30 +35,52 @@ class HomeFeedScreen extends ConsumerWidget {
 
     return AppShell(
       currentIndex: 0,
-      child: CustomScrollView(
-        slivers: [
-          SliverAppBar.large(
-            title: Text(strings.dayFeed),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFF6FAFF),
+              Color(0xFFF3F6FA),
+              Color(0xFFF8FAFC),
+            ],
           ),
-          const SliverToBoxAdapter(child: _MemoryBanner()),
-          if (isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: Text(strings.emptyFeed)),
-            )
-          else ...[
-            _MemorySliverList(items: todayFeed, ref: ref),
-            if (yesterdayFeed.isNotEmpty) ...[
-              _FeedSectionHeader(title: strings.yesterdaySection),
-              _MemorySliverList(items: yesterdayFeed, ref: ref),
+        ),
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar.large(
+              backgroundColor: const Color(0xFFF6FAFF),
+              surfaceTintColor: Colors.transparent,
+              title: Text(
+                strings.dayFeed,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF172033),
+                    ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: _MemoryBanner()),
+            if (isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child:
+                    Center(child: _EmptyFeedMessage(text: strings.emptyFeed)),
+              )
+            else ...[
+              _MemorySliverList(items: todayFeed, ref: ref),
+              if (yesterdayFeed.isNotEmpty) ...[
+                _FeedSectionHeader(title: strings.yesterdaySection),
+                _MemorySliverList(items: yesterdayFeed, ref: ref),
+              ],
+              if (dayBeforeYesterdayFeed.isNotEmpty) ...[
+                _FeedSectionHeader(title: strings.dayBeforeYesterdaySection),
+                _MemorySliverList(items: dayBeforeYesterdayFeed, ref: ref),
+              ],
+              const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
             ],
-            if (dayBeforeYesterdayFeed.isNotEmpty) ...[
-              _FeedSectionHeader(title: strings.dayBeforeYesterdaySection),
-              _MemorySliverList(items: dayBeforeYesterdayFeed, ref: ref),
-            ],
-            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -107,11 +129,12 @@ class _MemoryBanner extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFF0F172A).withValues(alpha: 0.12),
-                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.24),
+                      const Color(0xFFDBEAFE).withValues(alpha: 0.32),
+                      Colors.white.withValues(alpha: 0.1),
                     ],
                   ),
                   border: Border.all(
@@ -140,12 +163,80 @@ class _FeedSectionHeader extends StatelessWidget {
 
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
-        child: Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 7),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFDDE7F3)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF172033),
+                  ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyFeedMessage extends StatelessWidget {
+  const _EmptyFeedMessage({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFDDE7F3)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
+              child: const SizedBox(
+                width: 34,
+                height: 34,
+                child: Icon(
+                  Icons.dynamic_feed_outlined,
+                  color: Color(0xFF2563EB),
+                  size: 19,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                text,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF475569),
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ),
+          ],
         ),
       ),
     );

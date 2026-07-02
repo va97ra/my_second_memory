@@ -28,9 +28,9 @@ class MemoryItemCard extends StatelessWidget {
     final isDone = item.isDone;
     final typeColor = _typeColor(item.type);
     final cardColor =
-        isDone ? const Color(0xFFEAF8EF) : typeColor.withValues(alpha: 0.075);
+        isDone ? const Color(0xFFEAF8EF) : Colors.white.withValues(alpha: 0.9);
     final borderColor =
-        isDone ? const Color(0xFF86EFAC) : typeColor.withValues(alpha: 0.28);
+        isDone ? const Color(0xFF86EFAC) : typeColor.withValues(alpha: 0.3);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
@@ -47,134 +47,162 @@ class MemoryItemCard extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   color: (isDone ? doneColor : typeColor)
-                      .withValues(alpha: isDone ? 0.08 : 0.075),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
+                      .withValues(alpha: isDone ? 0.1 : 0.08),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 40,
-                        child: Column(
-                          children: [
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: typeColor.withValues(alpha: 0.14),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: typeColor.withValues(alpha: 0.28),
-                                ),
-                              ),
-                              child: SizedBox(
-                                width: 34,
-                                height: 34,
-                                child: Icon(
-                                  _iconFor(item.type),
-                                  size: 19,
-                                  color: typeColor,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              day,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
-                                  ?.copyWith(
-                                    color: isDone
-                                        ? const Color(0xFF166534)
-                                        : typeColor,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1,
-                                  ),
-                            ),
-                            Text(
-                              month,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                    color: const Color(0xFF64748B),
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.1,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: IntrinsicHeight(
+                child: Row(
+                  children: [
+                    ColoredBox(
+                      color: isDone ? doneColor : typeColor,
+                      child: const SizedBox(width: 5),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              item.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.18,
-                                    color:
-                                        isDone ? const Color(0xFF14532D) : null,
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: 42,
+                                  child: Column(
+                                    children: [
+                                      DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          color:
+                                              typeColor.withValues(alpha: 0.12),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: typeColor.withValues(
+                                                alpha: 0.28),
+                                          ),
+                                        ),
+                                        child: SizedBox(
+                                          width: 36,
+                                          height: 36,
+                                          child: Icon(
+                                            _iconFor(item.type),
+                                            size: 20,
+                                            color: typeColor,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        day,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelMedium
+                                            ?.copyWith(
+                                              color: isDone
+                                                  ? const Color(0xFF166534)
+                                                  : typeColor,
+                                              fontWeight: FontWeight.w900,
+                                              height: 1,
+                                            ),
+                                      ),
+                                      Text(
+                                        month,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: const Color(0xFF64748B),
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
+                                              height: 1.1,
+                                            ),
+                                      ),
+                                    ],
                                   ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.title,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w900,
+                                              height: 1.18,
+                                              color: isDone
+                                                  ? const Color(0xFF14532D)
+                                                  : const Color(0xFF172033),
+                                            ),
+                                      ),
+                                      if (isDone) ...[
+                                        const SizedBox(height: 6),
+                                        _StatusPill(
+                                          text:
+                                              AppStrings.of(context).completed,
+                                          color: doneColor,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: isDone
+                                      ? AppStrings.of(context).markActive
+                                      : AppStrings.of(context).markDone,
+                                  onPressed: onToggleDone,
+                                  icon: Icon(
+                                    isDone
+                                        ? Icons.check_circle
+                                        : Icons.check_circle_outline,
+                                    size: 23,
+                                  ),
+                                  style: IconButton.styleFrom(
+                                    foregroundColor: isDone
+                                        ? Colors.white
+                                        : const Color(0xFF94A3B8),
+                                    backgroundColor: isDone
+                                        ? const Color(0xFF16A34A)
+                                        : const Color(0xFFF1F5F9),
+                                    minimumSize: const Size(38, 38),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    side: BorderSide(
+                                      color: isDone
+                                          ? const Color(0xFF16A34A)
+                                          : const Color(0xFFDDE7F3),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            if (isDone) ...[
-                              const SizedBox(height: 6),
-                              _StatusPill(
-                                text: AppStrings.of(context).completed,
-                                color: doneColor,
-                              ),
+                            if (item.audioPath != null) ...[
+                              const SizedBox(height: 12),
+                              VoiceNotePlayer(path: item.audioPath!),
+                            ],
+                            if (item.imagePaths.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              _ImageStrip(paths: item.imagePaths),
                             ],
                           ],
                         ),
                       ),
-                      IconButton(
-                        tooltip: isDone
-                            ? AppStrings.of(context).markActive
-                            : AppStrings.of(context).markDone,
-                        onPressed: onToggleDone,
-                        icon: Icon(
-                          isDone
-                              ? Icons.check_circle
-                              : Icons.check_circle_outline,
-                          size: 22,
-                        ),
-                        style: IconButton.styleFrom(
-                          foregroundColor:
-                              isDone ? Colors.white : const Color(0xFF94A3B8),
-                          backgroundColor: isDone
-                              ? const Color(0xFF16A34A)
-                              : const Color(0xFFF1F5F9),
-                          minimumSize: const Size(36, 36),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (item.audioPath != null) ...[
-                    const SizedBox(height: 12),
-                    VoiceNotePlayer(path: item.audioPath!),
+                    ),
                   ],
-                  if (item.imagePaths.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _ImageStrip(paths: item.imagePaths),
-                  ],
-                ],
+                ),
               ),
             ),
           ),
