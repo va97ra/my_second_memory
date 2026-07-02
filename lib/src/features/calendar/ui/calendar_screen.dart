@@ -452,7 +452,7 @@ class _CalendarDayCell extends StatelessWidget {
       for (final schedule in shiftSchedules) Color(schedule.colorValue),
     ];
     final hasShift = shiftColors.isNotEmpty && isInVisibleMonth;
-    final foreground = isSelected
+    final foreground = isSelected && !hasShift
         ? colors.onPrimary
         : isInVisibleMonth
             ? colors.onSurface
@@ -465,7 +465,6 @@ class _CalendarDayCell extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         decoration: BoxDecoration(
           color: _cellColor(colors, hasItems, hasShift),
-          gradient: _shiftGradient(shiftColors),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
@@ -492,12 +491,14 @@ class _CalendarDayCell extends StatelessWidget {
         child: Stack(
           children: [
             if (hasShift)
-              Positioned(
-                top: 4,
-                left: 4,
-                right: 4,
-                child: _ShiftStripe(
-                  colors: isSelected ? shiftColors : const [],
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: _ShiftFill(
+                    key: ValueKey('shift_fill_${_dateKey(date)}'),
+                    colors: shiftColors,
+                    isSelected: isSelected,
+                  ),
                 ),
               ),
             Center(
@@ -580,13 +581,11 @@ class _CalendarDayCell extends StatelessWidget {
   }
 
   Color _cellColor(ColorScheme colors, bool hasItems, bool hasShift) {
+    if (hasShift) {
+      return Colors.white;
+    }
     if (isSelected) {
       return colors.primary;
-    }
-    if (hasShift) {
-      return shiftSchedules.length == 1
-          ? Color(shiftSchedules.first.colorValue).withValues(alpha: 0.18)
-          : Colors.transparent;
     }
     if (isToday) {
       return const Color(0xFFEAF3FF);
@@ -600,51 +599,40 @@ class _CalendarDayCell extends StatelessWidget {
     return Colors.transparent;
   }
 
-  Gradient? _shiftGradient(List<Color> shiftColors) {
-    if (isSelected || !isInVisibleMonth || shiftColors.length < 2) {
-      return null;
-    }
-
-    final colors = <Color>[];
-    final stops = <double>[];
-    for (var index = 0; index < shiftColors.length; index++) {
-      final start = index / shiftColors.length;
-      final end = (index + 1) / shiftColors.length;
-      final color = shiftColors[index].withValues(alpha: 0.2);
-      colors
-        ..add(color)
-        ..add(color);
-      stops
-        ..add(start)
-        ..add(end);
-    }
-
-    return LinearGradient(colors: colors, stops: stops);
+  String _dateKey(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 }
 
-class _ShiftStripe extends StatelessWidget {
-  const _ShiftStripe({required this.colors});
+class _ShiftFill extends StatelessWidget {
+  const _ShiftFill({
+    super.key,
+    required this.colors,
+    required this.isSelected,
+  });
 
   final List<Color> colors;
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
-    if (colors.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    final alpha = colors.length == 1
+        ? isSelected
+            ? 0.48
+            : 0.4
+        : isSelected
+            ? 0.78
+            : 0.62;
 
     return Row(
       children: [
-        for (final color in colors.take(4))
+        for (final color in colors)
           Expanded(
-            child: Container(
-              height: 3,
-              margin: const EdgeInsets.symmetric(horizontal: 0.5),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(3),
-              ),
+            child: ColoredBox(
+              color: color.withValues(alpha: alpha),
+              child: const SizedBox.expand(),
             ),
           ),
       ],

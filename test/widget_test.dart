@@ -472,18 +472,18 @@ void main() {
     final memoryRepository = _FeedMemoryRepository();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final targetDate = today.day < 25
-        ? today.add(const Duration(days: 1))
-        : today.subtract(const Duration(days: 1));
-    final dayKey =
-        '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-'
-        '${targetDate.day.toString().padLeft(2, '0')}';
+    final dayKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-'
+        '${today.day.toString().padLeft(2, '0')}';
+    final secondWorkDay = today.add(const Duration(days: 1));
+    final secondWorkDayKey =
+        '${secondWorkDay.year}-${secondWorkDay.month.toString().padLeft(2, '0')}-'
+        '${secondWorkDay.day.toString().padLeft(2, '0')}';
     final shiftRepository = _FakeShiftScheduleRepository([
       ShiftSchedule(
         id: 'factory',
         organizationName: 'Завод',
         colorValue: 0xFF2563EB,
-        startDate: targetDate,
+        startDate: today,
         workDays: 5,
         restDays: 2,
       ),
@@ -491,7 +491,7 @@ void main() {
         id: 'watch',
         organizationName: 'Вахта',
         colorValue: 0xFF16A34A,
-        startDate: targetDate,
+        startDate: today,
         workDays: 1,
         restDays: 3,
       ),
@@ -514,13 +514,24 @@ void main() {
 
     final cell = find.byKey(ValueKey('calendar_day_$dayKey'));
     expect(cell, findsOneWidget);
-    final animatedCell = find.descendant(
-      of: cell,
-      matching: find.byType(AnimatedContainer),
+    expect(
+      find.descendant(
+        of: cell,
+        matching: find.byKey(ValueKey('shift_fill_$dayKey')),
+      ),
+      findsOneWidget,
     );
-    final widget = tester.widget<AnimatedContainer>(animatedCell.first);
-    final decoration = widget.decoration! as BoxDecoration;
-    expect(decoration.gradient, isNotNull);
+
+    final secondWorkCell =
+        find.byKey(ValueKey('calendar_day_$secondWorkDayKey'));
+    expect(secondWorkCell, findsOneWidget);
+    expect(
+      find.descendant(
+        of: secondWorkCell,
+        matching: find.byKey(ValueKey('shift_fill_$secondWorkDayKey')),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(cell);
     await tester.pumpAndSettle();
