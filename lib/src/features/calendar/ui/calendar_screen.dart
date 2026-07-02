@@ -175,10 +175,12 @@ class _CalendarPanel extends StatelessWidget {
               itemCount: days.length,
               itemBuilder: (context, index) {
                 final day = days[index];
-                final dayItems = _itemsForDay(day);
+                final isInVisibleMonth = day.month == visibleMonth.month;
+                final dayItems =
+                    isInVisibleMonth ? _itemsForDay(day) : <MemoryItem>[];
                 return _CalendarDayCell(
                   date: day,
-                  isInVisibleMonth: day.month == visibleMonth.month,
+                  isInVisibleMonth: isInVisibleMonth,
                   isSelected: isSameDay(day, selectedDate),
                   isToday: isSameDay(day, DateTime.now()),
                   itemCount: dayItems.length,
