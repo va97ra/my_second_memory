@@ -112,32 +112,33 @@ class _MemoryItemDetailScreenState
       body: SafeArea(
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            children: [
-              _TypeEditor(
-                selectedType: _type,
-                onTypeChanged: (type) {
-                  setState(() => _type = type);
-                },
-              ),
-              const SizedBox(height: 12),
-              _RecordEditor(
-                controller: _bodyController,
-                imagePaths: _imagePaths,
-                audioPath: _audioPath,
-                isRecording: _isRecording,
-                onPickImage: _pickImage,
-                onRemoveImage: (path) => setState(() {
-                  _imagePaths.remove(path);
-                }),
-                onVoicePressed: _isRecording ? _stopAndSaveVoice : _startVoice,
-              ),
-              if (_audioPath != null) ...[
-                const SizedBox(height: 16),
-                VoiceNotePlayer(path: _audioPath!),
+            child: Column(
+              children: [
+                _TypeEditor(
+                  selectedType: _type,
+                  onTypeChanged: (type) {
+                    setState(() => _type = type);
+                  },
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: _RecordEditor(
+                    controller: _bodyController,
+                    imagePaths: _imagePaths,
+                    audioPath: _audioPath,
+                    isRecording: _isRecording,
+                    onPickImage: _pickImage,
+                    onRemoveImage: (path) => setState(() {
+                      _imagePaths.remove(path);
+                    }),
+                    onVoicePressed:
+                        _isRecording ? _stopAndSaveVoice : _startVoice,
+                  ),
+                ),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -417,63 +418,39 @@ class _RecordEditor extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextFormField(
-              controller: controller,
-              decoration: InputDecoration(
-                labelText: strings.description,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+            Expanded(
+              child: TextFormField(
+                controller: controller,
+                expands: true,
+                maxLines: null,
+                minLines: null,
+                textAlignVertical: TextAlignVertical.top,
+                decoration: InputDecoration(
+                  labelText: strings.description,
+                  alignLabelWithHint: true,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
-              minLines: 4,
-              maxLines: 10,
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _SquareActionButton(
-                  tooltip: strings.addImage,
-                  icon: Icons.photo_camera_outlined,
-                  color: const Color(0xFF2563EB),
-                  onPressed: onPickImage,
-                ),
-                const SizedBox(width: 8),
-                _SquareActionButton(
-                  tooltip: isRecording ? strings.stopRecording : strings.voice,
-                  icon: isRecording ? Icons.stop : Icons.mic_none,
-                  color: isRecording
-                      ? const Color(0xFFDC2626)
-                      : const Color(0xFFDB2777),
-                  onPressed: onVoicePressed,
-                ),
-                if (audioPath != null) ...[
-                  const SizedBox(width: 10),
-                  Icon(
-                    Icons.graphic_eq,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      strings.voiceMessage,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+            if (audioPath != null) ...[
+              const SizedBox(height: 10),
+              VoiceNotePlayer(path: audioPath!),
+            ],
             if (imagePaths.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final path in imagePaths)
-                    Stack(
+              SizedBox(
+                height: 72,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: imagePaths.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final path = imagePaths[index];
+                    return Stack(
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
@@ -498,10 +475,36 @@ class _RecordEditor extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
-                ],
+                    );
+                  },
+                ),
               ),
             ],
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _SquareActionButton(
+                    tooltip: strings.addImage,
+                    icon: Icons.photo_camera_outlined,
+                    color: const Color(0xFF2563EB),
+                    onPressed: onPickImage,
+                  ),
+                  const SizedBox(width: 8),
+                  _SquareActionButton(
+                    tooltip:
+                        isRecording ? strings.stopRecording : strings.voice,
+                    icon: isRecording ? Icons.stop : Icons.mic_none,
+                    color: isRecording
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFFDB2777),
+                    onPressed: onVoicePressed,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
