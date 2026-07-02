@@ -48,16 +48,14 @@ class HomeFeedScreen extends ConsumerWidget {
             )
           else ...[
             _MemorySliverList(items: todayFeed, ref: ref),
-            _FeedSectionHeader(title: strings.yesterdaySection),
-            if (yesterdayFeed.isEmpty)
-              _EmptyFeedSection(text: strings.noRecords)
-            else
+            if (yesterdayFeed.isNotEmpty) ...[
+              _FeedSectionHeader(title: strings.yesterdaySection),
               _MemorySliverList(items: yesterdayFeed, ref: ref),
-            _FeedSectionHeader(title: strings.dayBeforeYesterdaySection),
-            if (dayBeforeYesterdayFeed.isEmpty)
-              _EmptyFeedSection(text: strings.noRecords)
-            else
+            ],
+            if (dayBeforeYesterdayFeed.isNotEmpty) ...[
+              _FeedSectionHeader(title: strings.dayBeforeYesterdaySection),
               _MemorySliverList(items: dayBeforeYesterdayFeed, ref: ref),
+            ],
             const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
           ],
         ],
@@ -147,27 +145,6 @@ class _FeedSectionHeader extends StatelessWidget {
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-              ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyFeedSection extends StatelessWidget {
-  const _EmptyFeedSection({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-        child: Text(
-          text,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
         ),
       ),

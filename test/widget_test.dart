@@ -69,6 +69,32 @@ class _FeedMemoryRepository implements MemoryRepository {
   }
 }
 
+class _TodayOnlyMemoryRepository implements MemoryRepository {
+  List<MemoryItem> savedItems = const [];
+
+  @override
+  Future<List<MemoryItem>> loadItems() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    return [
+      MemoryItem(
+        id: 'today-only',
+        type: MemoryType.note,
+        title: 'Только сегодня',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+  }
+
+  @override
+  Future<void> saveItems(List<MemoryItem> items) async {
+    savedItems = items;
+  }
+}
+
 void main() {
   testWidgets('shows the home feed when app is unlocked', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
@@ -102,6 +128,30 @@ void main() {
     expect(find.text('Позавчерашняя заметка'), findsOneWidget);
     expect(find.byIcon(Icons.delete_outline), findsNothing);
     expect(find.byIcon(Icons.check_circle_outline), findsWidgets);
+  });
+
+  testWidgets('hides empty previous day sections', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(
+            _TodayOnlyMemoryRepository(),
+          ),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Только сегодня'), findsOneWidget);
+    expect(find.text('Это было вчера'), findsNothing);
+    expect(find.text('Это было позавчера'), findsNothing);
+    expect(find.text('Записей нет'), findsNothing);
   });
 
   testWidgets('feed card can be completed and opened for editing',
