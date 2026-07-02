@@ -107,7 +107,11 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
                           final item = dayItems[index];
                           return _ChatBubble(
                             item: item,
-                            onDelete: () => _confirmDelete(item),
+                            onOpen: () {
+                              context.push(
+                                '/memory/item/${Uri.encodeComponent(item.id)}',
+                              );
+                            },
                           );
                         },
                       ),
@@ -250,31 +254,6 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
     await ref.read(memoryItemsControllerProvider.notifier).add(item);
   }
 
-  Future<void> _confirmDelete(MemoryItem item) async {
-    final strings = AppStrings.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(strings.deleteRecordQuestion),
-        content: Text(item.title),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(strings.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(strings.delete),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await ref.read(memoryItemsControllerProvider.notifier).delete(item.id);
-    }
-  }
-
   String _titleFromText(String value) {
     final compact = value.replaceAll(RegExp(r'\s+'), ' ').trim();
     if (compact.length <= 48) {
@@ -287,11 +266,11 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
 class _ChatBubble extends StatelessWidget {
   const _ChatBubble({
     required this.item,
-    required this.onDelete,
+    required this.onOpen,
   });
 
   final MemoryItem item;
-  final VoidCallback onDelete;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -301,72 +280,51 @@ class _ChatBubble extends StatelessWidget {
       alignment: Alignment.centerRight,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFDFF0FF),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFBADBFF)),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (item.imagePaths.isNotEmpty) ...[
-                          _BubbleImageGrid(paths: item.imagePaths),
-                          if (text.isNotEmpty) const SizedBox(height: 8),
-                        ],
-                        if (item.audioPath != null)
-                          VoiceNotePlayer(path: item.audioPath!),
-                        if (text.isNotEmpty &&
-                            item.type != MemoryType.voiceNote)
-                          Text(text),
-                      ],
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onOpen,
+              borderRadius: BorderRadius.circular(14),
+              child: Ink(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDFF0FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFBADBFF)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
                     ),
-                  ),
-                  PopupMenuButton<String>(
-                    tooltip: AppStrings.of(context).delete,
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.more_vert, size: 18),
-                    onSelected: (value) {
-                      if (value == 'delete') {
-                        onDelete();
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text(AppStrings.of(context).delete),
-                      ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (item.imagePaths.isNotEmpty) ...[
+                      _BubbleImageGrid(paths: item.imagePaths),
+                      if (text.isNotEmpty) const SizedBox(height: 8),
                     ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  DateFormat.Hm().format(item.createdAt),
-                  style: Theme.of(context).textTheme.labelSmall,
+                    if (item.audioPath != null)
+                      VoiceNotePlayer(path: item.audioPath!),
+                    if (text.isNotEmpty && item.type != MemoryType.voiceNote)
+                      Text(text),
+                    const SizedBox(height: 2),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        DateFormat.Hm().format(item.createdAt),
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
@@ -25,8 +26,19 @@ class ProjectsScreen extends ConsumerWidget {
           SliverAppBar.large(title: Text(strings.projects)),
           SliverList.builder(
             itemCount: projects.length,
-            itemBuilder: (context, index) =>
-                MemoryItemCard(item: projects[index]),
+            itemBuilder: (context, index) => MemoryItemCard(
+              item: projects[index],
+              onOpen: () {
+                context.push(
+                  '/memory/item/${Uri.encodeComponent(projects[index].id)}',
+                );
+              },
+              onToggleDone: () {
+                ref
+                    .read(memoryItemsControllerProvider.notifier)
+                    .toggleDone(projects[index].id);
+              },
+            ),
           ),
         ],
       ),

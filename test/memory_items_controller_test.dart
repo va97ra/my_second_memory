@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_second_memory/src/features/memory_items/data/memory_repository.dart';
 import 'package:my_second_memory/src/features/memory_items/domain/memory_item.dart';
+import 'package:my_second_memory/src/features/memory_items/domain/memory_status.dart';
 import 'package:my_second_memory/src/features/memory_items/domain/memory_type.dart';
 import 'package:my_second_memory/src/features/memory_items/state/memory_items_controller.dart';
 
@@ -46,5 +47,31 @@ void main() {
 
     expect(controller.state.map((item) => item.id), ['keep']);
     expect(repository.items.map((item) => item.id), ['keep']);
+  });
+
+  test('toggleDone switches active and done states', () async {
+    final date = DateTime(2026, 6, 30);
+    final repository = _MemoryRepository([
+      MemoryItem(
+        id: 'toggle',
+        type: MemoryType.note,
+        title: 'Toggle',
+        memoryDate: date,
+        createdAt: date,
+        updatedAt: date,
+      ),
+    ]);
+    final controller = MemoryItemsController(repository);
+
+    await controller.load();
+    await controller.toggleDone('toggle');
+
+    expect(controller.state.single.status, MemoryStatus.done);
+    expect(repository.items.single.status, MemoryStatus.done);
+
+    await controller.toggleDone('toggle');
+
+    expect(controller.state.single.status, MemoryStatus.active);
+    expect(repository.items.single.status, MemoryStatus.active);
   });
 }

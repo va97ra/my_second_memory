@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_second_memory/src/app.dart';
 import 'package:my_second_memory/src/features/memory_items/data/memory_repository.dart';
 import 'package:my_second_memory/src/features/memory_items/domain/memory_item.dart';
+import 'package:my_second_memory/src/features/memory_items/domain/memory_status.dart';
 import 'package:my_second_memory/src/features/memory_items/domain/memory_type.dart';
 import 'package:my_second_memory/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:my_second_memory/src/features/security/data/security_service.dart';
@@ -99,6 +100,72 @@ void main() {
     expect(find.text('Вчерашняя заметка'), findsOneWidget);
     expect(find.text('Это было позавчера'), findsOneWidget);
     expect(find.text('Позавчерашняя заметка'), findsOneWidget);
+    expect(find.byIcon(Icons.delete_outline), findsNothing);
+    expect(find.byIcon(Icons.check_circle_outline), findsWidgets);
+  });
+
+  testWidgets('feed card can be completed and opened for editing',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _FeedMemoryRepository();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final targetDay = today.day == 15 ? 16 : 15;
+    final targetDate = DateTime(today.year, today.month, targetDay);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Отметить выполненным').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('План на сегодня'), findsOneWidget);
+    expect(find.text('Выполнено'), findsOneWidget);
+    expect(
+      repository.savedItems
+          .firstWhere((item) => item.id == 'today-plan')
+          .status,
+      MemoryStatus.done,
+    );
+
+    await tester.tap(find.text('План на сегодня'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Редактировать запись'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Название'),
+      'Обновлённый план',
+    );
+    await tester.tap(find.byIcon(Icons.calendar_month));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('$targetDay').last);
+    await tester.pumpAndSettle();
+    final okRu = find.text('ОК');
+    if (okRu.evaluate().isNotEmpty) {
+      await tester.tap(okRu);
+    } else {
+      await tester.tap(find.text('OK'));
+    }
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.save_outlined));
+    await tester.pumpAndSettle();
+
+    final saved = repository.savedItems.firstWhere(
+      (item) => item.id == 'today-plan',
+    );
+    expect(saved.title, 'Обновлённый план');
+    expect(saved.memoryDate, targetDate);
+    expect(saved.status, MemoryStatus.done);
   });
 
   testWidgets('calendar date opens day chat and sends text on selected date',
@@ -146,5 +213,36 @@ void main() {
       ),
       isTrue,
     );
+  });
+
+  testWidgets('calendar chat bubble opens the full screen editor',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _FeedMemoryRepository();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Календарь'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('${today.day}').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('План на сегодня'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Редактировать запись'), findsOneWidget);
+    expect(find.text('План на сегодня'), findsWidgets);
   });
 }

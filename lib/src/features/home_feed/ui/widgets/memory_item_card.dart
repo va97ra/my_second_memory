@@ -10,152 +10,166 @@ import 'memory_image_preview.dart';
 class MemoryItemCard extends StatelessWidget {
   const MemoryItemCard({
     required this.item,
-    this.onDelete,
+    required this.onOpen,
+    required this.onToggleDone,
     super.key,
   });
 
   final MemoryItem item;
-  final VoidCallback? onDelete;
+  final VoidCallback onOpen;
+  final VoidCallback onToggleDone;
 
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
     final date = DateFormat.yMMMd(locale).format(item.memoryDate);
     final colors = Theme.of(context).colorScheme;
+    const doneColor = Color(0xFF16A34A);
+    final isDone = item.isDone;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.surface,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onOpen,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFDDE3EA)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.035),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: _typeColor(item.type).withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _typeColor(item.type).withValues(alpha: 0.28),
-                      ),
-                    ),
-                    child: SizedBox(
-                      width: 34,
-                      height: 34,
-                      child: Icon(
-                        _iconFor(item.type),
-                        size: 19,
-                        color: _typeColor(item.type),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.18,
-                                  ),
-                        ),
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          children: [
-                            _MetaPill(
-                              text: item.type.label(locale),
-                              color: _typeColor(item.type),
-                            ),
-                            _MetaPill(text: date),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (onDelete != null)
-                    IconButton(
-                      tooltip: AppStrings.of(context).delete,
-                      onPressed: () => _confirmDelete(context),
-                      icon: const Icon(Icons.delete_outline, size: 20),
-                      style: IconButton.styleFrom(
-                        foregroundColor: const Color(0xFF64748B),
-                        backgroundColor: const Color(0xFFF8FAFC),
-                        minimumSize: const Size(34, 34),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
-                ],
+          child: Ink(
+            decoration: BoxDecoration(
+              color: isDone ? const Color(0xFFEAF8EF) : colors.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color:
+                    isDone ? const Color(0xFF86EFAC) : const Color(0xFFDDE3EA),
               ),
-              if (item.body.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  item.body,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.35,
-                        color: const Color(0xFF334155),
-                      ),
+              boxShadow: [
+                BoxShadow(
+                  color: (isDone ? doneColor : Colors.black)
+                      .withValues(alpha: isDone ? 0.08 : 0.035),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
                 ),
               ],
-              if (item.audioPath != null) ...[
-                const SizedBox(height: 12),
-                VoiceNotePlayer(path: item.audioPath!),
-              ],
-              if (item.imagePaths.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                _ImageStrip(paths: item.imagePaths),
-              ],
-            ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: (isDone ? doneColor : _typeColor(item.type))
+                              .withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: (isDone ? doneColor : _typeColor(item.type))
+                                .withValues(alpha: 0.28),
+                          ),
+                        ),
+                        child: SizedBox(
+                          width: 34,
+                          height: 34,
+                          child: Icon(
+                            isDone ? Icons.check_circle : _iconFor(item.type),
+                            size: 19,
+                            color: isDone ? doneColor : _typeColor(item.type),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.18,
+                                    color:
+                                        isDone ? const Color(0xFF14532D) : null,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                _MetaPill(
+                                  text: item.type.label(locale),
+                                  color: isDone
+                                      ? doneColor
+                                      : _typeColor(item.type),
+                                ),
+                                _MetaPill(text: date),
+                                if (isDone)
+                                  _MetaPill(
+                                    text: AppStrings.of(context).completed,
+                                    color: doneColor,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: isDone
+                            ? AppStrings.of(context).markActive
+                            : AppStrings.of(context).markDone,
+                        onPressed: onToggleDone,
+                        icon: Icon(
+                          isDone
+                              ? Icons.check_circle
+                              : Icons.check_circle_outline,
+                          size: 22,
+                        ),
+                        style: IconButton.styleFrom(
+                          foregroundColor:
+                              isDone ? Colors.white : const Color(0xFF16A34A),
+                          backgroundColor: isDone
+                              ? const Color(0xFF16A34A)
+                              : const Color(0xFFEAF8EF),
+                          minimumSize: const Size(36, 36),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (item.body.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      item.body,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            height: 1.35,
+                            color: isDone
+                                ? const Color(0xFF166534)
+                                : const Color(0xFF334155),
+                          ),
+                    ),
+                  ],
+                  if (item.audioPath != null) ...[
+                    const SizedBox(height: 12),
+                    VoiceNotePlayer(path: item.audioPath!),
+                  ],
+                  if (item.imagePaths.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _ImageStrip(paths: item.imagePaths),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
-  }
-
-  Future<void> _confirmDelete(BuildContext context) async {
-    final strings = AppStrings.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(strings.deleteRecordQuestion),
-        content: Text(item.title),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(strings.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(strings.delete),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      onDelete?.call();
-    }
   }
 
   IconData _iconFor(MemoryType type) {

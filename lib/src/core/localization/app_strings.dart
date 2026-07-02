@@ -30,6 +30,7 @@ class AppStrings {
   String get description => isRu ? 'Описание' : 'Description';
   String get date => isRu ? 'Дата' : 'Date';
   String get save => isRu ? 'Сохранить' : 'Save';
+  String get saved => isRu ? 'Сохранено' : 'Saved';
   String get requiredDate => isRu ? 'Дата обязательна' : 'Date is required';
   String get emptyFeed =>
       isRu ? 'На этот день пока ничего нет' : 'Nothing for this day yet';
@@ -40,6 +41,11 @@ class AppStrings {
   String get play => isRu ? 'Воспроизвести' : 'Play';
   String get delete => isRu ? 'Удалить' : 'Delete';
   String get cancel => isRu ? 'Отмена' : 'Cancel';
+  String get completed => isRu ? 'Выполнено' : 'Done';
+  String get markDone => isRu ? 'Отметить выполненным' : 'Mark done';
+  String get markActive => isRu ? 'Вернуть в работу' : 'Mark active';
+  String get editRecord => isRu ? 'Редактировать запись' : 'Edit record';
+  String get recordNotFound => isRu ? 'Запись не найдена' : 'Record not found';
   String get deleteRecordQuestion =>
       isRu ? 'Удалить эту запись?' : 'Delete this record?';
   String get addImage => isRu ? 'Добавить фото' : 'Add image';

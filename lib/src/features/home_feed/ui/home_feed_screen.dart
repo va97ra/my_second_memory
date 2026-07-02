@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
@@ -195,8 +196,13 @@ class _MemorySliverList extends StatelessWidget {
         final item = items[index];
         return MemoryItemCard(
           item: item,
-          onDelete: () {
-            ref.read(memoryItemsControllerProvider.notifier).delete(item.id);
+          onOpen: () {
+            context.push('/memory/item/${Uri.encodeComponent(item.id)}');
+          },
+          onToggleDone: () {
+            ref
+                .read(memoryItemsControllerProvider.notifier)
+                .toggleDone(item.id);
           },
         );
       },

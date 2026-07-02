@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
@@ -10,7 +11,8 @@ class MemoryLibraryScreen extends ConsumerStatefulWidget {
   const MemoryLibraryScreen({super.key});
 
   @override
-  ConsumerState<MemoryLibraryScreen> createState() => _MemoryLibraryScreenState();
+  ConsumerState<MemoryLibraryScreen> createState() =>
+      _MemoryLibraryScreenState();
 }
 
 class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
@@ -64,10 +66,15 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
               itemCount: items.length,
               itemBuilder: (context, index) => MemoryItemCard(
                 item: items[index],
-                onDelete: () {
+                onOpen: () {
+                  context.push(
+                    '/memory/item/${Uri.encodeComponent(items[index].id)}',
+                  );
+                },
+                onToggleDone: () {
                   ref
                       .read(memoryItemsControllerProvider.notifier)
-                      .delete(items[index].id);
+                      .toggleDone(items[index].id);
                 },
               ),
             ),

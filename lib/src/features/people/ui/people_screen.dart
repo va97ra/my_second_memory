@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
@@ -25,7 +26,19 @@ class PeopleScreen extends ConsumerWidget {
           SliverAppBar.large(title: Text(strings.people)),
           SliverList.builder(
             itemCount: people.length,
-            itemBuilder: (context, index) => MemoryItemCard(item: people[index]),
+            itemBuilder: (context, index) => MemoryItemCard(
+              item: people[index],
+              onOpen: () {
+                context.push(
+                  '/memory/item/${Uri.encodeComponent(people[index].id)}',
+                );
+              },
+              onToggleDone: () {
+                ref
+                    .read(memoryItemsControllerProvider.notifier)
+                    .toggleDone(people[index].id);
+              },
+            ),
           ),
         ],
       ),

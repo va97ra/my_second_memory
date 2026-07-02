@@ -51,6 +51,21 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     await _repository.saveItems(state);
   }
 
+  Future<void> toggleDone(String id) async {
+    final now = DateTime.now();
+    state = _sort([
+      for (final item in state)
+        if (item.id == id)
+          item.copyWith(
+            status: item.isDone ? MemoryStatus.active : MemoryStatus.done,
+            updatedAt: now,
+          )
+        else
+          item,
+    ]);
+    await _repository.saveItems(state);
+  }
+
   Future<void> delete(String id) async {
     state = [
       for (final item in state)
