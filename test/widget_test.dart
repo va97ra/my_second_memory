@@ -614,6 +614,33 @@ void main() {
     expect(find.text('Архивная запись'), findsOneWidget);
   });
 
+  testWidgets('settings opens backup screen', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Настройки'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Резервная копия'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Сохранить резервную копию'), findsOneWidget);
+    expect(find.text('Восстановить из копии'), findsOneWidget);
+  });
+
   testWidgets('calendar shows shift colors and opens selected day',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 900));

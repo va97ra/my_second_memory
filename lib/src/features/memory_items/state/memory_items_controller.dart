@@ -95,6 +95,12 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     await _repository.saveItems(state);
   }
 
+  Future<void> replaceAll(List<MemoryItem> items) async {
+    await _loadFuture;
+    state = _sort(items);
+    await _repository.saveItems(state);
+  }
+
   List<MemoryItem> _sort(List<MemoryItem> items) {
     return [...items]..sort((a, b) {
         final byDate = a.memoryDate.compareTo(b.memoryDate);

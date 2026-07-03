@@ -27,6 +27,23 @@ class AppStrings {
   String get people => isRu ? 'Люди' : 'People';
   String get projects => isRu ? 'Проекты' : 'Projects';
   String get memoryBase => isRu ? 'База памяти' : 'Memory base';
+  String get backup => isRu ? 'Резервная копия' : 'Backup';
+  String get backupSubtitle =>
+      isRu ? 'Сохранить или восстановить данные' : 'Save or restore data';
+  String get exportBackup =>
+      isRu ? 'Сохранить резервную копию' : 'Export backup';
+  String get importBackup => isRu ? 'Восстановить из копии' : 'Import backup';
+  String get backupCreated =>
+      isRu ? 'Резервная копия сохранена' : 'Backup saved';
+  String get backupRestored =>
+      isRu ? 'Резервная копия восстановлена' : 'Backup restored';
+  String get restoreBackupQuestion =>
+      isRu ? 'Восстановить резервную копию?' : 'Restore backup?';
+  String get restoreBackupWarning => isRu
+      ? 'Текущие записи и графики смен будут заменены данными из файла.'
+      : 'Current records and shift schedules will be replaced by the file data.';
+  String get invalidBackupFile =>
+      isRu ? 'Не удалось прочитать резервную копию' : 'Cannot read backup file';
   String get archive => isRu ? 'Архив' : 'Archive';
   String get archiveRecord => isRu ? 'Скрыть в архив' : 'Archive record';
   String get restoreToFeed => isRu ? 'Вернуть в ленту' : 'Restore to feed';

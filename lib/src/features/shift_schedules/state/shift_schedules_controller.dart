@@ -57,6 +57,11 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
     await _repository.saveSchedules(state);
   }
 
+  Future<void> replaceAll(List<ShiftSchedule> schedules) async {
+    state = _sort(schedules);
+    await _repository.saveSchedules(state);
+  }
+
   List<ShiftSchedule> workingOn(DateTime date) {
     return [
       for (final schedule in state)
