@@ -19,9 +19,19 @@ class LocalMemoryRepository implements MemoryRepository {
     }
 
     final decoded = jsonDecode(raw) as List<dynamic>;
-    return decoded.map((entry) {
+    final items = decoded.map((entry) {
       return MemoryItem.fromJson(Map<String, Object?>.from(entry as Map));
     }).toList();
+    final userItems = [
+      for (final item in items)
+        if (!_isStarterItem(item)) item,
+    ];
+
+    if (userItems.length != items.length) {
+      await saveItems(userItems);
+    }
+
+    return userItems;
   }
 
   @override
@@ -29,5 +39,11 @@ class LocalMemoryRepository implements MemoryRepository {
     final prefs = await SharedPreferences.getInstance();
     final encoded = jsonEncode(items.map((item) => item.toJson()).toList());
     await prefs.setString(_storageKey, encoded);
+  }
+
+  bool _isStarterItem(MemoryItem item) {
+    return item.id == 'starter-event' ||
+        item.id == 'starter-project' ||
+        item.id == 'starter-person';
   }
 }
