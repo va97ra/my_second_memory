@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+@DataClassName('MemoryItemRow')
 class MemoryItems extends Table {
   TextColumn get id => text()();
   TextColumn get type => text()();
@@ -18,6 +19,7 @@ class MemoryItems extends Table {
   TextColumn get placeId => text().nullable()();
   TextColumn get audioPath => text().nullable()();
   IntColumn get audioDurationSeconds => integer().nullable()();
+  TextColumn get imagePathsJson => text().withDefault(const Constant('[]'))();
   TextColumn get transcript => text().nullable()();
 
   @override

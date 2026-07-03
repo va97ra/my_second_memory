@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/local_memory_repository.dart';
 import '../data/memory_repository.dart';
+import '../data/memory_repository_factory.dart';
 import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
 
 final memoryRepositoryProvider = Provider<MemoryRepository>(
-  (ref) => const LocalMemoryRepository(),
+  (ref) => createMemoryRepository(),
 );
 
 final memoryItemsControllerProvider =
