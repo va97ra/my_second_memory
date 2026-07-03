@@ -6,6 +6,7 @@ import '../../../memory_items/domain/memory_item.dart';
 import '../../../memory_items/domain/memory_type.dart';
 import '../../../voice_notes/ui/widgets/voice_note_player.dart';
 import 'memory_image_preview.dart';
+import 'memory_image_viewer.dart';
 
 class MemoryItemCard extends StatelessWidget {
   const MemoryItemCard({
@@ -293,10 +294,17 @@ class _ImageStrip extends StatelessWidget {
           final path = paths[index];
           return ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: SizedBox(
-              width: 128,
-              height: 92,
-              child: MemoryImagePreview(path: path),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: ValueKey('feed_image_$path'),
+                onTap: () => openMemoryImageViewer(context, path),
+                child: SizedBox(
+                  width: 128,
+                  height: 92,
+                  child: MemoryImagePreview(path: path),
+                ),
+              ),
             ),
           );
         },

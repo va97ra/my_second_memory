@@ -13,6 +13,10 @@ import 'package:my_second_memory/src/features/shift_schedules/data/shift_schedul
 import 'package:my_second_memory/src/features/shift_schedules/domain/shift_schedule.dart';
 import 'package:my_second_memory/src/features/shift_schedules/state/shift_schedules_controller.dart';
 
+const _pixelImageDataUrl =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
+    'AAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
 class _UnlockedSecurityService extends SecurityService {
   @override
   Future<bool> hasPin() async => false;
@@ -105,9 +109,6 @@ class _RichEditorMemoryRepository implements MemoryRepository {
   Future<List<MemoryItem>> loadItems() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    const pixel =
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
-        'AAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
     return [
       MemoryItem(
@@ -119,7 +120,11 @@ class _RichEditorMemoryRepository implements MemoryRepository {
         memoryDate: today,
         createdAt: now,
         updatedAt: now,
-        imagePaths: const [pixel, pixel, pixel],
+        imagePaths: const [
+          _pixelImageDataUrl,
+          _pixelImageDataUrl,
+          _pixelImageDataUrl,
+        ],
       ),
     ];
   }
@@ -169,6 +174,8 @@ void main() {
 
     await tester.pumpAndSettle();
 
+    final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(app.theme?.scaffoldBackgroundColor, const Color(0xFFF7ECDB));
     expect(find.text('Лента дня'), findsWidgets);
     expect(find.text('Лента'), findsOneWidget);
     expect(find.text('Календарь'), findsOneWidget);
@@ -212,16 +219,12 @@ void main() {
     expect(find.text('Записей нет'), findsNothing);
   });
 
-  testWidgets('feed card can be completed and opened for editing',
+  testWidgets('feed card can be completed and opened read-only',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final repository = _FeedMemoryRepository();
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final targetDay = today.day == 15 ? 16 : 15;
-    final targetDate = DateTime(today.year, today.month, targetDay);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -252,47 +255,12 @@ void main() {
     await tester.tap(find.text('План на сегодня'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Редактировать запись'), findsOneWidget);
-    expect(find.text('Выполнено'), findsNothing);
-    expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.mic_none), findsOneWidget);
-    expect(find.byIcon(Icons.calendar_month), findsNothing);
-    expect(find.textContaining('Дата:'), findsNothing);
-    await tester.tap(find.text('Событие'));
-    await tester.pumpAndSettle();
-    expect(find.text('Голос'), findsNothing);
-    expect(find.text('Человек'), findsNothing);
-    expect(find.text('Привычка'), findsNothing);
-    await tester.drag(find.byType(ListView).last, const Offset(0, -320));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Покупка'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Запись'),
-      'Обновлённый план из первых строк записи',
-    );
-    await tester.tap(find.byKey(const ValueKey('memory_date_picker')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('$targetDay').last);
-    await tester.pumpAndSettle();
-    final okRu = find.text('ОК');
-    if (okRu.evaluate().isNotEmpty) {
-      await tester.tap(okRu);
-    } else {
-      await tester.tap(find.text('OK'));
-    }
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.save_outlined));
-    await tester.pumpAndSettle();
-
-    final saved = repository.savedItems.firstWhere(
-      (item) => item.id == 'today-plan',
-    );
-    expect(saved.title, 'Обновлённый план из первых строк записи');
-    expect(saved.body, 'Обновлённый план из первых строк записи');
-    expect(saved.type, MemoryType.purchase);
-    expect(saved.memoryDate, targetDate);
-    expect(saved.status, MemoryStatus.done);
+    expect(find.byKey(const ValueKey('memory_readonly_view')), findsOneWidget);
+    expect(find.text('Редактировать запись'), findsNothing);
+    expect(find.byIcon(Icons.save_outlined), findsNothing);
+    expect(find.byIcon(Icons.more_vert), findsNothing);
+    expect(find.widgetWithText(TextFormField, 'Запись'), findsNothing);
+    expect(find.text('Тип записи'), findsNothing);
   });
 
   testWidgets('editor keeps record field large with long text and images',
@@ -316,7 +284,16 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Длинная запись'));
+    await tester.tap(find.text('Календарь'));
+    await tester.pumpAndSettle();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    await tester.tap(find.text('${today.day}').first);
+    await tester.pumpAndSettle();
+    final chatText = find.textContaining('Длинная строка').first;
+    await tester.ensureVisible(chatText);
+    await tester.pumpAndSettle();
+    await tester.tap(chatText);
     await tester.pumpAndSettle();
 
     final panelSize =
@@ -329,6 +306,47 @@ void main() {
     expect(find.byKey(const ValueKey('record_editor_images')), findsOneWidget);
     expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
     expect(find.byIcon(Icons.mic_none), findsOneWidget);
+  });
+
+  testWidgets('readonly image opens fullscreen viewer', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 720));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _RichEditorMemoryRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Длинная запись'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('memory_readonly_view')), findsOneWidget);
+    final image =
+        find.byKey(const ValueKey('readonly_image_$_pixelImageDataUrl')).first;
+    await tester.ensureVisible(image);
+    await tester.pumpAndSettle();
+    await tester.tap(image);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('memory_image_viewer')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('memory_image_viewer_image')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('memory_image_viewer_close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('memory_image_viewer')), findsNothing);
   });
 
   testWidgets('calendar date opens day chat and sends text on selected date',

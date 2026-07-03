@@ -41,16 +41,16 @@ class HomeFeedScreen extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFF6FAFF),
-              Color(0xFFF3F6FA),
-              Color(0xFFF8FAFC),
+              Color(0xFFFBF3E8),
+              Color(0xFFF7ECDB),
+              Color(0xFFFCF7EF),
             ],
           ),
         ),
         child: CustomScrollView(
           slivers: [
             SliverAppBar.large(
-              backgroundColor: const Color(0xFFF6FAFF),
+              backgroundColor: const Color(0xFFFBF3E8),
               surfaceTintColor: Colors.transparent,
               title: Text(
                 strings.dayFeed,
@@ -265,7 +265,7 @@ class _MemorySliverList extends StatelessWidget {
         return MemoryItemCard(
           item: item,
           onOpen: () {
-            context.push('/memory/item/${Uri.encodeComponent(item.id)}');
+            context.push('/memory/view/${Uri.encodeComponent(item.id)}');
           },
           onToggleDone: () {
             ref

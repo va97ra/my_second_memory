@@ -59,8 +59,8 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFFEFF6FF),
-                    Color(0xFFF8FAFC),
+                    Color(0xFFFBF3E8),
+                    Color(0xFFF7ECDB),
                     Color(0xFFFFF7ED),
                   ],
                 ),
@@ -73,7 +73,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
                       padding: const EdgeInsets.all(24),
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.88),
+                          color: const Color(0xFFFFFCF6).withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: Colors.white),
                           boxShadow: [

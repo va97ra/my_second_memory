@@ -17,9 +17,9 @@ class ShiftSchedulesScreen extends ConsumerWidget {
     final schedules = ref.watch(shiftSchedulesControllerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FB),
+      backgroundColor: const Color(0xFFF7ECDB),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF6FAFF),
+        backgroundColor: const Color(0xFFFBF3E8),
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -44,9 +44,9 @@ class ShiftSchedulesScreen extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFF6FAFF),
-              Color(0xFFF3F6FA),
-              Color(0xFFF8FAFC),
+              Color(0xFFFBF3E8),
+              Color(0xFFF7ECDB),
+              Color(0xFFFCF7EF),
             ],
           ),
         ),
@@ -213,7 +213,7 @@ class _ShiftScheduleTile extends StatelessWidget {
               ),
               color: schedule.isEnabled
                   ? color.withValues(alpha: 0.1)
-                  : Colors.white.withValues(alpha: 0.88),
+                  : const Color(0xFFFFFCF6).withValues(alpha: 0.92),
               boxShadow: [
                 BoxShadow(
                   color: color.withValues(alpha: schedule.isEnabled ? 0.1 : 0),
@@ -378,7 +378,7 @@ class _ShiftScheduleEditorSheetState
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
           child: Material(
-            color: Colors.white,
+            color: const Color(0xFFFFFCF6),
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(16),
@@ -420,7 +420,7 @@ class _ShiftScheduleEditorSheetState
                     decoration: InputDecoration(
                       labelText: strings.organization,
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: const Color(0xFFFFF8EE),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -467,7 +467,7 @@ class _ShiftScheduleEditorSheetState
                           decoration: InputDecoration(
                             labelText: strings.workDays,
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
+                            fillColor: const Color(0xFFFFF8EE),
                           ),
                           onChanged: (_) => _syncPreset(),
                         ),
@@ -480,7 +480,7 @@ class _ShiftScheduleEditorSheetState
                           decoration: InputDecoration(
                             labelText: strings.restDays,
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
+                            fillColor: const Color(0xFFFFF8EE),
                           ),
                           onChanged: (_) => _syncPreset(),
                         ),

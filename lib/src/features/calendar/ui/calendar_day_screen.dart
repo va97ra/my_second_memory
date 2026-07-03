@@ -11,6 +11,7 @@ import 'package:record/record.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../home_feed/domain/feed_rules.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
+import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
@@ -62,9 +63,9 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FB),
+      backgroundColor: const Color(0xFFF7ECDB),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF6FAFF),
+        backgroundColor: const Color(0xFFFBF3E8),
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
@@ -92,9 +93,9 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFF6FAFF),
-              Color(0xFFF2F6FB),
-              Color(0xFFF7F9FC),
+              Color(0xFFFBF3E8),
+              Color(0xFFF7ECDB),
+              Color(0xFFFCF7EF),
             ],
           ),
         ),
@@ -504,12 +505,20 @@ class _BubbleImageGrid extends StatelessWidget {
       runSpacing: 6,
       children: [
         for (final path in paths)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: SizedBox(
-              width: 180,
-              height: 128,
-              child: MemoryImagePreview(path: path),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: ValueKey('chat_image_$path'),
+              onTap: () => openMemoryImageViewer(context, path),
+              borderRadius: BorderRadius.circular(10),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  width: 180,
+                  height: 128,
+                  child: MemoryImagePreview(path: path),
+                ),
+              ),
             ),
           ),
       ],
@@ -594,7 +603,11 @@ class _MessageComposerState extends State<_MessageComposer> {
                           child: SizedBox(
                             width: 96,
                             height: 72,
-                            child: MemoryImagePreview(path: path),
+                            child: GestureDetector(
+                              key: ValueKey('composer_image_$path'),
+                              onTap: () => openMemoryImageViewer(context, path),
+                              child: MemoryImagePreview(path: path),
+                            ),
                           ),
                         ),
                         Positioned(

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 ThemeData buildAppTheme() {
   const seed = Color(0xFF2563EB);
-  const background = Color(0xFFF5F7FA);
-  const surface = Color(0xFFFFFFFF);
-  const border = Color(0xFFDDE3EA);
+  const background = Color(0xFFF7ECDB);
+  const surface = Color(0xFFFFFCF6);
+  const border = Color(0xFFE4D6C3);
   const onSurface = Color(0xFF1F2933);
 
   return ThemeData(
@@ -83,8 +83,8 @@ ThemeData buildAppTheme() {
     ),
     navigationBarTheme: NavigationBarThemeData(
       height: 68,
-      backgroundColor: const Color(0xFFF8FAFC),
-      indicatorColor: const Color(0xFFDCEBFF),
+      backgroundColor: const Color(0xFFFFF8EE),
+      indicatorColor: const Color(0xFFEAD9FF),
       surfaceTintColor: Colors.transparent,
       labelTextStyle: WidgetStateProperty.all(
         const TextStyle(

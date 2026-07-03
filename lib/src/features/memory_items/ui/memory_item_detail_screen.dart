@@ -10,6 +10,7 @@ import 'package:record/record.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
+import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../voice_notes/data/voice_note_storage.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
 import '../domain/memory_item.dart';
@@ -507,7 +508,12 @@ class _RecordEditor extends StatelessWidget {
                               child: SizedBox(
                                 width: imageWidth,
                                 height: imageHeight,
-                                child: MemoryImagePreview(path: path),
+                                child: GestureDetector(
+                                  key: ValueKey('editor_image_$path'),
+                                  onTap: () =>
+                                      openMemoryImageViewer(context, path),
+                                  child: MemoryImagePreview(path: path),
+                                ),
                               ),
                             ),
                             Positioned(
