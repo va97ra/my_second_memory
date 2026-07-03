@@ -12,13 +12,19 @@ class MemoryItemCard extends StatelessWidget {
   const MemoryItemCard({
     required this.item,
     required this.onOpen,
-    required this.onToggleDone,
+    this.onToggleDone,
+    this.onArchive,
+    this.onRestore,
+    this.showDate = true,
     super.key,
   });
 
   final MemoryItem item;
   final VoidCallback onOpen;
-  final VoidCallback onToggleDone;
+  final VoidCallback? onToggleDone;
+  final VoidCallback? onArchive;
+  final VoidCallback? onRestore;
+  final bool showDate;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +90,8 @@ class MemoryItemCard extends StatelessWidget {
                                               BorderRadius.circular(8),
                                           border: Border.all(
                                             color: typeColor.withValues(
-                                                alpha: 0.28),
+                                              alpha: 0.28,
+                                            ),
                                           ),
                                         ),
                                         child: SizedBox(
@@ -97,34 +104,36 @@ class MemoryItemCard extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        day,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelMedium
-                                            ?.copyWith(
-                                              color: isDone
-                                                  ? const Color(0xFF166534)
-                                                  : typeColor,
-                                              fontWeight: FontWeight.w900,
-                                              height: 1,
-                                            ),
-                                      ),
-                                      Text(
-                                        month,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(
-                                              color: const Color(0xFF64748B),
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w800,
-                                              height: 1.1,
-                                            ),
-                                      ),
+                                      if (showDate) ...[
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          day,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium
+                                              ?.copyWith(
+                                                color: isDone
+                                                    ? const Color(0xFF166534)
+                                                    : typeColor,
+                                                fontWeight: FontWeight.w900,
+                                                height: 1,
+                                              ),
+                                        ),
+                                        Text(
+                                          month,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(
+                                                color: const Color(0xFF64748B),
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w800,
+                                                height: 1.1,
+                                              ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -160,39 +169,21 @@ class MemoryItemCard extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                IconButton(
-                                  tooltip: isDone
-                                      ? AppStrings.of(context).markActive
-                                      : AppStrings.of(context).markDone,
-                                  onPressed: onToggleDone,
-                                  icon: Icon(
-                                    isDone
-                                        ? Icons.check_circle
-                                        : Icons.check_circle_outline,
-                                    size: 23,
-                                  ),
-                                  style: IconButton.styleFrom(
-                                    foregroundColor: isDone
-                                        ? Colors.white
-                                        : const Color(0xFF94A3B8),
-                                    backgroundColor: isDone
-                                        ? const Color(0xFF16A34A)
-                                        : const Color(0xFFF1F5F9),
-                                    minimumSize: const Size(38, 38),
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    side: BorderSide(
-                                      color: isDone
-                                          ? const Color(0xFF16A34A)
-                                          : const Color(0xFFDDE7F3),
-                                    ),
-                                  ),
+                                _CardActions(
+                                  isDone: isDone,
+                                  onToggleDone: onToggleDone,
+                                  onArchive: onArchive,
+                                  onRestore: onRestore,
                                 ),
                               ],
                             ),
                             if (item.audioPath != null) ...[
                               const SizedBox(height: 12),
-                              VoiceNotePlayer(path: item.audioPath!),
+                              VoiceNotePlayer(
+                                path: item.audioPath!,
+                                recordedAt: item.memoryDate,
+                                durationSeconds: item.audioDurationSeconds,
+                              ),
                             ],
                             if (item.imagePaths.isNotEmpty) ...[
                               const SizedBox(height: 12),
@@ -273,6 +264,82 @@ class _StatusPill extends StatelessWidget {
               ),
         ),
       ),
+    );
+  }
+}
+
+class _CardActions extends StatelessWidget {
+  const _CardActions({
+    required this.isDone,
+    this.onToggleDone,
+    this.onArchive,
+    this.onRestore,
+  });
+
+  final bool isDone;
+  final VoidCallback? onToggleDone;
+  final VoidCallback? onArchive;
+  final VoidCallback? onRestore;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (onToggleDone != null)
+          IconButton(
+            tooltip: isDone ? strings.markActive : strings.markDone,
+            onPressed: onToggleDone,
+            icon: Icon(
+              isDone ? Icons.check_circle : Icons.check_circle_outline,
+              size: 23,
+            ),
+            style: IconButton.styleFrom(
+              foregroundColor: isDone ? Colors.white : const Color(0xFF94A3B8),
+              backgroundColor:
+                  isDone ? const Color(0xFF16A34A) : const Color(0xFFF1F5F9),
+              minimumSize: const Size(38, 38),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              side: BorderSide(
+                color:
+                    isDone ? const Color(0xFF16A34A) : const Color(0xFFDDE7F3),
+              ),
+            ),
+          ),
+        if (onArchive != null) ...[
+          if (onToggleDone != null) const SizedBox(height: 6),
+          IconButton(
+            tooltip: strings.archiveRecord,
+            onPressed: onArchive,
+            icon: const Icon(Icons.archive_outlined, size: 21),
+            style: IconButton.styleFrom(
+              foregroundColor: const Color(0xFF92400E),
+              backgroundColor: const Color(0xFFFFF7ED),
+              minimumSize: const Size(38, 38),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              side: const BorderSide(color: Color(0xFFF3D6B4)),
+            ),
+          ),
+        ],
+        if (onRestore != null) ...[
+          if (onToggleDone != null || onArchive != null)
+            const SizedBox(height: 6),
+          IconButton(
+            tooltip: strings.restoreToFeed,
+            onPressed: onRestore,
+            icon: const Icon(Icons.unarchive_outlined, size: 21),
+            style: IconButton.styleFrom(
+              foregroundColor: const Color(0xFF2563EB),
+              backgroundColor: const Color(0xFFEAF3FF),
+              minimumSize: const Size(38, 38),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              side: const BorderSide(color: Color(0xFFBFDBFE)),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

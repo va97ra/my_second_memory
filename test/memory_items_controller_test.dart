@@ -74,4 +74,26 @@ void main() {
     expect(controller.state.single.status, MemoryStatus.active);
     expect(repository.items.single.status, MemoryStatus.active);
   });
+
+  test('restore returns archived item to active state', () async {
+    final date = DateTime(2026, 6, 30);
+    final repository = _MemoryRepository([
+      MemoryItem(
+        id: 'archived',
+        type: MemoryType.note,
+        title: 'Archived',
+        memoryDate: date,
+        createdAt: date,
+        updatedAt: date,
+        status: MemoryStatus.archived,
+      ),
+    ]);
+    final controller = MemoryItemsController(repository);
+
+    await controller.load();
+    await controller.restore('archived');
+
+    expect(controller.state.single.status, MemoryStatus.active);
+    expect(repository.items.single.status, MemoryStatus.active);
+  });
 }

@@ -6,6 +6,7 @@ import '../../features/calendar/ui/calendar_day_screen.dart';
 import '../../features/home_feed/ui/home_feed_screen.dart';
 import '../../features/memory_items/ui/add_memory_item_screen.dart';
 import '../../features/memory_items/ui/memory_item_detail_screen.dart';
+import '../../features/memory_items/ui/memory_library_screen.dart';
 import '../../features/memory_items/ui/memory_item_view_screen.dart';
 import '../../features/people/ui/people_screen.dart';
 import '../../features/projects/ui/projects_screen.dart';
@@ -27,13 +28,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/memory',
-        redirect: (context, state) => '/',
+        builder: (context, state) => const MemoryLibraryScreen(),
       ),
       GoRoute(
         path: '/memory/item/:id',
         builder: (context, state) {
           return MemoryItemDetailScreen(
             itemId: state.pathParameters['id'] ?? '',
+          );
+        },
+      ),
+      GoRoute(
+        path: '/memory/new',
+        builder: (context, state) {
+          final rawDate = state.uri.queryParameters['date'];
+          final date = rawDate == null
+              ? DateTime.now()
+              : DateTime.tryParse(rawDate) ?? DateTime.now();
+          return MemoryItemDetailScreen(
+            initialDate: DateTime(date.year, date.month, date.day),
           );
         },
       ),

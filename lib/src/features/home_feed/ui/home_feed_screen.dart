@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
@@ -16,22 +17,8 @@ class HomeFeedScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
     final items = ref.watch(memoryItemsControllerProvider);
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final todayFeed = smartFeedForDay(items, today);
-    final yesterdayFeed = _itemsForExactDay(
-      items,
-      today.subtract(const Duration(days: 1)),
-      todayFeed,
-    );
-    final dayBeforeYesterdayFeed = _itemsForExactDay(
-      items,
-      today.subtract(const Duration(days: 2)),
-      todayFeed,
-    );
-    final isEmpty = todayFeed.isEmpty &&
-        yesterdayFeed.isEmpty &&
-        dayBeforeYesterdayFeed.isEmpty;
+    final groups = groupItemsByDate(items);
+    final isEmpty = groups.isEmpty;
 
     return AppShell(
       currentIndex: 0,
@@ -67,43 +54,16 @@ class HomeFeedScreen extends ConsumerWidget {
                 child:
                     Center(child: _EmptyFeedMessage(text: strings.emptyFeed)),
               )
-            else ...[
-              _MemorySliverList(items: todayFeed, ref: ref),
-              if (yesterdayFeed.isNotEmpty) ...[
-                _FeedSectionHeader(title: strings.yesterdaySection),
-                _MemorySliverList(items: yesterdayFeed, ref: ref),
+            else
+              for (final group in groups) ...[
+                _FeedSectionHeader(date: group.date),
+                _MemorySliverList(items: group.items, ref: ref),
               ],
-              if (dayBeforeYesterdayFeed.isNotEmpty) ...[
-                _FeedSectionHeader(title: strings.dayBeforeYesterdaySection),
-                _MemorySliverList(items: dayBeforeYesterdayFeed, ref: ref),
-              ],
-              const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
-            ],
+            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
           ],
         ),
       ),
     );
-  }
-
-  List<MemoryItem> _itemsForExactDay(
-    List<MemoryItem> items,
-    DateTime date,
-    List<MemoryItem> alreadyShown,
-  ) {
-    final shownIds = alreadyShown.map((item) => item.id).toSet();
-    final day = DateTime(date.year, date.month, date.day);
-    return items.where((item) {
-      return !item.isArchived &&
-          !shownIds.contains(item.id) &&
-          isSameDay(item.memoryDate, day);
-    }).toList()
-      ..sort((a, b) {
-        final priority = b.priority.compareTo(a.priority);
-        if (priority != 0) {
-          return priority;
-        }
-        return a.createdAt.compareTo(b.createdAt);
-      });
   }
 }
 
@@ -151,12 +111,15 @@ class _MemoryBanner extends StatelessWidget {
 }
 
 class _FeedSectionHeader extends StatelessWidget {
-  const _FeedSectionHeader({required this.title});
+  const _FeedSectionHeader({required this.date});
 
-  final String title;
+  final DateTime date;
 
   @override
   Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    final title = DateFormat.yMMMMd(locale).format(date);
+
     if (title.isEmpty) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
@@ -264,6 +227,7 @@ class _MemorySliverList extends StatelessWidget {
         final item = items[index];
         return MemoryItemCard(
           item: item,
+          showDate: false,
           onOpen: () {
             context.push('/memory/view/${Uri.encodeComponent(item.id)}');
           },
@@ -271,6 +235,9 @@ class _MemorySliverList extends StatelessWidget {
             ref
                 .read(memoryItemsControllerProvider.notifier)
                 .toggleDone(item.id);
+          },
+          onArchive: () {
+            ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
           },
         );
       },

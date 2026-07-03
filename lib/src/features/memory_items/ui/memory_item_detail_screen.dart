@@ -13,6 +13,7 @@ import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../voice_notes/data/voice_note_storage.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
+import '../data/memory_image_storage.dart';
 import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
 import '../domain/memory_type.dart';
@@ -20,11 +21,13 @@ import '../state/memory_items_controller.dart';
 
 class MemoryItemDetailScreen extends ConsumerStatefulWidget {
   const MemoryItemDetailScreen({
-    required this.itemId,
+    this.itemId,
+    this.initialDate,
     super.key,
   });
 
-  final String itemId;
+  final String? itemId;
+  final DateTime? initialDate;
 
   @override
   ConsumerState<MemoryItemDetailScreen> createState() =>
@@ -37,6 +40,7 @@ class _MemoryItemDetailScreenState
   final _bodyController = TextEditingController();
   final _recorder = AudioRecorder();
   final _voiceStorage = VoiceNoteStorage();
+  final _imageStorage = MemoryImageStorage();
   final _imagePaths = <String>[];
 
   String? _loadedItemId;
@@ -60,7 +64,7 @@ class _MemoryItemDetailScreenState
     final strings = AppStrings.of(context);
     final item = _findItem();
 
-    if (item == null) {
+    if (item == null && widget.itemId != null) {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -74,7 +78,11 @@ class _MemoryItemDetailScreenState
       );
     }
 
-    _initializeFrom(item);
+    if (item == null) {
+      _initializeNew();
+    } else {
+      _initializeFrom(item);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -84,7 +92,7 @@ class _MemoryItemDetailScreenState
           icon: const Icon(Icons.arrow_back),
         ),
         title: _EditorTitle(
-          title: strings.editRecord,
+          title: item == null ? strings.newRecord : strings.editRecord,
           dateText: _formattedDate(context),
           onDateTap: _pickDate,
         ),
@@ -94,20 +102,21 @@ class _MemoryItemDetailScreenState
             onPressed: _isRecording ? null : () => _save(item),
             icon: const Icon(Icons.save_outlined),
           ),
-          PopupMenuButton<String>(
-            tooltip: strings.delete,
-            onSelected: (value) {
-              if (value == 'delete') {
-                _confirmDelete(item);
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'delete',
-                child: Text(strings.delete),
-              ),
-            ],
-          ),
+          if (item != null)
+            PopupMenuButton<String>(
+              tooltip: strings.delete,
+              onSelected: (value) {
+                if (value == 'delete') {
+                  _confirmDelete(item);
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Text(strings.delete),
+                ),
+              ],
+            ),
         ],
       ),
       body: SafeArea(
@@ -122,6 +131,8 @@ class _MemoryItemDetailScreenState
               controller: _bodyController,
               imagePaths: _imagePaths,
               audioPath: _audioPath,
+              audioDurationSeconds: _audioDurationSeconds,
+              memoryDate: _memoryDate,
               isRecording: _isRecording,
               onPickImage: _pickImage,
               onRemoveImage: (path) => setState(() {
@@ -136,9 +147,13 @@ class _MemoryItemDetailScreenState
   }
 
   MemoryItem? _findItem() {
+    final itemId = widget.itemId;
+    if (itemId == null) {
+      return null;
+    }
     final items = ref.watch(memoryItemsControllerProvider);
     for (final item in items) {
-      if (item.id == widget.itemId) {
+      if (item.id == itemId) {
         return item;
       }
     }
@@ -160,6 +175,21 @@ class _MemoryItemDetailScreenState
     _imagePaths
       ..clear()
       ..addAll(item.imagePaths);
+  }
+
+  void _initializeNew() {
+    if (_loadedItemId == '__new__') {
+      return;
+    }
+    final date = widget.initialDate ?? DateTime.now();
+    _loadedItemId = '__new__';
+    _bodyController.clear();
+    _memoryDate = DateTime(date.year, date.month, date.day);
+    _status = MemoryStatus.active;
+    _type = MemoryType.note;
+    _audioPath = null;
+    _audioDurationSeconds = null;
+    _imagePaths.clear();
   }
 
   Future<void> _pickDate() async {
@@ -198,7 +228,8 @@ class _MemoryItemDetailScreenState
       return;
     }
 
-    setState(() => _imagePaths.add(file.path));
+    final savedPath = await _imageStorage.savePickedImage(file);
+    setState(() => _imagePaths.add(savedPath));
   }
 
   Future<void> _startVoice() async {
@@ -245,29 +276,59 @@ class _MemoryItemDetailScreenState
     return 'image/jpeg';
   }
 
-  Future<void> _save(MemoryItem item) async {
+  Future<void> _save(MemoryItem? item) async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final now = DateTime.now();
+    final title = _titleFromRecord(
+      _bodyController.text,
+      _type,
+      Localizations.localeOf(context).languageCode,
+    );
+    final memoryDate = DateTime(
+      _memoryDate.year,
+      _memoryDate.month,
+      _memoryDate.day,
+    );
+
+    if (item == null) {
+      final created = MemoryItem(
+        id: now.microsecondsSinceEpoch.toString(),
+        type: _type,
+        title: title,
+        body: _bodyController.text.trim(),
+        memoryDate: memoryDate,
+        createdAt: now,
+        updatedAt: now,
+        status: _status,
+        audioPath: _audioPath,
+        audioDurationSeconds: _audioDurationSeconds,
+        imagePaths: List.unmodifiable(_imagePaths),
+      );
+      await ref.read(memoryItemsControllerProvider.notifier).add(created);
+
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).saved)),
+      );
+      context.go('/memory/item/${Uri.encodeComponent(created.id)}');
       return;
     }
 
     final updated = item.copyWith(
       type: _type,
-      title: _titleFromRecord(
-        _bodyController.text,
-        _type,
-        Localizations.localeOf(context).languageCode,
-      ),
+      title: title,
       body: _bodyController.text.trim(),
-      memoryDate: DateTime(
-        _memoryDate.year,
-        _memoryDate.month,
-        _memoryDate.day,
-      ),
+      memoryDate: memoryDate,
       status: _status,
       audioPath: _audioPath,
       audioDurationSeconds: _audioDurationSeconds,
       imagePaths: List.unmodifiable(_imagePaths),
-      updatedAt: DateTime.now(),
+      updatedAt: now,
     );
     await ref.read(memoryItemsControllerProvider.notifier).update(updated);
 
@@ -424,6 +485,8 @@ class _RecordEditor extends StatelessWidget {
     required this.controller,
     required this.imagePaths,
     required this.audioPath,
+    required this.audioDurationSeconds,
+    required this.memoryDate,
     required this.isRecording,
     required this.onPickImage,
     required this.onRemoveImage,
@@ -433,6 +496,8 @@ class _RecordEditor extends StatelessWidget {
   final TextEditingController controller;
   final List<String> imagePaths;
   final String? audioPath;
+  final int? audioDurationSeconds;
+  final DateTime memoryDate;
   final bool isRecording;
   final VoidCallback onPickImage;
   final ValueChanged<String> onRemoveImage;
@@ -461,36 +526,7 @@ class _RecordEditor extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextFormField(
-                    key: const ValueKey('record_editor_text'),
-                    controller: controller,
-                    expands: true,
-                    maxLines: null,
-                    minLines: null,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.newline,
-                    textAlignVertical: TextAlignVertical.top,
-                    scrollPadding: const EdgeInsets.only(bottom: 120),
-                    decoration: InputDecoration(
-                      labelText: strings.description,
-                      alignLabelWithHint: true,
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ),
-                if (audioPath != null) ...[
-                  SizedBox(height: compact ? 8 : 10),
-                  VoiceNotePlayer(path: audioPath!),
-                ] else if (isRecording) ...[
-                  SizedBox(height: compact ? 8 : 10),
-                  _RecordingPill(text: strings.recordingNow),
-                ],
                 if (imagePaths.isNotEmpty) ...[
-                  SizedBox(height: compact ? 8 : 12),
                   SizedBox(
                     height: imageHeight,
                     child: ListView.separated(
@@ -535,7 +571,40 @@ class _RecordEditor extends StatelessWidget {
                       },
                     ),
                   ),
+                  SizedBox(height: compact ? 8 : 12),
                 ],
+                if (audioPath != null) ...[
+                  VoiceNotePlayer(
+                    path: audioPath!,
+                    recordedAt: memoryDate,
+                    durationSeconds: audioDurationSeconds,
+                  ),
+                  SizedBox(height: compact ? 8 : 12),
+                ] else if (isRecording) ...[
+                  _RecordingPill(text: strings.recordingNow),
+                  SizedBox(height: compact ? 8 : 12),
+                ],
+                Expanded(
+                  child: TextFormField(
+                    key: const ValueKey('record_editor_text'),
+                    controller: controller,
+                    expands: true,
+                    maxLines: null,
+                    minLines: null,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    textAlignVertical: TextAlignVertical.top,
+                    scrollPadding: const EdgeInsets.only(bottom: 120),
+                    decoration: InputDecoration(
+                      labelText: strings.description,
+                      alignLabelWithHint: true,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
                 SizedBox(height: compact ? 8 : 12),
                 Align(
                   alignment: Alignment.centerRight,

@@ -1,12 +1,7 @@
-import 'dart:convert';
-
-import 'package:file_selector/file_selector.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:record/record.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../home_feed/domain/feed_rules.dart';
@@ -17,7 +12,6 @@ import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
-import '../../voice_notes/data/voice_note_storage.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
 
 class CalendarDayScreen extends ConsumerStatefulWidget {
@@ -33,28 +27,13 @@ class CalendarDayScreen extends ConsumerStatefulWidget {
 }
 
 class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
-  final _messageController = TextEditingController();
-  final _recorder = AudioRecorder();
-  final _voiceStorage = VoiceNoteStorage();
-  final _imagePaths = <String>[];
-  DateTime? _recordingStartedAt;
-  bool _isRecording = false;
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    _recorder.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
     final strings = AppStrings.of(context);
     final dayItems = ref
         .watch(memoryItemsControllerProvider)
-        .where((item) =>
-            !item.isArchived && isSameDay(item.memoryDate, widget.date))
+        .where((item) => isSameDay(item.memoryDate, widget.date))
         .toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     final workingSchedules = ref
@@ -126,16 +105,7 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
                         },
                       ),
               ),
-              _MessageComposer(
-                controller: _messageController,
-                imagePaths: _imagePaths,
-                isRecording: _isRecording,
-                onAttachImage: _pickImage,
-                onRemoveImage: (path) =>
-                    setState(() => _imagePaths.remove(path)),
-                onSubmit: _sendTextAndImages,
-                onVoicePressed: _isRecording ? _stopAndSaveVoice : _startVoice,
-              ),
+              _AddRecordBar(onPressed: _openNewRecord),
             ],
           ),
         ),
@@ -143,133 +113,10 @@ class _CalendarDayScreenState extends ConsumerState<CalendarDayScreen> {
     );
   }
 
-  Future<void> _pickImage() async {
-    const imageGroup = XTypeGroup(
-      label: 'Images',
-      extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+  void _openNewRecord() {
+    context.push(
+      '/memory/new?date=${DateFormat('yyyy-MM-dd').format(widget.date)}',
     );
-    final file = await openFile(acceptedTypeGroups: [imageGroup]);
-    if (file == null) {
-      return;
-    }
-
-    if (kIsWeb) {
-      final bytes = await file.readAsBytes();
-      final mimeType = file.mimeType ?? _mimeTypeForName(file.name);
-      final dataUrl = 'data:$mimeType;base64,${base64Encode(bytes)}';
-      setState(() => _imagePaths.add(dataUrl));
-      return;
-    }
-
-    setState(() => _imagePaths.add(file.path));
-  }
-
-  String _mimeTypeForName(String name) {
-    final lower = name.toLowerCase();
-    if (lower.endsWith('.png')) {
-      return 'image/png';
-    }
-    if (lower.endsWith('.gif')) {
-      return 'image/gif';
-    }
-    if (lower.endsWith('.webp')) {
-      return 'image/webp';
-    }
-    return 'image/jpeg';
-  }
-
-  Future<void> _sendTextAndImages() async {
-    final text = _messageController.text.trim();
-    if (text.isEmpty && _imagePaths.isEmpty) {
-      return;
-    }
-
-    final strings = AppStrings.of(context);
-    final title = text.isNotEmpty ? _titleFromText(text) : strings.photo;
-    await _addItem(
-      type: MemoryType.note,
-      title: title,
-      body: text,
-      imagePaths: List.unmodifiable(_imagePaths),
-    );
-
-    if (!mounted) {
-      return;
-    }
-    _messageController.clear();
-    setState(() => _imagePaths.clear());
-  }
-
-  Future<void> _startVoice() async {
-    final hasPermission = await _recorder.hasPermission();
-    if (!hasPermission) {
-      return;
-    }
-
-    final path = await _voiceStorage.buildNewPath();
-    await _recorder.start(const RecordConfig(), path: path);
-    setState(() {
-      _recordingStartedAt = DateTime.now();
-      _isRecording = true;
-    });
-  }
-
-  Future<void> _stopAndSaveVoice() async {
-    final path = await _recorder.stop();
-    final startedAt = _recordingStartedAt;
-    final duration =
-        startedAt == null ? 0 : DateTime.now().difference(startedAt).inSeconds;
-    setState(() {
-      _recordingStartedAt = null;
-      _isRecording = false;
-    });
-
-    if (path == null) {
-      return;
-    }
-
-    if (!mounted) {
-      return;
-    }
-    final title = AppStrings.of(context).voiceMessage;
-    await _addItem(
-      type: MemoryType.voiceNote,
-      title: title,
-      audioPath: path,
-      audioDurationSeconds: duration,
-    );
-  }
-
-  Future<void> _addItem({
-    required MemoryType type,
-    required String title,
-    String body = '',
-    String? audioPath,
-    int? audioDurationSeconds,
-    List<String> imagePaths = const [],
-  }) async {
-    final now = DateTime.now();
-    final item = MemoryItem(
-      id: now.microsecondsSinceEpoch.toString(),
-      type: type,
-      title: title,
-      body: body,
-      memoryDate: widget.date,
-      createdAt: now,
-      updatedAt: now,
-      audioPath: audioPath,
-      audioDurationSeconds: audioDurationSeconds,
-      imagePaths: imagePaths,
-    );
-    await ref.read(memoryItemsControllerProvider.notifier).add(item);
-  }
-
-  String _titleFromText(String value) {
-    final compact = value.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (compact.length <= 48) {
-      return compact;
-    }
-    return '${compact.substring(0, 48)}...';
   }
 }
 
@@ -446,7 +293,11 @@ class _ChatBubble extends StatelessWidget {
                       if (text.isNotEmpty) const SizedBox(height: 8),
                     ],
                     if (item.audioPath != null)
-                      VoiceNotePlayer(path: item.audioPath!),
+                      VoiceNotePlayer(
+                        path: item.audioPath!,
+                        recordedAt: item.memoryDate,
+                        durationSeconds: item.audioDurationSeconds,
+                      ),
                     if (text.isNotEmpty && item.type != MemoryType.voiceNote)
                       Text(
                         text,
@@ -456,6 +307,10 @@ class _ChatBubble extends StatelessWidget {
                             ),
                       ),
                     const SizedBox(height: 4),
+                    if (item.isArchived) ...[
+                      _ArchivePill(text: AppStrings.of(context).archive),
+                      const SizedBox(height: 4),
+                    ],
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
@@ -471,6 +326,33 @@ class _ChatBubble extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ArchivePill extends StatelessWidget {
+  const _ArchivePill({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFF3D6B4)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: const Color(0xFF92400E),
+                fontWeight: FontWeight.w800,
+              ),
         ),
       ),
     );
@@ -526,53 +408,19 @@ class _BubbleImageGrid extends StatelessWidget {
   }
 }
 
-class _MessageComposer extends StatefulWidget {
-  const _MessageComposer({
-    required this.controller,
-    required this.imagePaths,
-    required this.isRecording,
-    required this.onAttachImage,
-    required this.onRemoveImage,
-    required this.onSubmit,
-    required this.onVoicePressed,
-  });
+class _AddRecordBar extends StatelessWidget {
+  const _AddRecordBar({required this.onPressed});
 
-  final TextEditingController controller;
-  final List<String> imagePaths;
-  final bool isRecording;
-  final VoidCallback onAttachImage;
-  final ValueChanged<String> onRemoveImage;
-  final VoidCallback onSubmit;
-  final VoidCallback onVoicePressed;
-
-  @override
-  State<_MessageComposer> createState() => _MessageComposerState();
-}
-
-class _MessageComposerState extends State<_MessageComposer> {
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onTextChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onTextChanged);
-    super.dispose();
-  }
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    final hasDraft = widget.controller.text.trim().isNotEmpty ||
-        widget.imagePaths.isNotEmpty;
-    final canSend = hasDraft && !widget.isRecording;
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
-        border: const Border(top: BorderSide(color: Color(0xFFDDE7F3))),
+        color: const Color(0xFFFFFCF6).withValues(alpha: 0.96),
+        border: const Border(top: BorderSide(color: Color(0xFFE4D6C3))),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F172A).withValues(alpha: 0.08),
@@ -581,142 +429,26 @@ class _MessageComposerState extends State<_MessageComposer> {
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 9),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (widget.imagePaths.isNotEmpty)
-              SizedBox(
-                height: 72,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: widget.imagePaths.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final path = widget.imagePaths[index];
-                    return Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox(
-                            width: 96,
-                            height: 72,
-                            child: GestureDetector(
-                              key: ValueKey('composer_image_$path'),
-                              onTap: () => openMemoryImageViewer(context, path),
-                              child: MemoryImagePreview(path: path),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 2,
-                          top: 2,
-                          child: IconButton.filledTonal(
-                            constraints: const BoxConstraints.tightFor(
-                              width: 24,
-                              height: 24,
-                            ),
-                            padding: EdgeInsets.zero,
-                            onPressed: () => widget.onRemoveImage(path),
-                            icon: const Icon(Icons.close, size: 14),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const ValueKey('calendar_day_add_record'),
+              onPressed: onPressed,
+              icon: const Icon(Icons.add),
+              label: Text(strings.addRecord),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-            Row(
-              children: [
-                _ComposerActionButton(
-                  tooltip: strings.addImage,
-                  icon: Icons.photo_camera_outlined,
-                  color: const Color(0xFF2563EB),
-                  onPressed: widget.onAttachImage,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: widget.controller,
-                    minLines: 1,
-                    maxLines: 4,
-                    decoration: InputDecoration(
-                      hintText: strings.messageHint,
-                      filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFD6E2EF),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF2563EB),
-                          width: 1.4,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _ComposerActionButton(
-                  tooltip: canSend ? strings.save : strings.voice,
-                  icon: canSend
-                      ? Icons.send
-                      : widget.isRecording
-                          ? Icons.stop
-                          : Icons.mic_none,
-                  color: canSend
-                      ? const Color(0xFF2563EB)
-                      : widget.isRecording
-                          ? const Color(0xFFDC2626)
-                          : const Color(0xFFDB2777),
-                  onPressed: canSend ? widget.onSubmit : widget.onVoicePressed,
-                ),
-              ],
             ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-
-  void _onTextChanged() => setState(() {});
-}
-
-class _ComposerActionButton extends StatelessWidget {
-  const _ComposerActionButton({
-    required this.tooltip,
-    required this.icon,
-    required this.color,
-    required this.onPressed,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      icon: Icon(icon),
-      style: IconButton.styleFrom(
-        fixedSize: const Size(44, 44),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        foregroundColor: color,
-        backgroundColor: color.withValues(alpha: 0.13),
-        side: BorderSide(color: color.withValues(alpha: 0.28)),
       ),
     );
   }

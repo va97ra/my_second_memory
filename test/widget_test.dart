@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:my_second_memory/src/app.dart';
 import 'package:my_second_memory/src/features/memory_items/data/memory_repository.dart';
 import 'package:my_second_memory/src/features/memory_items/domain/memory_item.dart';
@@ -33,6 +34,7 @@ class _FeedMemoryRepository implements MemoryRepository {
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final dayBeforeYesterday = today.subtract(const Duration(days: 2));
+    final oldDay = today.subtract(const Duration(days: 5));
 
     return [
       MemoryItem(
@@ -66,6 +68,23 @@ class _FeedMemoryRepository implements MemoryRepository {
         memoryDate: dayBeforeYesterday,
         createdAt: now,
         updatedAt: now,
+      ),
+      MemoryItem(
+        id: 'old-note',
+        type: MemoryType.note,
+        title: 'Старая активная запись',
+        memoryDate: oldDay,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      MemoryItem(
+        id: 'archived-note',
+        type: MemoryType.note,
+        title: 'Архивная запись',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+        status: MemoryStatus.archived,
       ),
     ];
   }
@@ -154,10 +173,14 @@ class _FakeShiftScheduleRepository implements ShiftScheduleRepository {
 
 void main() {
   testWidgets('shows the home feed when app is unlocked', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    await tester.binding.setSurfaceSize(const Size(800, 1300));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final repository = _FeedMemoryRepository();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final oldDay = today.subtract(const Duration(days: 5));
 
     await tester.pumpWidget(
       ProviderScope(
@@ -184,12 +207,26 @@ void main() {
     expect(find.text('Проекты'), findsNothing);
     expect(find.text('План на сегодня'), findsOneWidget);
     expect(find.text('Моя вторая память'), findsWidgets);
-    expect(find.text('Это было вчера'), findsOneWidget);
+    expect(find.text(DateFormat.yMMMMd('ru').format(today)), findsOneWidget);
+    expect(
+      find.text(DateFormat.yMMMMd('ru').format(yesterday)),
+      findsOneWidget,
+    );
+    expect(find.text(DateFormat.yMMMMd('ru').format(oldDay)), findsOneWidget);
     expect(find.text('Вчерашняя заметка'), findsOneWidget);
-    expect(find.text('Это было позавчера'), findsOneWidget);
     expect(find.text('Позавчерашняя заметка'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Старая активная запись'),
+      220,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Старая активная запись'), findsOneWidget);
+    expect(find.text('Архивная запись'), findsNothing);
+    expect(find.text(DateFormat.MMM('ru').format(today)), findsNothing);
     expect(find.byIcon(Icons.delete_outline), findsNothing);
     expect(find.byIcon(Icons.check_circle_outline), findsWidgets);
+    expect(find.byIcon(Icons.archive_outlined), findsWidgets);
   });
 
   testWidgets('hides empty previous day sections', (tester) async {
@@ -214,8 +251,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Только сегодня'), findsOneWidget);
-    expect(find.text('Это было вчера'), findsNothing);
-    expect(find.text('Это было позавчера'), findsNothing);
     expect(find.text('Записей нет'), findsNothing);
   });
 
@@ -261,6 +296,35 @@ void main() {
     expect(find.byIcon(Icons.more_vert), findsNothing);
     expect(find.widgetWithText(TextFormField, 'Запись'), findsNothing);
     expect(find.text('Тип записи'), findsNothing);
+  });
+
+  testWidgets('feed card can be archived from the feed', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _TodayOnlyMemoryRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.text('Только сегодня'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Скрыть в архив'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Только сегодня'), findsNothing);
+    expect(repository.savedItems.single.status, MemoryStatus.archived);
   });
 
   testWidgets('editor keeps record field large with long text and images',
@@ -349,7 +413,7 @@ void main() {
     expect(find.byKey(const ValueKey('memory_image_viewer')), findsNothing);
   });
 
-  testWidgets('calendar date opens day chat and sends text on selected date',
+  testWidgets('calendar date opens day and add opens editor on selected date',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -384,19 +448,40 @@ void main() {
 
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     expect(find.text('План на сегодня'), findsOneWidget);
-    expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.mic_none), findsOneWidget);
+    expect(find.text('Архивная запись'), findsOneWidget);
+    expect(find.text('Архив'), findsOneWidget);
+    expect(find.text('Добавить запись'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('calendar_day_add_record')),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(TextField, 'Сообщение'), findsNothing);
+    expect(find.byIcon(Icons.send), findsNothing);
     expect(find.byIcon(Icons.attach_file), findsNothing);
-    await tester.enterText(
-        find.widgetWithText(TextField, 'Сообщение'), 'Фото дня');
-    await tester.pump();
-    await tester.tap(find.byIcon(Icons.send));
+
+    await tester.tap(find.byKey(const ValueKey('calendar_day_add_record')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Фото дня'), findsOneWidget);
+    expect(find.text('Новая запись'), findsOneWidget);
+    expect(
+      find.textContaining(DateFormat.yMMMd('ru').format(today)),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Запись'),
+      'Новая запись из календаря',
+    );
+    await tester.tap(find.byIcon(Icons.save_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Редактировать запись'), findsOneWidget);
+    expect(find.text('Новая запись из календаря'), findsOneWidget);
     expect(
       repository.savedItems.any(
-        (item) => item.title == 'Фото дня' && item.memoryDate == today,
+        (item) =>
+            item.title == 'Новая запись из календаря' &&
+            item.body == 'Новая запись из календаря' &&
+            item.memoryDate == today,
       ),
       isTrue,
     );
@@ -480,6 +565,53 @@ void main() {
     expect(shiftRepository.savedSchedules.single.organizationName, 'Завод');
     expect(shiftRepository.savedSchedules.single.workDays, 2);
     expect(shiftRepository.savedSchedules.single.restDays, 2);
+  });
+
+  testWidgets('settings opens memory archive and restores item to feed',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _FeedMemoryRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Настройки'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('База памяти'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('База памяти'), findsWidgets);
+    expect(find.text('Архивная запись'), findsOneWidget);
+    expect(find.text('План на сегодня'), findsNothing);
+
+    await tester.tap(find.byTooltip('Вернуть в ленту'));
+    await tester.pumpAndSettle();
+
+    expect(
+      repository.savedItems
+          .firstWhere((item) => item.id == 'archived-note')
+          .status,
+      MemoryStatus.active,
+    );
+    expect(find.text('Архивная запись'), findsNothing);
+
+    await tester.tap(find.text('Лента'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Архивная запись'), findsOneWidget);
   });
 
   testWidgets('calendar shows shift colors and opens selected day',

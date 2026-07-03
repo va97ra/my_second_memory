@@ -22,9 +22,16 @@ class AppStrings {
       isRu ? 'Это было позавчера' : 'This was two days ago';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
   String get add => isRu ? 'Добавить' : 'Add';
+  String get addRecord => isRu ? 'Добавить запись' : 'Add record';
+  String get newRecord => isRu ? 'Новая запись' : 'New record';
   String get people => isRu ? 'Люди' : 'People';
   String get projects => isRu ? 'Проекты' : 'Projects';
   String get memoryBase => isRu ? 'База памяти' : 'Memory base';
+  String get archive => isRu ? 'Архив' : 'Archive';
+  String get archiveRecord => isRu ? 'Скрыть в архив' : 'Archive record';
+  String get restoreToFeed => isRu ? 'Вернуть в ленту' : 'Restore to feed';
+  String get emptyArchive =>
+      isRu ? 'В архиве пока ничего нет' : 'Archive is empty';
   String get settings => isRu ? 'Настройки' : 'Settings';
   String get title => isRu ? 'Название' : 'Title';
   String get recordType => isRu ? 'Тип записи' : 'Record type';

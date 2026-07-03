@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_second_memory/src/features/home_feed/domain/feed_rules.dart';
 import 'package:my_second_memory/src/features/memory_items/domain/memory_item.dart';
+import 'package:my_second_memory/src/features/memory_items/domain/memory_status.dart';
 import 'package:my_second_memory/src/features/memory_items/domain/memory_type.dart';
 
 void main() {
@@ -25,16 +26,30 @@ void main() {
       _item('1', MemoryType.note, DateTime(2026, 6, 30), 'a'),
       _item('2', MemoryType.voiceNote, DateTime(2026, 6, 30), 'b'),
       _item('3', MemoryType.project, DateTime(2026, 7, 1), 'c'),
+      _item(
+        '4',
+        MemoryType.note,
+        DateTime(2026, 7, 2),
+        'archived',
+        status: MemoryStatus.archived,
+      ),
     ];
 
     final groups = groupItemsByDate(items);
 
     expect(groups.length, 2);
-    expect(groups.first.items.length, 2);
+    expect(groups.first.date, DateTime(2026, 7, 1));
+    expect(groups.last.items.length, 2);
   });
 }
 
-MemoryItem _item(String id, MemoryType type, DateTime date, String title) {
+MemoryItem _item(
+  String id,
+  MemoryType type,
+  DateTime date,
+  String title, {
+  MemoryStatus status = MemoryStatus.active,
+}) {
   return MemoryItem(
     id: id,
     type: type,
@@ -42,5 +57,6 @@ MemoryItem _item(String id, MemoryType type, DateTime date, String title) {
     memoryDate: date,
     createdAt: date,
     updatedAt: date,
+    status: status,
   );
 }

@@ -147,7 +147,11 @@ class MemoryItemViewScreen extends ConsumerWidget {
                         ],
                         if (item.audioPath != null) ...[
                           const SizedBox(height: 16),
-                          VoiceNotePlayer(path: item.audioPath!),
+                          VoiceNotePlayer(
+                            path: item.audioPath!,
+                            recordedAt: item.memoryDate,
+                            durationSeconds: item.audioDurationSeconds,
+                          ),
                         ],
                         if (item.imagePaths.isNotEmpty) ...[
                           const SizedBox(height: 16),

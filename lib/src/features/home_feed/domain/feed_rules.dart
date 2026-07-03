@@ -42,7 +42,17 @@ List<MemoryItem> smartFeedForDay(List<MemoryItem> items, DateTime date) {
 
 List<FeedDay> groupItemsByDate(List<MemoryItem> items) {
   final visible = items.where((item) => !item.isArchived).toList()
-    ..sort((a, b) => a.memoryDate.compareTo(b.memoryDate));
+    ..sort((a, b) {
+      final byDate = b.memoryDate.compareTo(a.memoryDate);
+      if (byDate != 0) {
+        return byDate;
+      }
+      final byPriority = b.priority.compareTo(a.priority);
+      if (byPriority != 0) {
+        return byPriority;
+      }
+      return b.createdAt.compareTo(a.createdAt);
+    });
 
   final grouped = <DateTime, List<MemoryItem>>{};
   for (final item in visible) {

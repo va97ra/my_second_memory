@@ -35,10 +35,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).languageCode;
-    final items = ref
-        .watch(memoryItemsControllerProvider)
-        .where((item) => !item.isArchived)
-        .toList();
+    final items = ref.watch(memoryItemsControllerProvider);
     final shiftSchedules = ref.watch(shiftSchedulesControllerProvider);
 
     return AppShell(

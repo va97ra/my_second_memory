@@ -16,22 +16,27 @@ final memoryItemsControllerProvider =
 
 class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   MemoryItemsController(this._repository) : super(const []) {
-    load();
+    _loadFuture = _load();
   }
 
   final MemoryRepository _repository;
+  late final Future<void> _loadFuture;
 
-  Future<void> load() async {
+  Future<void> load() => _loadFuture;
+
+  Future<void> _load() async {
     final items = await _repository.loadItems();
     state = _sort(items);
   }
 
   Future<void> add(MemoryItem item) async {
+    await _loadFuture;
     state = _sort([...state, item]);
     await _repository.saveItems(state);
   }
 
   Future<void> update(MemoryItem item) async {
+    await _loadFuture;
     state = _sort([
       for (final existing in state)
         if (existing.id == item.id) item else existing,
@@ -40,6 +45,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   }
 
   Future<void> archive(String id) async {
+    await _loadFuture;
     final now = DateTime.now();
     state = _sort([
       for (final item in state)
@@ -51,7 +57,21 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     await _repository.saveItems(state);
   }
 
+  Future<void> restore(String id) async {
+    await _loadFuture;
+    final now = DateTime.now();
+    state = _sort([
+      for (final item in state)
+        if (item.id == id)
+          item.copyWith(status: MemoryStatus.active, updatedAt: now)
+        else
+          item,
+    ]);
+    await _repository.saveItems(state);
+  }
+
   Future<void> toggleDone(String id) async {
+    await _loadFuture;
     final now = DateTime.now();
     state = _sort([
       for (final item in state)
@@ -67,6 +87,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   }
 
   Future<void> delete(String id) async {
+    await _loadFuture;
     state = [
       for (final item in state)
         if (item.id != id) item,
