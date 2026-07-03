@@ -16,84 +16,108 @@ class SettingsScreen extends ConsumerWidget {
 
     return AppShell(
       currentIndex: 2,
-      child: CustomScrollView(
-        slivers: [
-          SliverAppBar.large(title: Text(strings.settings)),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFDDE3EA)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.035),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFF6FAFF),
+              Color(0xFFF3F6FA),
+              Color(0xFFF8FAFC),
+            ],
+          ),
+        ),
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar.large(
+              backgroundColor: const Color(0xFFF6FAFF),
+              surfaceTintColor: Colors.transparent,
+              title: Text(
+                strings.settings,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF172033),
                     ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Column(
-                    children: [
-                      _SettingsTile(
-                        icon: Icons.language,
-                        iconColor: const Color(0xFF0891B2),
-                        title: strings.language,
-                        subtitle:
-                            locale.languageCode == 'ru' ? 'Русский' : 'English',
-                        trailing: SegmentedButton<String>(
-                          segments: const [
-                            ButtonSegment(value: 'ru', label: Text('RU')),
-                            ButtonSegment(value: 'en', label: Text('EN')),
-                          ],
-                          selected: {locale.languageCode},
-                          onSelectionChanged: (value) {
-                            final code = value.first;
-                            final controller =
-                                ref.read(appLocaleControllerProvider.notifier);
-                            if (code == 'ru') {
-                              controller.setRussian();
-                            } else {
-                              controller.setEnglish();
-                            }
-                          },
-                        ),
-                      ),
-                      const Divider(),
-                      _SettingsTile(
-                        icon: Icons.lock_outline,
-                        iconColor: const Color(0xFF7C3AED),
-                        title: strings.pinSecurity,
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.go('/security'),
-                      ),
-                      const Divider(),
-                      _SettingsTile(
-                        icon: Icons.work_history_outlined,
-                        iconColor: const Color(0xFF16A34A),
-                        title: strings.shiftSchedules,
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.go('/settings/shifts'),
-                      ),
-                      const Divider(),
-                      _SettingsTile(
-                        icon: Icons.inventory_2_outlined,
-                        iconColor: const Color(0xFFEA580C),
-                        title: strings.memoryBase,
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.go('/memory'),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.94),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFD6E2EF)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.06),
+                        blurRadius: 20,
+                        offset: const Offset(0, 9),
                       ),
                     ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Column(
+                      children: [
+                        _SettingsTile(
+                          icon: Icons.language,
+                          iconColor: const Color(0xFF0891B2),
+                          title: strings.language,
+                          subtitle: locale.languageCode == 'ru'
+                              ? 'Русский'
+                              : 'English',
+                          trailing: SegmentedButton<String>(
+                            segments: const [
+                              ButtonSegment(value: 'ru', label: Text('RU')),
+                              ButtonSegment(value: 'en', label: Text('EN')),
+                            ],
+                            selected: {locale.languageCode},
+                            onSelectionChanged: (value) {
+                              final code = value.first;
+                              final controller = ref
+                                  .read(appLocaleControllerProvider.notifier);
+                              if (code == 'ru') {
+                                controller.setRussian();
+                              } else {
+                                controller.setEnglish();
+                              }
+                            },
+                          ),
+                        ),
+                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        _SettingsTile(
+                          icon: Icons.lock_outline,
+                          iconColor: const Color(0xFF7C3AED),
+                          title: strings.pinSecurity,
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.go('/security'),
+                        ),
+                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        _SettingsTile(
+                          icon: Icons.work_history_outlined,
+                          iconColor: const Color(0xFF16A34A),
+                          title: strings.shiftSchedules,
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.go('/settings/shifts'),
+                        ),
+                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        _SettingsTile(
+                          icon: Icons.inventory_2_outlined,
+                          iconColor: const Color(0xFFEA580C),
+                          title: strings.memoryBase,
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.go('/memory'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -119,18 +143,26 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       leading: DecoratedBox(
         decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.12),
+          color: iconColor.withValues(alpha: 0.13),
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: iconColor.withValues(alpha: 0.18)),
         ),
         child: SizedBox(
-          width: 36,
-          height: 36,
+          width: 38,
+          height: 38,
           child: Icon(icon, color: iconColor, size: 20),
         ),
       ),
-      title: Text(title),
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: const Color(0xFF172033),
+              fontWeight: FontWeight.w800,
+            ),
+      ),
       subtitle: subtitle == null ? null : Text(subtitle!),
       trailing: trailing,
       onTap: onTap,

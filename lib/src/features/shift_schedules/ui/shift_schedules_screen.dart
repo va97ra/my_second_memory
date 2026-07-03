@@ -17,44 +17,70 @@ class ShiftSchedulesScreen extends ConsumerWidget {
     final schedules = ref.watch(shiftSchedulesControllerProvider);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F7FB),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF6FAFF),
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: () => context.go('/settings'),
           icon: const Icon(Icons.arrow_back),
         ),
-        title: Text(strings.shiftSchedules),
+        title: Text(
+          strings.shiftSchedules,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: const Color(0xFF172033),
+                fontWeight: FontWeight.w900,
+              ),
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: Color(0xFFDDE7F3)),
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Column(
-                children: [
-                  if (schedules.isEmpty)
-                    _EmptyShiftSchedules(title: strings.noShiftSchedules)
-                  else
-                    for (final schedule in schedules)
-                      _ShiftScheduleTile(
-                        schedule: schedule,
-                        locale: locale,
-                        onEdit: () => _openEditor(context, ref, schedule),
-                        onToggle: () {
-                          ref
-                              .read(shiftSchedulesControllerProvider.notifier)
-                              .toggleEnabled(schedule.id);
-                        },
-                        onDelete: () =>
-                            _confirmDelete(context, ref, schedule.id),
-                      ),
-                ],
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFF6FAFF),
+              Color(0xFFF3F6FA),
+              Color(0xFFF8FAFC),
+            ],
+          ),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Column(
+                  children: [
+                    if (schedules.isEmpty)
+                      _EmptyShiftSchedules(title: strings.noShiftSchedules)
+                    else
+                      for (final schedule in schedules)
+                        _ShiftScheduleTile(
+                          schedule: schedule,
+                          locale: locale,
+                          onEdit: () => _openEditor(context, ref, schedule),
+                          onToggle: () {
+                            ref
+                                .read(shiftSchedulesControllerProvider.notifier)
+                                .toggleEnabled(schedule.id);
+                          },
+                          onDelete: () =>
+                              _confirmDelete(context, ref, schedule.id),
+                        ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(context, ref),
@@ -122,7 +148,14 @@ class _EmptyShiftSchedules extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE3EA)),
+        border: Border.all(color: const Color(0xFFDDE7F3)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: SizedBox(
         width: double.infinity,
@@ -131,7 +164,10 @@ class _EmptyShiftSchedules extends StatelessWidget {
           child: Text(
             title,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(0xFF475569),
+                  fontWeight: FontWeight.w800,
+                ),
           ),
         ),
       ),
@@ -162,7 +198,7 @@ class _ShiftScheduleTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: Theme.of(context).colorScheme.surface,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
@@ -172,12 +208,19 @@ class _ShiftScheduleTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: schedule.isEnabled
-                    ? color.withValues(alpha: 0.32)
-                    : const Color(0xFFDDE3EA),
+                    ? color.withValues(alpha: 0.34)
+                    : const Color(0xFFDDE7F3),
               ),
               color: schedule.isEnabled
-                  ? color.withValues(alpha: 0.08)
-                  : Colors.white,
+                  ? color.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.88),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: schedule.isEnabled ? 0.1 : 0),
+                  blurRadius: 16,
+                  offset: const Offset(0, 7),
+                ),
+              ],
             ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
@@ -201,7 +244,8 @@ class _ShiftScheduleTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF172033),
+                                    fontWeight: FontWeight.w900,
                                   ),
                         ),
                         const SizedBox(height: 3),
@@ -210,6 +254,7 @@ class _ShiftScheduleTile extends StatelessWidget {
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w700,
                                   ),
                         ),
                       ],
@@ -333,12 +378,12 @@ class _ShiftScheduleEditorSheetState
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
           child: Material(
-            color: Theme.of(context).colorScheme.surface,
+            color: Colors.white,
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
-              side: BorderSide(color: Color(0xFFDDE3EA)),
+              side: BorderSide(color: Color(0xFFDDE7F3)),
             ),
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
@@ -355,6 +400,7 @@ class _ShiftScheduleEditorSheetState
                               : strings.editShiftSchedule,
                           style:
                               Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: const Color(0xFF172033),
                                     fontWeight: FontWeight.w900,
                                   ),
                         ),
@@ -371,8 +417,11 @@ class _ShiftScheduleEditorSheetState
                   TextFormField(
                     controller: _organizationController,
                     textInputAction: TextInputAction.next,
-                    decoration:
-                        InputDecoration(labelText: strings.organization),
+                    decoration: InputDecoration(
+                      labelText: strings.organization,
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
@@ -417,6 +466,8 @@ class _ShiftScheduleEditorSheetState
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             labelText: strings.workDays,
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
                           ),
                           onChanged: (_) => _syncPreset(),
                         ),
@@ -428,6 +479,8 @@ class _ShiftScheduleEditorSheetState
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             labelText: strings.restDays,
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
                           ),
                           onChanged: (_) => _syncPreset(),
                         ),
@@ -466,6 +519,12 @@ class _ShiftScheduleEditorSheetState
                       onPressed: _save,
                       icon: const Icon(Icons.save_outlined),
                       label: Text(strings.save),
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                      ),
                     ),
                   ),
                 ],
