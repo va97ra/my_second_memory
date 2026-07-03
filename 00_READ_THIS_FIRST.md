@@ -179,6 +179,30 @@
 - `Календарь`
 - `Настройки`
 
+## Android
+
+Android-платформа добавлена в проект. Пакет приложения:
+
+```text
+com.va97ra.mysecondmemory
+```
+
+Название Android-приложения берется из:
+
+```text
+android/app/src/main/res/values/strings.xml
+```
+
+Иконка приложения:
+
+```text
+assets/icons/app_icon_source.png
+assets/icons/app_icon_1024.png
+android/app/src/main/res/mipmap-*/ic_launcher.png
+```
+
+Текущая release-сборка подписывается debug-ключом, чтобы APK можно было быстро поставить на телефон для проверки. Для публикации в Google Play позже нужен отдельный release-keystore.
+
 ## Хранилище
 
 Сейчас активное хранилище - `LocalMemoryRepository` через `SharedPreferences`.
@@ -346,6 +370,22 @@ $env:FLUTTER_SUPPRESS_ANALYTICS='true'
 .\.tools\flutter\bin\flutter.bat analyze
 .\.tools\flutter\bin\flutter.bat test
 .\.tools\flutter\bin\flutter.bat build web
+```
+
+Для APK:
+
+```powershell
+$env:PUB_CACHE=(Resolve-Path '.tools\pub-cache').Path
+$env:APPDATA=(Resolve-Path '.tools\appdata').Path
+$env:LOCALAPPDATA=(Resolve-Path '.tools\localappdata').Path
+$env:FLUTTER_SUPPRESS_ANALYTICS='true'
+.\.tools\flutter\bin\flutter.bat build apk --release
+```
+
+Готовый APK Flutter кладет сюда:
+
+```text
+build/app/outputs/flutter-apk/app-release.apk
 ```
 
 Для локального запуска:

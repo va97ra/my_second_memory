@@ -6,6 +6,8 @@
 .pub/
 build/
 coverage/
+release/*.apk
+release/*.aab
 
 android/.gradle/
 android/app/build/
