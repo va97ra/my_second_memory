@@ -318,13 +318,13 @@ class _ShiftScheduleEditorSheetState
   ];
 
   static const _presets = [
-    _ShiftPreset('5/2', 5, 2),
-    _ShiftPreset('2/2', 2, 2),
-    _ShiftPreset('сутки/трое', 1, 3),
-    _ShiftPreset('7/7', 7, 7),
-    _ShiftPreset('14/14', 14, 14),
-    _ShiftPreset('15/15', 15, 15),
-    _ShiftPreset('30/30', 30, 30),
+    _ShiftPreset('5/2', '5/2', '5/2', 5, 2),
+    _ShiftPreset('2/2', '2/2', '2/2', 2, 2),
+    _ShiftPreset('1/3', 'сутки/трое', '24h/3 off', 1, 3),
+    _ShiftPreset('7/7', '7/7', '7/7', 7, 7),
+    _ShiftPreset('14/14', '14/14', '14/14', 14, 14),
+    _ShiftPreset('15/15', '15/15', '15/15', 15, 15),
+    _ShiftPreset('30/30', '30/30', '30/30', 30, 30),
   ];
 
   late final TextEditingController _organizationController;
@@ -333,7 +333,7 @@ class _ShiftScheduleEditorSheetState
   late DateTime _startDate;
   late Color _selectedColor;
   late bool _isEnabled;
-  String? _selectedPresetLabel;
+  String? _selectedPresetKey;
 
   @override
   void initState() {
@@ -351,7 +351,7 @@ class _ShiftScheduleEditorSheetState
     _startDate = schedule?.startDate ?? _dateOnly(DateTime.now());
     _selectedColor = Color(schedule?.colorValue ?? _colors.first.toARGB32());
     _isEnabled = schedule?.isEnabled ?? true;
-    _selectedPresetLabel = _presetLabelFor(
+    _selectedPresetKey = _presetKeyFor(
       int.tryParse(_workDaysController.text) ?? 5,
       int.tryParse(_restDaysController.text) ?? 2,
     );
@@ -444,15 +444,15 @@ class _ShiftScheduleEditorSheetState
                     children: [
                       for (final preset in _presets)
                         ChoiceChip(
-                          label: Text(preset.label),
-                          selected: _selectedPresetLabel == preset.label,
+                          label: Text(preset.label(locale)),
+                          selected: _selectedPresetKey == preset.key,
                           onSelected: (_) => _applyPreset(preset),
                         ),
                       ChoiceChip(
                         label: Text(strings.customSchedule),
-                        selected: _selectedPresetLabel == null,
+                        selected: _selectedPresetKey == null,
                         onSelected: (_) => setState(() {
-                          _selectedPresetLabel = null;
+                          _selectedPresetKey = null;
                         }),
                       ),
                     ],
@@ -553,7 +553,7 @@ class _ShiftScheduleEditorSheetState
 
   void _applyPreset(_ShiftPreset preset) {
     setState(() {
-      _selectedPresetLabel = preset.label;
+      _selectedPresetKey = preset.key;
       _workDaysController.text = '${preset.workDays}';
       _restDaysController.text = '${preset.restDays}';
     });
@@ -563,9 +563,9 @@ class _ShiftScheduleEditorSheetState
     final workDays = int.tryParse(_workDaysController.text);
     final restDays = int.tryParse(_restDaysController.text);
     setState(() {
-      _selectedPresetLabel = workDays == null || restDays == null
+      _selectedPresetKey = workDays == null || restDays == null
           ? null
-          : _presetLabelFor(
+          : _presetKeyFor(
               workDays,
               restDays,
             );
@@ -607,10 +607,10 @@ class _ShiftScheduleEditorSheetState
     }
   }
 
-  String? _presetLabelFor(int workDays, int restDays) {
+  String? _presetKeyFor(int workDays, int restDays) {
     for (final preset in _presets) {
       if (preset.workDays == workDays && preset.restDays == restDays) {
-        return preset.label;
+        return preset.key;
       }
     }
     return null;
@@ -666,9 +666,21 @@ class _ColorSwatch extends StatelessWidget {
 }
 
 class _ShiftPreset {
-  const _ShiftPreset(this.label, this.workDays, this.restDays);
+  const _ShiftPreset(
+    this.key,
+    this.ruLabel,
+    this.enLabel,
+    this.workDays,
+    this.restDays,
+  );
 
-  final String label;
+  final String key;
+  final String ruLabel;
+  final String enLabel;
   final int workDays;
   final int restDays;
+
+  String label(String locale) {
+    return locale == 'ru' ? ruLabel : enLabel;
+  }
 }

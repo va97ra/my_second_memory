@@ -307,6 +307,7 @@ class _CalendarMonthHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final month = DateFormat.yMMMM(locale).format(visibleMonth);
+    final strings = AppStrings.of(context);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
@@ -343,13 +344,13 @@ class _CalendarMonthHeader extends StatelessWidget {
                     Row(
                       children: [
                         _MonthIconButton(
-                          tooltip: 'Предыдущий месяц',
+                          tooltip: strings.previousMonth,
                           icon: Icons.chevron_left,
                           onPressed: onPreviousMonth,
                         ),
                         const Spacer(),
                         _MonthIconButton(
-                          tooltip: 'Следующий месяц',
+                          tooltip: strings.nextMonth,
                           icon: Icons.chevron_right,
                           onPressed: onNextMonth,
                         ),
@@ -378,7 +379,7 @@ class _CalendarMonthHeader extends StatelessWidget {
                         FilledButton.tonalIcon(
                           onPressed: onToday,
                           icon: const Icon(Icons.today, size: 18),
-                          label: const Text('Сегодня'),
+                          label: Text(strings.today),
                           style: FilledButton.styleFrom(
                             backgroundColor:
                                 Colors.white.withValues(alpha: 0.88),

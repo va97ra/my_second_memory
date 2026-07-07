@@ -17,7 +17,7 @@ class MySecondMemoryApp extends ConsumerWidget {
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Моя вторая память',
+      onGenerateTitle: (context) => AppStrings.of(context).appTitle,
       theme: buildAppTheme(),
       locale: locale,
       supportedLocales: AppStrings.supportedLocales,

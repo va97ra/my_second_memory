@@ -48,7 +48,7 @@ class _FeedMemoryRepository implements MemoryRepository {
       MemoryItem(
         id: 'today-project',
         type: MemoryType.project,
-        title: 'Моя вторая память',
+        title: 'Ежедневник V2',
         memoryDate: today,
         createdAt: now,
         updatedAt: now,
@@ -207,7 +207,7 @@ void main() {
     expect(find.text('Люди'), findsNothing);
     expect(find.text('Проекты'), findsNothing);
     expect(find.text('План на сегодня'), findsOneWidget);
-    expect(find.text('Моя вторая память'), findsWidgets);
+    expect(find.text('Ежедневник V2'), findsWidgets);
     expect(find.text(DateFormat.yMMMMd('ru').format(today)), findsOneWidget);
     expect(
       find.text(DateFormat.yMMMMd('ru').format(yesterday)),
@@ -354,7 +354,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Проект'), findsOneWidget);
-    expect(find.text('Моя вторая память'), findsWidgets);
+    expect(find.text('Ежедневник V2'), findsWidgets);
     expect(find.text('План на сегодня'), findsNothing);
     expect(find.text('Вчерашняя заметка'), findsNothing);
   });

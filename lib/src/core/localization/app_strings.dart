@@ -13,7 +13,7 @@ class AppStrings {
 
   bool get isRu => locale.languageCode == 'ru';
 
-  String get appTitle => isRu ? 'Моя вторая память' : 'My Second Memory';
+  String get appTitle => 'Ежедневник V2';
   String get feed => isRu ? 'Лента' : 'Feed';
   String get dayFeed => isRu ? 'Лента дня' : 'Day feed';
   String get feedFilter => isRu ? 'Фильтр' : 'Filter';
@@ -21,6 +21,8 @@ class AppStrings {
   String get activeRecords => isRu ? 'Активные' : 'Active';
   String get completedRecords => isRu ? 'Выполненные' : 'Done';
   String get today => isRu ? 'Сегодня' : 'Today';
+  String get previousMonth => isRu ? 'Предыдущий месяц' : 'Previous month';
+  String get nextMonth => isRu ? 'Следующий месяц' : 'Next month';
   String get yesterdaySection => isRu ? 'Это было вчера' : 'This was yesterday';
   String get dayBeforeYesterdaySection =>
       isRu ? 'Это было позавчера' : 'This was two days ago';
