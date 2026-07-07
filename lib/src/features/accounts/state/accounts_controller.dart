@@ -4,7 +4,6 @@ import '../../security/data/encrypted_json_store.dart';
 import '../../security/state/security_provider.dart';
 import '../data/account_repository.dart';
 import '../data/encrypted_account_repository.dart';
-import '../data/locked_account_repository.dart';
 import '../data/local_account_repository.dart';
 import '../domain/account_item.dart';
 
@@ -21,7 +20,7 @@ final accountRepositoryProvider = Provider<AccountRepository>((ref) {
   if (!session.hasPin) {
     return plainRepository;
   }
-  return const LockedAccountRepository();
+  return plainRepository;
 });
 
 final accountsControllerProvider =

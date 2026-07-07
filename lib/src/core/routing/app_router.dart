@@ -6,12 +6,9 @@ import '../../features/backup/ui/backup_screen.dart';
 import '../../features/calendar/ui/calendar_screen.dart';
 import '../../features/calendar/ui/calendar_day_screen.dart';
 import '../../features/home_feed/ui/home_feed_screen.dart';
-import '../../features/memory_items/ui/add_memory_item_screen.dart';
 import '../../features/memory_items/ui/memory_item_detail_screen.dart';
 import '../../features/memory_items/ui/memory_library_screen.dart';
 import '../../features/memory_items/ui/memory_item_view_screen.dart';
-import '../../features/people/ui/people_screen.dart';
-import '../../features/projects/ui/projects_screen.dart';
 import '../../features/security/ui/security_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
 import '../../features/shift_schedules/ui/shift_schedules_screen.dart';
@@ -23,10 +20,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const HomeFeedScreen(),
-      ),
-      GoRoute(
-        path: '/add',
-        builder: (context, state) => const AddMemoryItemScreen(),
       ),
       GoRoute(
         path: '/memory',
@@ -79,14 +72,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             date: DateTime(date.year, date.month, date.day),
           );
         },
-      ),
-      GoRoute(
-        path: '/people',
-        builder: (context, state) => const PeopleScreen(),
-      ),
-      GoRoute(
-        path: '/projects',
-        builder: (context, state) => const ProjectsScreen(),
       ),
       GoRoute(
         path: '/settings',

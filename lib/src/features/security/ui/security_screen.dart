@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
-import '../../accounts/data/encrypted_account_repository.dart';
-import '../../accounts/data/local_account_repository.dart';
+import '../../../shared/ui/screen_chrome.dart';
 import '../../accounts/state/accounts_controller.dart';
-import '../../memory_items/data/encrypted_memory_repository.dart';
-import '../../memory_items/data/memory_repository_factory.dart';
 import '../../memory_items/state/memory_items_controller.dart';
-import '../../shift_schedules/data/encrypted_shift_schedule_repository.dart';
-import '../../shift_schedules/data/local_shift_schedule_repository.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
-import '../data/encrypted_json_store.dart';
+import '../data/security_data_migration_service.dart';
 import '../state/security_provider.dart';
 
 class SecurityScreen extends ConsumerStatefulWidget {
@@ -25,6 +19,7 @@ class SecurityScreen extends ConsumerStatefulWidget {
 
 class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   final _pinController = TextEditingController();
+  final _migrationService = const SecurityDataMigrationService();
   String? _message;
 
   @override
@@ -42,11 +37,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
       currentIndex: 3,
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            onPressed: () => context.go('/settings'),
-            icon: const Icon(Icons.arrow_back),
-          ),
+          leading: const AppBackButton(fallbackLocation: '/settings'),
           title: Text(strings.pinSecurity),
         ),
         body: ListView(
@@ -158,57 +149,18 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     }
 
     final currentSession = ref.read(securitySessionProvider);
-    final oldCipher = currentSession.cipher;
-    final memoryItems = oldCipher == null
-        ? null
-        : await EncryptedMemoryRepository(
-            store: EncryptedJsonStore(cipher: oldCipher),
-            plainRepository: createMemoryRepository(),
-          ).loadItems();
-    final shiftSchedules = oldCipher == null
-        ? null
-        : await EncryptedShiftScheduleRepository(
-            store: EncryptedJsonStore(cipher: oldCipher),
-            plainRepository: const LocalShiftScheduleRepository(),
-          ).loadSchedules();
-    final accounts = oldCipher == null
-        ? null
-        : await EncryptedAccountRepository(
-            store: EncryptedJsonStore(cipher: oldCipher),
-            plainRepository: const LocalAccountRepository(),
-          ).loadAccounts();
+    final snapshot = await _migrationService.snapshotEncryptedData(
+      currentSession.cipher,
+    );
 
     await ref.read(securitySessionProvider.notifier).setPin(pin);
 
     final newCipher = ref.read(securitySessionProvider).cipher;
     if (newCipher != null) {
-      final newMemoryRepository = EncryptedMemoryRepository(
-        store: EncryptedJsonStore(cipher: newCipher),
-        plainRepository: createMemoryRepository(),
+      await _migrationService.encryptPlainData(
+        cipher: newCipher,
+        snapshot: snapshot,
       );
-      final newShiftRepository = EncryptedShiftScheduleRepository(
-        store: EncryptedJsonStore(cipher: newCipher),
-        plainRepository: const LocalShiftScheduleRepository(),
-      );
-      final newAccountRepository = EncryptedAccountRepository(
-        store: EncryptedJsonStore(cipher: newCipher),
-        plainRepository: const LocalAccountRepository(),
-      );
-      if (memoryItems != null) {
-        await newMemoryRepository.saveItems(memoryItems);
-      } else {
-        await newMemoryRepository.loadItems();
-      }
-      if (shiftSchedules != null) {
-        await newShiftRepository.saveSchedules(shiftSchedules);
-      } else {
-        await newShiftRepository.loadSchedules();
-      }
-      if (accounts != null) {
-        await newAccountRepository.saveAccounts(accounts);
-      } else {
-        await newAccountRepository.loadAccounts();
-      }
     }
 
     _pinController.clear();
@@ -251,34 +203,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
       return;
     }
 
-    final store = EncryptedJsonStore(cipher: cipher);
-    final plainMemory = createMemoryRepository();
-    final memoryRepository = EncryptedMemoryRepository(
-      store: store,
-      plainRepository: plainMemory,
-    );
-    final items = await memoryRepository.loadItems();
-    await plainMemory.saveItems(items);
-    await store.remove(EncryptedMemoryRepository.storageKey);
-
-    const plainShifts = LocalShiftScheduleRepository();
-    final shiftRepository = EncryptedShiftScheduleRepository(
-      store: store,
-      plainRepository: plainShifts,
-    );
-    final schedules = await shiftRepository.loadSchedules();
-    await plainShifts.saveSchedules(schedules);
-    await store.remove(EncryptedShiftScheduleRepository.storageKey);
-
-    const plainAccounts = LocalAccountRepository();
-    final accountRepository = EncryptedAccountRepository(
-      store: store,
-      plainRepository: plainAccounts,
-    );
-    final accounts = await accountRepository.loadAccounts();
-    await plainAccounts.saveAccounts(accounts);
-    await store.remove(EncryptedAccountRepository.storageKey);
-
+    await _migrationService.decryptToPlainData(cipher);
     await ref.read(securitySessionProvider.notifier).clearPinSession();
     _invalidateProtectedProviders();
     if (!mounted) return;

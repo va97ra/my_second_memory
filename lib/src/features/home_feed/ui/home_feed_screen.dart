@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
+import '../../../shared/ui/screen_chrome.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
@@ -30,31 +31,10 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
 
     return AppShell(
       currentIndex: 0,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFBF3E8),
-              Color(0xFFF7ECDB),
-              Color(0xFFFCF7EF),
-            ],
-          ),
-        ),
+      child: WarmGradientBackground(
         child: CustomScrollView(
           slivers: [
-            SliverAppBar.large(
-              backgroundColor: const Color(0xFFFBF3E8),
-              surfaceTintColor: Colors.transparent,
-              title: Text(
-                strings.dayFeed,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF172033),
-                    ),
-              ),
-            ),
+            MainSliverAppBar(title: strings.dayFeed),
             SliverToBoxAdapter(
               child: _FeedFilterButton(
                 selected: _filter,

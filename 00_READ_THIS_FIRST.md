@@ -270,7 +270,21 @@ assets/icons/app_icon_1024.png
 android/app/src/main/res/mipmap-*/ic_launcher.png
 ```
 
-Текущая release-сборка подписывается debug-ключом, чтобы APK можно было быстро поставить на телефон для проверки. Для публикации в Google Play позже нужен отдельный release-keystore.
+Release-сборка подписывается постоянным upload-ключом для RuStore. Приватные файлы ключа не коммитить и хранить отдельно:
+
+```text
+android/app/upload-keystore.jks
+android/key.properties
+signing/UPLOAD_KEY_README_PRIVATE.txt
+```
+
+Для RuStore подготовлены release-артефакты:
+
+```text
+release/my_second_memory-rustore-release.apk
+release/my_second_memory-rustore-release.aab
+release/my_second_memory-rustore-signature-pepk.zip
+```
 
 ## Хранилище
 
@@ -456,12 +470,7 @@ UI работает через интерфейс `MemoryRepository`, поэто
 ### Технические задачи
 
 - Позже добавить SQLite/Web или другой надежный Web-storage, если браузерная версия станет основной.
-- Навести порядок в неиспользуемых экранах:
-  - `PeopleScreen`
-  - `ProjectsScreen`
-  - `AddMemoryItemScreen`
-  - `MemoryLibraryScreen`
-- Решить, удалить ли эти экраны или оставить как внутренние заготовки.
+- Старые неиспользуемые маршруты `/add`, `/people`, `/projects` удалены. `MemoryLibraryScreen` оставлен как рабочая `База памяти` / архив.
 - Улучшить тесты редактора:
   - проверка растягивания поля записи;
   - проверка сохранения фото из редактора;

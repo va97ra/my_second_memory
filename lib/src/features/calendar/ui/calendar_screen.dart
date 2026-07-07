@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
+import '../../../shared/ui/screen_chrome.dart';
 import '../../home_feed/domain/feed_rules.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_type.dart';
@@ -42,14 +43,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       currentIndex: 1,
       child: CustomScrollView(
         slivers: [
-          SliverAppBar.large(
-            leading: IconButton(
-              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-              onPressed: () => context.go('/'),
-              icon: const Icon(Icons.arrow_back),
-            ),
-            title: Text(strings.calendar),
-          ),
+          MainSliverAppBar(title: strings.calendar, backLocation: '/'),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
+import '../../../shared/ui/screen_chrome.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
 import '../domain/memory_type.dart';
 import '../state/memory_items_controller.dart';
@@ -31,29 +32,12 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
 
     return AppShell(
       currentIndex: 3,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFBF3E8),
-              Color(0xFFF7ECDB),
-              Color(0xFFFCF7EF),
-            ],
-          ),
-        ),
+      child: WarmGradientBackground(
         child: CustomScrollView(
           slivers: [
-            SliverAppBar.large(
-              backgroundColor: const Color(0xFFFBF3E8),
-              surfaceTintColor: Colors.transparent,
-              leading: IconButton(
-                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                onPressed: () => context.go('/settings'),
-                icon: const Icon(Icons.arrow_back),
-              ),
-              title: Text(strings.memoryBase),
+            MainSliverAppBar(
+              title: strings.memoryBase,
+              backLocation: '/settings',
             ),
             SliverToBoxAdapter(
               child: SingleChildScrollView(

@@ -35,9 +35,6 @@ class AppStrings {
   String get note => isRu ? 'Заметка' : 'Note';
   String get copyPassword => isRu ? 'Скопировать пароль' : 'Copy password';
   String get passwordCopied => isRu ? 'Пароль скопирован' : 'Password copied';
-  String get pinRequiredForAccounts => isRu
-      ? 'Для хранения аккаунтов сначала включите PIN'
-      : 'Enable PIN before storing accounts';
   String get noAccounts => isRu ? 'Аккаунтов пока нет' : 'No accounts yet';
   String get add => isRu ? 'Добавить' : 'Add';
   String get addRecord => isRu ? 'Добавить запись' : 'Add record';

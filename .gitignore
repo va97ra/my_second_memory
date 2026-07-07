@@ -9,6 +9,7 @@ coverage/
 release/*.apk
 release/*.aab
 release/*.zip
+release/*.txt
 signing/
 pepk.jar
 
