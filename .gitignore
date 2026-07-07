@@ -11,6 +11,7 @@ release/*.aab
 release/*.zip
 release/*.txt
 release/*.pem
+release/**/*.png
 signing/
 pepk.jar
 
