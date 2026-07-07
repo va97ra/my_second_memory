@@ -10,6 +10,7 @@ release/*.apk
 release/*.aab
 release/*.zip
 release/*.txt
+release/*.pem
 signing/
 pepk.jar
 
