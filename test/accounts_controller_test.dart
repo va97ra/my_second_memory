@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_second_memory/src/features/accounts/data/encrypted_account_repository.dart';
+import 'package:my_second_memory/src/features/accounts/data/local_account_repository.dart';
 import 'package:my_second_memory/src/features/accounts/domain/account_item.dart';
 import 'package:my_second_memory/src/features/accounts/state/accounts_controller.dart';
 import 'package:my_second_memory/src/features/security/data/app_cipher.dart';
@@ -68,5 +69,34 @@ void main() {
       store: EncryptedJsonStore(cipher: secondCipher),
     );
     expect(secondRepository.loadAccounts, throwsA(isA<Exception>()));
+  });
+
+  test('encrypted account repository migrates plaintext accounts', () async {
+    SharedPreferences.setMockInitialValues({});
+    final now = DateTime(2026, 7, 7);
+    const plainRepository = LocalAccountRepository();
+    await plainRepository.saveAccounts([
+      AccountItem(
+        id: 'acc',
+        serviceName: 'Mail',
+        login: 'user',
+        password: 'secret',
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ]);
+    final cipher = await AppCipher.fromPin(
+      pin: '1234',
+      salt: List<int>.filled(16, 5),
+    );
+    final encryptedRepository = EncryptedAccountRepository(
+      store: EncryptedJsonStore(cipher: cipher),
+      plainRepository: plainRepository,
+    );
+
+    final accounts = await encryptedRepository.loadAccounts();
+
+    expect(accounts.single.password, 'secret');
+    expect(await plainRepository.loadAccounts(), isEmpty);
   });
 }

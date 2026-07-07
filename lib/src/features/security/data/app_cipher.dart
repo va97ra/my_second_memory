@@ -26,6 +26,12 @@ class AppCipher {
     return AppCipher._(await key.extractBytes());
   }
 
+  factory AppCipher.fromKeyBytes(List<int> keyBytes) {
+    return AppCipher._(List<int>.unmodifiable(keyBytes));
+  }
+
+  List<int> exportKeyBytes() => List<int>.unmodifiable(_keyBytes);
+
   Future<String> encryptString(String value) async {
     final nonce = _randomBytes(12);
     final box = await _algorithm.encrypt(

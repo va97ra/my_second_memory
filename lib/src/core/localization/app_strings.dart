@@ -111,6 +111,7 @@ class AppStrings {
   String get schedulePreset => isRu ? 'Шаблон' : 'Pattern';
   String get customSchedule => isRu ? 'Свой' : 'Custom';
   String get enabled => isRu ? 'Включен' : 'Enabled';
+  String get disabled => isRu ? 'Выключен' : 'Disabled';
   String get noShiftSchedules =>
       isRu ? 'Графиков пока нет' : 'No schedules yet';
   String get deleteShiftScheduleQuestion =>
@@ -119,6 +120,20 @@ class AppStrings {
   String get language => isRu ? 'Язык' : 'Language';
   String get unlock => isRu ? 'Открыть' : 'Unlock';
   String get biometrics => isRu ? 'Биометрия' : 'Biometrics';
+  String get pinStatus => isRu ? 'PIN' : 'PIN';
+  String get enablePin => isRu ? 'Включить PIN' : 'Enable PIN';
+  String get changePin => isRu ? 'Сменить PIN' : 'Change PIN';
+  String get disablePin => isRu ? 'Отключить PIN' : 'Disable PIN';
+  String get currentPin => isRu ? 'Текущий PIN' : 'Current PIN';
+  String get pinDisabled => isRu ? 'PIN отключен' : 'PIN disabled';
+  String get disablePinWarning => isRu
+      ? 'Данные будут расшифрованы и останутся доступными без PIN.'
+      : 'Data will be decrypted and remain available without PIN.';
+  String get biometricsSubtitle => isRu
+      ? 'Показывать вход по биометрии на стартовом экране'
+      : 'Show biometric unlock on the startup screen';
+  String get biometricsNeedsPin =>
+      isRu ? 'Сначала включите PIN' : 'Enable PIN first';
   String get wrongPin => isRu ? 'Неверный PIN' : 'Wrong PIN';
   String get biometricsUnavailable =>
       isRu ? 'Биометрия недоступна' : 'Biometrics unavailable';

@@ -33,4 +33,9 @@ class EncryptedJsonStore {
     final encrypted = await cipher.encryptString(jsonEncode(values));
     await prefs.setString(key, encrypted);
   }
+
+  Future<void> remove(String key) async {
+    final prefs = preferences ?? await SharedPreferences.getInstance();
+    await prefs.remove(key);
+  }
 }

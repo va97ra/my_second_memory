@@ -16,22 +16,27 @@ class SecuritySessionState {
   const SecuritySessionState({
     this.hasPin = false,
     this.isUnlocked = false,
+    this.biometricsEnabled = false,
     this.cipher,
   });
 
   final bool hasPin;
   final bool isUnlocked;
+  final bool biometricsEnabled;
   final AppCipher? cipher;
 
   SecuritySessionState copyWith({
     bool? hasPin,
     bool? isUnlocked,
+    bool? biometricsEnabled,
     AppCipher? cipher,
+    bool clearCipher = false,
   }) {
     return SecuritySessionState(
       hasPin: hasPin ?? this.hasPin,
       isUnlocked: isUnlocked ?? this.isUnlocked,
-      cipher: cipher ?? this.cipher,
+      biometricsEnabled: biometricsEnabled ?? this.biometricsEnabled,
+      cipher: clearCipher ? null : cipher ?? this.cipher,
     );
   }
 }
@@ -43,7 +48,11 @@ class SecuritySessionController extends StateNotifier<SecuritySessionState> {
   final SecurityService _service;
 
   Future<void> load() async {
-    state = state.copyWith(hasPin: await _service.hasPin());
+    final hasPin = await _service.hasPin();
+    state = state.copyWith(
+      hasPin: hasPin,
+      biometricsEnabled: hasPin ? await _service.biometricsEnabled() : false,
+    );
   }
 
   Future<bool> unlockWithPin(String pin) async {
@@ -54,6 +63,7 @@ class SecuritySessionController extends StateNotifier<SecuritySessionState> {
     state = SecuritySessionState(
       hasPin: true,
       isUnlocked: true,
+      biometricsEnabled: await _service.biometricsEnabled(),
       cipher: cipher,
     );
     return true;
@@ -64,14 +74,33 @@ class SecuritySessionController extends StateNotifier<SecuritySessionState> {
     await unlockWithPin(pin);
   }
 
-  Future<bool> unlockWithBiometrics() async {
-    if (state.hasPin) {
+  Future<bool> setBiometricsEnabled(bool enabled) async {
+    if (enabled && (!state.hasPin || state.cipher == null)) {
       return false;
     }
-    final ok = await _service.authenticateWithBiometrics();
-    if (ok) {
-      state = state.copyWith(isUnlocked: true);
+    await _service.setBiometricsEnabled(enabled, cipher: state.cipher);
+    state = state.copyWith(
+      biometricsEnabled: await _service.biometricsEnabled(),
+    );
+    return state.biometricsEnabled == enabled;
+  }
+
+  Future<void> clearPinSession() async {
+    await _service.clearPin();
+    state = const SecuritySessionState();
+  }
+
+  Future<bool> unlockWithBiometrics() async {
+    final cipher = await _service.unlockWithBiometrics();
+    if (cipher == null) {
+      return false;
     }
-    return ok;
+    state = SecuritySessionState(
+      hasPin: true,
+      isUnlocked: true,
+      biometricsEnabled: true,
+      cipher: cipher,
+    );
+    return true;
   }
 }

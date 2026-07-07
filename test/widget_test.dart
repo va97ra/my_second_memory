@@ -359,7 +359,8 @@ void main() {
     expect(find.text('Вчерашняя заметка'), findsNothing);
   });
 
-  testWidgets('accounts tab opens pin required screen', (tester) async {
+  testWidgets('accounts tab opens accounts without requiring pin',
+      (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -380,8 +381,12 @@ void main() {
     await tester.tap(find.text('Аккаунты'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Для хранения аккаунтов сначала включите PIN'),
-        findsOneWidget);
+    expect(find.text('Аккаунтов пока нет'), findsOneWidget);
+    expect(find.text('Добавить аккаунт'), findsOneWidget);
+    expect(
+      find.text('Для хранения аккаунтов сначала включите PIN'),
+      findsNothing,
+    );
   });
 
   testWidgets('editor keeps record field large with long text and images',

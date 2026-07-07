@@ -100,52 +100,68 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              DecoratedBox(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEAF3FF),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: const Color(0xFFC7DDFF),
-                                  ),
-                                ),
-                                child: const SizedBox(
-                                  width: 52,
-                                  height: 52,
-                                  child: Icon(
-                                    Icons.lock_outline,
-                                    size: 28,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                ),
+                              const Icon(
+                                Icons.lock_outline,
+                                size: 38,
+                                color: Color(0xFF2563EB),
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 10),
                               Text(
-                                strings.pinSecurity,
-                                style:
-                                    Theme.of(context).textTheme.headlineSmall,
+                                strings.appTitle,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(fontWeight: FontWeight.w900),
                               ),
-                              const SizedBox(height: 18),
+                              const SizedBox(height: 6),
+                              Text(
+                                strings.unlock,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: const Color(0xFF5F6B7A),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              const SizedBox(height: 20),
                               TextField(
                                 controller: _pinController,
                                 keyboardType: TextInputType.number,
                                 obscureText: true,
                                 maxLength: 8,
-                                decoration:
-                                    const InputDecoration(labelText: 'PIN'),
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(letterSpacing: 6),
+                                decoration: const InputDecoration(
+                                  labelText: 'PIN',
+                                  counterText: '',
+                                ),
                                 onSubmitted: (_) => _unlockWithPin(),
                               ),
-                              const SizedBox(height: 8),
-                              FilledButton.icon(
-                                onPressed: _unlockWithPin,
-                                icon: const Icon(Icons.lock_open),
-                                label: Text(strings.unlock),
+                              const SizedBox(height: 14),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton.icon(
+                                  onPressed: _unlockWithPin,
+                                  icon: const Icon(Icons.lock_open),
+                                  label: Text(strings.unlock),
+                                ),
                               ),
-                              const SizedBox(height: 8),
-                              OutlinedButton.icon(
-                                onPressed: _unlockWithBiometrics,
-                                icon: const Icon(Icons.fingerprint),
-                                label: Text(strings.biometrics),
-                              ),
+                              if (session.biometricsEnabled) ...[
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: _unlockWithBiometrics,
+                                    icon: const Icon(Icons.fingerprint),
+                                    label: Text(strings.biometrics),
+                                  ),
+                                ),
+                              ],
                               if (_error != null) ...[
                                 const SizedBox(height: 12),
                                 Text(

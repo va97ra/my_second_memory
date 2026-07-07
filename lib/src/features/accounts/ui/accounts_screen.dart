@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
-import '../../security/state/security_provider.dart';
 import '../domain/account_item.dart';
 import '../state/accounts_controller.dart';
 
@@ -15,18 +13,15 @@ class AccountsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
-    final session = ref.watch(securitySessionProvider);
     final accounts = ref.watch(accountsControllerProvider);
 
     return AppShell(
       currentIndex: 2,
-      floatingActionButton: session.hasPin && session.cipher != null
-          ? FloatingActionButton.extended(
-              onPressed: () => _showAccountEditor(context, ref),
-              icon: const Icon(Icons.add),
-              label: Text(strings.addAccount),
-            )
-          : null,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAccountEditor(context, ref),
+        icon: const Icon(Icons.add),
+        label: Text(strings.addAccount),
+      ),
       child: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -52,15 +47,7 @@ class AccountsScreen extends ConsumerWidget {
                     ),
               ),
             ),
-            if (!session.hasPin || session.cipher == null)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _PinRequiredCard(
-                  text: strings.pinRequiredForAccounts,
-                  onOpenSettings: () => context.go('/security'),
-                ),
-              )
-            else if (accounts.isEmpty)
+            if (accounts.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(child: Text(strings.noAccounts)),
@@ -96,48 +83,6 @@ class AccountsScreen extends ConsumerWidget {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) => _AccountEditor(account: account, ref: ref),
-    );
-  }
-}
-
-class _PinRequiredCard extends StatelessWidget {
-  const _PinRequiredCard({
-    required this.text,
-    required this.onOpenSettings,
-  });
-
-  final String text;
-  final VoidCallback onOpenSettings;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFD6E2EF)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.lock_outline, size: 34),
-                const SizedBox(height: 12),
-                Text(text, textAlign: TextAlign.center),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: onOpenSettings,
-                  child: Text(AppStrings.of(context).pinSecurity),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
