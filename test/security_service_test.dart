@@ -1,6 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_second_memory/src/features/security/data/security_service.dart';
+import 'package:ezhednevnik_v2/src/features/security/data/security_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

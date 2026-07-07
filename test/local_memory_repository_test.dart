@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_second_memory/src/features/memory_items/data/local_memory_repository.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_item.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_type.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/data/local_memory_repository.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

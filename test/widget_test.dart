@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
-import 'package:my_second_memory/src/app.dart';
-import 'package:my_second_memory/src/features/memory_items/data/memory_repository.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_item.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_status.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_type.dart';
-import 'package:my_second_memory/src/features/memory_items/state/memory_items_controller.dart';
-import 'package:my_second_memory/src/features/security/data/security_service.dart';
-import 'package:my_second_memory/src/features/security/state/security_provider.dart';
-import 'package:my_second_memory/src/features/shift_schedules/data/shift_schedule_repository.dart';
-import 'package:my_second_memory/src/features/shift_schedules/domain/shift_schedule.dart';
-import 'package:my_second_memory/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import 'package:ezhednevnik_v2/src/app.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/data/memory_repository.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_status.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
+import 'package:ezhednevnik_v2/src/features/security/data/security_service.dart';
+import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/data/shift_schedule_repository.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/domain/shift_schedule.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
 
 const _pixelImageDataUrl =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
@@ -191,7 +191,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -245,7 +245,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -271,7 +271,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -314,7 +314,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -341,7 +341,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -373,7 +373,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -405,7 +405,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -449,7 +449,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -493,7 +493,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -567,7 +567,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -599,7 +599,7 @@ void main() {
           memoryRepositoryProvider.overrideWithValue(memoryRepository),
           shiftScheduleRepositoryProvider.overrideWithValue(shiftRepository),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -645,7 +645,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -689,7 +689,7 @@ void main() {
             _FakeShiftScheduleRepository(),
           ),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 
@@ -743,7 +743,7 @@ void main() {
           memoryRepositoryProvider.overrideWithValue(memoryRepository),
           shiftScheduleRepositoryProvider.overrideWithValue(shiftRepository),
         ],
-        child: const MySecondMemoryApp(),
+        child: const EzhednevnikV2App(),
       ),
     );
 

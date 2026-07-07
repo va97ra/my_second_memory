@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_second_memory/src/features/home_feed/domain/feed_rules.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_item.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_status.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_type.dart';
+import 'package:ezhednevnik_v2/src/features/home_feed/domain/feed_rules.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_status.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
 
 void main() {
   test('smart feed includes today and overdue tasks', () {

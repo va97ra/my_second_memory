@@ -8,8 +8,8 @@ import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/security/ui/security_gate.dart';
 
-class MySecondMemoryApp extends ConsumerWidget {
-  const MySecondMemoryApp({super.key});
+class EzhednevnikV2App extends ConsumerWidget {
+  const EzhednevnikV2App({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

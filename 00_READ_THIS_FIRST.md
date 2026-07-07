@@ -253,7 +253,7 @@
 Android-платформа добавлена в проект. Пакет приложения:
 
 ```text
-com.va97ra.mysecondmemory
+com.va97ra.ezhednevnikv2
 ```
 
 Название Android-приложения берется из:
@@ -281,9 +281,10 @@ signing/UPLOAD_KEY_README_PRIVATE.txt
 Для RuStore подготовлены release-артефакты:
 
 ```text
-release/my_second_memory-rustore-release.apk
-release/my_second_memory-rustore-release.aab
-release/my_second_memory-rustore-signature-pepk.zip
+release/ezhednevnik_v2-rustore-release.apk
+release/ezhednevnik_v2-rustore-release.aab
+release/ezhednevnik_v2-rustore-signature-pepk.zip
+release/ezhednevnik_v2-rustore-upload-certificate.pem
 ```
 
 ## Хранилище

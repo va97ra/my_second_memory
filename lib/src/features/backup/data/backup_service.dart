@@ -12,7 +12,7 @@ class BackupService {
     required this.shiftScheduleRepository,
   });
 
-  static const format = 'my_second_memory_backup';
+  static const format = 'ezhednevnik_v2_backup';
   static const version = 1;
 
   final MemoryRepository memoryRepository;

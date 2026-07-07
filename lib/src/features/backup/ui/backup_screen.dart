@@ -109,7 +109,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           XTypeGroup(label: 'JSON', extensions: ['json']),
         ],
         suggestedName:
-            'my_second_memory_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.json',
+            'ezhednevnik_v2_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.json',
       );
       if (saveLocation == null) {
         return;

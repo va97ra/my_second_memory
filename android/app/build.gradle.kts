@@ -13,7 +13,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.va97ra.mysecondmemory"
+    namespace = "com.va97ra.ezhednevnikv2"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -24,7 +24,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.va97ra.mysecondmemory"
+        applicationId = "com.va97ra.ezhednevnikv2"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

@@ -1,13 +1,13 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_second_memory/src/features/backup/data/backup_service.dart';
-import 'package:my_second_memory/src/features/memory_items/data/memory_repository.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_item.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_status.dart';
-import 'package:my_second_memory/src/features/memory_items/domain/memory_type.dart';
-import 'package:my_second_memory/src/features/shift_schedules/data/shift_schedule_repository.dart';
-import 'package:my_second_memory/src/features/shift_schedules/domain/shift_schedule.dart';
+import 'package:ezhednevnik_v2/src/features/backup/data/backup_service.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/data/memory_repository.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_status.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/data/shift_schedule_repository.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/domain/shift_schedule.dart';
 
 void main() {
   test('exports and parses memory records and shift schedules', () async {

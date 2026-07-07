@@ -5,5 +5,5 @@ import 'src/app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: MySecondMemoryApp()));
+  runApp(const ProviderScope(child: EzhednevnikV2App()));
 }

@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:my_second_memory/src/features/accounts/data/encrypted_account_repository.dart';
-import 'package:my_second_memory/src/features/accounts/data/local_account_repository.dart';
-import 'package:my_second_memory/src/features/accounts/domain/account_item.dart';
-import 'package:my_second_memory/src/features/accounts/state/accounts_controller.dart';
-import 'package:my_second_memory/src/features/security/data/app_cipher.dart';
-import 'package:my_second_memory/src/features/security/data/encrypted_json_store.dart';
+import 'package:ezhednevnik_v2/src/features/accounts/data/encrypted_account_repository.dart';
+import 'package:ezhednevnik_v2/src/features/accounts/data/local_account_repository.dart';
+import 'package:ezhednevnik_v2/src/features/accounts/domain/account_item.dart';
+import 'package:ezhednevnik_v2/src/features/accounts/state/accounts_controller.dart';
+import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';
+import 'package:ezhednevnik_v2/src/features/security/data/encrypted_json_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

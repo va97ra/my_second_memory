@@ -20,7 +20,7 @@ class AppDatabase extends _$AppDatabase {
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final directory = await getApplicationDocumentsDirectory();
-    final file = File(p.join(directory.path, 'my_second_memory.sqlite'));
+    final file = File(p.join(directory.path, 'ezhednevnik_v2.sqlite'));
     return NativeDatabase.createInBackground(file);
   });
 }
