@@ -8,6 +8,9 @@ build/
 coverage/
 release/*.apk
 release/*.aab
+release/*.zip
+signing/
+pepk.jar
 
 android/.gradle/
 android/app/build/
