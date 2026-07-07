@@ -42,7 +42,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       currentIndex: 1,
       child: CustomScrollView(
         slivers: [
-          SliverAppBar.large(title: Text(strings.calendar)),
+          SliverAppBar.large(
+            leading: IconButton(
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: () => context.go('/'),
+              icon: const Icon(Icons.arrow_back),
+            ),
+            title: Text(strings.calendar),
+          ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
@@ -39,6 +40,11 @@ class AccountsScreen extends ConsumerWidget {
             SliverAppBar.large(
               backgroundColor: const Color(0xFFFBF3E8),
               surfaceTintColor: Colors.transparent,
+              leading: IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                onPressed: () => context.go('/'),
+                icon: const Icon(Icons.arrow_back),
+              ),
               title: Text(
                 strings.accounts,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
