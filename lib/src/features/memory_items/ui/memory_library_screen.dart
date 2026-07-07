@@ -30,7 +30,7 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
     }).toList();
 
     return AppShell(
-      currentIndex: 2,
+      currentIndex: 3,
       child: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

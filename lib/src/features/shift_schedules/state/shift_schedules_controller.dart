@@ -1,12 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../security/data/encrypted_json_store.dart';
+import '../../security/state/security_provider.dart';
+import '../data/encrypted_shift_schedule_repository.dart';
 import '../data/local_shift_schedule_repository.dart';
 import '../data/shift_schedule_repository.dart';
 import '../domain/shift_schedule.dart';
 
-final shiftScheduleRepositoryProvider = Provider<ShiftScheduleRepository>(
-  (ref) => const LocalShiftScheduleRepository(),
-);
+final shiftScheduleRepositoryProvider =
+    Provider<ShiftScheduleRepository>((ref) {
+  const plainRepository = LocalShiftScheduleRepository();
+  final session = ref.watch(securitySessionProvider);
+  final cipher = session.cipher;
+  if (session.hasPin && cipher != null) {
+    return EncryptedShiftScheduleRepository(
+      store: EncryptedJsonStore(cipher: cipher),
+      plainRepository: plainRepository,
+    );
+  }
+  return plainRepository;
+});
 
 final shiftSchedulesControllerProvider =
     StateNotifierProvider<ShiftSchedulesController, List<ShiftSchedule>>((ref) {

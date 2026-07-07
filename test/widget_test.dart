@@ -202,6 +202,7 @@ void main() {
     expect(find.text('Лента дня'), findsWidgets);
     expect(find.text('Лента'), findsOneWidget);
     expect(find.text('Календарь'), findsOneWidget);
+    expect(find.text('Аккаунты'), findsOneWidget);
     expect(find.text('Настройки'), findsOneWidget);
     expect(find.text('Люди'), findsNothing);
     expect(find.text('Проекты'), findsNothing);
@@ -325,6 +326,62 @@ void main() {
 
     expect(find.text('Только сегодня'), findsNothing);
     expect(repository.savedItems.single.status, MemoryStatus.archived);
+  });
+
+  testWidgets('feed filter shows selected record type only', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.text('Все записи'), findsOneWidget);
+
+    await tester.tap(find.text('Все записи'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Проект').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Проект'), findsOneWidget);
+    expect(find.text('Моя вторая память'), findsWidgets);
+    expect(find.text('План на сегодня'), findsNothing);
+    expect(find.text('Вчерашняя заметка'), findsNothing);
+  });
+
+  testWidgets('accounts tab opens pin required screen', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const MySecondMemoryApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Аккаунты'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Для хранения аккаунтов сначала включите PIN'),
+        findsOneWidget);
   });
 
   testWidgets('editor keeps record field large with long text and images',

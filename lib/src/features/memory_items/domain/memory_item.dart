@@ -88,8 +88,7 @@ class MemoryItem {
       personIds: personIds ?? this.personIds,
       placeId: placeId ?? this.placeId,
       audioPath: audioPath ?? this.audioPath,
-      audioDurationSeconds:
-          audioDurationSeconds ?? this.audioDurationSeconds,
+      audioDurationSeconds: audioDurationSeconds ?? this.audioDurationSeconds,
       imagePaths: imagePaths ?? this.imagePaths,
       transcript: transcript ?? this.transcript,
     );

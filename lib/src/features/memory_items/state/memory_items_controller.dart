@@ -1,13 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../security/data/encrypted_json_store.dart';
+import '../../security/state/security_provider.dart';
+import '../data/encrypted_memory_repository.dart';
 import '../data/memory_repository.dart';
 import '../data/memory_repository_factory.dart';
 import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
 
-final memoryRepositoryProvider = Provider<MemoryRepository>(
-  (ref) => createMemoryRepository(),
-);
+final memoryRepositoryProvider = Provider<MemoryRepository>((ref) {
+  final session = ref.watch(securitySessionProvider);
+  final plainRepository = createMemoryRepository();
+  final cipher = session.cipher;
+  if (session.hasPin && cipher != null) {
+    return EncryptedMemoryRepository(
+      store: EncryptedJsonStore(cipher: cipher),
+      plainRepository: plainRepository,
+    );
+  }
+  return plainRepository;
+});
 
 final memoryItemsControllerProvider =
     StateNotifierProvider<MemoryItemsController, List<MemoryItem>>((ref) {

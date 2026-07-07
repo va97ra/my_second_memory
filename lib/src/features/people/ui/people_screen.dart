@@ -20,7 +20,7 @@ class PeopleScreen extends ConsumerWidget {
         .toList();
 
     return AppShell(
-      currentIndex: 2,
+      currentIndex: 3,
       child: CustomScrollView(
         slivers: [
           SliverAppBar.large(title: Text(strings.people)),

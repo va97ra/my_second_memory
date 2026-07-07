@@ -50,6 +50,9 @@ class AppShell extends StatelessWidget {
                     context.go('/calendar');
                     break;
                   case 2:
+                    context.go('/accounts');
+                    break;
+                  case 3:
                     context.go('/settings');
                     break;
                 }
@@ -64,6 +67,11 @@ class AppShell extends StatelessWidget {
                   icon: const Icon(Icons.calendar_month_outlined),
                   selectedIcon: const Icon(Icons.calendar_month),
                   label: strings.calendar,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.key_outlined),
+                  selectedIcon: const Icon(Icons.key),
+                  label: strings.accounts,
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.tune_outlined),

@@ -27,7 +27,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final strings = AppStrings.of(context);
 
     return AppShell(
-      currentIndex: 2,
+      currentIndex: 3,
       child: Scaffold(
         appBar: AppBar(
           leading: IconButton(

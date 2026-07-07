@@ -79,9 +79,8 @@ class _VoiceNoteRecorderState extends State<VoiceNoteRecorder> {
   Future<void> _stop() async {
     final path = await _recorder.stop();
     final startedAt = _startedAt;
-    final duration = startedAt == null
-        ? 0
-        : DateTime.now().difference(startedAt).inSeconds;
+    final duration =
+        startedAt == null ? 0 : DateTime.now().difference(startedAt).inSeconds;
 
     setState(() => _isRecording = false);
 

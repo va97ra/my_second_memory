@@ -134,7 +134,8 @@ class _AddMemoryItemScreenState extends ConsumerState<AddMemoryItemScreen> {
       type: _type,
       title: _titleController.text.trim(),
       body: _bodyController.text.trim(),
-      memoryDate: DateTime(_memoryDate.year, _memoryDate.month, _memoryDate.day),
+      memoryDate:
+          DateTime(_memoryDate.year, _memoryDate.month, _memoryDate.day),
       createdAt: now,
       updatedAt: now,
       audioPath: _audioPath,

@@ -20,7 +20,7 @@ class ProjectsScreen extends ConsumerWidget {
         .toList();
 
     return AppShell(
-      currentIndex: 2,
+      currentIndex: 3,
       child: CustomScrollView(
         slivers: [
           SliverAppBar.large(title: Text(strings.projects)),

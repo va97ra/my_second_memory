@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../memory_items/state/memory_items_controller.dart';
+import '../../shift_schedules/state/shift_schedules_controller.dart';
 import '../state/security_provider.dart';
 
 class SecurityScreen extends ConsumerStatefulWidget {
@@ -95,7 +97,13 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   }
 
   Future<void> _savePin() async {
-    await ref.read(securityServiceProvider).setPin(_pinController.text.trim());
+    await ref
+        .read(securitySessionProvider.notifier)
+        .setPin(_pinController.text.trim());
+    ref.invalidate(memoryRepositoryProvider);
+    ref.invalidate(memoryItemsControllerProvider);
+    ref.invalidate(shiftScheduleRepositoryProvider);
+    ref.invalidate(shiftSchedulesControllerProvider);
     if (!mounted) return;
     setState(() => _message = AppStrings.of(context).pinSaved);
   }

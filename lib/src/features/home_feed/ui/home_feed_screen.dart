@@ -6,18 +6,26 @@ import 'package:intl/intl.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
 import '../../memory_items/domain/memory_item.dart';
+import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../domain/feed_rules.dart';
 import 'widgets/memory_item_card.dart';
 
-class HomeFeedScreen extends ConsumerWidget {
+class HomeFeedScreen extends ConsumerStatefulWidget {
   const HomeFeedScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeFeedScreen> createState() => _HomeFeedScreenState();
+}
+
+class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
+  FeedFilter _filter = FeedFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final items = ref.watch(memoryItemsControllerProvider);
-    final groups = groupItemsByDate(items);
+    final groups = groupItemsByDate(items, filter: _filter);
     final isEmpty = groups.isEmpty;
 
     return AppShell(
@@ -47,6 +55,12 @@ class HomeFeedScreen extends ConsumerWidget {
                     ),
               ),
             ),
+            SliverToBoxAdapter(
+              child: _FeedFilterButton(
+                selected: _filter,
+                onSelected: (filter) => setState(() => _filter = filter),
+              ),
+            ),
             const SliverToBoxAdapter(child: _MemoryBanner()),
             if (isEmpty)
               SliverFillRemaining(
@@ -64,6 +78,120 @@ class HomeFeedScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+class _FeedFilterButton extends StatelessWidget {
+  const _FeedFilterButton({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final FeedFilter selected;
+  final ValueChanged<FeedFilter> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
+    final label = _labelFor(context, selected);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: PopupMenuButton<FeedFilter>(
+          tooltip: strings.feedFilter,
+          initialValue: selected,
+          onSelected: onSelected,
+          itemBuilder: (context) {
+            return [
+              for (final filter in FeedFilter.values)
+                PopupMenuItem(
+                  value: filter,
+                  child: Row(
+                    children: [
+                      Icon(
+                        _iconFor(filter),
+                        size: 19,
+                        color: filter == selected
+                            ? Theme.of(context).colorScheme.primary
+                            : const Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(_labelFor(context, filter)),
+                    ],
+                  ),
+                ),
+            ];
+          },
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFD6E2EF)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.tune,
+                    size: 18,
+                    color: Color(0xFF2563EB),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: const Color(0xFF172033),
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.expand_more, size: 18),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _labelFor(BuildContext context, FeedFilter filter) {
+    final strings = AppStrings.of(context);
+    final locale = Localizations.localeOf(context).languageCode;
+
+    return switch (filter) {
+      FeedFilter.all => strings.allRecords,
+      FeedFilter.active => strings.activeRecords,
+      FeedFilter.done => strings.completedRecords,
+      FeedFilter.task => MemoryType.task.label(locale),
+      FeedFilter.note => MemoryType.note.label(locale),
+      FeedFilter.event => MemoryType.event.label(locale),
+      FeedFilter.goal => MemoryType.goal.label(locale),
+      FeedFilter.project => MemoryType.project.label(locale),
+      FeedFilter.purchase => MemoryType.purchase.label(locale),
+      FeedFilter.document => MemoryType.document.label(locale),
+      FeedFilter.place => MemoryType.place.label(locale),
+    };
+  }
+
+  IconData _iconFor(FeedFilter filter) {
+    return switch (filter) {
+      FeedFilter.all => Icons.dynamic_feed_outlined,
+      FeedFilter.active => Icons.radio_button_unchecked,
+      FeedFilter.done => Icons.check_circle_outline,
+      FeedFilter.task => Icons.check_circle_outline,
+      FeedFilter.note => Icons.notes,
+      FeedFilter.event => Icons.event,
+      FeedFilter.goal => Icons.flag_outlined,
+      FeedFilter.project => Icons.folder_outlined,
+      FeedFilter.purchase => Icons.shopping_bag_outlined,
+      FeedFilter.document => Icons.description_outlined,
+      FeedFilter.place => Icons.place_outlined,
+    };
   }
 }
 

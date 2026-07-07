@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/accounts/ui/accounts_screen.dart';
 import '../../features/backup/ui/backup_screen.dart';
 import '../../features/calendar/ui/calendar_screen.dart';
 import '../../features/calendar/ui/calendar_day_screen.dart';
@@ -62,6 +63,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/calendar',
         builder: (context, state) => const CalendarScreen(),
+      ),
+      GoRoute(
+        path: '/accounts',
+        builder: (context, state) => const AccountsScreen(),
       ),
       GoRoute(
         path: '/calendar/day',

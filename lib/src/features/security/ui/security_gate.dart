@@ -19,8 +19,6 @@ class SecurityGate extends ConsumerStatefulWidget {
 class _SecurityGateState extends ConsumerState<SecurityGate> {
   final _pinController = TextEditingController();
   bool _isLoading = true;
-  bool _hasPin = false;
-  bool _isUnlocked = false;
   String? _error;
 
   @override
@@ -43,7 +41,9 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
       );
     }
 
-    if (!_hasPin || _isUnlocked) {
+    final session = ref.watch(securitySessionProvider);
+
+    if (!session.hasPin || session.isUnlocked) {
       return widget.child;
     }
 
@@ -171,38 +171,30 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
   }
 
   Future<void> _load() async {
-    final hasPin = await ref.read(securityServiceProvider).hasPin();
+    await ref.read(securitySessionProvider.notifier).load();
     if (!mounted) {
       return;
     }
-    setState(() {
-      _hasPin = hasPin;
-      _isLoading = false;
-    });
+    setState(() => _isLoading = false);
   }
 
   Future<void> _unlockWithPin() async {
     final ok = await ref
-        .read(securityServiceProvider)
-        .verifyPin(_pinController.text.trim());
+        .read(securitySessionProvider.notifier)
+        .unlockWithPin(_pinController.text.trim());
     if (!mounted) {
       return;
     }
-    setState(() {
-      _isUnlocked = ok;
-      _error = ok ? null : AppStrings.of(context).wrongPin;
-    });
+    setState(() => _error = ok ? null : AppStrings.of(context).wrongPin);
   }
 
   Future<void> _unlockWithBiometrics() async {
     final ok =
-        await ref.read(securityServiceProvider).authenticateWithBiometrics();
+        await ref.read(securitySessionProvider.notifier).unlockWithBiometrics();
     if (!mounted) {
       return;
     }
-    setState(() {
-      _isUnlocked = ok;
-      _error = ok ? null : AppStrings.of(context).biometricsUnavailable;
-    });
+    setState(() =>
+        _error = ok ? null : AppStrings.of(context).biometricsUnavailable);
   }
 }

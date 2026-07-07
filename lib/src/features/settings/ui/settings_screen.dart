@@ -15,7 +15,7 @@ class SettingsScreen extends ConsumerWidget {
     final locale = ref.watch(appLocaleControllerProvider);
 
     return AppShell(
-      currentIndex: 2,
+      currentIndex: 3,
       child: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

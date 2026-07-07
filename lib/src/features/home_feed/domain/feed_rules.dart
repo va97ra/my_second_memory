@@ -12,6 +12,20 @@ class FeedDay {
   final List<MemoryItem> items;
 }
 
+enum FeedFilter {
+  all,
+  active,
+  done,
+  task,
+  note,
+  event,
+  goal,
+  project,
+  purchase,
+  document,
+  place;
+}
+
 List<MemoryItem> smartFeedForDay(List<MemoryItem> items, DateTime date) {
   final day = DateTime(date.year, date.month, date.day);
 
@@ -40,8 +54,13 @@ List<MemoryItem> smartFeedForDay(List<MemoryItem> items, DateTime date) {
   return feed;
 }
 
-List<FeedDay> groupItemsByDate(List<MemoryItem> items) {
-  final visible = items.where((item) => !item.isArchived).toList()
+List<FeedDay> groupItemsByDate(
+  List<MemoryItem> items, {
+  FeedFilter filter = FeedFilter.all,
+}) {
+  final visible = items.where((item) {
+    return !item.isArchived && _matchesFilter(item, filter);
+  }).toList()
     ..sort((a, b) {
       final byDate = b.memoryDate.compareTo(a.memoryDate);
       if (byDate != 0) {
@@ -67,6 +86,22 @@ List<FeedDay> groupItemsByDate(List<MemoryItem> items) {
   return grouped.entries
       .map((entry) => FeedDay(date: entry.key, items: entry.value))
       .toList();
+}
+
+bool _matchesFilter(MemoryItem item, FeedFilter filter) {
+  return switch (filter) {
+    FeedFilter.all => true,
+    FeedFilter.active => !item.isDone,
+    FeedFilter.done => item.isDone,
+    FeedFilter.task => item.type == MemoryType.task,
+    FeedFilter.note => item.type == MemoryType.note,
+    FeedFilter.event => item.type == MemoryType.event,
+    FeedFilter.goal => item.type == MemoryType.goal,
+    FeedFilter.project => item.type == MemoryType.project,
+    FeedFilter.purchase => item.type == MemoryType.purchase,
+    FeedFilter.document => item.type == MemoryType.document,
+    FeedFilter.place => item.type == MemoryType.place,
+  };
 }
 
 bool isSameDay(DateTime left, DateTime right) {

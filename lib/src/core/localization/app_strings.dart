@@ -16,11 +16,29 @@ class AppStrings {
   String get appTitle => isRu ? 'Моя вторая память' : 'My Second Memory';
   String get feed => isRu ? 'Лента' : 'Feed';
   String get dayFeed => isRu ? 'Лента дня' : 'Day feed';
+  String get feedFilter => isRu ? 'Фильтр' : 'Filter';
+  String get allRecords => isRu ? 'Все записи' : 'All records';
+  String get activeRecords => isRu ? 'Активные' : 'Active';
+  String get completedRecords => isRu ? 'Выполненные' : 'Done';
   String get today => isRu ? 'Сегодня' : 'Today';
   String get yesterdaySection => isRu ? 'Это было вчера' : 'This was yesterday';
   String get dayBeforeYesterdaySection =>
       isRu ? 'Это было позавчера' : 'This was two days ago';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
+  String get accounts => isRu ? 'Аккаунты' : 'Accounts';
+  String get addAccount => isRu ? 'Добавить аккаунт' : 'Add account';
+  String get editAccount => isRu ? 'Редактировать аккаунт' : 'Edit account';
+  String get serviceName => isRu ? 'Сервис' : 'Service';
+  String get login => isRu ? 'Логин' : 'Login';
+  String get password => isRu ? 'Пароль' : 'Password';
+  String get website => isRu ? 'Сайт' : 'Website';
+  String get note => isRu ? 'Заметка' : 'Note';
+  String get copyPassword => isRu ? 'Скопировать пароль' : 'Copy password';
+  String get passwordCopied => isRu ? 'Пароль скопирован' : 'Password copied';
+  String get pinRequiredForAccounts => isRu
+      ? 'Для хранения аккаунтов сначала включите PIN'
+      : 'Enable PIN before storing accounts';
+  String get noAccounts => isRu ? 'Аккаунтов пока нет' : 'No accounts yet';
   String get add => isRu ? 'Добавить' : 'Add';
   String get addRecord => isRu ? 'Добавить запись' : 'Add record';
   String get newRecord => isRu ? 'Новая запись' : 'New record';
