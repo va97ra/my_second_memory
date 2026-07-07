@@ -48,6 +48,11 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
             SliverAppBar.large(
               backgroundColor: const Color(0xFFFBF3E8),
               surfaceTintColor: Colors.transparent,
+              leading: IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                onPressed: () => context.go('/settings'),
+                icon: const Icon(Icons.arrow_back),
+              ),
               title: Text(strings.memoryBase),
             ),
             SliverToBoxAdapter(

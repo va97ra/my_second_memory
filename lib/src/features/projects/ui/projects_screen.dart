@@ -23,7 +23,14 @@ class ProjectsScreen extends ConsumerWidget {
       currentIndex: 3,
       child: CustomScrollView(
         slivers: [
-          SliverAppBar.large(title: Text(strings.projects)),
+          SliverAppBar.large(
+            leading: IconButton(
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: () => context.go('/settings'),
+              icon: const Icon(Icons.arrow_back),
+            ),
+            title: Text(strings.projects),
+          ),
           SliverList.builder(
             itemCount: projects.length,
             itemBuilder: (context, index) => MemoryItemCard(

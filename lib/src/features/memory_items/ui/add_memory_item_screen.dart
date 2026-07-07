@@ -41,7 +41,14 @@ class _AddMemoryItemScreenState extends ConsumerState<AddMemoryItemScreen> {
     final locale = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
-      appBar: AppBar(title: Text(strings.add)),
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: () => context.go('/'),
+          icon: const Icon(Icons.arrow_back),
+        ),
+        title: Text(strings.add),
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,

@@ -23,7 +23,14 @@ class PeopleScreen extends ConsumerWidget {
       currentIndex: 3,
       child: CustomScrollView(
         slivers: [
-          SliverAppBar.large(title: Text(strings.people)),
+          SliverAppBar.large(
+            leading: IconButton(
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: () => context.go('/settings'),
+              icon: const Icon(Icons.arrow_back),
+            ),
+            title: Text(strings.people),
+          ),
           SliverList.builder(
             itemCount: people.length,
             itemBuilder: (context, index) => MemoryItemCard(
