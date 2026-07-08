@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -80,23 +81,31 @@ class SecurityService {
     return await _storage.read(key: _biometricsEnabledKey) == 'true';
   }
 
-  Future<void> setBiometricsEnabled(
+  Future<bool> setBiometricsEnabled(
     bool enabled, {
     AppCipher? cipher,
+    bool authenticate = true,
   }) async {
     if (!enabled) {
       await _storage.delete(key: _biometricsEnabledKey);
       await _storage.delete(key: _biometricCipherKey);
-      return;
+      return true;
     }
     if (!await hasPin() || cipher == null) {
-      return;
+      return false;
+    }
+    if (authenticate) {
+      final available = await canUseBiometrics();
+      if (!available || !await authenticateWithBiometrics()) {
+        return false;
+      }
     }
     await _storage.write(key: _biometricsEnabledKey, value: 'true');
     await _storage.write(
       key: _biometricCipherKey,
       value: base64Encode(cipher.exportKeyBytes()),
     );
+    return true;
   }
 
   Future<AppCipher?> unlockWithBiometrics() async {
@@ -115,13 +124,27 @@ class SecurityService {
   }
 
   Future<bool> authenticateWithBiometrics() async {
-    final canCheck = await _localAuthentication.canCheckBiometrics;
-    if (!canCheck) {
+    if (!await canUseBiometrics()) {
       return false;
     }
-    return _localAuthentication.authenticate(
-      localizedReason: 'Unlock your memory',
-      options: const AuthenticationOptions(biometricOnly: true),
-    );
+    try {
+      return _localAuthentication.authenticate(
+        localizedReason: 'Подтвердите вход биометрией',
+        options: const AuthenticationOptions(biometricOnly: true),
+      );
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  Future<bool> canUseBiometrics() async {
+    try {
+      final supported = await _localAuthentication.isDeviceSupported();
+      final canCheck = await _localAuthentication.canCheckBiometrics;
+      final biometrics = await _localAuthentication.getAvailableBiometrics();
+      return supported && canCheck && biometrics.isNotEmpty;
+    } on PlatformException {
+      return false;
+    }
   }
 }

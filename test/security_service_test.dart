@@ -40,12 +40,16 @@ void main() {
   test('biometrics flag requires pin and is cleared with pin', () async {
     final service = SecurityService();
 
-    await service.setBiometricsEnabled(true);
+    await service.setBiometricsEnabled(true, authenticate: false);
     expect(await service.biometricsEnabled(), isFalse);
 
     await service.setPin('1234');
     final cipher = await service.unlockWithPin('1234');
-    await service.setBiometricsEnabled(true, cipher: cipher);
+    await service.setBiometricsEnabled(
+      true,
+      cipher: cipher,
+      authenticate: false,
+    );
 
     expect(await service.biometricsEnabled(), isTrue);
 

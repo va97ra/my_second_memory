@@ -64,18 +64,31 @@ class MainSliverAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SliverAppBar.large(
-      backgroundColor: const Color(0xFFFBF3E8),
-      surfaceTintColor: Colors.transparent,
-      leading: backLocation == null
-          ? null
-          : AppBackButton(fallbackLocation: backLocation!),
-      title: Text(
-        title,
-        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: const Color(0xFF172033),
-            ),
+    return SliverToBoxAdapter(
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+          child: Row(
+            children: [
+              if (backLocation != null) ...[
+                AppBackButton(fallbackLocation: backLocation!),
+                const SizedBox(width: 4),
+              ],
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF172033),
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
