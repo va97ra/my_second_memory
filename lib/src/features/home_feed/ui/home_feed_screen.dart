@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
+import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_type.dart';
@@ -45,8 +46,14 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
             if (isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child:
-                    Center(child: _EmptyFeedMessage(text: strings.emptyFeed)),
+                child: Center(
+                  child: AppEmptyState(
+                    icon: Icons.dynamic_feed_outlined,
+                    title: strings.emptyFeed,
+                    actionLabel: strings.addRecord,
+                    onAction: () => context.go('/calendar'),
+                  ),
+                ),
               )
             else
               for (final group in groups) ...[
@@ -234,78 +241,23 @@ class _FeedSectionHeader extends StatelessWidget {
 
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 7),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.72),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFDDE7F3)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            child: Text(
+        padding: const EdgeInsets.fromLTRB(18, 16, 16, 6),
+        child: Row(
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: const SizedBox(width: 4, height: 22),
+            ),
+            const SizedBox(width: 9),
+            Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                     color: const Color(0xFF172033),
                   ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyFeedMessage extends StatelessWidget {
-  const _EmptyFeedMessage({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.86),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE7F3)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const SizedBox(
-                width: 34,
-                height: 34,
-                child: Icon(
-                  Icons.dynamic_feed_outlined,
-                  color: Color(0xFF2563EB),
-                  size: 19,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Flexible(
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF475569),
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
             ),
           ],
         ),

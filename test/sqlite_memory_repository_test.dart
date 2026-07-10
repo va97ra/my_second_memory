@@ -33,6 +33,7 @@ void main() {
       type: MemoryType.purchase,
       title: 'Покупка',
       body: 'Молоко',
+      timeMinutes: 18 * 60,
       memoryDate: DateTime(2026, 7, 3),
       createdAt: date,
       updatedAt: date,
@@ -62,6 +63,7 @@ void main() {
 
     expect(restored, hasLength(1));
     expect(restored.single.id, 'saved-note');
+    expect(restored.single.timeMinutes, 18 * 60);
     expect(restored.single.status, MemoryStatus.done);
     expect(restored.single.audioPath, '/local/voice.m4a');
     expect(restored.single.audioDurationSeconds, 42);
@@ -117,6 +119,7 @@ void main() {
       type: MemoryType.note,
       title: 'Настоящая запись',
       body: 'Не потерять',
+      timeMinutes: 9 * 60 + 15,
       memoryDate: date,
       createdAt: date,
       updatedAt: date,
@@ -141,6 +144,7 @@ void main() {
 
     expect(firstLoad, hasLength(1));
     expect(firstLoad.single.id, 'real-note');
+    expect(firstLoad.single.timeMinutes, 9 * 60 + 15);
     expect(firstLoad.single.imagePaths, ['/local/photo.jpg']);
     expect(secondLoad, hasLength(1));
     expect(secondLoad.single.id, 'real-note');

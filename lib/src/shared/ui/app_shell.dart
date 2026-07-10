@@ -38,7 +38,7 @@ class AppShell extends StatelessWidget {
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+            padding: const EdgeInsets.fromLTRB(8, 2, 8, 4),
             child: NavigationBar(
               selectedIndex: currentIndex,
               onDestinationSelected: (index) {

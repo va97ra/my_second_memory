@@ -70,7 +70,13 @@ List<FeedDay> groupItemsByDate(
       if (byPriority != 0) {
         return byPriority;
       }
-      return b.createdAt.compareTo(a.createdAt);
+      final byVisibleTime = _visibleTimeMinutes(a).compareTo(
+        _visibleTimeMinutes(b),
+      );
+      if (byVisibleTime != 0) {
+        return byVisibleTime;
+      }
+      return a.createdAt.compareTo(b.createdAt);
     });
 
   final grouped = <DateTime, List<MemoryItem>>{};
@@ -102,6 +108,10 @@ bool _matchesFilter(MemoryItem item, FeedFilter filter) {
     FeedFilter.document => item.type == MemoryType.document,
     FeedFilter.place => item.type == MemoryType.place,
   };
+}
+
+int _visibleTimeMinutes(MemoryItem item) {
+  return item.timeMinutes ?? item.createdAt.hour * 60 + item.createdAt.minute;
 }
 
 bool isSameDay(DateTime left, DateTime right) {

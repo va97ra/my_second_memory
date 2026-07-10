@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../shared/ui/empty_state.dart';
+import '../../../shared/ui/screen_chrome.dart';
 import '../domain/shift_schedule.dart';
 import '../state/shift_schedules_controller.dart';
 
@@ -17,15 +18,11 @@ class ShiftSchedulesScreen extends ConsumerWidget {
     final schedules = ref.watch(shiftSchedulesControllerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7ECDB),
+      backgroundColor: const Color(0xFFE9DECF),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF3E8),
+        backgroundColor: const Color(0xFFF1E7DA),
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          onPressed: () => context.go('/settings'),
-          icon: const Icon(Icons.arrow_back),
-        ),
+        leading: const AppBackButton(fallbackLocation: '/settings'),
         title: Text(
           strings.shiftSchedules,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -44,9 +41,9 @@ class ShiftSchedulesScreen extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFFBF3E8),
-              Color(0xFFF7ECDB),
-              Color(0xFFFCF7EF),
+              Color(0xFFF1E7DA),
+              Color(0xFFE9DECF),
+              Color(0xFFF4EBDF),
             ],
           ),
         ),
@@ -60,7 +57,12 @@ class ShiftSchedulesScreen extends ConsumerWidget {
                 child: Column(
                   children: [
                     if (schedules.isEmpty)
-                      _EmptyShiftSchedules(title: strings.noShiftSchedules)
+                      AppEmptyState(
+                        icon: Icons.work_history_outlined,
+                        title: strings.noShiftSchedules,
+                        actionLabel: strings.addShiftSchedule,
+                        onAction: () => _openEditor(context, ref),
+                      )
                     else
                       for (final schedule in schedules)
                         _ShiftScheduleTile(
@@ -137,44 +139,6 @@ class ShiftSchedulesScreen extends ConsumerWidget {
   }
 }
 
-class _EmptyShiftSchedules extends StatelessWidget {
-  const _EmptyShiftSchedules({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE7F3)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF475569),
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ShiftScheduleTile extends StatelessWidget {
   const _ShiftScheduleTile({
     required this.schedule,
@@ -213,7 +177,7 @@ class _ShiftScheduleTile extends StatelessWidget {
               ),
               color: schedule.isEnabled
                   ? color.withValues(alpha: 0.1)
-                  : const Color(0xFFFFFCF6).withValues(alpha: 0.92),
+                  : const Color(0xFFFFFCF7).withValues(alpha: 0.92),
               boxShadow: [
                 BoxShadow(
                   color: color.withValues(alpha: schedule.isEnabled ? 0.1 : 0),
@@ -378,7 +342,7 @@ class _ShiftScheduleEditorSheetState
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),
           child: Material(
-            color: const Color(0xFFFFFCF6),
+            color: const Color(0xFFFFFCF7),
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(16),

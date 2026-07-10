@@ -18,6 +18,7 @@ class SecurityService {
   static const _pinSaltKey = 'app_pin_salt_v2';
   static const _biometricsEnabledKey = 'biometrics_enabled_v1';
   static const _biometricCipherKey = 'biometric_cipher_key_v1';
+  static const _setupCompletedKey = 'security_setup_completed_v1';
 
   final FlutterSecureStorage _storage;
   final LocalAuthentication _localAuthentication;
@@ -27,15 +28,20 @@ class SecurityService {
         (await _storage.read(key: _pinKey)) != null;
   }
 
+  Future<bool> setupCompleted() async {
+    return await _storage.read(key: _setupCompletedKey) == 'true';
+  }
+
   Future<void> setPin(String pin) async {
     final salt = AppCipher.randomSalt();
     final cipher = await AppCipher.fromPin(pin: pin, salt: salt);
     final verifier = await cipher.encryptString('pin-ok');
     await _storage.write(key: _pinSaltKey, value: base64Encode(salt));
     await _storage.write(key: _pinHashKey, value: verifier);
+    await _storage.write(key: _setupCompletedKey, value: 'true');
     await _storage.delete(key: _pinKey);
     if (await biometricsEnabled()) {
-      await setBiometricsEnabled(true, cipher: cipher);
+      await setBiometricsEnabled(true, cipher: cipher, authenticate: false);
     }
   }
 

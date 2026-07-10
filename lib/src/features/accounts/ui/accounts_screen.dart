@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
+import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../domain/account_item.dart';
 import '../state/accounts_controller.dart';
@@ -30,7 +31,14 @@ class AccountsScreen extends ConsumerWidget {
             if (accounts.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: Center(child: Text(strings.noAccounts)),
+                child: Center(
+                  child: AppEmptyState(
+                    icon: Icons.key_outlined,
+                    title: strings.noAccounts,
+                    actionLabel: strings.addAccount,
+                    onAction: () => _showAccountEditor(context, ref),
+                  ),
+                ),
               )
             else
               SliverList.builder(
@@ -62,6 +70,8 @@ class AccountsScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      useSafeArea: true,
+      backgroundColor: const Color(0xFFFFFBF5),
       builder: (context) => _AccountEditor(account: account, ref: ref),
     );
   }
@@ -107,7 +117,7 @@ class _AccountCardState extends State<_AccountCard> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.key_outlined, color: Color(0xFF2563EB)),
+                  _ServiceAvatar(name: account.serviceName),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -129,48 +139,158 @@ class _AccountCardState extends State<_AccountCard> {
                   ),
                 ],
               ),
-              if (account.login.isNotEmpty) Text(account.login),
+              if (account.login.isNotEmpty)
+                _AccountInfoLine(
+                  icon: Icons.person_outline,
+                  text: account.login,
+                ),
+              if (account.email.isNotEmpty)
+                _AccountInfoLine(
+                  icon: Icons.alternate_email,
+                  text: account.email,
+                ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      passwordText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F7FA),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE0E6ED)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.lock_outline,
+                        size: 18,
+                        color: Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          passwordText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: strings.password,
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
+                        icon: Icon(
+                          _showPassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: strings.copyPassword,
+                        onPressed: () async {
+                          await Clipboard.setData(
+                            ClipboardData(text: account.password),
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(strings.passwordCopied)),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.copy, size: 20),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    tooltip: strings.password,
-                    onPressed: () =>
-                        setState(() => _showPassword = !_showPassword),
-                    icon: Icon(
-                      _showPassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: strings.copyPassword,
-                    onPressed: () async {
-                      await Clipboard.setData(
-                        ClipboardData(text: account.password),
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(strings.passwordCopied)),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.copy),
-                  ),
-                ],
+                ),
               ),
-              if (account.website.isNotEmpty) Text(account.website),
-              if (account.note.isNotEmpty) Text(account.note),
+              if (account.website.isNotEmpty)
+                _AccountInfoLine(
+                  icon: Icons.language_outlined,
+                  text: account.website,
+                ),
+              if (account.note.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F5EF),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE7DED2)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        account.note,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ServiceAvatar extends StatelessWidget {
+  const _ServiceAvatar({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final trimmed = name.trim();
+    final letter =
+        trimmed.isEmpty ? '?' : trimmed.substring(0, 1).toUpperCase();
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8EAFE),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFC7D2FE)),
+      ),
+      child: SizedBox(
+        width: 38,
+        height: 38,
+        child: Center(
+          child: Text(
+            letter,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(0xFF3157C8),
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AccountInfoLine extends StatelessWidget {
+  const _AccountInfoLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 17, color: const Color(0xFF64748B)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -190,8 +310,10 @@ class _AccountEditorState extends State<_AccountEditor> {
   final _service = TextEditingController();
   final _login = TextEditingController();
   final _password = TextEditingController();
+  final _email = TextEditingController();
   final _website = TextEditingController();
   final _note = TextEditingController();
+  bool _showPassword = false;
 
   @override
   void initState() {
@@ -201,6 +323,7 @@ class _AccountEditorState extends State<_AccountEditor> {
       _service.text = account.serviceName;
       _login.text = account.login;
       _password.text = account.password;
+      _email.text = account.email;
       _website.text = account.website;
       _note.text = account.note;
     }
@@ -211,6 +334,7 @@ class _AccountEditorState extends State<_AccountEditor> {
     _service.dispose();
     _login.dispose();
     _password.dispose();
+    _email.dispose();
     _website.dispose();
     _note.dispose();
     super.dispose();
@@ -219,47 +343,113 @@ class _AccountEditorState extends State<_AccountEditor> {
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          0,
-          16,
-          16 + MediaQuery.viewInsetsOf(context).bottom,
-        ),
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.86,
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 14 + bottomInset),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              widget.account == null ? strings.addAccount : strings.editAccount,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _service,
-              decoration: InputDecoration(labelText: strings.serviceName),
-            ),
-            TextField(
-              controller: _login,
-              decoration: InputDecoration(labelText: strings.login),
-            ),
-            TextField(
-              controller: _password,
-              obscureText: true,
-              decoration: InputDecoration(labelText: strings.password),
-            ),
-            TextField(
-              controller: _website,
-              decoration: InputDecoration(labelText: strings.website),
-            ),
-            TextField(
-              controller: _note,
-              decoration: InputDecoration(labelText: strings.note),
+            Row(
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8EAFE),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const SizedBox(
+                    width: 42,
+                    height: 42,
+                    child: Icon(Icons.key_outlined, color: Color(0xFF3157C8)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    widget.account == null
+                        ? strings.addAccount
+                        : strings.editAccount,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
+            Expanded(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
+                  children: [
+                    _AccountTextField(
+                      controller: _service,
+                      label: strings.serviceName,
+                      icon: Icons.apps_outlined,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    _AccountTextField(
+                      controller: _login,
+                      label: strings.login,
+                      icon: Icons.person_outline,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    _AccountTextField(
+                      controller: _email,
+                      label: strings.email,
+                      icon: Icons.alternate_email,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    _AccountTextField(
+                      controller: _password,
+                      label: strings.password,
+                      icon: Icons.lock_outline,
+                      obscureText: !_showPassword,
+                      textInputAction: TextInputAction.next,
+                      suffixIcon: IconButton(
+                        tooltip: strings.password,
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
+                        icon: Icon(
+                          _showPassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                      ),
+                    ),
+                    _AccountTextField(
+                      controller: _website,
+                      label: strings.website,
+                      icon: Icons.language_outlined,
+                      keyboardType: TextInputType.url,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    _AccountTextField(
+                      controller: _note,
+                      label: strings.note,
+                      icon: Icons.notes_outlined,
+                      minLines: 4,
+                      maxLines: 6,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
+              height: 48,
               child: FilledButton.icon(
                 onPressed: _save,
                 icon: const Icon(Icons.save_outlined),
@@ -281,6 +471,7 @@ class _AccountEditorState extends State<_AccountEditor> {
             serviceName: _service.text.trim(),
             login: _login.text.trim(),
             password: _password.text,
+            email: _email.text.trim(),
             website: _website.text.trim(),
             note: _note.text.trim(),
             createdAt: now,
@@ -290,6 +481,7 @@ class _AccountEditorState extends State<_AccountEditor> {
             serviceName: _service.text.trim(),
             login: _login.text.trim(),
             password: _password.text,
+            email: _email.text.trim(),
             website: _website.text.trim(),
             note: _note.text.trim(),
             updatedAt: now,
@@ -305,5 +497,53 @@ class _AccountEditorState extends State<_AccountEditor> {
     if (mounted) {
       Navigator.of(context).pop();
     }
+  }
+}
+
+class _AccountTextField extends StatelessWidget {
+  const _AccountTextField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.obscureText = false,
+    this.keyboardType,
+    this.textInputAction,
+    this.suffixIcon,
+    this.minLines,
+    this.maxLines = 1,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final Widget? suffixIcon;
+  final int? minLines;
+  final int? maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        minLines: obscureText ? 1 : minLines,
+        maxLines: obscureText ? 1 : maxLines,
+        textAlignVertical: TextAlignVertical.top,
+        decoration: InputDecoration(
+          labelText: label,
+          alignLabelWithHint: (maxLines ?? 1) > 1,
+          prefixIcon: Icon(icon),
+          suffixIcon: suffixIcon,
+          filled: true,
+          fillColor: Colors.white.withValues(alpha: 0.82),
+        ),
+      ),
+    );
   }
 }

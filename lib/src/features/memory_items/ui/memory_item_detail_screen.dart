@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:async';
 
-import 'package:file_selector/file_selector.dart';
+import 'package:file_selector/file_selector.dart' as file_selector;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:record/record.dart';
 
@@ -41,19 +43,24 @@ class _MemoryItemDetailScreenState
   final _recorder = AudioRecorder();
   final _voiceStorage = VoiceNoteStorage();
   final _imageStorage = MemoryImageStorage();
+  final _imagePicker = ImagePicker();
   final _imagePaths = <String>[];
 
   String? _loadedItemId;
   DateTime _memoryDate = DateTime.now();
+  int? _timeMinutes;
   MemoryStatus _status = MemoryStatus.active;
   MemoryType _type = MemoryType.note;
   String? _audioPath;
   int? _audioDurationSeconds;
   DateTime? _recordingStartedAt;
   bool _isRecording = false;
+  bool _isSaving = false;
+  Timer? _autosaveTimer;
 
   @override
   void dispose() {
+    _autosaveTimer?.cancel();
     _bodyController.dispose();
     _recorder.dispose();
     super.dispose();
@@ -91,16 +98,12 @@ class _MemoryItemDetailScreenState
           onPressed: _goBack,
           icon: const Icon(Icons.arrow_back),
         ),
-        title: _EditorTitle(
-          title: item == null ? strings.newRecord : strings.editRecord,
-          dateText: _formattedDate(context),
-          onDateTap: _pickDate,
-        ),
+        title: Text(item == null ? strings.newRecord : strings.editRecord),
         actions: [
           IconButton(
-            tooltip: strings.save,
-            onPressed: _isRecording ? null : () => _save(item),
-            icon: const Icon(Icons.save_outlined),
+            tooltip: _isSaving ? strings.saving : strings.saved,
+            onPressed: null,
+            icon: Icon(_isSaving ? Icons.sync : Icons.cloud_done_outlined),
           ),
           if (item != null)
             PopupMenuButton<String>(
@@ -124,8 +127,19 @@ class _MemoryItemDetailScreenState
           key: _formKey,
           child: _EditorBody(
             selectedType: _type,
+            dateText: _formattedDate(context),
+            timeText: _formattedTime(),
+            onDateTap: _pickDate,
+            onTimeTap: _pickTime,
+            onClearTime: _timeMinutes == null
+                ? null
+                : () {
+                    setState(() => _timeMinutes = null);
+                    _scheduleAutosave(item);
+                  },
             onTypeChanged: (type) {
               setState(() => _type = type);
+              _scheduleAutosave(item);
             },
             recordEditor: _RecordEditor(
               controller: _bodyController,
@@ -137,8 +151,11 @@ class _MemoryItemDetailScreenState
               onPickImage: _pickImage,
               onRemoveImage: (path) => setState(() {
                 _imagePaths.remove(path);
+                _scheduleAutosave(item);
               }),
-              onVoicePressed: _isRecording ? _stopAndSaveVoice : _startVoice,
+              onVoicePressed:
+                  _isRecording ? () => _stopAndSaveVoice(item) : _startVoice,
+              onChanged: () => _scheduleAutosave(item),
             ),
           ),
         ),
@@ -167,6 +184,7 @@ class _MemoryItemDetailScreenState
     _loadedItemId = item.id;
     _bodyController.text = item.body;
     _memoryDate = item.memoryDate;
+    _timeMinutes = item.timeMinutes;
     _status = item.status;
     _type =
         editableMemoryTypes.contains(item.type) ? item.type : MemoryType.note;
@@ -185,6 +203,7 @@ class _MemoryItemDetailScreenState
     _loadedItemId = '__new__';
     _bodyController.clear();
     _memoryDate = DateTime(date.year, date.month, date.day);
+    _timeMinutes = null;
     _status = MemoryStatus.active;
     _type = MemoryType.note;
     _audioPath = null;
@@ -203,6 +222,7 @@ class _MemoryItemDetailScreenState
       return;
     }
     setState(() => _memoryDate = DateTime(date.year, date.month, date.day));
+    _scheduleAutosave(_findItem());
   }
 
   String _formattedDate(BuildContext context) {
@@ -210,12 +230,36 @@ class _MemoryItemDetailScreenState
         .format(_memoryDate);
   }
 
-  Future<void> _pickImage() async {
-    const imageGroup = XTypeGroup(
-      label: 'Images',
-      extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+  String? _formattedTime() {
+    final minutes = _timeMinutes;
+    if (minutes == null) {
+      return null;
+    }
+    final hour = (minutes ~/ 60).toString().padLeft(2, '0');
+    final minute = (minutes % 60).toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  Future<void> _pickTime() async {
+    final initialMinutes = _timeMinutes;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initialMinutes == null
+          ? TimeOfDay.now()
+          : TimeOfDay(
+              hour: initialMinutes ~/ 60,
+              minute: initialMinutes % 60,
+            ),
     );
-    final file = await openFile(acceptedTypeGroups: [imageGroup]);
+    if (picked == null) {
+      return;
+    }
+    setState(() => _timeMinutes = picked.hour * 60 + picked.minute);
+    _scheduleAutosave(_findItem());
+  }
+
+  Future<void> _pickImage() async {
+    final file = kIsWeb ? await _pickImageForWeb() : await _pickImageForIo();
     if (file == null) {
       return;
     }
@@ -225,11 +269,50 @@ class _MemoryItemDetailScreenState
       final mimeType = file.mimeType ?? _mimeTypeForName(file.name);
       final dataUrl = 'data:$mimeType;base64,${base64Encode(bytes)}';
       setState(() => _imagePaths.add(dataUrl));
+      _scheduleAutosave(_findItem());
       return;
     }
 
     final savedPath = await _imageStorage.savePickedImage(file);
     setState(() => _imagePaths.add(savedPath));
+    _scheduleAutosave(_findItem());
+  }
+
+  Future<XFile?> _pickImageForWeb() async {
+    const imageGroup = file_selector.XTypeGroup(
+      label: 'Images',
+      extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    );
+    return file_selector.openFile(acceptedTypeGroups: [imageGroup]);
+  }
+
+  Future<XFile?> _pickImageForIo() async {
+    final strings = AppStrings.of(context);
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(strings.gallery),
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text(strings.camera),
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) {
+      return null;
+    }
+    return _imagePicker.pickImage(source: source, imageQuality: 92);
   }
 
   Future<void> _startVoice() async {
@@ -246,7 +329,7 @@ class _MemoryItemDetailScreenState
     });
   }
 
-  Future<void> _stopAndSaveVoice() async {
+  Future<void> _stopAndSaveVoice(MemoryItem? item) async {
     final path = await _recorder.stop();
     final startedAt = _recordingStartedAt;
     final duration =
@@ -260,6 +343,7 @@ class _MemoryItemDetailScreenState
         _audioDurationSeconds = duration;
       }
     });
+    _scheduleAutosave(item);
   }
 
   String _mimeTypeForName(String name) {
@@ -276,10 +360,15 @@ class _MemoryItemDetailScreenState
     return 'image/jpeg';
   }
 
-  Future<void> _save(MemoryItem? item) async {
+  Future<void> _save(MemoryItem? item, {bool showMessage = true}) async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    if (!_hasContent()) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
 
     final now = DateTime.now();
     final title = _titleFromRecord(
@@ -299,6 +388,7 @@ class _MemoryItemDetailScreenState
         type: _type,
         title: title,
         body: _bodyController.text.trim(),
+        timeMinutes: _timeMinutes,
         memoryDate: memoryDate,
         createdAt: now,
         updatedAt: now,
@@ -308,14 +398,18 @@ class _MemoryItemDetailScreenState
         imagePaths: List.unmodifiable(_imagePaths),
       );
       await ref.read(memoryItemsControllerProvider.notifier).add(created);
+      _loadedItemId = created.id;
 
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(context).saved)),
-      );
-      context.go('/memory/item/${Uri.encodeComponent(created.id)}');
+      setState(() => _isSaving = false);
+      if (showMessage) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.of(context).saved)),
+        );
+      }
+      context.replace('/memory/item/${Uri.encodeComponent(created.id)}');
       return;
     }
 
@@ -323,6 +417,8 @@ class _MemoryItemDetailScreenState
       type: _type,
       title: title,
       body: _bodyController.text.trim(),
+      timeMinutes: _timeMinutes,
+      clearTime: _timeMinutes == null,
       memoryDate: memoryDate,
       status: _status,
       audioPath: _audioPath,
@@ -335,9 +431,30 @@ class _MemoryItemDetailScreenState
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppStrings.of(context).saved)),
-    );
+    setState(() => _isSaving = false);
+    if (showMessage) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.of(context).saved)),
+      );
+    }
+  }
+
+  bool _hasContent() {
+    return _bodyController.text.trim().isNotEmpty ||
+        _imagePaths.isNotEmpty ||
+        _audioPath != null;
+  }
+
+  void _scheduleAutosave(MemoryItem? item) {
+    _autosaveTimer?.cancel();
+    if (_isRecording || !_hasContent()) {
+      return;
+    }
+    _autosaveTimer = Timer(const Duration(milliseconds: 700), () {
+      if (mounted) {
+        _save(item, showMessage: false);
+      }
+    });
   }
 
   Future<void> _confirmDelete(MemoryItem item) async {
@@ -397,11 +514,21 @@ class _MemoryItemDetailScreenState
 class _EditorBody extends StatelessWidget {
   const _EditorBody({
     required this.selectedType,
+    required this.dateText,
+    required this.timeText,
+    required this.onDateTap,
+    required this.onTimeTap,
+    required this.onClearTime,
     required this.onTypeChanged,
     required this.recordEditor,
   });
 
   final MemoryType selectedType;
+  final String dateText;
+  final String? timeText;
+  final VoidCallback onDateTap;
+  final VoidCallback onTimeTap;
+  final VoidCallback? onClearTime;
   final ValueChanged<MemoryType> onTypeChanged;
   final Widget recordEditor;
 
@@ -428,6 +555,14 @@ class _EditorBody extends StatelessWidget {
                     onTypeChanged: onTypeChanged,
                   ),
                   SizedBox(height: compact ? 8 : 12),
+                  _ScheduleEditor(
+                    dateText: dateText,
+                    timeText: timeText,
+                    onDateTap: onDateTap,
+                    onTimeTap: onTimeTap,
+                    onClearTime: onClearTime,
+                  ),
+                  SizedBox(height: compact ? 8 : 12),
                   Expanded(child: recordEditor),
                 ],
               ),
@@ -439,43 +574,144 @@ class _EditorBody extends StatelessWidget {
   }
 }
 
-class _EditorTitle extends StatelessWidget {
-  const _EditorTitle({
-    required this.title,
+class _ScheduleEditor extends StatelessWidget {
+  const _ScheduleEditor({
     required this.dateText,
+    required this.timeText,
     required this.onDateTap,
+    required this.onTimeTap,
+    required this.onClearTime,
   });
 
-  final String title;
   final String dateText;
+  final String? timeText;
   final VoidCallback onDateTap;
+  final VoidCallback onTimeTap;
+  final VoidCallback? onClearTime;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final strings = AppStrings.of(context);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title),
-        const SizedBox(height: 2),
-        InkWell(
-          key: const ValueKey('memory_date_picker'),
-          onTap: onDateTap,
-          borderRadius: BorderRadius.circular(6),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-            child: Text(
-              dateText,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFDDE3EA)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          children: [
+            Expanded(
+              child: _ScheduleButton(
+                key: const ValueKey('memory_date_picker'),
+                icon: Icons.event_outlined,
+                label: strings.date,
+                value: dateText,
+                onTap: onDateTap,
+              ),
             ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _ScheduleButton(
+                key: const ValueKey('memory_time_picker'),
+                icon: Icons.schedule_outlined,
+                label: strings.time,
+                value: timeText ?? strings.timeNotSet,
+                isPlaceholder: timeText == null,
+                onTap: onTimeTap,
+                trailing: onClearTime == null
+                    ? null
+                    : IconButton(
+                        tooltip: strings.delete,
+                        onPressed: onClearTime,
+                        icon: const Icon(Icons.close, size: 16),
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 28,
+                          height: 28,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScheduleButton extends StatelessWidget {
+  const _ScheduleButton({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.isPlaceholder = false,
+    this.trailing,
+    super.key,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool isPlaceholder;
+  final VoidCallback onTap;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isPlaceholder
+        ? const Color(0xFF64748B)
+        : Theme.of(context).colorScheme.primary;
+
+    return Material(
+      color: const Color(0xFFF8FAFC),
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: const Color(0xFF64748B),
+                            fontWeight: FontWeight.w700,
+                            height: 1,
+                          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              if (trailing != null) trailing!,
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -491,6 +727,7 @@ class _RecordEditor extends StatelessWidget {
     required this.onPickImage,
     required this.onRemoveImage,
     required this.onVoicePressed,
+    required this.onChanged,
   });
 
   final TextEditingController controller;
@@ -502,6 +739,7 @@ class _RecordEditor extends StatelessWidget {
   final VoidCallback onPickImage;
   final ValueChanged<String> onRemoveImage;
   final VoidCallback onVoicePressed;
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -603,6 +841,7 @@ class _RecordEditor extends StatelessWidget {
                       focusedBorder: InputBorder.none,
                       contentPadding: EdgeInsets.zero,
                     ),
+                    onChanged: (_) => onChanged(),
                   ),
                 ),
                 SizedBox(height: compact ? 8 : 12),

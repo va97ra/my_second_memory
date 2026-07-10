@@ -10,6 +10,7 @@ class MemoryItem {
     required this.createdAt,
     required this.updatedAt,
     this.body = '',
+    this.timeMinutes,
     this.status = MemoryStatus.active,
     this.priority = 0,
     this.tags = const [],
@@ -28,6 +29,7 @@ class MemoryItem {
   final MemoryType type;
   final String title;
   final String body;
+  final int? timeMinutes;
   final DateTime memoryDate;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -55,6 +57,8 @@ class MemoryItem {
     MemoryType? type,
     String? title,
     String? body,
+    int? timeMinutes,
+    bool clearTime = false,
     DateTime? memoryDate,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -76,6 +80,7 @@ class MemoryItem {
       type: type ?? this.type,
       title: title ?? this.title,
       body: body ?? this.body,
+      timeMinutes: clearTime ? null : timeMinutes ?? this.timeMinutes,
       memoryDate: memoryDate ?? this.memoryDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -100,6 +105,7 @@ class MemoryItem {
       'type': type.name,
       'title': title,
       'body': body,
+      'timeMinutes': timeMinutes,
       'memoryDate': memoryDate.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -124,6 +130,7 @@ class MemoryItem {
       type: MemoryType.values.byName(json['type'] as String),
       title: json['title'] as String,
       body: json['body'] as String? ?? '',
+      timeMinutes: json['timeMinutes'] as int?,
       memoryDate: DateTime.parse(json['memoryDate'] as String),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),

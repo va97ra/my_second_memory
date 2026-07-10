@@ -28,12 +28,14 @@ void main() {
         serviceName: 'Mail',
         login: 'user',
         password: 'secret',
+        email: 'user@mail.test',
         website: 'https://mail.test',
         createdAt: now,
         updatedAt: now,
       ),
     );
     expect(controller.state.single.password, 'secret');
+    expect((await repository.loadAccounts()).single.email, 'user@mail.test');
 
     await controller.update(
       controller.state.single.copyWith(password: 'new-secret'),

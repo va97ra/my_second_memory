@@ -13,8 +13,11 @@ void main() {
       () async {
     final service = SecurityService();
 
+    expect(await service.setupCompleted(), isFalse);
+
     await service.setPin('1234');
 
+    expect(await service.setupCompleted(), isTrue);
     expect(await service.hasPin(), isTrue);
     expect(await service.verifyPin('1234'), isTrue);
     expect(await service.verifyPin('9999'), isFalse);
@@ -33,6 +36,7 @@ void main() {
 
     await service.clearPin();
 
+    expect(await service.setupCompleted(), isTrue);
     expect(await service.hasPin(), isFalse);
     expect(await service.biometricsEnabled(), isFalse);
   });

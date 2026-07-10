@@ -12,6 +12,7 @@ void main() {
       memoryDate: date,
       createdAt: date,
       updatedAt: date,
+      timeMinutes: 9 * 60 + 30,
       audioPath: '/local/voice.m4a',
       audioDurationSeconds: 12,
       imagePaths: const ['/local/photo.jpg'],
@@ -20,6 +21,7 @@ void main() {
     final restored = MemoryItem.fromJson(item.toJson());
 
     expect(restored.memoryDate, date);
+    expect(restored.timeMinutes, 9 * 60 + 30);
     expect(restored.type, MemoryType.voiceNote);
     expect(restored.audioPath, '/local/voice.m4a');
     expect(restored.audioDurationSeconds, 12);

@@ -27,12 +27,16 @@ class AppStrings {
   String get dayBeforeYesterdaySection =>
       isRu ? 'Это было позавчера' : 'This was two days ago';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
+  String get calendarTapHint => isRu
+      ? 'Нажмите на нужное число, чтобы открыть день и добавить запись.'
+      : 'Tap a date to open the day and add a record.';
   String get accounts => isRu ? 'Аккаунты' : 'Accounts';
   String get addAccount => isRu ? 'Добавить аккаунт' : 'Add account';
   String get editAccount => isRu ? 'Редактировать аккаунт' : 'Edit account';
   String get serviceName => isRu ? 'Сервис' : 'Service';
   String get login => isRu ? 'Логин' : 'Login';
   String get password => isRu ? 'Пароль' : 'Password';
+  String get email => 'Email';
   String get website => isRu ? 'Сайт' : 'Website';
   String get note => isRu ? 'Заметка' : 'Note';
   String get copyPassword => isRu ? 'Скопировать пароль' : 'Copy password';
@@ -52,13 +56,27 @@ class AppStrings {
   String get importBackup => isRu ? 'Восстановить из копии' : 'Import backup';
   String get backupCreated =>
       isRu ? 'Резервная копия сохранена' : 'Backup saved';
+  String get backupDownloadsHint => isRu
+      ? 'Архив будет сохранён в папку Загрузки.'
+      : 'The archive will be saved to Downloads.';
+  String get backupSavedToDownloads =>
+      isRu ? 'Архив сохранён в папку Загрузки' : 'Archive saved to Downloads';
   String get backupRestored =>
       isRu ? 'Резервная копия восстановлена' : 'Backup restored';
+  String get backupPassword =>
+      isRu ? 'Пароль резервной копии' : 'Backup password';
+  String get createBackupPassword =>
+      isRu ? 'Придумайте пароль для архива' : 'Create backup password';
+  String get enterBackupPassword =>
+      isRu ? 'Введите пароль архива' : 'Enter backup password';
+  String get backupPasswordHint => isRu
+      ? 'Этот пароль понадобится для восстановления'
+      : 'This password is required to restore';
   String get restoreBackupQuestion =>
       isRu ? 'Восстановить резервную копию?' : 'Restore backup?';
   String get restoreBackupWarning => isRu
-      ? 'Текущие записи и графики смен будут заменены данными из файла.'
-      : 'Current records and shift schedules will be replaced by the file data.';
+      ? 'Текущие записи, графики смен и аккаунты будут заменены данными из файла.'
+      : 'Current records, shift schedules, and accounts will be replaced by the file data.';
   String get invalidBackupFile =>
       isRu ? 'Не удалось прочитать резервную копию' : 'Cannot read backup file';
   String get archive => isRu ? 'Архив' : 'Archive';
@@ -71,6 +89,8 @@ class AppStrings {
   String get recordType => isRu ? 'Тип записи' : 'Record type';
   String get description => isRu ? 'Запись' : 'Record';
   String get date => isRu ? 'Дата' : 'Date';
+  String get time => isRu ? 'Время' : 'Time';
+  String get timeNotSet => isRu ? 'Без времени' : 'No time';
   String get save => isRu ? 'Сохранить' : 'Save';
   String get saved => isRu ? 'Сохранено' : 'Saved';
   String get requiredDate => isRu ? 'Дата обязательна' : 'Date is required';
@@ -91,6 +111,9 @@ class AppStrings {
   String get deleteRecordQuestion =>
       isRu ? 'Удалить эту запись?' : 'Delete this record?';
   String get addImage => isRu ? 'Добавить фото' : 'Add image';
+  String get gallery => isRu ? 'Галерея' : 'Gallery';
+  String get camera => isRu ? 'Камера' : 'Camera';
+  String get saving => isRu ? 'Сохраняю' : 'Saving';
   String get dayRecords => isRu ? 'Записи дня' : 'Day records';
   String get messageHint => isRu ? 'Сообщение' : 'Message';
   String get photo => isRu ? 'Фото' : 'Photo';
@@ -118,6 +141,18 @@ class AppStrings {
   String get workingToday => isRu ? 'Рабочий день' : 'Workday';
   String get language => isRu ? 'Язык' : 'Language';
   String get unlock => isRu ? 'Открыть' : 'Unlock';
+  String get setupPinTitle =>
+      isRu ? 'Создайте PIN для защиты данных' : 'Create a PIN to protect data';
+  String get setupPinSubtitle => isRu
+      ? 'PIN будет шифровать записи, аккаунты и настройки.'
+      : 'PIN encrypts records, accounts, and settings.';
+  String get createPin => isRu ? 'Создать PIN' : 'Create PIN';
+  String get enableBiometricsQuestion =>
+      isRu ? 'Включить вход по биометрии?' : 'Enable biometric unlock?';
+  String get maybeLater => isRu ? 'Позже' : 'Later';
+  String get unlockWithPin => isRu ? 'Войти по PIN' : 'Unlock with PIN';
+  String get tryBiometricsAgain =>
+      isRu ? 'Повторить биометрию' : 'Try biometrics again';
   String get biometrics => isRu ? 'Биометрия' : 'Biometrics';
   String get pinStatus => isRu ? 'PIN' : 'PIN';
   String get enablePin => isRu ? 'Включить PIN' : 'Enable PIN';

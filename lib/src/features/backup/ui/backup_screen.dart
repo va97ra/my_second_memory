@@ -1,15 +1,15 @@
-import 'dart:convert';
-
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
+import '../../../shared/ui/screen_chrome.dart';
+import '../../accounts/state/accounts_controller.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
+import '../data/backup_file_saver.dart';
 import '../data/backup_service.dart';
 
 class BackupScreen extends ConsumerStatefulWidget {
@@ -30,11 +30,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       currentIndex: 3,
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            onPressed: () => context.go('/settings'),
-            icon: const Icon(Icons.arrow_back),
-          ),
+          leading: const AppBackButton(fallbackLocation: '/settings'),
           title: Text(strings.backup),
         ),
         body: DecoratedBox(
@@ -43,9 +39,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFFFBF3E8),
-                Color(0xFFF7ECDB),
-                Color(0xFFFCF7EF),
+                Color(0xFFF1E7DA),
+                Color(0xFFE9DECF),
+                Color(0xFFF4EBDF),
               ],
             ),
           ),
@@ -66,6 +62,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          _BackupHint(text: strings.backupDownloadsHint),
+                          const SizedBox(height: 10),
                           _BackupActionButton(
                             icon: Icons.upload_file_outlined,
                             color: const Color(0xFF2563EB),
@@ -96,6 +94,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     return BackupService(
       memoryRepository: ref.read(memoryRepositoryProvider),
       shiftScheduleRepository: ref.read(shiftScheduleRepositoryProvider),
+      accountRepository: ref.read(accountRepositoryProvider),
     );
   }
 
@@ -103,21 +102,36 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final strings = AppStrings.of(context);
     setState(() => _isBusy = true);
     try {
-      final backupJson = await _service().createBackupJson();
+      final password = await _askPassword(strings.createBackupPassword);
+      if (password == null || password.isEmpty) {
+        return;
+      }
+      final backupBytes = await _service().createEncryptedBackupZip(password);
+      final fileName =
+          'ezhednevnik_v2_backup_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.zip';
+      final downloadsPath = await BackupFileSaver.saveToDownloads(
+        fileName: fileName,
+        bytes: backupBytes,
+      );
+      if (downloadsPath != null) {
+        if (mounted) {
+          _showMessage(strings.backupSavedToDownloads);
+        }
+        return;
+      }
       final saveLocation = await getSaveLocation(
         acceptedTypeGroups: const [
-          XTypeGroup(label: 'JSON', extensions: ['json']),
+          XTypeGroup(label: 'ZIP', extensions: ['zip']),
         ],
-        suggestedName:
-            'ezhednevnik_v2_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.json',
+        suggestedName: fileName,
       );
       if (saveLocation == null) {
         return;
       }
 
       await XFile.fromData(
-        utf8.encode(backupJson),
-        mimeType: 'application/json',
+        backupBytes,
+        mimeType: 'application/zip',
         name: saveLocation.path.split(RegExp(r'[\\/]')).last,
       ).saveTo(saveLocation.path);
 
@@ -162,20 +176,30 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     try {
       final file = await openFile(
         acceptedTypeGroups: const [
-          XTypeGroup(label: 'JSON', extensions: ['json']),
+          XTypeGroup(label: 'Backup', extensions: ['zip', 'json']),
         ],
       );
       if (file == null) {
         return;
       }
 
-      final data = await _service().parseBackupJson(await file.readAsString());
+      final bytes = await file.readAsBytes();
+      final password = _looksLikeZip(bytes)
+          ? await _askPassword(strings.enterBackupPassword)
+          : null;
+      if (_looksLikeZip(bytes) && (password == null || password.isEmpty)) {
+        return;
+      }
+      final data = await _service().parseBackupBytes(bytes, password: password);
       await ref
           .read(memoryItemsControllerProvider.notifier)
           .replaceAll(data.memoryItems);
       await ref
           .read(shiftSchedulesControllerProvider.notifier)
           .replaceAll(data.shiftSchedules);
+      await ref
+          .read(accountsControllerProvider.notifier)
+          .replaceAll(data.accounts);
 
       if (mounted) {
         _showMessage(strings.backupRestored);
@@ -194,6 +218,86 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   void _showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(text)),
+    );
+  }
+
+  Future<String?> _askPassword(String title) async {
+    final strings = AppStrings.of(context);
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: strings.backupPassword,
+            helperText: strings.backupPasswordHint,
+          ),
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(strings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: Text(strings.save),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result?.trim();
+  }
+
+  bool _looksLikeZip(List<int> bytes) {
+    return bytes.length >= 4 &&
+        bytes[0] == 0x50 &&
+        bytes[1] == 0x4B &&
+        bytes[2] == 0x03 &&
+        bytes[3] == 0x04;
+  }
+}
+
+class _BackupHint extends StatelessWidget {
+  const _BackupHint({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFDBEAFE).withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFBFDBFE)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.download_done_outlined,
+              color: Color(0xFF2563EB),
+              size: 20,
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                text,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: const Color(0xFF334155),
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

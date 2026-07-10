@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ezhednevnik_v2/src/features/accounts/data/account_repository.dart';
+import 'package:ezhednevnik_v2/src/features/accounts/domain/account_item.dart';
 import 'package:ezhednevnik_v2/src/features/backup/data/backup_service.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/data/memory_repository.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
@@ -18,6 +20,7 @@ void main() {
         type: MemoryType.note,
         title: 'Запись',
         body: 'Текст',
+        timeMinutes: 12 * 60 + 45,
         memoryDate: date,
         createdAt: date,
         updatedAt: date,
@@ -38,6 +41,16 @@ void main() {
     final service = BackupService(
       memoryRepository: memoryRepository,
       shiftScheduleRepository: shiftRepository,
+      accountRepository: _AccountRepository([
+        AccountItem(
+          id: 'account',
+          serviceName: 'Mail',
+          login: 'user',
+          password: 'secret',
+          createdAt: date,
+          updatedAt: date,
+        ),
+      ]),
     );
 
     final raw = await service.createBackupJson();
@@ -48,16 +61,63 @@ void main() {
     expect(decoded['version'], BackupService.version);
     expect(restored.memoryItems, hasLength(1));
     expect(restored.memoryItems.single.id, 'note');
+    expect(restored.memoryItems.single.timeMinutes, 12 * 60 + 45);
     expect(restored.memoryItems.single.status, MemoryStatus.done);
     expect(restored.memoryItems.single.imagePaths, ['/missing/photo.jpg']);
     expect(restored.shiftSchedules, hasLength(1));
     expect(restored.shiftSchedules.single.organizationName, 'Завод');
+    expect(restored.accounts, hasLength(1));
+    expect(restored.accounts.single.password, 'secret');
+  });
+
+  test('exports and restores encrypted zip with password', () async {
+    final date = DateTime(2026, 7, 3);
+    final service = BackupService(
+      memoryRepository: _MemoryRepository([
+        MemoryItem(
+          id: 'note',
+          type: MemoryType.note,
+          title: 'Запись',
+          body: 'Текст',
+          timeMinutes: 8 * 60,
+          memoryDate: date,
+          createdAt: date,
+          updatedAt: date,
+        ),
+      ]),
+      shiftScheduleRepository: _ShiftRepository(const []),
+      accountRepository: _AccountRepository([
+        AccountItem(
+          id: 'account',
+          serviceName: 'Mail',
+          login: 'user',
+          password: 'secret',
+          createdAt: date,
+          updatedAt: date,
+        ),
+      ]),
+    );
+
+    final zip = await service.createEncryptedBackupZip('good-password');
+    final restored = await service.parseBackupBytes(
+      zip,
+      password: 'good-password',
+    );
+
+    expect(restored.memoryItems.single.id, 'note');
+    expect(restored.memoryItems.single.timeMinutes, 8 * 60);
+    expect(restored.accounts.single.password, 'secret');
+    expect(
+      () => service.parseBackupBytes(zip, password: 'bad-password'),
+      throwsFormatException,
+    );
   });
 
   test('rejects unsupported backup files', () async {
     final service = BackupService(
       memoryRepository: _MemoryRepository(const []),
       shiftScheduleRepository: _ShiftRepository(const []),
+      accountRepository: _AccountRepository(const []),
     );
 
     expect(
@@ -89,4 +149,16 @@ class _ShiftRepository implements ShiftScheduleRepository {
 
   @override
   Future<void> saveSchedules(List<ShiftSchedule> schedules) async {}
+}
+
+class _AccountRepository implements AccountRepository {
+  _AccountRepository(this.accounts);
+
+  final List<AccountItem> accounts;
+
+  @override
+  Future<List<AccountItem>> loadAccounts() async => accounts;
+
+  @override
+  Future<void> saveAccounts(List<AccountItem> accounts) async {}
 }

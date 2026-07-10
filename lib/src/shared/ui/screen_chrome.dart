@@ -17,9 +17,9 @@ class WarmGradientBackground extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFFBF3E8),
-            Color(0xFFF7ECDB),
-            Color(0xFFFCF7EF),
+            Color(0xFFF1E7DA),
+            Color(0xFFE9DECF),
+            Color(0xFFF4EBDF),
           ],
         ),
       ),
@@ -65,29 +65,45 @@ class MainSliverAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
-          child: Row(
-            children: [
-              if (backLocation != null) ...[
-                AppBackButton(fallbackLocation: backLocation!),
-                const SizedBox(width: 4),
-              ],
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF172033),
-                      ),
-                ),
-              ),
+      child: MainPageHeader(title: title, backLocation: backLocation),
+    );
+  }
+}
+
+class MainPageHeader extends StatelessWidget {
+  const MainPageHeader({
+    required this.title,
+    this.backLocation,
+    super.key,
+  });
+
+  final String title;
+  final String? backLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+        child: Row(
+          children: [
+            if (backLocation != null) ...[
+              AppBackButton(fallbackLocation: backLocation!),
+              const SizedBox(width: 2),
             ],
-          ),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF172033),
+                    ),
+              ),
+            ),
+          ],
         ),
       ),
     );

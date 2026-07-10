@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
+import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
 import '../domain/memory_type.dart';
@@ -66,7 +67,14 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
             if (items.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: Center(child: Text(strings.emptyArchive)),
+                child: Center(
+                  child: AppEmptyState(
+                    icon: Icons.inventory_2_outlined,
+                    title: strings.emptyArchive,
+                    actionLabel: strings.feed,
+                    onAction: () => context.go('/'),
+                  ),
+                ),
               )
             else
               SliverList.builder(

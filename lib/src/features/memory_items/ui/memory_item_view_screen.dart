@@ -65,7 +65,7 @@ class MemoryItemViewScreen extends ConsumerWidget {
                 constraints: const BoxConstraints(maxWidth: 720),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFFCF6),
+                    color: const Color(0xFFFFFCF7),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: const Color(0xFFE7DCCB)),
                     boxShadow: [

@@ -31,6 +31,12 @@ class $MemoryItemsTable extends MemoryItems
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant(''));
+  static const VerificationMeta _timeMinutesMeta =
+      const VerificationMeta('timeMinutes');
+  @override
+  late final GeneratedColumn<int> timeMinutes = GeneratedColumn<int>(
+      'time_minutes', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _memoryDateMeta =
       const VerificationMeta('memoryDate');
   @override
@@ -136,6 +142,7 @@ class $MemoryItemsTable extends MemoryItems
         type,
         title,
         body,
+        timeMinutes,
         memoryDate,
         createdAt,
         updatedAt,
@@ -182,6 +189,12 @@ class $MemoryItemsTable extends MemoryItems
     if (data.containsKey('body')) {
       context.handle(
           _bodyMeta, body.isAcceptableOrUnknown(data['body']!, _bodyMeta));
+    }
+    if (data.containsKey('time_minutes')) {
+      context.handle(
+          _timeMinutesMeta,
+          timeMinutes.isAcceptableOrUnknown(
+              data['time_minutes']!, _timeMinutesMeta));
     }
     if (data.containsKey('memory_date')) {
       context.handle(
@@ -278,6 +291,8 @@ class $MemoryItemsTable extends MemoryItems
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       body: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}body'])!,
+      timeMinutes: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}time_minutes']),
       memoryDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}memory_date'])!,
       createdAt: attachedDatabase.typeMapping
@@ -322,6 +337,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
   final String type;
   final String title;
   final String body;
+  final int? timeMinutes;
   final DateTime memoryDate;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -342,6 +358,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       required this.type,
       required this.title,
       required this.body,
+      this.timeMinutes,
       required this.memoryDate,
       required this.createdAt,
       required this.updatedAt,
@@ -364,6 +381,9 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
     map['type'] = Variable<String>(type);
     map['title'] = Variable<String>(title);
     map['body'] = Variable<String>(body);
+    if (!nullToAbsent || timeMinutes != null) {
+      map['time_minutes'] = Variable<int>(timeMinutes);
+    }
     map['memory_date'] = Variable<DateTime>(memoryDate);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -402,6 +422,9 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       type: Value(type),
       title: Value(title),
       body: Value(body),
+      timeMinutes: timeMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(timeMinutes),
       memoryDate: Value(memoryDate),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -442,6 +465,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       type: serializer.fromJson<String>(json['type']),
       title: serializer.fromJson<String>(json['title']),
       body: serializer.fromJson<String>(json['body']),
+      timeMinutes: serializer.fromJson<int?>(json['timeMinutes']),
       memoryDate: serializer.fromJson<DateTime>(json['memoryDate']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -468,6 +492,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       'type': serializer.toJson<String>(type),
       'title': serializer.toJson<String>(title),
       'body': serializer.toJson<String>(body),
+      'timeMinutes': serializer.toJson<int?>(timeMinutes),
       'memoryDate': serializer.toJson<DateTime>(memoryDate),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -491,6 +516,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           String? type,
           String? title,
           String? body,
+          Value<int?> timeMinutes = const Value.absent(),
           DateTime? memoryDate,
           DateTime? createdAt,
           DateTime? updatedAt,
@@ -511,6 +537,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
         type: type ?? this.type,
         title: title ?? this.title,
         body: body ?? this.body,
+        timeMinutes: timeMinutes.present ? timeMinutes.value : this.timeMinutes,
         memoryDate: memoryDate ?? this.memoryDate,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
@@ -535,6 +562,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       type: data.type.present ? data.type.value : this.type,
       title: data.title.present ? data.title.value : this.title,
       body: data.body.present ? data.body.value : this.body,
+      timeMinutes:
+          data.timeMinutes.present ? data.timeMinutes.value : this.timeMinutes,
       memoryDate:
           data.memoryDate.present ? data.memoryDate.value : this.memoryDate,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -569,6 +598,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           ..write('type: $type, ')
           ..write('title: $title, ')
           ..write('body: $body, ')
+          ..write('timeMinutes: $timeMinutes, ')
           ..write('memoryDate: $memoryDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -594,6 +624,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       type,
       title,
       body,
+      timeMinutes,
       memoryDate,
       createdAt,
       updatedAt,
@@ -617,6 +648,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           other.type == this.type &&
           other.title == this.title &&
           other.body == this.body &&
+          other.timeMinutes == this.timeMinutes &&
           other.memoryDate == this.memoryDate &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -639,6 +671,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
   final Value<String> type;
   final Value<String> title;
   final Value<String> body;
+  final Value<int?> timeMinutes;
   final Value<DateTime> memoryDate;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -660,6 +693,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     this.type = const Value.absent(),
     this.title = const Value.absent(),
     this.body = const Value.absent(),
+    this.timeMinutes = const Value.absent(),
     this.memoryDate = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -682,6 +716,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     required String type,
     required String title,
     this.body = const Value.absent(),
+    this.timeMinutes = const Value.absent(),
     required DateTime memoryDate,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -709,6 +744,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     Expression<String>? type,
     Expression<String>? title,
     Expression<String>? body,
+    Expression<int>? timeMinutes,
     Expression<DateTime>? memoryDate,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -731,6 +767,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       if (type != null) 'type': type,
       if (title != null) 'title': title,
       if (body != null) 'body': body,
+      if (timeMinutes != null) 'time_minutes': timeMinutes,
       if (memoryDate != null) 'memory_date': memoryDate,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -756,6 +793,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       Value<String>? type,
       Value<String>? title,
       Value<String>? body,
+      Value<int?>? timeMinutes,
       Value<DateTime>? memoryDate,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
@@ -777,6 +815,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       type: type ?? this.type,
       title: title ?? this.title,
       body: body ?? this.body,
+      timeMinutes: timeMinutes ?? this.timeMinutes,
       memoryDate: memoryDate ?? this.memoryDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -810,6 +849,9 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     }
     if (body.present) {
       map['body'] = Variable<String>(body.value);
+    }
+    if (timeMinutes.present) {
+      map['time_minutes'] = Variable<int>(timeMinutes.value);
     }
     if (memoryDate.present) {
       map['memory_date'] = Variable<DateTime>(memoryDate.value);
@@ -869,6 +911,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
           ..write('type: $type, ')
           ..write('title: $title, ')
           ..write('body: $body, ')
+          ..write('timeMinutes: $timeMinutes, ')
           ..write('memoryDate: $memoryDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -907,6 +950,7 @@ typedef $$MemoryItemsTableCreateCompanionBuilder = MemoryItemsCompanion
   required String type,
   required String title,
   Value<String> body,
+  Value<int?> timeMinutes,
   required DateTime memoryDate,
   required DateTime createdAt,
   required DateTime updatedAt,
@@ -930,6 +974,7 @@ typedef $$MemoryItemsTableUpdateCompanionBuilder = MemoryItemsCompanion
   Value<String> type,
   Value<String> title,
   Value<String> body,
+  Value<int?> timeMinutes,
   Value<DateTime> memoryDate,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -968,6 +1013,9 @@ class $$MemoryItemsTableFilterComposer
 
   ColumnFilters<String> get body => $composableBuilder(
       column: $table.body, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get timeMinutes => $composableBuilder(
+      column: $table.timeMinutes, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get memoryDate => $composableBuilder(
       column: $table.memoryDate, builder: (column) => ColumnFilters(column));
@@ -1038,6 +1086,9 @@ class $$MemoryItemsTableOrderingComposer
   ColumnOrderings<String> get body => $composableBuilder(
       column: $table.body, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get timeMinutes => $composableBuilder(
+      column: $table.timeMinutes, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get memoryDate => $composableBuilder(
       column: $table.memoryDate, builder: (column) => ColumnOrderings(column));
 
@@ -1107,6 +1158,9 @@ class $$MemoryItemsTableAnnotationComposer
 
   GeneratedColumn<String> get body =>
       $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<int> get timeMinutes => $composableBuilder(
+      column: $table.timeMinutes, builder: (column) => column);
 
   GeneratedColumn<DateTime> get memoryDate => $composableBuilder(
       column: $table.memoryDate, builder: (column) => column);
@@ -1184,6 +1238,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             Value<String> type = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String> body = const Value.absent(),
+            Value<int?> timeMinutes = const Value.absent(),
             Value<DateTime> memoryDate = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -1206,6 +1261,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             type: type,
             title: title,
             body: body,
+            timeMinutes: timeMinutes,
             memoryDate: memoryDate,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -1228,6 +1284,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             required String type,
             required String title,
             Value<String> body = const Value.absent(),
+            Value<int?> timeMinutes = const Value.absent(),
             required DateTime memoryDate,
             required DateTime createdAt,
             required DateTime updatedAt,
@@ -1250,6 +1307,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             type: type,
             title: title,
             body: body,
+            timeMinutes: timeMinutes,
             memoryDate: memoryDate,
             createdAt: createdAt,
             updatedAt: updatedAt,

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 ThemeData buildAppTheme() {
   const seed = Color(0xFF2563EB);
-  const background = Color(0xFFF7ECDB);
-  const surface = Color(0xFFFFFCF6);
-  const border = Color(0xFFE4D6C3);
+  const background = Color(0xFFE9DECF);
+  const surface = Color(0xFFFFFCF7);
+  const border = Color(0xFFDED3C5);
   const onSurface = Color(0xFF1F2933);
 
   return ThemeData(
@@ -82,13 +82,13 @@ ThemeData buildAppTheme() {
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      height: 68,
-      backgroundColor: const Color(0xFFFFF8EE),
+      height: 64,
+      backgroundColor: const Color(0xFFFFFAF3),
       indicatorColor: const Color(0xFFEAD9FF),
       surfaceTintColor: Colors.transparent,
       labelTextStyle: WidgetStateProperty.all(
         const TextStyle(
-          fontSize: 12,
+          fontSize: 11.5,
           fontWeight: FontWeight.w600,
           fontFamily: 'Manrope',
           letterSpacing: 0,
@@ -149,6 +149,14 @@ ThemeData buildAppTheme() {
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      elevation: 3,
+      focusElevation: 3,
+      hoverElevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(8)),
       ),
     ),
     listTileTheme: const ListTileThemeData(

@@ -64,6 +64,12 @@ class AccountsController extends StateNotifier<List<AccountItem>> {
     await _repository.saveAccounts(state);
   }
 
+  Future<void> replaceAll(List<AccountItem> accounts) async {
+    await _loadFuture;
+    state = _sort(accounts);
+    await _repository.saveAccounts(state);
+  }
+
   List<AccountItem> _sort(List<AccountItem> accounts) {
     return [...accounts]..sort((a, b) {
         return a.serviceName.toLowerCase().compareTo(
