@@ -482,7 +482,7 @@ class _ShiftLegendChip extends StatelessWidget {
             DecoratedBox(
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(5),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: const SizedBox(width: 12, height: 12),
             ),
@@ -501,7 +501,7 @@ class _ShiftLegendChip extends StatelessWidget {
             DecoratedBox(
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.82),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
@@ -634,7 +634,7 @@ class _CalendarDayCell extends StatelessWidget {
                 if (hasShift)
                   Positioned.fill(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(7),
+                      borderRadius: BorderRadius.circular(8),
                       child: _ShiftFill(
                         key: ValueKey('shift_fill_${_dateKey(date)}'),
                         colors: shiftColors,
@@ -786,7 +786,7 @@ class _DayNumber extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF2563EB),
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
@@ -819,7 +819,7 @@ class _CalendarEventBar extends StatelessWidget {
       key: ValueKey('calendar_event_bar_${item.id}'),
       decoration: BoxDecoration(
         color: barColor,
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),

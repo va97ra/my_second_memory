@@ -247,7 +247,7 @@ class _FeedSectionHeader extends StatelessWidget {
             DecoratedBox(
               decoration: BoxDecoration(
                 color: const Color(0xFF2563EB),
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: const SizedBox(width: 4, height: 22),
             ),

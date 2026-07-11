@@ -141,7 +141,7 @@ class _MemoryItemDetailScreenState
                         ? const Color(0xFFD59A48)
                         : const Color(0xFF239B61))
                     .withValues(alpha: 0.13),
-                borderRadius: BorderRadius.circular(9),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 _isSaving ? Icons.sync : Icons.cloud_done_outlined,
@@ -697,7 +697,7 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
             Material(
               color: const Color(0xFFFFFDF8),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
                 side: const BorderSide(color: Color(0xFFD8C8B4)),
               ),
               child: SwitchListTile.adaptive(
@@ -892,7 +892,7 @@ class _ReminderSheetTile extends StatelessWidget {
     return Material(
       color: const Color(0xFFFFFDF8),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         side: const BorderSide(color: Color(0xFFD8C8B4)),
       ),
       child: ListTile(
@@ -998,7 +998,7 @@ class _EditorMetadataBar extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xFFFFFDF8).withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFD8C8B4)),
         boxShadow: [
           BoxShadow(
@@ -1139,10 +1139,10 @@ class _MetadataAction extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(7),
+      borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
           child: Row(
@@ -1249,7 +1249,7 @@ class _RecordEditor extends StatelessWidget {
           key: const ValueKey('record_editor_panel'),
           decoration: BoxDecoration(
             color: const Color(0xFFFFFDF8).withValues(alpha: 0.97),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(color: const Color(0xFFD8C8B4)),
             boxShadow: [
               BoxShadow(

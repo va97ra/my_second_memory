@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class PaperTextureBackground extends StatelessWidget {
+class PaperTextureBackground extends StatefulWidget {
   const PaperTextureBackground({required this.child, super.key});
 
   final Widget child;
+
+  @override
+  State<PaperTextureBackground> createState() => _PaperTextureBackgroundState();
+}
+
+class _PaperTextureBackgroundState extends State<PaperTextureBackground> {
   static const _texturePath = 'assets/images/paper_texture.jpg';
+  static const _texture = AssetImage(_texturePath);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(_texture, context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,18 +26,19 @@ class PaperTextureBackground extends StatelessWidget {
       color: const Color(0xFFE8DCCB),
       child: Stack(
         fit: StackFit.expand,
+        alignment: Alignment.topLeft,
         children: [
-          Opacity(
+          const Opacity(
             opacity: 0.9,
-            child: Image.asset(
-              _texturePath,
+            child: Image(
+              image: _texture,
               fit: BoxFit.cover,
               filterQuality: FilterQuality.medium,
               gaplessPlayback: true,
             ),
           ),
           const ColoredBox(color: Color(0x0FFFF7EA)),
-          child,
+          widget.child,
         ],
       ),
     );

@@ -75,7 +75,7 @@ class MemoryItemViewScreen extends ConsumerWidget {
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFFDF8).withValues(alpha: 0.97),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: const Color(0xFFD8C8B4)),
                         boxShadow: [
                           BoxShadow(
@@ -98,7 +98,7 @@ class MemoryItemViewScreen extends ConsumerWidget {
                                   height: 36,
                                   decoration: BoxDecoration(
                                     color: typeColor.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(9),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
                                     _iconFor(item.type),
@@ -137,7 +137,7 @@ class MemoryItemViewScreen extends ConsumerWidget {
                                   DecoratedBox(
                                     decoration: BoxDecoration(
                                       color: typeColor.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(7),
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -256,12 +256,12 @@ class _ReadonlyImageGrid extends StatelessWidget {
                 child: InkWell(
                   key: ValueKey('readonly_image_$path'),
                   onTap: () => openMemoryImageViewer(context, path),
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: BorderRadius.circular(8),
                   child: Ink(
                     width: width,
                     height: height,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(9),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: const Color(0xFFE0D3C0)),
                     ),
                     child: ClipRRect(

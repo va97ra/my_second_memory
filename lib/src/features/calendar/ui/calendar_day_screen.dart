@@ -161,7 +161,7 @@ class _WorkingShiftChips extends StatelessWidget {
                       DecoratedBox(
                         decoration: BoxDecoration(
                           color: Color(schedule.colorValue),
-                          borderRadius: BorderRadius.circular(5),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: const SizedBox(width: 10, height: 10),
                       ),

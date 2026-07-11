@@ -323,6 +323,26 @@ void main() {
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(app.theme?.scaffoldBackgroundColor, Colors.transparent);
     expect(find.byType(PaperTextureBackground), findsOneWidget);
+    final paperBackgroundState = tester.state(
+      find.byType(PaperTextureBackground),
+    );
+    expect(
+      find.ancestor(
+        of: find.byType(MaterialApp),
+        matching: find.byType(PaperTextureBackground),
+      ),
+      findsOneWidget,
+    );
+    final cardShape = app.theme?.cardTheme.shape as RoundedRectangleBorder;
+    final dialogShape = app.theme?.dialogTheme.shape as RoundedRectangleBorder;
+    final bottomSheetShape =
+        app.theme?.bottomSheetTheme.shape as RoundedRectangleBorder;
+    expect(cardShape.borderRadius, BorderRadius.circular(8));
+    expect(dialogShape.borderRadius, BorderRadius.circular(8));
+    expect(
+      bottomSheetShape.borderRadius,
+      const BorderRadius.vertical(top: Radius.circular(8)),
+    );
     expect(find.text('Лента дня'), findsWidgets);
     expect(find.text('Лента'), findsOneWidget);
     expect(find.text('Календарь'), findsOneWidget);
@@ -352,6 +372,13 @@ void main() {
     expect(find.byIcon(Icons.delete_outline), findsNothing);
     expect(find.byIcon(Icons.check_circle_outline), findsWidgets);
     expect(find.byIcon(Icons.archive_outlined), findsWidgets);
+
+    await tester.tap(find.text('Календарь'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.state(find.byType(PaperTextureBackground)),
+      same(paperBackgroundState),
+    );
   });
 
   testWidgets('hides empty previous day sections', (tester) async {

@@ -54,20 +54,20 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
   Widget build(BuildContext context) {
     final locale = ref.watch(appLocaleControllerProvider);
 
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      onGenerateTitle: (context) => AppStrings.of(context).appTitle,
-      theme: buildAppTheme(),
-      locale: locale,
-      supportedLocales: AppStrings.supportedLocales,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      routerConfig: ref.watch(appRouterProvider),
-      builder: (context, child) => PaperTextureBackground(
-        child: SecurityGate(
+    return PaperTextureBackground(
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        onGenerateTitle: (context) => AppStrings.of(context).appTitle,
+        theme: buildAppTheme(),
+        locale: locale,
+        supportedLocales: AppStrings.supportedLocales,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        routerConfig: ref.watch(appRouterProvider),
+        builder: (context, child) => SecurityGate(
           child: child ?? const SizedBox.shrink(),
         ),
       ),
