@@ -84,6 +84,18 @@ class $MemoryItemsTable extends MemoryItems
   late final GeneratedColumn<DateTime> remindAt = GeneratedColumn<DateTime>(
       'remind_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _reminderSoundUriMeta =
+      const VerificationMeta('reminderSoundUri');
+  @override
+  late final GeneratedColumn<String> reminderSoundUri = GeneratedColumn<String>(
+      'reminder_sound_uri', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _reminderSoundNameMeta =
+      const VerificationMeta('reminderSoundName');
+  @override
+  late final GeneratedColumn<String> reminderSoundName =
+      GeneratedColumn<String>('reminder_sound_name', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _repeatRuleMeta =
       const VerificationMeta('repeatRule');
   @override
@@ -150,6 +162,8 @@ class $MemoryItemsTable extends MemoryItems
         priority,
         tagsJson,
         remindAt,
+        reminderSoundUri,
+        reminderSoundName,
         repeatRule,
         projectId,
         personIdsJson,
@@ -232,6 +246,18 @@ class $MemoryItemsTable extends MemoryItems
       context.handle(_remindAtMeta,
           remindAt.isAcceptableOrUnknown(data['remind_at']!, _remindAtMeta));
     }
+    if (data.containsKey('reminder_sound_uri')) {
+      context.handle(
+          _reminderSoundUriMeta,
+          reminderSoundUri.isAcceptableOrUnknown(
+              data['reminder_sound_uri']!, _reminderSoundUriMeta));
+    }
+    if (data.containsKey('reminder_sound_name')) {
+      context.handle(
+          _reminderSoundNameMeta,
+          reminderSoundName.isAcceptableOrUnknown(
+              data['reminder_sound_name']!, _reminderSoundNameMeta));
+    }
     if (data.containsKey('repeat_rule')) {
       context.handle(
           _repeatRuleMeta,
@@ -307,6 +333,10 @@ class $MemoryItemsTable extends MemoryItems
           .read(DriftSqlType.string, data['${effectivePrefix}tags_json'])!,
       remindAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}remind_at']),
+      reminderSoundUri: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}reminder_sound_uri']),
+      reminderSoundName: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}reminder_sound_name']),
       repeatRule: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}repeat_rule']),
       projectId: attachedDatabase.typeMapping
@@ -345,6 +375,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
   final int priority;
   final String tagsJson;
   final DateTime? remindAt;
+  final String? reminderSoundUri;
+  final String? reminderSoundName;
   final String? repeatRule;
   final String? projectId;
   final String personIdsJson;
@@ -366,6 +398,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       required this.priority,
       required this.tagsJson,
       this.remindAt,
+      this.reminderSoundUri,
+      this.reminderSoundName,
       this.repeatRule,
       this.projectId,
       required this.personIdsJson,
@@ -392,6 +426,12 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
     map['tags_json'] = Variable<String>(tagsJson);
     if (!nullToAbsent || remindAt != null) {
       map['remind_at'] = Variable<DateTime>(remindAt);
+    }
+    if (!nullToAbsent || reminderSoundUri != null) {
+      map['reminder_sound_uri'] = Variable<String>(reminderSoundUri);
+    }
+    if (!nullToAbsent || reminderSoundName != null) {
+      map['reminder_sound_name'] = Variable<String>(reminderSoundName);
     }
     if (!nullToAbsent || repeatRule != null) {
       map['repeat_rule'] = Variable<String>(repeatRule);
@@ -434,6 +474,12 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       remindAt: remindAt == null && nullToAbsent
           ? const Value.absent()
           : Value(remindAt),
+      reminderSoundUri: reminderSoundUri == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reminderSoundUri),
+      reminderSoundName: reminderSoundName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reminderSoundName),
       repeatRule: repeatRule == null && nullToAbsent
           ? const Value.absent()
           : Value(repeatRule),
@@ -473,6 +519,9 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       priority: serializer.fromJson<int>(json['priority']),
       tagsJson: serializer.fromJson<String>(json['tagsJson']),
       remindAt: serializer.fromJson<DateTime?>(json['remindAt']),
+      reminderSoundUri: serializer.fromJson<String?>(json['reminderSoundUri']),
+      reminderSoundName:
+          serializer.fromJson<String?>(json['reminderSoundName']),
       repeatRule: serializer.fromJson<String?>(json['repeatRule']),
       projectId: serializer.fromJson<String?>(json['projectId']),
       personIdsJson: serializer.fromJson<String>(json['personIdsJson']),
@@ -500,6 +549,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       'priority': serializer.toJson<int>(priority),
       'tagsJson': serializer.toJson<String>(tagsJson),
       'remindAt': serializer.toJson<DateTime?>(remindAt),
+      'reminderSoundUri': serializer.toJson<String?>(reminderSoundUri),
+      'reminderSoundName': serializer.toJson<String?>(reminderSoundName),
       'repeatRule': serializer.toJson<String?>(repeatRule),
       'projectId': serializer.toJson<String?>(projectId),
       'personIdsJson': serializer.toJson<String>(personIdsJson),
@@ -524,6 +575,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           int? priority,
           String? tagsJson,
           Value<DateTime?> remindAt = const Value.absent(),
+          Value<String?> reminderSoundUri = const Value.absent(),
+          Value<String?> reminderSoundName = const Value.absent(),
           Value<String?> repeatRule = const Value.absent(),
           Value<String?> projectId = const Value.absent(),
           String? personIdsJson,
@@ -545,6 +598,12 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
         priority: priority ?? this.priority,
         tagsJson: tagsJson ?? this.tagsJson,
         remindAt: remindAt.present ? remindAt.value : this.remindAt,
+        reminderSoundUri: reminderSoundUri.present
+            ? reminderSoundUri.value
+            : this.reminderSoundUri,
+        reminderSoundName: reminderSoundName.present
+            ? reminderSoundName.value
+            : this.reminderSoundName,
         repeatRule: repeatRule.present ? repeatRule.value : this.repeatRule,
         projectId: projectId.present ? projectId.value : this.projectId,
         personIdsJson: personIdsJson ?? this.personIdsJson,
@@ -572,6 +631,12 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       priority: data.priority.present ? data.priority.value : this.priority,
       tagsJson: data.tagsJson.present ? data.tagsJson.value : this.tagsJson,
       remindAt: data.remindAt.present ? data.remindAt.value : this.remindAt,
+      reminderSoundUri: data.reminderSoundUri.present
+          ? data.reminderSoundUri.value
+          : this.reminderSoundUri,
+      reminderSoundName: data.reminderSoundName.present
+          ? data.reminderSoundName.value
+          : this.reminderSoundName,
       repeatRule:
           data.repeatRule.present ? data.repeatRule.value : this.repeatRule,
       projectId: data.projectId.present ? data.projectId.value : this.projectId,
@@ -606,6 +671,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           ..write('priority: $priority, ')
           ..write('tagsJson: $tagsJson, ')
           ..write('remindAt: $remindAt, ')
+          ..write('reminderSoundUri: $reminderSoundUri, ')
+          ..write('reminderSoundName: $reminderSoundName, ')
           ..write('repeatRule: $repeatRule, ')
           ..write('projectId: $projectId, ')
           ..write('personIdsJson: $personIdsJson, ')
@@ -619,27 +686,30 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      type,
-      title,
-      body,
-      timeMinutes,
-      memoryDate,
-      createdAt,
-      updatedAt,
-      status,
-      priority,
-      tagsJson,
-      remindAt,
-      repeatRule,
-      projectId,
-      personIdsJson,
-      placeId,
-      audioPath,
-      audioDurationSeconds,
-      imagePathsJson,
-      transcript);
+  int get hashCode => Object.hashAll([
+        id,
+        type,
+        title,
+        body,
+        timeMinutes,
+        memoryDate,
+        createdAt,
+        updatedAt,
+        status,
+        priority,
+        tagsJson,
+        remindAt,
+        reminderSoundUri,
+        reminderSoundName,
+        repeatRule,
+        projectId,
+        personIdsJson,
+        placeId,
+        audioPath,
+        audioDurationSeconds,
+        imagePathsJson,
+        transcript
+      ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -656,6 +726,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           other.priority == this.priority &&
           other.tagsJson == this.tagsJson &&
           other.remindAt == this.remindAt &&
+          other.reminderSoundUri == this.reminderSoundUri &&
+          other.reminderSoundName == this.reminderSoundName &&
           other.repeatRule == this.repeatRule &&
           other.projectId == this.projectId &&
           other.personIdsJson == this.personIdsJson &&
@@ -679,6 +751,8 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
   final Value<int> priority;
   final Value<String> tagsJson;
   final Value<DateTime?> remindAt;
+  final Value<String?> reminderSoundUri;
+  final Value<String?> reminderSoundName;
   final Value<String?> repeatRule;
   final Value<String?> projectId;
   final Value<String> personIdsJson;
@@ -701,6 +775,8 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     this.priority = const Value.absent(),
     this.tagsJson = const Value.absent(),
     this.remindAt = const Value.absent(),
+    this.reminderSoundUri = const Value.absent(),
+    this.reminderSoundName = const Value.absent(),
     this.repeatRule = const Value.absent(),
     this.projectId = const Value.absent(),
     this.personIdsJson = const Value.absent(),
@@ -724,6 +800,8 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     this.priority = const Value.absent(),
     this.tagsJson = const Value.absent(),
     this.remindAt = const Value.absent(),
+    this.reminderSoundUri = const Value.absent(),
+    this.reminderSoundName = const Value.absent(),
     this.repeatRule = const Value.absent(),
     this.projectId = const Value.absent(),
     this.personIdsJson = const Value.absent(),
@@ -752,6 +830,8 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     Expression<int>? priority,
     Expression<String>? tagsJson,
     Expression<DateTime>? remindAt,
+    Expression<String>? reminderSoundUri,
+    Expression<String>? reminderSoundName,
     Expression<String>? repeatRule,
     Expression<String>? projectId,
     Expression<String>? personIdsJson,
@@ -775,6 +855,8 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       if (priority != null) 'priority': priority,
       if (tagsJson != null) 'tags_json': tagsJson,
       if (remindAt != null) 'remind_at': remindAt,
+      if (reminderSoundUri != null) 'reminder_sound_uri': reminderSoundUri,
+      if (reminderSoundName != null) 'reminder_sound_name': reminderSoundName,
       if (repeatRule != null) 'repeat_rule': repeatRule,
       if (projectId != null) 'project_id': projectId,
       if (personIdsJson != null) 'person_ids_json': personIdsJson,
@@ -801,6 +883,8 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       Value<int>? priority,
       Value<String>? tagsJson,
       Value<DateTime?>? remindAt,
+      Value<String?>? reminderSoundUri,
+      Value<String?>? reminderSoundName,
       Value<String?>? repeatRule,
       Value<String?>? projectId,
       Value<String>? personIdsJson,
@@ -823,6 +907,8 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       priority: priority ?? this.priority,
       tagsJson: tagsJson ?? this.tagsJson,
       remindAt: remindAt ?? this.remindAt,
+      reminderSoundUri: reminderSoundUri ?? this.reminderSoundUri,
+      reminderSoundName: reminderSoundName ?? this.reminderSoundName,
       repeatRule: repeatRule ?? this.repeatRule,
       projectId: projectId ?? this.projectId,
       personIdsJson: personIdsJson ?? this.personIdsJson,
@@ -874,6 +960,12 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     if (remindAt.present) {
       map['remind_at'] = Variable<DateTime>(remindAt.value);
     }
+    if (reminderSoundUri.present) {
+      map['reminder_sound_uri'] = Variable<String>(reminderSoundUri.value);
+    }
+    if (reminderSoundName.present) {
+      map['reminder_sound_name'] = Variable<String>(reminderSoundName.value);
+    }
     if (repeatRule.present) {
       map['repeat_rule'] = Variable<String>(repeatRule.value);
     }
@@ -919,6 +1011,8 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
           ..write('priority: $priority, ')
           ..write('tagsJson: $tagsJson, ')
           ..write('remindAt: $remindAt, ')
+          ..write('reminderSoundUri: $reminderSoundUri, ')
+          ..write('reminderSoundName: $reminderSoundName, ')
           ..write('repeatRule: $repeatRule, ')
           ..write('projectId: $projectId, ')
           ..write('personIdsJson: $personIdsJson, ')
@@ -958,6 +1052,8 @@ typedef $$MemoryItemsTableCreateCompanionBuilder = MemoryItemsCompanion
   Value<int> priority,
   Value<String> tagsJson,
   Value<DateTime?> remindAt,
+  Value<String?> reminderSoundUri,
+  Value<String?> reminderSoundName,
   Value<String?> repeatRule,
   Value<String?> projectId,
   Value<String> personIdsJson,
@@ -982,6 +1078,8 @@ typedef $$MemoryItemsTableUpdateCompanionBuilder = MemoryItemsCompanion
   Value<int> priority,
   Value<String> tagsJson,
   Value<DateTime?> remindAt,
+  Value<String?> reminderSoundUri,
+  Value<String?> reminderSoundName,
   Value<String?> repeatRule,
   Value<String?> projectId,
   Value<String> personIdsJson,
@@ -1037,6 +1135,14 @@ class $$MemoryItemsTableFilterComposer
 
   ColumnFilters<DateTime> get remindAt => $composableBuilder(
       column: $table.remindAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get reminderSoundUri => $composableBuilder(
+      column: $table.reminderSoundUri,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get reminderSoundName => $composableBuilder(
+      column: $table.reminderSoundName,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get repeatRule => $composableBuilder(
       column: $table.repeatRule, builder: (column) => ColumnFilters(column));
@@ -1109,6 +1215,14 @@ class $$MemoryItemsTableOrderingComposer
 
   ColumnOrderings<DateTime> get remindAt => $composableBuilder(
       column: $table.remindAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get reminderSoundUri => $composableBuilder(
+      column: $table.reminderSoundUri,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get reminderSoundName => $composableBuilder(
+      column: $table.reminderSoundName,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get repeatRule => $composableBuilder(
       column: $table.repeatRule, builder: (column) => ColumnOrderings(column));
@@ -1183,6 +1297,12 @@ class $$MemoryItemsTableAnnotationComposer
   GeneratedColumn<DateTime> get remindAt =>
       $composableBuilder(column: $table.remindAt, builder: (column) => column);
 
+  GeneratedColumn<String> get reminderSoundUri => $composableBuilder(
+      column: $table.reminderSoundUri, builder: (column) => column);
+
+  GeneratedColumn<String> get reminderSoundName => $composableBuilder(
+      column: $table.reminderSoundName, builder: (column) => column);
+
   GeneratedColumn<String> get repeatRule => $composableBuilder(
       column: $table.repeatRule, builder: (column) => column);
 
@@ -1246,6 +1366,8 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             Value<int> priority = const Value.absent(),
             Value<String> tagsJson = const Value.absent(),
             Value<DateTime?> remindAt = const Value.absent(),
+            Value<String?> reminderSoundUri = const Value.absent(),
+            Value<String?> reminderSoundName = const Value.absent(),
             Value<String?> repeatRule = const Value.absent(),
             Value<String?> projectId = const Value.absent(),
             Value<String> personIdsJson = const Value.absent(),
@@ -1269,6 +1391,8 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             priority: priority,
             tagsJson: tagsJson,
             remindAt: remindAt,
+            reminderSoundUri: reminderSoundUri,
+            reminderSoundName: reminderSoundName,
             repeatRule: repeatRule,
             projectId: projectId,
             personIdsJson: personIdsJson,
@@ -1292,6 +1416,8 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             Value<int> priority = const Value.absent(),
             Value<String> tagsJson = const Value.absent(),
             Value<DateTime?> remindAt = const Value.absent(),
+            Value<String?> reminderSoundUri = const Value.absent(),
+            Value<String?> reminderSoundName = const Value.absent(),
             Value<String?> repeatRule = const Value.absent(),
             Value<String?> projectId = const Value.absent(),
             Value<String> personIdsJson = const Value.absent(),
@@ -1315,6 +1441,8 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             priority: priority,
             tagsJson: tagsJson,
             remindAt: remindAt,
+            reminderSoundUri: reminderSoundUri,
+            reminderSoundName: reminderSoundName,
             repeatRule: repeatRule,
             projectId: projectId,
             personIdsJson: personIdsJson,

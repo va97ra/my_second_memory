@@ -33,9 +33,9 @@ class CalendarDayScreen extends ConsumerWidget {
         .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE9DECF),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF1E7DA),
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         leading: const AppBackButton(fallbackLocation: '/calendar'),
         titleSpacing: 0,
@@ -53,18 +53,8 @@ class CalendarDayScreen extends ConsumerWidget {
           child: Divider(height: 1, color: Color(0xFFDDE7F3)),
         ),
       ),
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF1E7DA),
-              Color(0xFFE9DECF),
-              Color(0xFFF4EBDF),
-            ],
-          ),
-        ),
+      body: ColoredBox(
+        color: const Color(0x12A66F3F),
         child: SafeArea(
           top: false,
           child: Column(

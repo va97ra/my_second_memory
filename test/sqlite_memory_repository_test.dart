@@ -41,6 +41,8 @@ void main() {
       priority: 3,
       tags: const ['дом'],
       remindAt: DateTime(2026, 7, 4, 9),
+      reminderSoundUri: 'content://media/alarm/9',
+      reminderSoundName: 'Будильник',
       repeatRule: 'weekly',
       projectId: 'project-1',
       personIds: const ['person-1'],
@@ -71,6 +73,8 @@ void main() {
     expect(restored.single.tags, ['дом']);
     expect(restored.single.personIds, ['person-1']);
     expect(restored.single.remindAt, DateTime(2026, 7, 4, 9));
+    expect(restored.single.reminderSoundUri, 'content://media/alarm/9');
+    expect(restored.single.reminderSoundName, 'Будильник');
   });
 
   test('saveItems removes records missing from the provided list', () async {

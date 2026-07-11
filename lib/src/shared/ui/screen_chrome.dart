@@ -1,6 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+class PaperTextureBackground extends StatelessWidget {
+  const PaperTextureBackground({required this.child, super.key});
+
+  final Widget child;
+  static const _texturePath = 'assets/images/paper_texture.jpg';
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: const Color(0xFFE8DCCB),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Opacity(
+            opacity: 0.9,
+            child: Image.asset(
+              _texturePath,
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.medium,
+              gaplessPlayback: true,
+            ),
+          ),
+          const ColoredBox(color: Color(0x0FFFF7EA)),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
 class WarmGradientBackground extends StatelessWidget {
   const WarmGradientBackground({
     required this.child,
@@ -11,18 +41,8 @@ class WarmGradientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFF1E7DA),
-            Color(0xFFE9DECF),
-            Color(0xFFF4EBDF),
-          ],
-        ),
-      ),
+    return ColoredBox(
+      color: const Color(0x16A66F3F),
       child: child,
     );
   }

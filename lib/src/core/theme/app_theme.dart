@@ -14,7 +14,7 @@ ThemeData buildAppTheme() {
       brightness: Brightness.light,
       surface: surface,
     ),
-    scaffoldBackgroundColor: background,
+    scaffoldBackgroundColor: Colors.transparent,
     canvasColor: background,
     fontFamily: 'Manrope',
     dividerTheme: const DividerThemeData(
@@ -69,7 +69,7 @@ ThemeData buildAppTheme() {
         ),
     appBarTheme: const AppBarTheme(
       centerTitle: false,
-      backgroundColor: background,
+      backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       foregroundColor: onSurface,
       elevation: 0,

@@ -14,6 +14,8 @@ class MemoryItems extends Table {
   IntColumn get priority => integer().withDefault(const Constant(0))();
   TextColumn get tagsJson => text().withDefault(const Constant('[]'))();
   DateTimeColumn get remindAt => dateTime().nullable()();
+  TextColumn get reminderSoundUri => text().nullable()();
+  TextColumn get reminderSoundName => text().nullable()();
   TextColumn get repeatRule => text().nullable()();
   TextColumn get projectId => text().nullable()();
   TextColumn get personIdsJson => text().withDefault(const Constant('[]'))();

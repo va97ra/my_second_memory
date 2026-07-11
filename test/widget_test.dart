@@ -16,6 +16,7 @@ import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dar
 import 'package:ezhednevnik_v2/src/features/shift_schedules/data/shift_schedule_repository.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/domain/shift_schedule.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import 'package:ezhednevnik_v2/src/shared/ui/screen_chrome.dart';
 
 const _pixelImageDataUrl =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
@@ -320,7 +321,8 @@ void main() {
     await tester.pumpAndSettle();
 
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
-    expect(app.theme?.scaffoldBackgroundColor, const Color(0xFFE9DECF));
+    expect(app.theme?.scaffoldBackgroundColor, Colors.transparent);
+    expect(find.byType(PaperTextureBackground), findsOneWidget);
     expect(find.text('Лента дня'), findsWidgets);
     expect(find.text('Лента'), findsOneWidget);
     expect(find.text('Календарь'), findsOneWidget);
@@ -416,7 +418,9 @@ void main() {
           .height,
       124,
     );
-    await tester.tap(find.byTooltip('Отметить выполненным').first);
+    await tester.tap(
+      find.byKey(const ValueKey('memory_card_done_today-plan')),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('План на сегодня'), findsOneWidget);
@@ -582,6 +586,13 @@ void main() {
     expect(find.byKey(const ValueKey('record_editor_images')), findsOneWidget);
     expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
     expect(find.byIcon(Icons.mic_none), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('memory_time_picker')));
+    await tester.pumpAndSettle();
+    expect(find.text('Время и напоминание'), findsOneWidget);
+    expect(find.text('Звуковое уведомление'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('memory_reminder_done')));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('readonly image opens fullscreen viewer', (tester) async {
@@ -608,6 +619,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('memory_readonly_view')), findsOneWidget);
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('memory_readonly_panel')))
+          .height,
+      greaterThan(590),
+    );
+    expect(
+        find.byKey(const ValueKey('memory_readonly_content')), findsOneWidget);
     final image =
         find.byKey(const ValueKey('readonly_image_$_pixelImageDataUrl')).first;
     await tester.ensureVisible(image);
@@ -699,7 +718,7 @@ void main() {
 
     expect(find.text('Новая запись'), findsOneWidget);
     expect(
-      find.textContaining(DateFormat.yMMMd('ru').format(today)),
+      find.text(DateFormat('d MMM y', 'ru').format(today)),
       findsOneWidget,
     );
     await tester.enterText(
@@ -711,6 +730,10 @@ void main() {
 
     expect(find.text('Редактировать запись'), findsOneWidget);
     expect(find.text('Новая запись из календаря'), findsOneWidget);
+    final savedCloud = tester.widget<Icon>(
+      find.byKey(const ValueKey('memory_autosave_saved')),
+    );
+    expect(savedCloud.color, const Color(0xFF168653));
     expect(
       repository.savedItems.any(
         (item) =>

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,12 +9,49 @@ import 'core/localization/app_strings.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/security/ui/security_gate.dart';
+import 'features/notifications/data/notification_service.dart';
+import 'shared/ui/screen_chrome.dart';
 
-class EzhednevnikV2App extends ConsumerWidget {
+class EzhednevnikV2App extends ConsumerStatefulWidget {
   const EzhednevnikV2App({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EzhednevnikV2App> createState() => _EzhednevnikV2AppState();
+}
+
+class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
+  StreamSubscription<String>? _notificationSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.microtask(_initializeNotifications);
+  }
+
+  Future<void> _initializeNotifications() async {
+    final notifications = ref.read(notificationServiceProvider);
+    _notificationSubscription = notifications.openedItemIds.listen((itemId) {
+      if (mounted) {
+        ref.read(appRouterProvider).go(
+              '/memory/view/${Uri.encodeComponent(itemId)}',
+            );
+      }
+    });
+    try {
+      await notifications.initialize();
+    } catch (_) {
+      // The app remains usable when notifications are unavailable.
+    }
+  }
+
+  @override
+  void dispose() {
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final locale = ref.watch(appLocaleControllerProvider);
 
     return MaterialApp.router(
@@ -27,8 +66,10 @@ class EzhednevnikV2App extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       routerConfig: ref.watch(appRouterProvider),
-      builder: (context, child) => SecurityGate(
-        child: child ?? const SizedBox.shrink(),
+      builder: (context, child) => PaperTextureBackground(
+        child: SecurityGate(
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
     );
   }

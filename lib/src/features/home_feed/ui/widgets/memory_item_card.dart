@@ -42,51 +42,53 @@ class MemoryItemCard extends StatelessWidget {
       padding: margin,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
+        child: SizedBox(
           key: ValueKey('memory_card_${item.id}'),
-          onTap: onOpen,
-          borderRadius: BorderRadius.circular(8),
-          child: SizedBox(
-            height: 124,
-            child: Ink(
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: borderColor),
-                boxShadow: [
-                  BoxShadow(
-                    color: typeColor.withValues(alpha: 0.08),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(7),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _TypeRail(
+          height: 124,
+          child: Ink(
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: borderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: typeColor.withValues(alpha: 0.08),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(7),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  InkWell(
+                    onTap: onOpen,
+                    child: _TypeRail(
                       key: ValueKey('memory_card_type_${item.id}'),
                       item: item,
                       color: typeColor,
                       showDate: showDate,
                     ),
-                    Expanded(
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      onTap: onOpen,
                       child: _CardContent(
                         key: ValueKey('memory_card_content_${item.id}'),
                         item: item,
                       ),
                     ),
-                    _ActionRail(
-                      key: ValueKey('memory_card_actions_${item.id}'),
-                      item: item,
-                      onToggleDone: onToggleDone,
-                      onArchive: onArchive,
-                      onRestore: onRestore,
-                    ),
-                  ],
-                ),
+                  ),
+                  _ActionRail(
+                    key: ValueKey('memory_card_actions_${item.id}'),
+                    item: item,
+                    onToggleDone: onToggleDone,
+                    onArchive: onArchive,
+                    onRestore: onRestore,
+                  ),
+                ],
               ),
             ),
           ),

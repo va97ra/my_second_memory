@@ -21,6 +21,9 @@ void main() {
         title: 'Запись',
         body: 'Текст',
         timeMinutes: 12 * 60 + 45,
+        remindAt: DateTime(2026, 7, 3, 12, 45),
+        reminderSoundUri: 'content://media/alarm/4',
+        reminderSoundName: 'Сигнал',
         memoryDate: date,
         createdAt: date,
         updatedAt: date,
@@ -62,6 +65,9 @@ void main() {
     expect(restored.memoryItems, hasLength(1));
     expect(restored.memoryItems.single.id, 'note');
     expect(restored.memoryItems.single.timeMinutes, 12 * 60 + 45);
+    expect(restored.memoryItems.single.reminderSoundUri,
+        'content://media/alarm/4');
+    expect(restored.memoryItems.single.reminderSoundName, 'Сигнал');
     expect(restored.memoryItems.single.status, MemoryStatus.done);
     expect(restored.memoryItems.single.imagePaths, ['/missing/photo.jpg']);
     expect(restored.shiftSchedules, hasLength(1));

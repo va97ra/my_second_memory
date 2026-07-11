@@ -41,6 +41,10 @@ class MemoryItemViewScreen extends ConsumerWidget {
     final locale = Localizations.localeOf(context).languageCode;
     final typeColor = _typeColor(item.type);
     final text = item.body.trim().isNotEmpty ? item.body.trim() : item.title;
+    final timeText = item.timeMinutes == null
+        ? null
+        : '${(item.timeMinutes! ~/ 60).toString().padLeft(2, '0')}:'
+            '${(item.timeMinutes! % 60).toString().padLeft(2, '0')}';
 
     return Scaffold(
       appBar: AppBar(
@@ -56,58 +60,58 @@ class MemoryItemViewScreen extends ConsumerWidget {
         ),
       ),
       body: SafeArea(
-        child: ListView(
+        child: LayoutBuilder(
           key: const ValueKey('memory_readonly_view'),
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          children: [
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFCF7),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE7DCCB)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF92400E).withValues(alpha: 0.06),
-                        blurRadius: 22,
-                        offset: const Offset(0, 10),
+          builder: (context, constraints) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: SizedBox(
+                    key: const ValueKey('memory_readonly_panel'),
+                    width: double.infinity,
+                    height: constraints.maxHeight - 18,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFDF8).withValues(alpha: 0.97),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFD8C8B4)),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                const Color(0xFF6B4F35).withValues(alpha: 0.09),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: typeColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: typeColor.withValues(alpha: 0.24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 9),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: typeColor.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(9),
+                                  ),
+                                  child: Icon(
+                                    _iconFor(item.type),
+                                    color: typeColor,
+                                    size: 20,
+                                  ),
                                 ),
-                              ),
-                              child: SizedBox(
-                                width: 40,
-                                height: 40,
-                                child: Icon(
-                                  _iconFor(item.type),
-                                  color: typeColor,
-                                  size: 22,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
                                     item.type.label(locale),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -116,54 +120,93 @@ class MemoryItemViewScreen extends ConsumerWidget {
                                           fontWeight: FontWeight.w900,
                                         ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    DateFormat.yMMMd(locale)
-                                        .format(item.memoryDate),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelMedium
-                                        ?.copyWith(
-                                          color: const Color(0xFF6B5B47),
-                                          fontWeight: FontWeight.w800,
-                                        ),
+                                ),
+                                Text(
+                                  DateFormat('d MMM y', locale)
+                                      .format(item.memoryDate),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium
+                                      ?.copyWith(
+                                        color: const Color(0xFF6B5B47),
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                                if (timeText != null) ...[
+                                  const SizedBox(width: 8),
+                                  DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: typeColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(7),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 4,
+                                      ),
+                                      child: Text(
+                                        timeText,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelMedium
+                                            ?.copyWith(
+                                              color: typeColor,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                      ),
+                                    ),
                                   ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const Divider(),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              key: const ValueKey('memory_readonly_content'),
+                              padding:
+                                  const EdgeInsets.fromLTRB(14, 12, 14, 18),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (text.isNotEmpty) ...[
+                                    Text(
+                                      text,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            color: const Color(0xFF241F1A),
+                                            height: 1.36,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ],
+                                  if (item.audioPath != null) ...[
+                                    const SizedBox(height: 16),
+                                    VoiceNotePlayer(
+                                      path: item.audioPath!,
+                                      recordedAt: item.memoryDate,
+                                      durationSeconds:
+                                          item.audioDurationSeconds,
+                                    ),
+                                  ],
+                                  if (item.imagePaths.isNotEmpty) ...[
+                                    const SizedBox(height: 16),
+                                    _ReadonlyImageGrid(paths: item.imagePaths),
+                                  ],
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                        if (text.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            text,
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: const Color(0xFF241F1A),
-                                      height: 1.36,
-                                      fontWeight: FontWeight.w600,
-                                    ),
                           ),
                         ],
-                        if (item.audioPath != null) ...[
-                          const SizedBox(height: 16),
-                          VoiceNotePlayer(
-                            path: item.audioPath!,
-                            recordedAt: item.memoryDate,
-                            durationSeconds: item.audioDurationSeconds,
-                          ),
-                        ],
-                        if (item.imagePaths.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          _ReadonlyImageGrid(paths: item.imagePaths),
-                        ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -195,32 +238,45 @@ class _ReadonlyImageGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        for (final path in paths)
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              key: ValueKey('readonly_image_$path'),
-              onTap: () => openMemoryImageViewer(context, path),
-              borderRadius: BorderRadius.circular(8),
-              child: Ink(
-                width: 156,
-                height: 112,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFE0D3C0)),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: MemoryImagePreview(path: path),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final single = paths.length == 1;
+        final width =
+            single ? constraints.maxWidth : (constraints.maxWidth - 10) / 2;
+        final height =
+            single ? (width * 0.62).clamp(180.0, 360.0) : width * 0.72;
+
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (final path in paths)
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  key: ValueKey('readonly_image_$path'),
+                  onTap: () => openMemoryImageViewer(context, path),
+                  borderRadius: BorderRadius.circular(9),
+                  child: Ink(
+                    width: width,
+                    height: height,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: const Color(0xFFE0D3C0)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: MemoryImagePreview(
+                        path: path,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

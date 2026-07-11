@@ -15,6 +15,8 @@ class MemoryItem {
     this.priority = 0,
     this.tags = const [],
     this.remindAt,
+    this.reminderSoundUri,
+    this.reminderSoundName,
     this.repeatRule,
     this.projectId,
     this.personIds = const [],
@@ -37,6 +39,8 @@ class MemoryItem {
   final int priority;
   final List<String> tags;
   final DateTime? remindAt;
+  final String? reminderSoundUri;
+  final String? reminderSoundName;
   final String? repeatRule;
   final String? projectId;
   final List<String> personIds;
@@ -66,6 +70,10 @@ class MemoryItem {
     int? priority,
     List<String>? tags,
     DateTime? remindAt,
+    bool clearReminder = false,
+    String? reminderSoundUri,
+    String? reminderSoundName,
+    bool clearReminderSound = false,
     String? repeatRule,
     String? projectId,
     List<String>? personIds,
@@ -87,7 +95,12 @@ class MemoryItem {
       status: status ?? this.status,
       priority: priority ?? this.priority,
       tags: tags ?? this.tags,
-      remindAt: remindAt ?? this.remindAt,
+      remindAt: clearReminder ? null : remindAt ?? this.remindAt,
+      reminderSoundUri:
+          clearReminderSound ? null : reminderSoundUri ?? this.reminderSoundUri,
+      reminderSoundName: clearReminderSound
+          ? null
+          : reminderSoundName ?? this.reminderSoundName,
       repeatRule: repeatRule ?? this.repeatRule,
       projectId: projectId ?? this.projectId,
       personIds: personIds ?? this.personIds,
@@ -113,6 +126,8 @@ class MemoryItem {
       'priority': priority,
       'tags': tags,
       'remindAt': remindAt?.toIso8601String(),
+      'reminderSoundUri': reminderSoundUri,
+      'reminderSoundName': reminderSoundName,
       'repeatRule': repeatRule,
       'projectId': projectId,
       'personIds': personIds,
@@ -141,6 +156,8 @@ class MemoryItem {
         final String value => DateTime.parse(value),
         _ => null,
       },
+      reminderSoundUri: json['reminderSoundUri'] as String?,
+      reminderSoundName: json['reminderSoundName'] as String?,
       repeatRule: json['repeatRule'] as String?,
       projectId: json['projectId'] as String?,
       personIds:

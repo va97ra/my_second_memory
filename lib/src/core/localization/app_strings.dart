@@ -91,6 +91,27 @@ class AppStrings {
   String get date => isRu ? 'Дата' : 'Date';
   String get time => isRu ? 'Время' : 'Time';
   String get timeNotSet => isRu ? 'Без времени' : 'No time';
+  String get timeAndReminder =>
+      isRu ? 'Время и напоминание' : 'Time and reminder';
+  String get soundNotification =>
+      isRu ? 'Звуковое уведомление' : 'Sound notification';
+  String get systemAlarmSound =>
+      isRu ? 'Системная мелодия' : 'System alarm sound';
+  String get chooseSound => isRu ? 'Выбрать мелодию' : 'Choose sound';
+  String get soundPickerUnavailable => isRu
+      ? 'Не удалось открыть выбор мелодии. Будет использован системный звук.'
+      : 'Cannot open the sound picker. The system sound will be used.';
+  String get useSystemSound => isRu ? 'Системный звук' : 'Use system sound';
+  String get reminderPermissionRequired => isRu
+      ? 'Разрешите уведомления и точные события в настройках Android.'
+      : 'Allow notifications and exact alarms in Android settings.';
+  String get reminderFutureRequired => isRu
+      ? 'Для напоминания выберите будущее время.'
+      : 'Choose a future time for the reminder.';
+  String get androidOnlyReminder => isRu
+      ? 'Звуковые напоминания доступны на Android.'
+      : 'Sound reminders are available on Android.';
+  String get ready => isRu ? 'Готово' : 'Done';
   String get save => isRu ? 'Сохранить' : 'Save';
   String get saved => isRu ? 'Сохранено' : 'Saved';
   String get requiredDate => isRu ? 'Дата обязательна' : 'Date is required';

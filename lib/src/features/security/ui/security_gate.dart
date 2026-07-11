@@ -216,18 +216,8 @@ class _SecurityScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFF1E7DA),
-              Color(0xFFE9DECF),
-              Color(0xFFFFF7ED),
-            ],
-          ),
-        ),
+      body: ColoredBox(
+        color: const Color(0x12A66F3F),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(

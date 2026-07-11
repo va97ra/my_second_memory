@@ -33,18 +33,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           leading: const AppBackButton(fallbackLocation: '/settings'),
           title: Text(strings.backup),
         ),
-        body: DecoratedBox(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFF1E7DA),
-                Color(0xFFE9DECF),
-                Color(0xFFF4EBDF),
-              ],
-            ),
-          ),
+        body: ColoredBox(
+          color: const Color(0x12A66F3F),
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
             children: [
