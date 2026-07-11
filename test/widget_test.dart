@@ -551,6 +551,14 @@ void main() {
     expect(find.text('Ежедневник V2'), findsWidgets);
     expect(find.text('План на сегодня'), findsNothing);
     expect(find.text('Вчерашняя заметка'), findsNothing);
+
+    await tester.tap(find.text('Календарь'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Лента'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Проект'), findsWidgets);
+    expect(find.text('План на сегодня'), findsNothing);
   });
 
   testWidgets('accounts tab opens accounts without requiring pin',

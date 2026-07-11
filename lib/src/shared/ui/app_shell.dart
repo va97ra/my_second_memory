@@ -5,14 +5,17 @@ import '../../core/localization/app_strings.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({
-    required this.currentIndex,
-    required this.child,
+    this.navigationShell,
+    this.currentIndex,
+    this.child,
     this.floatingActionButton,
     super.key,
-  });
+  }) : assert(
+            navigationShell != null || (currentIndex != null && child != null));
 
-  final int currentIndex;
-  final Widget child;
+  final StatefulNavigationShell? navigationShell;
+  final int? currentIndex;
+  final Widget? child;
   final Widget? floatingActionButton;
 
   @override
@@ -21,7 +24,7 @@ class AppShell extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: child,
+      body: navigationShell ?? child,
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
@@ -40,22 +43,22 @@ class AppShell extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(8, 2, 8, 4),
             child: NavigationBar(
-              selectedIndex: currentIndex,
+              selectedIndex: navigationShell?.currentIndex ?? currentIndex!,
               onDestinationSelected: (index) {
-                switch (index) {
-                  case 0:
-                    context.go('/');
-                    break;
-                  case 1:
-                    context.go('/calendar');
-                    break;
-                  case 2:
-                    context.go('/accounts');
-                    break;
-                  case 3:
-                    context.go('/settings');
-                    break;
+                final shell = navigationShell;
+                if (shell != null) {
+                  shell.goBranch(
+                    index,
+                    initialLocation: index == shell.currentIndex,
+                  );
+                  return;
                 }
+                context.go(switch (index) {
+                  0 => '/',
+                  1 => '/calendar',
+                  2 => '/accounts',
+                  _ => '/settings',
+                });
               },
               destinations: [
                 NavigationDestination(

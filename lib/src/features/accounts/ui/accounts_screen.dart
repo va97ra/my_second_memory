@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
-import '../../../shared/ui/app_shell.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../domain/account_item.dart';
@@ -17,14 +16,13 @@ class AccountsScreen extends ConsumerWidget {
     final strings = AppStrings.of(context);
     final accounts = ref.watch(accountsControllerProvider);
 
-    return AppShell(
-      currentIndex: 2,
+    return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAccountEditor(context, ref),
         icon: const Icon(Icons.add),
         label: Text(strings.addAccount),
       ),
-      child: WarmGradientBackground(
+      body: WarmGradientBackground(
         child: CustomScrollView(
           slivers: [
             MainSliverAppBar(title: strings.accounts, backLocation: '/'),

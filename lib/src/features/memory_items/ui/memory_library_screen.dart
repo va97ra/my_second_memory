@@ -9,6 +9,7 @@ import '../../../shared/ui/screen_chrome.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
 import '../domain/memory_type.dart';
 import '../state/memory_items_controller.dart';
+import '../state/memory_item_selectors.dart';
 
 class MemoryLibraryScreen extends ConsumerStatefulWidget {
   const MemoryLibraryScreen({super.key});
@@ -25,10 +26,8 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).languageCode;
-    final allItems = ref.watch(memoryItemsControllerProvider);
-    final items = allItems.where((item) {
-      return item.isArchived &&
-          (_selectedType == null || item.type == _selectedType);
+    final items = ref.watch(archivedMemoryItemsProvider).where((item) {
+      return _selectedType == null || item.type == _selectedType;
     }).toList();
 
     return AppShell(

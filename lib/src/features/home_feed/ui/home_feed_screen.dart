@@ -4,13 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
-import '../../../shared/ui/app_shell.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../domain/feed_rules.dart';
+import '../state/feed_providers.dart';
 import 'widgets/memory_item_card.dart';
 
 class HomeFeedScreen extends ConsumerStatefulWidget {
@@ -21,48 +21,64 @@ class HomeFeedScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
-  FeedFilter _filter = FeedFilter.all;
-
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    final items = ref.watch(memoryItemsControllerProvider);
-    final groups = groupItemsByDate(items, filter: _filter);
+    final loadState = ref.watch(memoryItemsLoadProvider);
+    final filter = ref.watch(feedFilterProvider);
+    final groups = ref.watch(feedGroupsProvider);
     final isEmpty = groups.isEmpty;
 
-    return AppShell(
-      currentIndex: 0,
-      child: WarmGradientBackground(
+    if (loadState.isLoading || loadState.hasError) {
+      return WarmGradientBackground(
         child: CustomScrollView(
           slivers: [
             MainSliverAppBar(title: strings.dayFeed),
-            SliverToBoxAdapter(
-              child: _FeedFilterButton(
-                selected: _filter,
-                onSelected: (filter) => setState(() => _filter = filter),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: loadState.isLoading
+                    ? const CircularProgressIndicator()
+                    : Text(strings.loadFailed),
               ),
             ),
-            const SliverToBoxAdapter(child: _MemoryBanner()),
-            if (isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: AppEmptyState(
-                    icon: Icons.dynamic_feed_outlined,
-                    title: strings.emptyFeed,
-                    actionLabel: strings.addRecord,
-                    onAction: () => context.go('/calendar'),
-                  ),
-                ),
-              )
-            else
-              for (final group in groups) ...[
-                _FeedSectionHeader(date: group.date),
-                _MemorySliverList(items: group.items, ref: ref),
-              ],
-            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
           ],
         ),
+      );
+    }
+
+    return WarmGradientBackground(
+      child: CustomScrollView(
+        slivers: [
+          MainSliverAppBar(title: strings.dayFeed),
+          SliverToBoxAdapter(
+            child: _FeedFilterButton(
+              selected: filter,
+              onSelected: (filter) {
+                ref.read(feedFilterProvider.notifier).state = filter;
+              },
+            ),
+          ),
+          const SliverToBoxAdapter(child: _MemoryBanner()),
+          if (isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: AppEmptyState(
+                  icon: Icons.dynamic_feed_outlined,
+                  title: strings.emptyFeed,
+                  actionLabel: strings.addRecord,
+                  onAction: () => context.go('/calendar'),
+                ),
+              ),
+            )
+          else
+            for (final group in groups) ...[
+              _FeedSectionHeader(date: group.date),
+              _MemorySliverList(items: group.items, ref: ref),
+            ],
+          const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+        ],
       ),
     );
   }

@@ -6,10 +6,10 @@ import 'package:intl/intl.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../../home_feed/domain/feed_rules.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/state/memory_items_controller.dart';
+import '../../memory_items/state/memory_item_selectors.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
 
@@ -22,10 +22,7 @@ class CalendarDayScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = Localizations.localeOf(context).languageCode;
     final strings = AppStrings.of(context);
-    final dayItems = ref
-        .watch(memoryItemsControllerProvider)
-        .where((item) => isSameDay(item.memoryDate, date))
-        .toList()
+    final dayItems = ref.watch(memoryItemsForDayProvider(date)).toList()
       ..sort(_compareDayItems);
     final workingSchedules = ref
         .watch(shiftSchedulesControllerProvider)

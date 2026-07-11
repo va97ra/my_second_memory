@@ -38,6 +38,10 @@ final memoryItemsControllerProvider =
   );
 });
 
+final memoryItemsLoadProvider = FutureProvider<void>((ref) {
+  return ref.watch(memoryItemsControllerProvider.notifier).load();
+});
+
 class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   MemoryItemsController(this._repository, [this._reminders]) : super(const []) {
     _loadFuture = _load();

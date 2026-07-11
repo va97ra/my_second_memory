@@ -7,9 +7,9 @@ import '../../../core/localization/app_strings.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
-import '../domain/memory_item.dart';
 import '../domain/memory_type.dart';
 import '../state/memory_items_controller.dart';
+import '../state/memory_item_selectors.dart';
 
 class MemoryItemViewScreen extends ConsumerWidget {
   const MemoryItemViewScreen({
@@ -22,7 +22,17 @@ class MemoryItemViewScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
-    final item = _findItem(ref);
+    final loadState = ref.watch(memoryItemsLoadProvider);
+    final item = ref.watch(memoryItemByIdProvider(itemId));
+
+    if (loadState.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (loadState.hasError) {
+      return Scaffold(body: Center(child: Text(strings.loadFailed)));
+    }
 
     if (item == null) {
       return Scaffold(
@@ -210,16 +220,6 @@ class MemoryItemViewScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  MemoryItem? _findItem(WidgetRef ref) {
-    final items = ref.watch(memoryItemsControllerProvider);
-    for (final item in items) {
-      if (item.id == itemId) {
-        return item;
-      }
-    }
-    return null;
   }
 
   void _goBack(BuildContext context) {

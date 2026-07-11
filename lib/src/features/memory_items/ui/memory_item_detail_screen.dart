@@ -95,7 +95,17 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
+    final loadState = ref.watch(memoryItemsLoadProvider);
     final item = _watchItem();
+
+    if (loadState.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (loadState.hasError) {
+      return Scaffold(body: Center(child: Text(strings.loadFailed)));
+    }
 
     if (item == null && widget.itemId != null) {
       return Scaffold(

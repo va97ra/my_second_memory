@@ -12,14 +12,50 @@ import '../../features/memory_items/ui/memory_item_view_screen.dart';
 import '../../features/security/ui/security_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
 import '../../features/shift_schedules/ui/shift_schedules_screen.dart';
+import '../../shared/ui/app_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const HomeFeedScreen(),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return AppShell(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (context, state) => const HomeFeedScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/calendar',
+                builder: (context, state) => const CalendarScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/accounts',
+                builder: (context, state) => const AccountsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (context, state) => const SettingsScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: '/memory',
@@ -54,14 +90,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/calendar',
-        builder: (context, state) => const CalendarScreen(),
-      ),
-      GoRoute(
-        path: '/accounts',
-        builder: (context, state) => const AccountsScreen(),
-      ),
-      GoRoute(
         path: '/calendar/day',
         builder: (context, state) {
           final rawDate = state.uri.queryParameters['date'];
@@ -72,10 +100,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             date: DateTime(date.year, date.month, date.day),
           );
         },
-      ),
-      GoRoute(
-        path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: '/settings/shifts',

@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
-import '../../../shared/ui/app_shell.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../home_feed/domain/feed_rules.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
 import '../../memory_items/domain/memory_item.dart';
+import '../../memory_items/state/memory_item_selectors.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
@@ -36,49 +36,64 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).languageCode;
-    final items = ref.watch(memoryItemsControllerProvider);
+    final loadState = ref.watch(memoryItemsLoadProvider);
+    final items = ref.watch(visibleCalendarItemsProvider(_visibleMonth));
     final shiftSchedules = ref.watch(shiftSchedulesControllerProvider);
 
-    return AppShell(
-      currentIndex: 1,
-      child: LayoutBuilder(
-        builder: (context, viewportConstraints) {
-          final isLandscape =
-              viewportConstraints.maxWidth > viewportConstraints.maxHeight;
-          final needsLandscapeScroll =
-              isLandscape && viewportConstraints.maxHeight < 680;
-          final panel = _buildPanel(locale, items, shiftSchedules);
+    if (loadState.isLoading || loadState.hasError) {
+      return WarmGradientBackground(
+        child: Column(
+          children: [
+            MainPageHeader(title: strings.calendar, backLocation: '/'),
+            Expanded(
+              child: Center(
+                child: loadState.isLoading
+                    ? const CircularProgressIndicator()
+                    : Text(strings.loadFailed),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-          return WarmGradientBackground(
-            child: needsLandscapeScroll
-                ? CustomScrollView(
-                    key: const ValueKey('calendar_landscape_scroll'),
-                    physics: const ClampingScrollPhysics(),
-                    slivers: [
-                      MainSliverAppBar(
-                        title: strings.calendar,
-                        backLocation: '/',
+    return LayoutBuilder(
+      builder: (context, viewportConstraints) {
+        final isLandscape =
+            viewportConstraints.maxWidth > viewportConstraints.maxHeight;
+        final needsLandscapeScroll =
+            isLandscape && viewportConstraints.maxHeight < 680;
+        final panel = _buildPanel(locale, items, shiftSchedules);
+
+        return WarmGradientBackground(
+          child: needsLandscapeScroll
+              ? CustomScrollView(
+                  key: const ValueKey('calendar_landscape_scroll'),
+                  physics: const ClampingScrollPhysics(),
+                  slivers: [
+                    MainSliverAppBar(
+                      title: strings.calendar,
+                      backLocation: '/',
+                    ),
+                    SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 600,
+                        child: panel,
                       ),
-                      SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: 600,
-                          child: panel,
-                        ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    children: [
-                      MainPageHeader(
-                        title: strings.calendar,
-                        backLocation: '/',
-                      ),
-                      Expanded(child: panel),
-                    ],
-                  ),
-          );
-        },
-      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    MainPageHeader(
+                      title: strings.calendar,
+                      backLocation: '/',
+                    ),
+                    Expanded(child: panel),
+                  ],
+                ),
+        );
+      },
     );
   }
 
