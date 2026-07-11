@@ -6,9 +6,9 @@ import 'package:intl/intl.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
+import '../../memory_items/state/memory_item_selectors.dart';
 import '../domain/feed_rules.dart';
 import '../state/feed_providers.dart';
 import 'widgets/memory_item_card.dart';
@@ -26,8 +26,8 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     final strings = AppStrings.of(context);
     final loadState = ref.watch(memoryItemsLoadProvider);
     final filter = ref.watch(feedFilterProvider);
-    final groups = ref.watch(feedGroupsProvider);
-    final isEmpty = groups.isEmpty;
+    final layout = ref.watch(feedLayoutProvider);
+    final isEmpty = layout.days.isEmpty;
 
     if (loadState.isLoading || loadState.hasError) {
       return WarmGradientBackground(
@@ -73,9 +73,9 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
               ),
             )
           else
-            for (final group in groups) ...[
+            for (final group in layout.days) ...[
               _FeedSectionHeader(date: group.date),
-              _MemorySliverList(items: group.items, ref: ref),
+              _MemorySliverList(itemIds: group.itemIds),
             ],
           const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
         ],
@@ -284,38 +284,46 @@ class _FeedSectionHeader extends StatelessWidget {
 
 class _MemorySliverList extends StatelessWidget {
   const _MemorySliverList({
-    required this.items,
-    required this.ref,
+    required this.itemIds,
   });
 
-  final List<MemoryItem> items;
-  final WidgetRef ref;
+  final List<String> itemIds;
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
+    if (itemIds.isEmpty) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
     return SliverList.builder(
-      itemCount: items.length,
+      itemCount: itemIds.length,
       itemBuilder: (context, index) {
-        final item = items[index];
-        return MemoryItemCard(
-          item: item,
-          showDate: false,
-          onOpen: () {
-            context.push('/memory/view/${Uri.encodeComponent(item.id)}');
-          },
-          onToggleDone: () {
-            ref
-                .read(memoryItemsControllerProvider.notifier)
-                .toggleDone(item.id);
-          },
-          onArchive: () {
-            ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
-          },
-        );
+        return _FeedMemoryCard(itemId: itemIds[index]);
+      },
+    );
+  }
+}
+
+class _FeedMemoryCard extends ConsumerWidget {
+  const _FeedMemoryCard({required this.itemId});
+
+  final String itemId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final item = ref.watch(memoryItemByIdProvider(itemId));
+    if (item == null) return const SizedBox.shrink();
+    return MemoryItemCard(
+      item: item,
+      showDate: false,
+      onOpen: () {
+        context.push('/memory/view/${Uri.encodeComponent(item.id)}');
+      },
+      onToggleDone: () {
+        ref.read(memoryItemsControllerProvider.notifier).toggleDone(item.id);
+      },
+      onArchive: () {
+        ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
       },
     );
   }
