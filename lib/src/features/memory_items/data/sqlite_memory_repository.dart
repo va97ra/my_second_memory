@@ -4,12 +4,13 @@ import 'package:drift/drift.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../data/database/app_database.dart';
+import '../../security/data/secure_entity_backend.dart';
 import '../domain/memory_item.dart' as domain;
 import '../domain/memory_status.dart';
 import '../domain/memory_type.dart';
 import 'memory_repository.dart';
 
-class SqliteMemoryRepository implements MemoryRepository {
+class SqliteMemoryRepository implements MemoryRepository, SecureEntityBackend {
   SqliteMemoryRepository({
     AppDatabase? database,
     SharedPreferences? legacyPreferences,
@@ -21,6 +22,82 @@ class SqliteMemoryRepository implements MemoryRepository {
 
   final AppDatabase _database;
   final SharedPreferences? _legacyPreferences;
+
+  @override
+  Future<List<SecureEntityRecord>> loadSecureEntities(String kind) async {
+    final rows = await (_database.select(_database.secureEntities)
+          ..where((row) => row.kind.equals(kind)))
+        .get();
+    return [
+      for (final row in rows)
+        SecureEntityRecord(
+          rowKey: row.rowKey,
+          lookupKey: row.lookupKey,
+          encryptedPayload: row.encryptedPayload,
+        ),
+    ];
+  }
+
+  @override
+  Future<void> upsertSecureEntity({
+    required String kind,
+    required String rowKey,
+    required String lookupKey,
+    required String encryptedPayload,
+  }) async {
+    await _database.transaction(() async {
+      await (_database.delete(_database.secureEntities)
+            ..where(
+              (row) => row.kind.equals(kind) & row.lookupKey.equals(lookupKey),
+            ))
+          .go();
+      await _database.into(_database.secureEntities).insert(
+            SecureEntitiesCompanion.insert(
+              kind: kind,
+              rowKey: rowKey,
+              lookupKey: lookupKey,
+              encryptedPayload: encryptedPayload,
+            ),
+          );
+    });
+  }
+
+  @override
+  Future<void> deleteSecureEntity(String kind, String lookupKey) async {
+    await (_database.delete(_database.secureEntities)
+          ..where(
+            (row) => row.kind.equals(kind) & row.lookupKey.equals(lookupKey),
+          ))
+        .go();
+  }
+
+  @override
+  Future<void> replaceSecureEntities(
+    String kind,
+    List<SecureEntityRecord> records,
+  ) async {
+    await _database.transaction(() async {
+      await (_database.delete(_database.secureEntities)
+            ..where((row) => row.kind.equals(kind)))
+          .go();
+      if (records.isNotEmpty) {
+        await _database.batch((batch) {
+          batch.insertAll(
+            _database.secureEntities,
+            [
+              for (final record in records)
+                SecureEntitiesCompanion.insert(
+                  kind: kind,
+                  rowKey: record.rowKey,
+                  lookupKey: record.lookupKey,
+                  encryptedPayload: record.encryptedPayload,
+                ),
+            ],
+          );
+        });
+      }
+    });
+  }
 
   @override
   Future<List<domain.MemoryItem>> loadAll() async {

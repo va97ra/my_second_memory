@@ -28,3 +28,19 @@ class MemoryItems extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+@DataClassName('SecureEntityRow')
+class SecureEntities extends Table {
+  TextColumn get kind => text()();
+  TextColumn get rowKey => text()();
+  TextColumn get lookupKey => text()();
+  TextColumn get encryptedPayload => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {rowKey};
+
+  @override
+  List<Set<Column<Object>>> get uniqueKeys => [
+        {kind, lookupKey},
+      ];
+}

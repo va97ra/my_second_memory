@@ -1,6 +1,9 @@
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ezhednevnik_v2/src/data/database/app_database.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/data/encrypted_memory_repository.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/data/memory_repository.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/data/sqlite_memory_repository.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
 import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';
@@ -67,6 +70,59 @@ void main() {
     expect(schedules.single.organizationName, 'Завод');
     expect(plain.schedules, isEmpty);
     expect(await repository.loadSchedules(), hasLength(1));
+  });
+
+  test('sqlite migration stores each memory item as an encrypted row',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final plain = SqliteMemoryRepository(database: database);
+    final date = DateTime(2026, 7, 7);
+    await plain.replaceAll([
+      MemoryItem(
+        id: 'first',
+        type: MemoryType.note,
+        title: 'Первая',
+        memoryDate: date,
+        createdAt: date,
+        updatedAt: date,
+      ),
+      MemoryItem(
+        id: 'second',
+        type: MemoryType.note,
+        title: 'Вторая',
+        memoryDate: date,
+        createdAt: date,
+        updatedAt: date,
+      ),
+    ]);
+    final cipher = await AppCipher.fromPin(
+      pin: '1234',
+      salt: List<int>.filled(16, 3),
+    );
+    final repository = EncryptedMemoryRepository(
+      store: EncryptedJsonStore(cipher: cipher),
+      plainRepository: plain,
+    );
+
+    final migrated = await repository.loadAll();
+    final rows = await plain.loadSecureEntities(
+      EncryptedMemoryRepository.entityKind,
+    );
+
+    expect(migrated, hasLength(2));
+    expect(await plain.loadAll(), isEmpty);
+    expect(rows, hasLength(2));
+    expect(rows.first.encryptedPayload, isNot(contains('Первая')));
+
+    await repository.upsert(migrated.first.copyWith(body: 'Изменена'));
+    expect(
+        await plain.loadSecureEntities(
+          EncryptedMemoryRepository.entityKind,
+        ),
+        hasLength(2));
+    expect((await repository.loadAll()).first.body, 'Изменена');
   });
 }
 

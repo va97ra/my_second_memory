@@ -1,8 +1,22 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/features/security/data/security_service.dart';
+import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';
 
 void main() {
+  test('app cipher encrypts and restores binary media', () async {
+    final cipher = await AppCipher.fromPin(
+      pin: '1234',
+      salt: List<int>.filled(16, 7),
+    );
+    final clear = List<int>.generate(1024, (index) => index % 251);
+
+    final encrypted = await cipher.encryptBytes(clear);
+
+    expect(encrypted, isNot(clear));
+    expect(await cipher.decryptBytes(encrypted), clear);
+  });
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {

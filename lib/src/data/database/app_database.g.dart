@@ -1027,15 +1027,297 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
   }
 }
 
+class $SecureEntitiesTable extends SecureEntities
+    with TableInfo<$SecureEntitiesTable, SecureEntityRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SecureEntitiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+      'kind', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _rowKeyMeta = const VerificationMeta('rowKey');
+  @override
+  late final GeneratedColumn<String> rowKey = GeneratedColumn<String>(
+      'row_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _lookupKeyMeta =
+      const VerificationMeta('lookupKey');
+  @override
+  late final GeneratedColumn<String> lookupKey = GeneratedColumn<String>(
+      'lookup_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _encryptedPayloadMeta =
+      const VerificationMeta('encryptedPayload');
+  @override
+  late final GeneratedColumn<String> encryptedPayload = GeneratedColumn<String>(
+      'encrypted_payload', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [kind, rowKey, lookupKey, encryptedPayload];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'secure_entities';
+  @override
+  VerificationContext validateIntegrity(Insertable<SecureEntityRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('kind')) {
+      context.handle(
+          _kindMeta, kind.isAcceptableOrUnknown(data['kind']!, _kindMeta));
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('row_key')) {
+      context.handle(_rowKeyMeta,
+          rowKey.isAcceptableOrUnknown(data['row_key']!, _rowKeyMeta));
+    } else if (isInserting) {
+      context.missing(_rowKeyMeta);
+    }
+    if (data.containsKey('lookup_key')) {
+      context.handle(_lookupKeyMeta,
+          lookupKey.isAcceptableOrUnknown(data['lookup_key']!, _lookupKeyMeta));
+    } else if (isInserting) {
+      context.missing(_lookupKeyMeta);
+    }
+    if (data.containsKey('encrypted_payload')) {
+      context.handle(
+          _encryptedPayloadMeta,
+          encryptedPayload.isAcceptableOrUnknown(
+              data['encrypted_payload']!, _encryptedPayloadMeta));
+    } else if (isInserting) {
+      context.missing(_encryptedPayloadMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {rowKey};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {kind, lookupKey},
+      ];
+  @override
+  SecureEntityRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SecureEntityRow(
+      kind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}kind'])!,
+      rowKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}row_key'])!,
+      lookupKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}lookup_key'])!,
+      encryptedPayload: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}encrypted_payload'])!,
+    );
+  }
+
+  @override
+  $SecureEntitiesTable createAlias(String alias) {
+    return $SecureEntitiesTable(attachedDatabase, alias);
+  }
+}
+
+class SecureEntityRow extends DataClass implements Insertable<SecureEntityRow> {
+  final String kind;
+  final String rowKey;
+  final String lookupKey;
+  final String encryptedPayload;
+  const SecureEntityRow(
+      {required this.kind,
+      required this.rowKey,
+      required this.lookupKey,
+      required this.encryptedPayload});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['kind'] = Variable<String>(kind);
+    map['row_key'] = Variable<String>(rowKey);
+    map['lookup_key'] = Variable<String>(lookupKey);
+    map['encrypted_payload'] = Variable<String>(encryptedPayload);
+    return map;
+  }
+
+  SecureEntitiesCompanion toCompanion(bool nullToAbsent) {
+    return SecureEntitiesCompanion(
+      kind: Value(kind),
+      rowKey: Value(rowKey),
+      lookupKey: Value(lookupKey),
+      encryptedPayload: Value(encryptedPayload),
+    );
+  }
+
+  factory SecureEntityRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SecureEntityRow(
+      kind: serializer.fromJson<String>(json['kind']),
+      rowKey: serializer.fromJson<String>(json['rowKey']),
+      lookupKey: serializer.fromJson<String>(json['lookupKey']),
+      encryptedPayload: serializer.fromJson<String>(json['encryptedPayload']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'kind': serializer.toJson<String>(kind),
+      'rowKey': serializer.toJson<String>(rowKey),
+      'lookupKey': serializer.toJson<String>(lookupKey),
+      'encryptedPayload': serializer.toJson<String>(encryptedPayload),
+    };
+  }
+
+  SecureEntityRow copyWith(
+          {String? kind,
+          String? rowKey,
+          String? lookupKey,
+          String? encryptedPayload}) =>
+      SecureEntityRow(
+        kind: kind ?? this.kind,
+        rowKey: rowKey ?? this.rowKey,
+        lookupKey: lookupKey ?? this.lookupKey,
+        encryptedPayload: encryptedPayload ?? this.encryptedPayload,
+      );
+  SecureEntityRow copyWithCompanion(SecureEntitiesCompanion data) {
+    return SecureEntityRow(
+      kind: data.kind.present ? data.kind.value : this.kind,
+      rowKey: data.rowKey.present ? data.rowKey.value : this.rowKey,
+      lookupKey: data.lookupKey.present ? data.lookupKey.value : this.lookupKey,
+      encryptedPayload: data.encryptedPayload.present
+          ? data.encryptedPayload.value
+          : this.encryptedPayload,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SecureEntityRow(')
+          ..write('kind: $kind, ')
+          ..write('rowKey: $rowKey, ')
+          ..write('lookupKey: $lookupKey, ')
+          ..write('encryptedPayload: $encryptedPayload')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(kind, rowKey, lookupKey, encryptedPayload);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SecureEntityRow &&
+          other.kind == this.kind &&
+          other.rowKey == this.rowKey &&
+          other.lookupKey == this.lookupKey &&
+          other.encryptedPayload == this.encryptedPayload);
+}
+
+class SecureEntitiesCompanion extends UpdateCompanion<SecureEntityRow> {
+  final Value<String> kind;
+  final Value<String> rowKey;
+  final Value<String> lookupKey;
+  final Value<String> encryptedPayload;
+  final Value<int> rowid;
+  const SecureEntitiesCompanion({
+    this.kind = const Value.absent(),
+    this.rowKey = const Value.absent(),
+    this.lookupKey = const Value.absent(),
+    this.encryptedPayload = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SecureEntitiesCompanion.insert({
+    required String kind,
+    required String rowKey,
+    required String lookupKey,
+    required String encryptedPayload,
+    this.rowid = const Value.absent(),
+  })  : kind = Value(kind),
+        rowKey = Value(rowKey),
+        lookupKey = Value(lookupKey),
+        encryptedPayload = Value(encryptedPayload);
+  static Insertable<SecureEntityRow> custom({
+    Expression<String>? kind,
+    Expression<String>? rowKey,
+    Expression<String>? lookupKey,
+    Expression<String>? encryptedPayload,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (kind != null) 'kind': kind,
+      if (rowKey != null) 'row_key': rowKey,
+      if (lookupKey != null) 'lookup_key': lookupKey,
+      if (encryptedPayload != null) 'encrypted_payload': encryptedPayload,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SecureEntitiesCompanion copyWith(
+      {Value<String>? kind,
+      Value<String>? rowKey,
+      Value<String>? lookupKey,
+      Value<String>? encryptedPayload,
+      Value<int>? rowid}) {
+    return SecureEntitiesCompanion(
+      kind: kind ?? this.kind,
+      rowKey: rowKey ?? this.rowKey,
+      lookupKey: lookupKey ?? this.lookupKey,
+      encryptedPayload: encryptedPayload ?? this.encryptedPayload,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (rowKey.present) {
+      map['row_key'] = Variable<String>(rowKey.value);
+    }
+    if (lookupKey.present) {
+      map['lookup_key'] = Variable<String>(lookupKey.value);
+    }
+    if (encryptedPayload.present) {
+      map['encrypted_payload'] = Variable<String>(encryptedPayload.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SecureEntitiesCompanion(')
+          ..write('kind: $kind, ')
+          ..write('rowKey: $rowKey, ')
+          ..write('lookupKey: $lookupKey, ')
+          ..write('encryptedPayload: $encryptedPayload, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $MemoryItemsTable memoryItems = $MemoryItemsTable(this);
+  late final $SecureEntitiesTable secureEntities = $SecureEntitiesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [memoryItems];
+  List<DatabaseSchemaEntity> get allSchemaEntities =>
+      [memoryItems, secureEntities];
 }
 
 typedef $$MemoryItemsTableCreateCompanionBuilder = MemoryItemsCompanion
@@ -1475,10 +1757,173 @@ typedef $$MemoryItemsTableProcessedTableManager = ProcessedTableManager<
     ),
     MemoryItemRow,
     PrefetchHooks Function()>;
+typedef $$SecureEntitiesTableCreateCompanionBuilder = SecureEntitiesCompanion
+    Function({
+  required String kind,
+  required String rowKey,
+  required String lookupKey,
+  required String encryptedPayload,
+  Value<int> rowid,
+});
+typedef $$SecureEntitiesTableUpdateCompanionBuilder = SecureEntitiesCompanion
+    Function({
+  Value<String> kind,
+  Value<String> rowKey,
+  Value<String> lookupKey,
+  Value<String> encryptedPayload,
+  Value<int> rowid,
+});
+
+class $$SecureEntitiesTableFilterComposer
+    extends Composer<_$AppDatabase, $SecureEntitiesTable> {
+  $$SecureEntitiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get rowKey => $composableBuilder(
+      column: $table.rowKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get lookupKey => $composableBuilder(
+      column: $table.lookupKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get encryptedPayload => $composableBuilder(
+      column: $table.encryptedPayload,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$SecureEntitiesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SecureEntitiesTable> {
+  $$SecureEntitiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get rowKey => $composableBuilder(
+      column: $table.rowKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get lookupKey => $composableBuilder(
+      column: $table.lookupKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get encryptedPayload => $composableBuilder(
+      column: $table.encryptedPayload,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$SecureEntitiesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SecureEntitiesTable> {
+  $$SecureEntitiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get rowKey =>
+      $composableBuilder(column: $table.rowKey, builder: (column) => column);
+
+  GeneratedColumn<String> get lookupKey =>
+      $composableBuilder(column: $table.lookupKey, builder: (column) => column);
+
+  GeneratedColumn<String> get encryptedPayload => $composableBuilder(
+      column: $table.encryptedPayload, builder: (column) => column);
+}
+
+class $$SecureEntitiesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SecureEntitiesTable,
+    SecureEntityRow,
+    $$SecureEntitiesTableFilterComposer,
+    $$SecureEntitiesTableOrderingComposer,
+    $$SecureEntitiesTableAnnotationComposer,
+    $$SecureEntitiesTableCreateCompanionBuilder,
+    $$SecureEntitiesTableUpdateCompanionBuilder,
+    (
+      SecureEntityRow,
+      BaseReferences<_$AppDatabase, $SecureEntitiesTable, SecureEntityRow>
+    ),
+    SecureEntityRow,
+    PrefetchHooks Function()> {
+  $$SecureEntitiesTableTableManager(
+      _$AppDatabase db, $SecureEntitiesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SecureEntitiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SecureEntitiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SecureEntitiesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> kind = const Value.absent(),
+            Value<String> rowKey = const Value.absent(),
+            Value<String> lookupKey = const Value.absent(),
+            Value<String> encryptedPayload = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SecureEntitiesCompanion(
+            kind: kind,
+            rowKey: rowKey,
+            lookupKey: lookupKey,
+            encryptedPayload: encryptedPayload,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String kind,
+            required String rowKey,
+            required String lookupKey,
+            required String encryptedPayload,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SecureEntitiesCompanion.insert(
+            kind: kind,
+            rowKey: rowKey,
+            lookupKey: lookupKey,
+            encryptedPayload: encryptedPayload,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SecureEntitiesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SecureEntitiesTable,
+    SecureEntityRow,
+    $$SecureEntitiesTableFilterComposer,
+    $$SecureEntitiesTableOrderingComposer,
+    $$SecureEntitiesTableAnnotationComposer,
+    $$SecureEntitiesTableCreateCompanionBuilder,
+    $$SecureEntitiesTableUpdateCompanionBuilder,
+    (
+      SecureEntityRow,
+      BaseReferences<_$AppDatabase, $SecureEntitiesTable, SecureEntityRow>
+    ),
+    SecureEntityRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$MemoryItemsTableTableManager get memoryItems =>
       $$MemoryItemsTableTableManager(_db, _db.memoryItems);
+  $$SecureEntitiesTableTableManager get secureEntities =>
+      $$SecureEntitiesTableTableManager(_db, _db.secureEntities);
 }

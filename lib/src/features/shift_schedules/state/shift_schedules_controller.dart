@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../security/data/encrypted_json_store.dart';
 import '../../security/state/security_provider.dart';
+import '../../security/data/secure_entity_backend.dart';
+import '../../memory_items/state/memory_items_controller.dart';
 import '../data/encrypted_shift_schedule_repository.dart';
 import '../data/local_shift_schedule_repository.dart';
 import '../data/shift_schedule_repository.dart';
@@ -13,9 +15,13 @@ final shiftScheduleRepositoryProvider =
   final session = ref.watch(securitySessionProvider);
   final cipher = session.cipher;
   if (session.hasPin && cipher != null) {
+    final memoryRepository = ref.watch(plainMemoryRepositoryProvider);
     return EncryptedShiftScheduleRepository(
       store: EncryptedJsonStore(cipher: cipher),
       plainRepository: plainRepository,
+      backend: memoryRepository is SecureEntityBackend
+          ? memoryRepository as SecureEntityBackend
+          : null,
     );
   }
   return plainRepository;

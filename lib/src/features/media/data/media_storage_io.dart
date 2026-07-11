@@ -4,7 +4,10 @@ import 'package:file_selector/file_selector.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../../security/data/app_cipher.dart';
+
 class MediaStorage {
+  static const encryptedExtension = '.ezm';
   Future<String> saveImage(XFile file) async {
     final directory = await getApplicationDocumentsDirectory();
     final extension = _safeImageExtension(file.name);
@@ -45,6 +48,84 @@ class MediaStorage {
       if (name.startsWith('image_') || name.startsWith('voice_')) {
         await entity.delete();
       }
+    }
+  }
+
+  Future<Map<String, String>> stageEncryption(
+    Iterable<String> paths,
+    AppCipher cipher,
+  ) async {
+    final mapping = <String, String>{};
+    for (final path in paths.toSet()) {
+      if (path.endsWith(encryptedExtension)) continue;
+      final source = File(path);
+      if (!await source.exists()) continue;
+      final destination = '$path$encryptedExtension';
+      await File(destination).writeAsBytes(
+        await cipher.encryptBytes(await source.readAsBytes()),
+        flush: true,
+      );
+      mapping[path] = destination;
+    }
+    return mapping;
+  }
+
+  Future<Map<String, String>> stageDecryption(
+    Iterable<String> paths,
+    AppCipher cipher,
+  ) async {
+    final mapping = <String, String>{};
+    for (final path in paths.toSet()) {
+      if (!path.endsWith(encryptedExtension)) continue;
+      final source = File(path);
+      if (!await source.exists()) continue;
+      final destination =
+          path.substring(0, path.length - encryptedExtension.length);
+      await File(destination).writeAsBytes(
+        await cipher.decryptBytes(await source.readAsBytes()),
+        flush: true,
+      );
+      mapping[path] = destination;
+    }
+    return mapping;
+  }
+
+  Future<void> commitMigration(Map<String, String> mapping) async {
+    for (final sourcePath in mapping.keys) {
+      final source = File(sourcePath);
+      if (await source.exists()) await source.delete();
+    }
+  }
+
+  Future<void> rollbackMigration(Map<String, String> mapping) async {
+    for (final destinationPath in mapping.values) {
+      final destination = File(destinationPath);
+      if (await destination.exists()) await destination.delete();
+    }
+  }
+
+  Future<List<int>> readEncryptedBytes(String path, AppCipher cipher) async {
+    return cipher.decryptBytes(await File(path).readAsBytes());
+  }
+
+  Future<String> materializeAudio(String path, AppCipher cipher) async {
+    if (!path.endsWith(encryptedExtension)) return path;
+    final cache = await getTemporaryDirectory();
+    final destination = p.join(
+      cache.path,
+      'playing_${DateTime.now().microsecondsSinceEpoch}.m4a',
+    );
+    await File(destination).writeAsBytes(
+      await readEncryptedBytes(path, cipher),
+      flush: true,
+    );
+    return destination;
+  }
+
+  Future<void> deleteTemporaryAudio(String path) async {
+    final file = File(path);
+    if (p.basename(path).startsWith('playing_') && await file.exists()) {
+      await file.delete();
     }
   }
 
