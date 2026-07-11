@@ -4,3 +4,9 @@ Future<String?> saveBackupToDownloads({
 }) async {
   return null;
 }
+
+Future<String?> saveBackupFileToDownloads({
+  required String fileName,
+  required String sourcePath,
+}) async =>
+    null;

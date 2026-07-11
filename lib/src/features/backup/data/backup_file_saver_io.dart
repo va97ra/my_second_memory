@@ -17,3 +17,19 @@ Future<String?> saveBackupToDownloads({
     return null;
   }
 }
+
+Future<String?> saveBackupFileToDownloads({
+  required String fileName,
+  required String sourcePath,
+}) async {
+  try {
+    return _channel.invokeMethod<String>('saveBackupFileToDownloads', {
+      'fileName': fileName,
+      'sourcePath': sourcePath,
+    });
+  } on PlatformException {
+    return null;
+  } on MissingPluginException {
+    return null;
+  }
+}

@@ -63,15 +63,22 @@ class MainActivity : FlutterFragmentActivity() {
             flutterEngine.dartExecutor.binaryMessenger,
             "ezhednevnik_v2/downloads"
         ).setMethodCallHandler { call, result ->
-            if (call.method != "saveBackupToDownloads") {
+            if (call.method != "saveBackupToDownloads" &&
+                call.method != "saveBackupFileToDownloads") {
                 result.notImplemented()
                 return@setMethodCallHandler
             }
 
             try {
                 val fileName = call.argument<String>("fileName") ?: "ezhednevnik_v2_backup.zip"
-                val bytes = call.argument<ByteArray>("bytes") ?: ByteArray(0)
-                result.success(saveToDownloads(fileName, bytes))
+                if (call.method == "saveBackupFileToDownloads") {
+                    val sourcePath = call.argument<String>("sourcePath")
+                        ?: throw IllegalArgumentException("Missing source path")
+                    result.success(saveFileToDownloads(fileName, File(sourcePath)))
+                } else {
+                    val bytes = call.argument<ByteArray>("bytes") ?: ByteArray(0)
+                    result.success(saveToDownloads(fileName, bytes))
+                }
             } catch (_: Exception) {
                 result.success(null)
             }
@@ -137,6 +144,19 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     private fun saveToDownloads(fileName: String, bytes: ByteArray): String {
+        return saveStreamToDownloads(fileName) { output -> output.write(bytes) }
+    }
+
+    private fun saveFileToDownloads(fileName: String, source: File): String {
+        return saveStreamToDownloads(fileName) { output ->
+            source.inputStream().use { input -> input.copyTo(output) }
+        }
+    }
+
+    private fun saveStreamToDownloads(
+        fileName: String,
+        writer: (java.io.OutputStream) -> Unit
+    ): String {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
@@ -146,7 +166,7 @@ class MainActivity : FlutterFragmentActivity() {
             val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
                 ?: throw IllegalStateException("Cannot create download file")
             contentResolver.openOutputStream(uri)?.use { output ->
-                output.write(bytes)
+                writer(output)
             } ?: throw IllegalStateException("Cannot open download file")
             return "Загрузки/$fileName"
         }
@@ -156,7 +176,7 @@ class MainActivity : FlutterFragmentActivity() {
             directory.mkdirs()
         }
         val file = File(directory, fileName)
-        file.writeBytes(bytes)
+        file.outputStream().use(writer)
         return file.absolutePath
     }
 }

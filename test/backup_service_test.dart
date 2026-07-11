@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/features/accounts/data/account_repository.dart';
@@ -117,6 +118,46 @@ void main() {
       () => service.parseBackupBytes(zip, password: 'bad-password'),
       throwsFormatException,
     );
+  });
+
+  test('streaming backup file restores and rejects a wrong password', () async {
+    final date = DateTime(2026, 7, 3);
+    final service = BackupService(
+      memoryRepository: _MemoryRepository([
+        MemoryItem(
+          id: 'streamed',
+          type: MemoryType.note,
+          title: 'Streamed',
+          memoryDate: date,
+          createdAt: date,
+          updatedAt: date,
+        ),
+      ]),
+      shiftScheduleRepository: _ShiftRepository(const []),
+      accountRepository: _AccountRepository(const []),
+    );
+
+    final temp = await Directory.systemTemp.createTemp('backup_stream_test_');
+    addTearDown(() async {
+      if (await temp.exists()) await temp.delete(recursive: true);
+    });
+    final path = await service.createStreamingBackupFile(
+      'good-password',
+      temporaryRoot: temp.path,
+    );
+    expect(path, isNotNull);
+    final bytes = await File(path!).readAsBytes();
+    final restored = await service.parseBackupBytes(
+      bytes,
+      password: 'good-password',
+    );
+
+    expect(restored.memoryItems.single.id, 'streamed');
+    expect(
+      () => service.parseBackupBytes(bytes, password: 'bad-password'),
+      throwsFormatException,
+    );
+    await service.deleteTemporaryBackup(path);
   });
 
   test('rejects unsupported backup files', () async {

@@ -96,14 +96,26 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       if (password == null || password.isEmpty) {
         return;
       }
-      final backupBytes = await _service().createEncryptedBackupZip(password);
+      final service = _service();
       final fileName =
           'ezhednevnik_v2_backup_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.zip';
-      final downloadsPath = await BackupFileSaver.saveToDownloads(
-        fileName: fileName,
-        bytes: backupBytes,
-      );
+      final temporaryPath = await service.createStreamingBackupFile(password);
+      final backupBytes = temporaryPath == null
+          ? await service.createEncryptedBackupZip(password)
+          : null;
+      final downloadsPath = temporaryPath == null
+          ? await BackupFileSaver.saveToDownloads(
+              fileName: fileName,
+              bytes: backupBytes!,
+            )
+          : await BackupFileSaver.saveFileToDownloads(
+              fileName: fileName,
+              sourcePath: temporaryPath,
+            );
       if (downloadsPath != null) {
+        if (temporaryPath != null) {
+          await service.deleteTemporaryBackup(temporaryPath);
+        }
         if (mounted) {
           _showMessage(strings.backupSavedToDownloads);
         }
@@ -116,14 +128,22 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         suggestedName: fileName,
       );
       if (saveLocation == null) {
+        if (temporaryPath != null) {
+          await service.deleteTemporaryBackup(temporaryPath);
+        }
         return;
       }
 
-      await XFile.fromData(
-        backupBytes,
-        mimeType: 'application/zip',
-        name: saveLocation.path.split(RegExp(r'[\\/]')).last,
-      ).saveTo(saveLocation.path);
+      if (temporaryPath != null) {
+        await XFile(temporaryPath).saveTo(saveLocation.path);
+        await service.deleteTemporaryBackup(temporaryPath);
+      } else {
+        await XFile.fromData(
+          backupBytes!,
+          mimeType: 'application/zip',
+          name: saveLocation.path.split(RegExp(r'[\\/]')).last,
+        ).saveTo(saveLocation.path);
+      }
 
       if (mounted) {
         _showMessage(strings.backupCreated);

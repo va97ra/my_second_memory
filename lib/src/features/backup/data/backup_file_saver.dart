@@ -9,4 +9,14 @@ abstract final class BackupFileSaver {
   }) {
     return saveBackupToDownloads(fileName: fileName, bytes: bytes);
   }
+
+  static Future<String?> saveFileToDownloads({
+    required String fileName,
+    required String sourcePath,
+  }) {
+    return saveBackupFileToDownloads(
+      fileName: fileName,
+      sourcePath: sourcePath,
+    );
+  }
 }

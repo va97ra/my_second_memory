@@ -12,6 +12,7 @@ import '../../memory_items/domain/memory_item.dart';
 import '../../shift_schedules/data/shift_schedule_repository.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 import 'backup_media_store.dart';
+import 'streaming_backup.dart';
 
 class BackupService {
   const BackupService({
@@ -24,6 +25,8 @@ class BackupService {
   static const version = 2;
   static const legacyVersion = 1;
   static const encryptedZipFormat = 'ezhednevnik_v2_encrypted_zip';
+  static const streamingZipFormat = 'ezhednevnik_v2_streaming_zip';
+  static const streamingZipVersion = 3;
 
   final MemoryRepository memoryRepository;
   final ShiftScheduleRepository shiftScheduleRepository;
@@ -77,6 +80,25 @@ class BackupService {
     return Uint8List.fromList(ZipEncoder().encode(archive));
   }
 
+  Future<String?> createStreamingBackupFile(
+    String password, {
+    String? temporaryRoot,
+  }) async {
+    return createStreamingBackup(
+      password: password,
+      format: streamingZipFormat,
+      version: streamingZipVersion,
+      memoryItems: await memoryRepository.loadAll(),
+      shiftSchedules: await shiftScheduleRepository.loadSchedules(),
+      accounts: await accountRepository.loadAccounts(),
+      temporaryRoot: temporaryRoot,
+    );
+  }
+
+  Future<void> deleteTemporaryBackup(String path) {
+    return deleteStreamingBackup(path);
+  }
+
   Future<BackupRestoreData> parseBackupBytes(
     List<int> bytes, {
     String? password,
@@ -85,9 +107,64 @@ class BackupService {
       if (password == null || password.isEmpty) {
         throw const FormatException('Backup password is required');
       }
+      final streaming = await _tryParseStreamingZip(bytes, password);
+      if (streaming != null) return streaming;
       return parseBackupJson(await _decryptBackupZip(bytes, password));
     }
     return parseBackupJson(utf8.decode(bytes));
+  }
+
+  Future<BackupRestoreData?> _tryParseStreamingZip(
+    List<int> bytes,
+    String password,
+  ) async {
+    Archive archive;
+    try {
+      archive = ZipDecoder().decodeBytes(bytes, password: password);
+    } catch (_) {
+      return null;
+    }
+    final manifestFile = archive.findFile('manifest.json');
+    if (manifestFile == null) return null;
+    Map<String, Object?> manifest;
+    try {
+      manifest = Map<String, Object?>.from(
+        jsonDecode(utf8.decode(manifestFile.content as List<int>)) as Map,
+      );
+    } catch (_) {
+      return null;
+    }
+    if (manifest['format'] != streamingZipFormat ||
+        manifest['version'] != streamingZipVersion) {
+      return null;
+    }
+    final items = (manifest['memoryItems'] as List<dynamic>? ?? const [])
+        .map((entry) => MemoryItem.fromJson(
+              Map<String, Object?>.from(entry as Map),
+            ))
+        .toList();
+    final files = <String, List<int>>{
+      for (final file in archive.files)
+        if (file.isFile) file.name: file.content as List<int>,
+    };
+    final restoredItems = await restoreStreamingMedia(
+      items: items,
+      mediaEntries: manifest['mediaEntries'] as List<dynamic>? ?? const [],
+      archiveFiles: files,
+    );
+    final shifts =
+        (manifest['shiftSchedules'] as List<dynamic>? ?? const []).map((entry) {
+      return ShiftSchedule.fromJson(Map<String, Object?>.from(entry as Map));
+    }).toList();
+    final accounts =
+        (manifest['accounts'] as List<dynamic>? ?? const []).map((entry) {
+      return AccountItem.fromJson(Map<String, Object?>.from(entry as Map));
+    }).toList();
+    return BackupRestoreData(
+      memoryItems: restoredItems,
+      shiftSchedules: shifts,
+      accounts: accounts,
+    );
   }
 
   Future<BackupRestoreData> parseBackupJson(String raw) async {
@@ -123,7 +200,12 @@ class BackupService {
   }
 
   Future<String> _decryptBackupZip(List<int> bytes, String password) async {
-    final archive = ZipDecoder().decodeBytes(bytes);
+    late final Archive archive;
+    try {
+      archive = ZipDecoder().decodeBytes(bytes);
+    } catch (_) {
+      throw const FormatException('Invalid backup password');
+    }
     final manifestFile = archive.findFile('manifest.json');
     final payloadFile = archive.findFile('payload.bin');
     if (manifestFile == null || payloadFile == null) {
