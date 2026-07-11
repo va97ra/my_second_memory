@@ -17,7 +17,7 @@ void main() {
     final repository = SqliteMemoryRepository(database: database);
     addTearDown(database.close);
 
-    final items = await repository.loadItems();
+    final items = await repository.loadAll();
 
     expect(items, isEmpty);
   });
@@ -55,13 +55,13 @@ void main() {
 
     final firstDatabase = AppDatabase(NativeDatabase(file));
     final firstRepository = SqliteMemoryRepository(database: firstDatabase);
-    await firstRepository.saveItems([item]);
+    await firstRepository.upsert(item);
     await firstDatabase.close();
 
     final secondDatabase = AppDatabase(NativeDatabase(file));
     final secondRepository = SqliteMemoryRepository(database: secondDatabase);
     addTearDown(secondDatabase.close);
-    final restored = await secondRepository.loadItems();
+    final restored = await secondRepository.loadAll();
 
     expect(restored, hasLength(1));
     expect(restored.single.id, 'saved-note');
@@ -77,7 +77,7 @@ void main() {
     expect(restored.single.reminderSoundName, 'Будильник');
   });
 
-  test('saveItems removes records missing from the provided list', () async {
+  test('replaceAll removes records missing from the provided list', () async {
     SharedPreferences.setMockInitialValues({});
     final database = AppDatabase(NativeDatabase.memory());
     final repository = SqliteMemoryRepository(database: database);
@@ -100,10 +100,10 @@ void main() {
       updatedAt: date,
     );
 
-    await repository.saveItems([first, second]);
-    await repository.saveItems([second]);
+    await repository.replaceAll([first, second]);
+    await repository.replaceAll([second]);
 
-    final restored = await repository.loadItems();
+    final restored = await repository.loadAll();
     expect(restored.map((item) => item.id), ['second']);
   });
 
@@ -143,8 +143,8 @@ void main() {
     );
     addTearDown(database.close);
 
-    final firstLoad = await repository.loadItems();
-    final secondLoad = await repository.loadItems();
+    final firstLoad = await repository.loadAll();
+    final secondLoad = await repository.loadAll();
 
     expect(firstLoad, hasLength(1));
     expect(firstLoad.single.id, 'real-note');
@@ -153,5 +153,37 @@ void main() {
     expect(secondLoad, hasLength(1));
     expect(secondLoad.single.id, 'real-note');
     expect(prefs.getBool(SqliteMemoryRepository.legacyMigrationKey), isTrue);
+  });
+
+  test('upsert changes one record without replacing other records', () async {
+    SharedPreferences.setMockInitialValues({});
+    final database = AppDatabase(NativeDatabase.memory());
+    final repository = SqliteMemoryRepository(database: database);
+    addTearDown(database.close);
+    final date = DateTime(2026, 7, 3);
+    final first = MemoryItem(
+      id: 'first',
+      type: MemoryType.note,
+      title: 'Первая',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+    );
+    final second = MemoryItem(
+      id: 'second',
+      type: MemoryType.note,
+      title: 'Вторая',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+    );
+
+    await repository.replaceAll([first, second]);
+    await repository.upsert(first.copyWith(body: 'Изменена'));
+
+    final restored = await repository.loadAll();
+    expect(restored, hasLength(2));
+    expect(restored.singleWhere((item) => item.id == 'first').body, 'Изменена');
+    expect(restored.singleWhere((item) => item.id == 'second').title, 'Вторая');
   });
 }

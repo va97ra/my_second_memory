@@ -52,13 +52,36 @@ class _BiometricFailsSecurityService extends SecurityService {
   Future<AppCipher?> unlockWithBiometrics() async => null;
 }
 
-class _FeedMemoryRepository implements MemoryRepository {
+abstract class _TestMemoryRepository implements MemoryRepository {
+  @override
+  Future<void> upsert(MemoryItem item) async {
+    final items = await loadAll();
+    await replaceAll([
+      for (final existing in items)
+        if (existing.id == item.id) item else existing,
+      if (!items.any((existing) => existing.id == item.id)) item,
+    ]);
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    await replaceAll([
+      for (final item in await loadAll())
+        if (item.id != id) item,
+    ]);
+  }
+
+  @override
+  Future<void> close() async {}
+}
+
+class _FeedMemoryRepository extends _TestMemoryRepository {
   _FeedMemoryRepository();
 
   List<MemoryItem> savedItems = const [];
 
   @override
-  Future<List<MemoryItem>> loadItems() async {
+  Future<List<MemoryItem>> loadAll() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
@@ -120,16 +143,16 @@ class _FeedMemoryRepository implements MemoryRepository {
   }
 
   @override
-  Future<void> saveItems(List<MemoryItem> items) async {
+  Future<void> replaceAll(List<MemoryItem> items) async {
     savedItems = items;
   }
 }
 
-class _TodayOnlyMemoryRepository implements MemoryRepository {
+class _TodayOnlyMemoryRepository extends _TestMemoryRepository {
   List<MemoryItem> savedItems = const [];
 
   @override
-  Future<List<MemoryItem>> loadItems() async {
+  Future<List<MemoryItem>> loadAll() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -146,16 +169,16 @@ class _TodayOnlyMemoryRepository implements MemoryRepository {
   }
 
   @override
-  Future<void> saveItems(List<MemoryItem> items) async {
+  Future<void> replaceAll(List<MemoryItem> items) async {
     savedItems = items;
   }
 }
 
-class _RichEditorMemoryRepository implements MemoryRepository {
+class _RichEditorMemoryRepository extends _TestMemoryRepository {
   List<MemoryItem> savedItems = const [];
 
   @override
-  Future<List<MemoryItem>> loadItems() async {
+  Future<List<MemoryItem>> loadAll() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -179,7 +202,7 @@ class _RichEditorMemoryRepository implements MemoryRepository {
   }
 
   @override
-  Future<void> saveItems(List<MemoryItem> items) async {
+  Future<void> replaceAll(List<MemoryItem> items) async {
     savedItems = items;
   }
 }

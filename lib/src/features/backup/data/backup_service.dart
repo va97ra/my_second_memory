@@ -30,7 +30,7 @@ class BackupService {
   final AccountRepository accountRepository;
 
   Future<String> createBackupJson() async {
-    final memoryItems = await memoryRepository.loadItems();
+    final memoryItems = await memoryRepository.loadAll();
     final shiftSchedules = await shiftScheduleRepository.loadSchedules();
     final accounts = await accountRepository.loadAccounts();
     final mediaFiles = await collectBackupMedia(memoryItems);

@@ -139,10 +139,19 @@ class _MemoryRepository implements MemoryRepository {
   final List<MemoryItem> items;
 
   @override
-  Future<List<MemoryItem>> loadItems() async => items;
+  Future<List<MemoryItem>> loadAll() async => items;
 
   @override
-  Future<void> saveItems(List<MemoryItem> items) async {}
+  Future<void> upsert(MemoryItem item) async {}
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {}
+
+  @override
+  Future<void> close() async {}
 }
 
 class _ShiftRepository implements ShiftScheduleRepository {

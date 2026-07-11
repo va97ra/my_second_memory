@@ -14,7 +14,7 @@ class EncryptedMemoryRepository implements MemoryRepository {
   final MemoryRepository plainRepository;
 
   @override
-  Future<List<MemoryItem>> loadItems() async {
+  Future<List<MemoryItem>> loadAll() async {
     if (await store.contains(storageKey)) {
       final decoded = await store.readList(storageKey);
       return decoded.map((entry) {
@@ -22,17 +22,38 @@ class EncryptedMemoryRepository implements MemoryRepository {
       }).toList();
     }
 
-    final items = await plainRepository.loadItems();
-    await saveItems(items);
-    await plainRepository.saveItems(const []);
+    final items = await plainRepository.loadAll();
+    await replaceAll(items);
+    await plainRepository.replaceAll(const []);
     return items;
   }
 
   @override
-  Future<void> saveItems(List<MemoryItem> items) async {
+  Future<void> upsert(MemoryItem item) async {
+    final items = await loadAll();
+    await replaceAll([
+      for (final existing in items)
+        if (existing.id == item.id) item else existing,
+      if (!items.any((existing) => existing.id == item.id)) item,
+    ]);
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    await replaceAll([
+      for (final item in await loadAll())
+        if (item.id != id) item,
+    ]);
+  }
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {
     await store.writeList(
       storageKey,
       items.map((item) => item.toJson()).toList(),
     );
   }
+
+  @override
+  Future<void> close() async {}
 }

@@ -37,7 +37,7 @@ class SecurityDataMigrationService {
       memoryItems: await EncryptedMemoryRepository(
         store: store,
         plainRepository: createMemoryRepository(),
-      ).loadItems(),
+      ).loadAll(),
       shiftSchedules: await EncryptedShiftScheduleRepository(
         store: store,
         plainRepository: const LocalShiftScheduleRepository(),
@@ -56,9 +56,9 @@ class SecurityDataMigrationService {
     final repositories = _EncryptedRepositories(cipher);
 
     if (snapshot.memoryItems != null) {
-      await repositories.memory.saveItems(snapshot.memoryItems!);
+      await repositories.memory.replaceAll(snapshot.memoryItems!);
     } else {
-      await repositories.memory.loadItems();
+      await repositories.memory.loadAll();
     }
 
     if (snapshot.shiftSchedules != null) {
@@ -82,7 +82,7 @@ class SecurityDataMigrationService {
       store: store,
       plainRepository: plainMemory,
     );
-    await plainMemory.saveItems(await memoryRepository.loadItems());
+    await plainMemory.replaceAll(await memoryRepository.loadAll());
     await store.remove(EncryptedMemoryRepository.storageKey);
 
     const plainShifts = LocalShiftScheduleRepository();

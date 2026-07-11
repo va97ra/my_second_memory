@@ -11,9 +11,15 @@ import '../data/memory_repository_factory.dart';
 import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
 
+final plainMemoryRepositoryProvider = Provider<MemoryRepository>((ref) {
+  final repository = createMemoryRepository();
+  ref.onDispose(() => unawaited(repository.close()));
+  return repository;
+});
+
 final memoryRepositoryProvider = Provider<MemoryRepository>((ref) {
   final session = ref.watch(securitySessionProvider);
-  final plainRepository = createMemoryRepository();
+  final plainRepository = ref.watch(plainMemoryRepositoryProvider);
   final cipher = session.cipher;
   if (session.hasPin && cipher != null) {
     return EncryptedMemoryRepository(
@@ -40,11 +46,12 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   final MemoryRepository _repository;
   final ReminderScheduler? _reminders;
   late final Future<void> _loadFuture;
+  Future<void> _writeTail = Future.value();
 
   Future<void> load() => _loadFuture;
 
   Future<void> _load() async {
-    final items = await _repository.loadItems();
+    final items = await _repository.loadAll();
     state = _sort(items);
     unawaited(_safeReconcile());
   }
@@ -52,7 +59,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   Future<void> add(MemoryItem item) async {
     await _loadFuture;
     state = _sort([...state, item]);
-    await _repository.saveItems(state);
+    await _enqueueWrite(() => _repository.upsert(item));
     unawaited(_safeSchedule(item));
   }
 
@@ -62,7 +69,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
       for (final existing in state)
         if (existing.id == item.id) item else existing,
     ]);
-    await _repository.saveItems(state);
+    await _enqueueWrite(() => _repository.upsert(item));
     unawaited(_safeSchedule(item));
   }
 
@@ -76,7 +83,10 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
         else
           item,
     ]);
-    await _repository.saveItems(state);
+    final archived = _findById(id);
+    if (archived != null) {
+      await _enqueueWrite(() => _repository.upsert(archived));
+    }
     unawaited(_safeCancel(id));
   }
 
@@ -90,9 +100,9 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
         else
           item,
     ]);
-    await _repository.saveItems(state);
     final restored = _findById(id);
     if (restored != null) {
+      await _enqueueWrite(() => _repository.upsert(restored));
       unawaited(_safeSchedule(restored));
     }
   }
@@ -110,8 +120,10 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
         else
           item,
     ]);
-    await _repository.saveItems(state);
     final updated = _findById(id);
+    if (updated != null) {
+      await _enqueueWrite(() => _repository.upsert(updated));
+    }
     if (updated == null || updated.status != MemoryStatus.active) {
       unawaited(_safeCancel(id));
     } else {
@@ -125,14 +137,14 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
       for (final item in state)
         if (item.id != id) item,
     ];
-    await _repository.saveItems(state);
+    await _enqueueWrite(() => _repository.delete(id));
     unawaited(_safeCancel(id));
   }
 
   Future<void> replaceAll(List<MemoryItem> items) async {
     await _loadFuture;
     state = _sort(items);
-    await _repository.saveItems(state);
+    await _enqueueWrite(() => _repository.replaceAll(state));
     unawaited(_safeReconcile());
   }
 
@@ -158,6 +170,15 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     } catch (_) {
       // A later app launch or edit will retry notification reconciliation.
     }
+  }
+
+  Future<void> _enqueueWrite(Future<void> Function() operation) {
+    final next = _writeTail.then((_) => operation());
+    _writeTail = next.then<void>(
+      (_) {},
+      onError: (_, __) {},
+    );
+    return next;
   }
 
   MemoryItem? _findById(String id) {

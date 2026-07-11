@@ -11,7 +11,7 @@ class LocalMemoryRepository implements MemoryRepository {
   static const _storageKey = 'memory_items_v1';
 
   @override
-  Future<List<MemoryItem>> loadItems() async {
+  Future<List<MemoryItem>> loadAll() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_storageKey);
     if (raw == null || raw.isEmpty) {
@@ -28,18 +28,39 @@ class LocalMemoryRepository implements MemoryRepository {
     ];
 
     if (userItems.length != items.length) {
-      await saveItems(userItems);
+      await replaceAll(userItems);
     }
 
     return userItems;
   }
 
   @override
-  Future<void> saveItems(List<MemoryItem> items) async {
+  Future<void> upsert(MemoryItem item) async {
+    final items = await loadAll();
+    await replaceAll([
+      for (final existing in items)
+        if (existing.id == item.id) item else existing,
+      if (!items.any((existing) => existing.id == item.id)) item,
+    ]);
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    await replaceAll([
+      for (final item in await loadAll())
+        if (item.id != id) item,
+    ]);
+  }
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {
     final prefs = await SharedPreferences.getInstance();
     final encoded = jsonEncode(items.map((item) => item.toJson()).toList());
     await prefs.setString(_storageKey, encoded);
   }
+
+  @override
+  Future<void> close() async {}
 
   bool _isStarterItem(MemoryItem item) {
     return item.id == 'starter-event' ||

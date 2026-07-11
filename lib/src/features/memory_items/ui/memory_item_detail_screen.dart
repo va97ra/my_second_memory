@@ -37,8 +37,8 @@ class MemoryItemDetailScreen extends ConsumerStatefulWidget {
       _MemoryItemDetailScreenState();
 }
 
-class _MemoryItemDetailScreenState
-    extends ConsumerState<MemoryItemDetailScreen> {
+class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   final _bodyController = TextEditingController();
   final _recorder = AudioRecorder();
@@ -60,10 +60,23 @@ class _MemoryItemDetailScreenState
   DateTime? _recordingStartedAt;
   bool _isRecording = false;
   bool _isSaving = false;
+  String? _saveError;
+  bool _hasPendingAutosave = false;
+  bool _allowPop = false;
+  bool _isLeaving = false;
+  int _saveRevision = 0;
   Timer? _autosaveTimer;
+  Future<void> _saveTail = Future.value();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _autosaveTimer?.cancel();
     _bodyController.dispose();
     _recorder.dispose();
@@ -71,9 +84,18 @@ class _MemoryItemDetailScreenState
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      unawaited(_flushAutosave());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    final item = _findItem();
+    final item = _watchItem();
 
     if (item == null && widget.itemId != null) {
       return Scaffold(
@@ -95,123 +117,150 @@ class _MemoryItemDetailScreenState
       _initializeFrom(item);
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          onPressed: _goBack,
-          icon: const Icon(Icons.arrow_back),
-        ),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              item == null ? strings.newRecord : strings.editRecord,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF202531),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          unawaited(_goBack());
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          titleSpacing: 0,
+          leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onPressed: _goBack,
+            icon: const Icon(Icons.arrow_back),
+          ),
+          title: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item == null ? strings.newRecord : strings.editRecord,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFF202531),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              Text(
+                _saveError != null
+                    ? strings.saveFailed
+                    : _isSaving
+                        ? strings.saving
+                        : strings.saved,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: _saveError != null
+                          ? Theme.of(context).colorScheme.error
+                          : _isSaving
+                              ? const Color(0xFF9A6A32)
+                              : const Color(0xFF6B7280),
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ],
+          ),
+          actions: [
+            Tooltip(
+              message: _saveError != null
+                  ? strings.saveFailed
+                  : _isSaving
+                      ? strings.saving
+                      : strings.saved,
+              child: AnimatedContainer(
+                key: const ValueKey('memory_autosave_status'),
+                duration: const Duration(milliseconds: 220),
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: (_saveError != null
+                          ? Theme.of(context).colorScheme.error
+                          : _isSaving
+                              ? const Color(0xFFD59A48)
+                              : const Color(0xFF239B61))
+                      .withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  _saveError != null
+                      ? Icons.cloud_off_outlined
+                      : _isSaving
+                          ? Icons.sync
+                          : Icons.cloud_done_outlined,
+                  key: ValueKey(
+                    _saveError != null
+                        ? 'memory_autosave_error'
+                        : _isSaving
+                            ? 'memory_autosave_saving'
+                            : 'memory_autosave_saved',
                   ),
+                  size: 20,
+                  color: _saveError != null
+                      ? Theme.of(context).colorScheme.error
+                      : _isSaving
+                          ? const Color(0xFFB7791F)
+                          : const Color(0xFF168653),
+                ),
+              ),
             ),
-            Text(
-              _isSaving ? strings.saving : strings.saved,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: _isSaving
-                        ? const Color(0xFF9A6A32)
-                        : const Color(0xFF6B7280),
-                    fontWeight: FontWeight.w700,
+            if (item != null)
+              PopupMenuButton<String>(
+                tooltip: strings.delete,
+                onSelected: (value) {
+                  if (value == 'delete') {
+                    _confirmDelete(item);
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Text(strings.delete),
                   ),
-            ),
+                ],
+              ),
           ],
         ),
-        actions: [
-          Tooltip(
-            message: _isSaving ? strings.saving : strings.saved,
-            child: AnimatedContainer(
-              key: const ValueKey('memory_autosave_status'),
-              duration: const Duration(milliseconds: 220),
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: (_isSaving
-                        ? const Color(0xFFD59A48)
-                        : const Color(0xFF239B61))
-                    .withValues(alpha: 0.13),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                _isSaving ? Icons.sync : Icons.cloud_done_outlined,
-                key: ValueKey(
-                  _isSaving
-                      ? 'memory_autosave_saving'
-                      : 'memory_autosave_saved',
-                ),
-                size: 20,
-                color: _isSaving
-                    ? const Color(0xFFB7791F)
-                    : const Color(0xFF168653),
-              ),
-            ),
-          ),
-          if (item != null)
-            PopupMenuButton<String>(
-              tooltip: strings.delete,
-              onSelected: (value) {
-                if (value == 'delete') {
-                  _confirmDelete(item);
-                }
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: _EditorBody(
+              selectedType: _type,
+              dateText: _formattedDate(context),
+              timeText: _formattedTime(),
+              reminderEnabled: _remindAt != null,
+              onDateTap: _pickDate,
+              onTimeTap: _openTimeAndReminder,
+              onClearTime: _timeMinutes == null
+                  ? null
+                  : () {
+                      setState(() {
+                        _timeMinutes = null;
+                        _remindAt = null;
+                      });
+                      _scheduleAutosave();
+                    },
+              onTypeChanged: (type) {
+                setState(() => _type = type);
+                _scheduleAutosave();
               },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Text(strings.delete),
-                ),
-              ],
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: _EditorBody(
-            selectedType: _type,
-            dateText: _formattedDate(context),
-            timeText: _formattedTime(),
-            reminderEnabled: _remindAt != null,
-            onDateTap: _pickDate,
-            onTimeTap: () => _openTimeAndReminder(item),
-            onClearTime: _timeMinutes == null
-                ? null
-                : () {
-                    setState(() {
-                      _timeMinutes = null;
-                      _remindAt = null;
-                    });
-                    _scheduleAutosave(item);
-                  },
-            onTypeChanged: (type) {
-              setState(() => _type = type);
-              _scheduleAutosave(item);
-            },
-            recordEditor: _RecordEditor(
-              controller: _bodyController,
-              imagePaths: _imagePaths,
-              audioPath: _audioPath,
-              audioDurationSeconds: _audioDurationSeconds,
-              memoryDate: _memoryDate,
-              isRecording: _isRecording,
-              onPickImage: _pickImage,
-              onRemoveImage: (path) => setState(() {
-                _imagePaths.remove(path);
-                _scheduleAutosave(item);
-              }),
-              onVoicePressed:
-                  _isRecording ? () => _stopAndSaveVoice(item) : _startVoice,
-              onChanged: () => _scheduleAutosave(item),
+              recordEditor: _RecordEditor(
+                controller: _bodyController,
+                imagePaths: _imagePaths,
+                audioPath: _audioPath,
+                audioDurationSeconds: _audioDurationSeconds,
+                memoryDate: _memoryDate,
+                isRecording: _isRecording,
+                onPickImage: _pickImage,
+                onRemoveImage: (path) => setState(() {
+                  _imagePaths.remove(path);
+                  _scheduleAutosave();
+                }),
+                onVoicePressed: _isRecording ? _stopAndSaveVoice : _startVoice,
+                onChanged: _scheduleAutosave,
+              ),
             ),
           ),
         ),
@@ -219,12 +268,22 @@ class _MemoryItemDetailScreenState
     );
   }
 
-  MemoryItem? _findItem() {
-    final itemId = widget.itemId;
+  MemoryItem? _watchItem() {
+    return _findItem(ref.watch(memoryItemsControllerProvider));
+  }
+
+  MemoryItem? _readItem() {
+    return _findItem(ref.read(memoryItemsControllerProvider));
+  }
+
+  MemoryItem? _findItem(List<MemoryItem> items) {
+    final itemId = widget.itemId ??
+        (_loadedItemId == null || _loadedItemId == '__new__'
+            ? null
+            : _loadedItemId);
     if (itemId == null) {
       return null;
     }
-    final items = ref.watch(memoryItemsControllerProvider);
     for (final item in items) {
       if (item.id == itemId) {
         return item;
@@ -290,7 +349,7 @@ class _MemoryItemDetailScreenState
         _remindAt = nextReminder.isAfter(DateTime.now()) ? nextReminder : null;
       }
     });
-    _scheduleAutosave(_findItem());
+    _scheduleAutosave();
   }
 
   String _formattedDate(BuildContext context) {
@@ -308,7 +367,7 @@ class _MemoryItemDetailScreenState
     return '$hour:$minute';
   }
 
-  Future<void> _openTimeAndReminder(MemoryItem? item) async {
+  Future<void> _openTimeAndReminder() async {
     final result = await showModalBottomSheet<_TimeReminderDraft>(
       context: context,
       isScrollControlled: true,
@@ -334,7 +393,7 @@ class _MemoryItemDetailScreenState
       _reminderSoundUri = result.soundUri;
       _reminderSoundName = result.soundName;
     });
-    _scheduleAutosave(item);
+    _scheduleAutosave();
   }
 
   DateTime _dateTimeFor(DateTime date, int minutes) => DateTime(
@@ -356,13 +415,13 @@ class _MemoryItemDetailScreenState
       final mimeType = file.mimeType ?? _mimeTypeForName(file.name);
       final dataUrl = 'data:$mimeType;base64,${base64Encode(bytes)}';
       setState(() => _imagePaths.add(dataUrl));
-      _scheduleAutosave(_findItem());
+      _scheduleAutosave();
       return;
     }
 
     final savedPath = await _imageStorage.savePickedImage(file);
     setState(() => _imagePaths.add(savedPath));
-    _scheduleAutosave(_findItem());
+    _scheduleAutosave();
   }
 
   Future<XFile?> _pickImageForWeb() async {
@@ -416,7 +475,7 @@ class _MemoryItemDetailScreenState
     });
   }
 
-  Future<void> _stopAndSaveVoice(MemoryItem? item) async {
+  Future<void> _stopAndSaveVoice() async {
     final path = await _recorder.stop();
     final startedAt = _recordingStartedAt;
     final duration =
@@ -430,7 +489,7 @@ class _MemoryItemDetailScreenState
         _audioDurationSeconds = duration;
       }
     });
-    _scheduleAutosave(item);
+    _scheduleAutosave();
   }
 
   String _mimeTypeForName(String name) {
@@ -447,50 +506,53 @@ class _MemoryItemDetailScreenState
     return 'image/jpeg';
   }
 
-  Future<void> _save(MemoryItem? item, {bool showMessage = true}) async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> _save({bool showMessage = true}) async {
+    if (_formKey.currentState?.validate() == false) {
       return;
     }
     if (!_hasContent()) {
       return;
     }
 
-    setState(() => _isSaving = true);
-
     final now = DateTime.now();
-    final title = _titleFromRecord(
-      _bodyController.text,
-      _type,
-      Localizations.localeOf(context).languageCode,
+    final snapshot = _MemoryEditorSnapshot(
+      type: _type,
+      title: _titleFromRecord(
+        _bodyController.text,
+        _type,
+        Localizations.localeOf(context).languageCode,
+      ),
+      body: _bodyController.text.trim(),
+      timeMinutes: _timeMinutes,
+      remindAt: _remindAt,
+      reminderSoundUri: _reminderSoundUri,
+      reminderSoundName: _reminderSoundName,
+      memoryDate: DateTime(
+        _memoryDate.year,
+        _memoryDate.month,
+        _memoryDate.day,
+      ),
+      status: _status,
+      audioPath: _audioPath,
+      audioDurationSeconds: _audioDurationSeconds,
+      imagePaths: List.unmodifiable(_imagePaths),
+      savedAt: now,
     );
-    final memoryDate = DateTime(
-      _memoryDate.year,
-      _memoryDate.month,
-      _memoryDate.day,
-    );
+    final revision = ++_saveRevision;
+    _hasPendingAutosave = false;
+    if (mounted) {
+      setState(() {
+        _isSaving = true;
+        _saveError = null;
+      });
+    }
 
-    if (item == null) {
-      final created = MemoryItem(
-        id: now.microsecondsSinceEpoch.toString(),
-        type: _type,
-        title: title,
-        body: _bodyController.text.trim(),
-        timeMinutes: _timeMinutes,
-        remindAt: _remindAt,
-        reminderSoundUri: _reminderSoundUri,
-        reminderSoundName: _reminderSoundName,
-        memoryDate: memoryDate,
-        createdAt: now,
-        updatedAt: now,
-        status: _status,
-        audioPath: _audioPath,
-        audioDurationSeconds: _audioDurationSeconds,
-        imagePaths: List.unmodifiable(_imagePaths),
-      );
-      await ref.read(memoryItemsControllerProvider.notifier).add(created);
-      _loadedItemId = created.id;
+    final operation = _saveTail.then((_) => _persistSnapshot(snapshot));
+    _saveTail = operation.then<void>((_) {}, onError: (_, __) {});
 
-      if (!mounted) {
+    try {
+      await operation;
+      if (!mounted || revision != _saveRevision) {
         return;
       }
       setState(() => _isSaving = false);
@@ -499,38 +561,64 @@ class _MemoryItemDetailScreenState
           SnackBar(content: Text(AppStrings.of(context).saved)),
         );
       }
-      context.replace('/memory/item/${Uri.encodeComponent(created.id)}');
+    } catch (_) {
+      if (!mounted || revision != _saveRevision) {
+        return;
+      }
+      setState(() {
+        _isSaving = false;
+        _saveError = AppStrings.of(context).saveFailed;
+      });
+    }
+  }
+
+  Future<void> _persistSnapshot(_MemoryEditorSnapshot snapshot) async {
+    final item = _readItem();
+    if (item == null) {
+      final created = MemoryItem(
+        id: snapshot.savedAt.microsecondsSinceEpoch.toString(),
+        type: snapshot.type,
+        title: snapshot.title,
+        body: snapshot.body,
+        timeMinutes: snapshot.timeMinutes,
+        remindAt: snapshot.remindAt,
+        reminderSoundUri: snapshot.reminderSoundUri,
+        reminderSoundName: snapshot.reminderSoundName,
+        memoryDate: snapshot.memoryDate,
+        createdAt: snapshot.savedAt,
+        updatedAt: snapshot.savedAt,
+        status: snapshot.status,
+        audioPath: snapshot.audioPath,
+        audioDurationSeconds: snapshot.audioDurationSeconds,
+        imagePaths: snapshot.imagePaths,
+      );
+      await ref.read(memoryItemsControllerProvider.notifier).add(created);
+      _loadedItemId = created.id;
+
+      if (mounted && widget.itemId == null) {
+        context.replace('/memory/item/${Uri.encodeComponent(created.id)}');
+      }
       return;
     }
 
     final updated = item.copyWith(
-      type: _type,
-      title: title,
-      body: _bodyController.text.trim(),
-      timeMinutes: _timeMinutes,
-      clearTime: _timeMinutes == null,
-      remindAt: _remindAt,
-      clearReminder: _remindAt == null,
-      reminderSoundUri: _reminderSoundUri,
-      reminderSoundName: _reminderSoundName,
-      memoryDate: memoryDate,
-      status: _status,
-      audioPath: _audioPath,
-      audioDurationSeconds: _audioDurationSeconds,
-      imagePaths: List.unmodifiable(_imagePaths),
-      updatedAt: now,
+      type: snapshot.type,
+      title: snapshot.title,
+      body: snapshot.body,
+      timeMinutes: snapshot.timeMinutes,
+      clearTime: snapshot.timeMinutes == null,
+      remindAt: snapshot.remindAt,
+      clearReminder: snapshot.remindAt == null,
+      reminderSoundUri: snapshot.reminderSoundUri,
+      reminderSoundName: snapshot.reminderSoundName,
+      memoryDate: snapshot.memoryDate,
+      status: snapshot.status,
+      audioPath: snapshot.audioPath,
+      audioDurationSeconds: snapshot.audioDurationSeconds,
+      imagePaths: snapshot.imagePaths,
+      updatedAt: snapshot.savedAt,
     );
     await ref.read(memoryItemsControllerProvider.notifier).update(updated);
-
-    if (!mounted) {
-      return;
-    }
-    setState(() => _isSaving = false);
-    if (showMessage) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(context).saved)),
-      );
-    }
   }
 
   bool _hasContent() {
@@ -539,16 +627,26 @@ class _MemoryItemDetailScreenState
         _audioPath != null;
   }
 
-  void _scheduleAutosave(MemoryItem? item) {
+  void _scheduleAutosave() {
     _autosaveTimer?.cancel();
     if (_isRecording || !_hasContent()) {
       return;
     }
+    _hasPendingAutosave = true;
     _autosaveTimer = Timer(const Duration(milliseconds: 700), () {
       if (mounted) {
-        _save(item, showMessage: false);
+        unawaited(_save(showMessage: false));
       }
     });
+  }
+
+  Future<void> _flushAutosave() async {
+    _autosaveTimer?.cancel();
+    _autosaveTimer = null;
+    if (_hasPendingAutosave && !_isRecording && _hasContent()) {
+      await _save(showMessage: false);
+    }
+    await _saveTail;
   }
 
   Future<void> _confirmDelete(MemoryItem item) async {
@@ -574,10 +672,12 @@ class _MemoryItemDetailScreenState
     if (confirmed != true) {
       return;
     }
+    _autosaveTimer?.cancel();
+    _hasPendingAutosave = false;
     await ref.read(memoryItemsControllerProvider.notifier).delete(item.id);
 
     if (mounted) {
-      _goBack();
+      await _goBack(skipSave: true);
     }
   }
 
@@ -596,13 +696,60 @@ class _MemoryItemDetailScreenState
     return '${compact.substring(0, 48)}...';
   }
 
-  void _goBack() {
+  Future<void> _goBack({bool skipSave = false}) async {
+    if (_isLeaving) {
+      return;
+    }
+    _isLeaving = true;
+    if (!skipSave) {
+      await _flushAutosave();
+      if (_saveError != null) {
+        _isLeaving = false;
+        return;
+      }
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() => _allowPop = true);
     if (context.canPop()) {
       context.pop();
       return;
     }
     context.go('/');
   }
+}
+
+class _MemoryEditorSnapshot {
+  const _MemoryEditorSnapshot({
+    required this.type,
+    required this.title,
+    required this.body,
+    required this.timeMinutes,
+    required this.remindAt,
+    required this.reminderSoundUri,
+    required this.reminderSoundName,
+    required this.memoryDate,
+    required this.status,
+    required this.audioPath,
+    required this.audioDurationSeconds,
+    required this.imagePaths,
+    required this.savedAt,
+  });
+
+  final MemoryType type;
+  final String title;
+  final String body;
+  final int? timeMinutes;
+  final DateTime? remindAt;
+  final String? reminderSoundUri;
+  final String? reminderSoundName;
+  final DateTime memoryDate;
+  final MemoryStatus status;
+  final String? audioPath;
+  final int? audioDurationSeconds;
+  final List<String> imagePaths;
+  final DateTime savedAt;
 }
 
 class _TimeReminderDraft {

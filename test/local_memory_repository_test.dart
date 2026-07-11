@@ -11,7 +11,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
 
     const repository = LocalMemoryRepository();
-    final items = await repository.loadItems();
+    final items = await repository.loadAll();
 
     expect(items, isEmpty);
   });
@@ -32,9 +32,9 @@ void main() {
       imagePaths: const ['/local/photo.jpg'],
     );
 
-    await repository.saveItems([item]);
+    await repository.upsert(item);
 
-    final restored = await repository.loadItems();
+    final restored = await repository.loadAll();
 
     expect(restored, hasLength(1));
     expect(restored.single.id, 'real-note');
@@ -68,7 +68,7 @@ void main() {
     });
 
     const repository = LocalMemoryRepository();
-    final restored = await repository.loadItems();
+    final restored = await repository.loadAll();
 
     expect(restored, hasLength(1));
     expect(restored.single.id, 'real-note');

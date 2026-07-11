@@ -135,6 +135,7 @@ class AppStrings {
   String get gallery => isRu ? 'Галерея' : 'Gallery';
   String get camera => isRu ? 'Камера' : 'Camera';
   String get saving => isRu ? 'Сохраняю' : 'Saving';
+  String get saveFailed => isRu ? 'Ошибка сохранения' : 'Save failed';
   String get dayRecords => isRu ? 'Записи дня' : 'Day records';
   String get messageHint => isRu ? 'Сообщение' : 'Message';
   String get photo => isRu ? 'Фото' : 'Photo';

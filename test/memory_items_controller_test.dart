@@ -12,13 +12,57 @@ class _MemoryRepository implements MemoryRepository {
   _MemoryRepository(this.items);
 
   List<MemoryItem> items;
+  final upsertedIds = <String>[];
+  final deletedIds = <String>[];
+  int replaceAllCount = 0;
 
   @override
-  Future<List<MemoryItem>> loadItems() async => items;
+  Future<List<MemoryItem>> loadAll() async => items;
 
   @override
-  Future<void> saveItems(List<MemoryItem> items) async {
+  Future<void> upsert(MemoryItem item) async {
+    upsertedIds.add(item.id);
+    items = [
+      for (final existing in items)
+        if (existing.id == item.id) item else existing,
+      if (!items.any((existing) => existing.id == item.id)) item,
+    ];
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    deletedIds.add(id);
+    items = [
+      for (final item in items)
+        if (item.id != id) item
+    ];
+  }
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {
+    replaceAllCount++;
     this.items = items;
+  }
+
+  @override
+  Future<void> close() async {}
+}
+
+class _DelayedMemoryRepository extends _MemoryRepository {
+  _DelayedMemoryRepository(super.items);
+
+  final firstWriteStarted = Completer<void>();
+  final releaseFirstWrite = Completer<void>();
+  final writtenBodies = <String>[];
+
+  @override
+  Future<void> upsert(MemoryItem item) async {
+    if (writtenBodies.isEmpty) {
+      firstWriteStarted.complete();
+      await releaseFirstWrite.future;
+    }
+    writtenBodies.add(item.body);
+    await super.upsert(item);
   }
 }
 
@@ -56,6 +100,51 @@ class _ReminderScheduler implements ReminderScheduler {
 }
 
 void main() {
+  test('update persists only the changed record', () async {
+    final date = DateTime(2026, 6, 30);
+    final item = MemoryItem(
+      id: 'one',
+      type: MemoryType.note,
+      title: 'One',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+    );
+    final repository = _MemoryRepository([item]);
+    final controller = MemoryItemsController(repository);
+
+    await controller.load();
+    await controller.update(item.copyWith(body: 'Changed'));
+
+    expect(repository.upsertedIds, ['one']);
+    expect(repository.replaceAllCount, 0);
+  });
+
+  test('concurrent updates are written in order and newest edit wins',
+      () async {
+    final date = DateTime(2026, 6, 30);
+    final item = MemoryItem(
+      id: 'ordered',
+      type: MemoryType.note,
+      title: 'Ordered',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+    );
+    final repository = _DelayedMemoryRepository([item]);
+    final controller = MemoryItemsController(repository);
+
+    await controller.load();
+    final first = controller.update(item.copyWith(body: 'First'));
+    await repository.firstWriteStarted.future;
+    final second = controller.update(item.copyWith(body: 'Second'));
+    repository.releaseFirstWrite.complete();
+    await Future.wait([first, second]);
+
+    expect(repository.writtenBodies, ['First', 'Second']);
+    expect(repository.items.single.body, 'Second');
+  });
+
   test('delete removes item from state and repository', () async {
     final date = DateTime(2026, 6, 30);
     final repository = _MemoryRepository([

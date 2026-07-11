@@ -23,7 +23,7 @@ class SqliteMemoryRepository implements MemoryRepository {
   final SharedPreferences? _legacyPreferences;
 
   @override
-  Future<List<domain.MemoryItem>> loadItems() async {
+  Future<List<domain.MemoryItem>> loadAll() async {
     await _migrateLegacyItemsIfNeeded();
     final rows = await _database.select(_database.memoryItems).get();
     final userRows = [
@@ -39,7 +39,26 @@ class SqliteMemoryRepository implements MemoryRepository {
   }
 
   @override
-  Future<void> saveItems(List<domain.MemoryItem> items) async {
+  Future<void> upsert(domain.MemoryItem item) async {
+    await _migrateLegacyItemsIfNeeded();
+    if (_isStarterId(item.id)) {
+      return;
+    }
+    await _database
+        .into(_database.memoryItems)
+        .insertOnConflictUpdate(_toCompanion(item));
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    await _migrateLegacyItemsIfNeeded();
+    await (_database.delete(_database.memoryItems)
+          ..where((row) => row.id.equals(id)))
+        .go();
+  }
+
+  @override
+  Future<void> replaceAll(List<domain.MemoryItem> items) async {
     await _migrateLegacyItemsIfNeeded();
     final userItems = [
       for (final item in items)
@@ -64,6 +83,9 @@ class SqliteMemoryRepository implements MemoryRepository {
       }
     });
   }
+
+  @override
+  Future<void> close() => _database.close();
 
   Future<void> _migrateLegacyItemsIfNeeded() async {
     final prefs = _legacyPreferences ?? await SharedPreferences.getInstance();

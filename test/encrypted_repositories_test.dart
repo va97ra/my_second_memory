@@ -33,11 +33,11 @@ void main() {
       plainRepository: plain,
     );
 
-    final items = await repository.loadItems();
+    final items = await repository.loadAll();
 
     expect(items.single.id, 'note');
     expect(plain.items, isEmpty);
-    expect(await repository.loadItems(), hasLength(1));
+    expect(await repository.loadAll(), hasLength(1));
   });
 
   test('encrypted shift repository migrates plaintext schedules', () async {
@@ -76,12 +76,32 @@ class _MemoryRepository implements MemoryRepository {
   List<MemoryItem> items;
 
   @override
-  Future<List<MemoryItem>> loadItems() async => items;
+  Future<List<MemoryItem>> loadAll() async => items;
 
   @override
-  Future<void> saveItems(List<MemoryItem> items) async {
+  Future<void> upsert(MemoryItem item) async {
+    items = [
+      for (final existing in items)
+        if (existing.id == item.id) item else existing,
+      if (!items.any((existing) => existing.id == item.id)) item,
+    ];
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    items = [
+      for (final item in items)
+        if (item.id != id) item
+    ];
+  }
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {
     this.items = items;
   }
+
+  @override
+  Future<void> close() async {}
 }
 
 class _ShiftRepository implements ShiftScheduleRepository {
