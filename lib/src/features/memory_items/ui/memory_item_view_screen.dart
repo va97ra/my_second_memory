@@ -7,9 +7,9 @@ import '../../../core/localization/app_strings.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
-import '../domain/memory_type.dart';
 import '../state/memory_items_controller.dart';
 import '../state/memory_item_selectors.dart';
+import 'widgets/memory_item_presentation.dart';
 
 class MemoryItemViewScreen extends ConsumerWidget {
   const MemoryItemViewScreen({
@@ -49,12 +49,10 @@ class MemoryItemViewScreen extends ConsumerWidget {
     }
 
     final locale = Localizations.localeOf(context).languageCode;
-    final typeColor = _typeColor(item.type);
+    final typeColor = memoryTypeColor(item.type);
     final text = item.body.trim().isNotEmpty ? item.body.trim() : item.title;
-    final timeText = item.timeMinutes == null
-        ? null
-        : '${(item.timeMinutes! ~/ 60).toString().padLeft(2, '0')}:'
-            '${(item.timeMinutes! % 60).toString().padLeft(2, '0')}';
+    final timeText =
+        item.timeMinutes == null ? null : formatMemoryTime(item.timeMinutes!);
 
     return Scaffold(
       appBar: AppBar(
@@ -111,7 +109,7 @@ class MemoryItemViewScreen extends ConsumerWidget {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
-                                    _iconFor(item.type),
+                                    memoryTypeIcon(item.type),
                                     color: typeColor,
                                     size: 20,
                                   ),
@@ -279,36 +277,4 @@ class _ReadonlyImageGrid extends StatelessWidget {
       },
     );
   }
-}
-
-IconData _iconFor(MemoryType type) {
-  return switch (type) {
-    MemoryType.task => Icons.check_circle_outline,
-    MemoryType.note => Icons.notes,
-    MemoryType.voiceNote => Icons.mic_none,
-    MemoryType.event => Icons.event,
-    MemoryType.person => Icons.person_outline,
-    MemoryType.habit => Icons.repeat,
-    MemoryType.goal => Icons.flag_outlined,
-    MemoryType.project => Icons.folder_outlined,
-    MemoryType.purchase => Icons.shopping_bag_outlined,
-    MemoryType.document => Icons.description_outlined,
-    MemoryType.place => Icons.place_outlined,
-  };
-}
-
-Color _typeColor(MemoryType type) {
-  return switch (type) {
-    MemoryType.task => const Color(0xFF16A34A),
-    MemoryType.note => const Color(0xFF2563EB),
-    MemoryType.voiceNote => const Color(0xFFDB2777),
-    MemoryType.event => const Color(0xFF7C3AED),
-    MemoryType.person => const Color(0xFF0891B2),
-    MemoryType.habit => const Color(0xFF059669),
-    MemoryType.goal => const Color(0xFFEA580C),
-    MemoryType.project => const Color(0xFF4F46E5),
-    MemoryType.purchase => const Color(0xFFCA8A04),
-    MemoryType.document => const Color(0xFF475569),
-    MemoryType.place => const Color(0xFFDC2626),
-  };
 }

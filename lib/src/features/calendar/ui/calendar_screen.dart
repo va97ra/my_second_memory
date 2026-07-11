@@ -5,13 +5,12 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/screen_chrome.dart';
+import '../state/calendar_month_data.dart';
 import '../../home_feed/domain/feed_rules.dart';
-import '../../home_feed/ui/widgets/memory_item_card.dart';
 import '../../memory_items/domain/memory_item.dart';
-import '../../memory_items/state/memory_item_selectors.dart';
 import '../../memory_items/state/memory_items_controller.dart';
+import '../../memory_items/ui/widgets/memory_item_presentation.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
-import '../../shift_schedules/state/shift_schedules_controller.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -37,8 +36,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).languageCode;
     final loadState = ref.watch(memoryItemsLoadProvider);
-    final items = ref.watch(visibleCalendarItemsProvider(_visibleMonth));
-    final shiftSchedules = ref.watch(shiftSchedulesControllerProvider);
+    final monthData = ref.watch(calendarMonthDataProvider(_visibleMonth));
 
     if (loadState.isLoading || loadState.hasError) {
       return WarmGradientBackground(
@@ -63,7 +61,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             viewportConstraints.maxWidth > viewportConstraints.maxHeight;
         final needsLandscapeScroll =
             isLandscape && viewportConstraints.maxHeight < 680;
-        final panel = _buildPanel(locale, items, shiftSchedules);
+        final panel = _buildPanel(locale, monthData);
 
         return WarmGradientBackground(
           child: needsLandscapeScroll
@@ -99,8 +97,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   Widget _buildPanel(
     String locale,
-    List<MemoryItem> items,
-    List<ShiftSchedule> shiftSchedules,
+    CalendarMonthData monthData,
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
@@ -108,8 +105,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         locale: locale,
         visibleMonth: _visibleMonth,
         selectedDate: _selectedDate,
-        items: items,
-        shiftSchedules: shiftSchedules,
+        monthData: monthData,
         onPreviousMonth: () => setState(() {
           _visibleMonth = DateTime(
             _visibleMonth.year,
@@ -152,8 +148,7 @@ class _CalendarPanel extends StatelessWidget {
     required this.locale,
     required this.visibleMonth,
     required this.selectedDate,
-    required this.items,
-    required this.shiftSchedules,
+    required this.monthData,
     required this.onPreviousMonth,
     required this.onNextMonth,
     required this.onToday,
@@ -163,8 +158,7 @@ class _CalendarPanel extends StatelessWidget {
   final String locale;
   final DateTime visibleMonth;
   final DateTime selectedDate;
-  final List<MemoryItem> items;
-  final List<ShiftSchedule> shiftSchedules;
+  final CalendarMonthData monthData;
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
   final VoidCallback onToday;
@@ -172,8 +166,8 @@ class _CalendarPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final days = _daysForMonth(visibleMonth);
-    final weekDays = _weekDayLabels(locale);
+    final days = monthData.days;
+    final weekDays = calendarWeekdayLabels(locale);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -188,7 +182,7 @@ class _CalendarPanel extends StatelessWidget {
                 onNextMonth: onNextMonth,
                 onToday: onToday,
               ),
-              _CalendarShiftLegend(schedules: shiftSchedules),
+              _CalendarShiftLegend(schedules: monthData.shiftSchedules),
               const SizedBox(height: 8),
               DecoratedBox(
                 key: const ValueKey('calendar_weekdays'),
@@ -252,13 +246,17 @@ class _CalendarPanel extends StatelessWidget {
                           final isInVisibleMonth =
                               day.month == visibleMonth.month;
                           final dayItems = isInVisibleMonth
-                              ? _itemsForDay(day)
+                              ? monthData.itemsByDay[calendarDateKey(day)] ??
+                                  const <MemoryItem>[]
                               : <MemoryItem>[];
                           final dayShiftSchedules = isInVisibleMonth
-                              ? _shiftSchedulesForDay(day)
+                              ? monthData.shiftsByDay[calendarDateKey(day)] ??
+                                  const <ShiftSchedule>[]
                               : <ShiftSchedule>[];
                           return _CalendarDayCell(
-                            key: ValueKey('calendar_day_${_dateKey(day)}'),
+                            key: ValueKey(
+                              'calendar_day_${calendarDateStringKey(day)}',
+                            ),
                             date: day,
                             locale: locale,
                             isInVisibleMonth: isInVisibleMonth,
@@ -312,43 +310,6 @@ class _CalendarPanel extends StatelessWidget {
         );
       },
     );
-  }
-
-  List<MemoryItem> _itemsForDay(DateTime date) {
-    return items.where((item) => isSameDay(item.memoryDate, date)).toList();
-  }
-
-  List<ShiftSchedule> _shiftSchedulesForDay(DateTime date) {
-    return [
-      for (final schedule in shiftSchedules)
-        if (schedule.isWorkday(date)) schedule,
-    ];
-  }
-
-  List<DateTime> _daysForMonth(DateTime month) {
-    final firstDay = DateTime(month.year, month.month);
-    final leadingDays = firstDay.weekday - DateTime.monday;
-    final start = firstDay.subtract(Duration(days: leadingDays));
-    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
-    final cellCount = ((leadingDays + daysInMonth + 6) ~/ 7) * 7;
-
-    return [
-      for (var index = 0; index < cellCount; index++)
-        DateTime(start.year, start.month, start.day + index),
-    ];
-  }
-
-  List<String> _weekDayLabels(String locale) {
-    if (locale == 'ru') {
-      return const ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-    }
-    return const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  }
-
-  String _dateKey(DateTime date) {
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '${date.year}-$month-$day';
   }
 }
 
@@ -847,10 +808,7 @@ class _CalendarEventBar extends StatelessWidget {
     if (minutes == null) {
       return null;
     }
-    final hours = minutes ~/ 60;
-    final mins = minutes % 60;
-    return '${hours.toString().padLeft(2, '0')}:'
-        '${mins.toString().padLeft(2, '0')}';
+    return formatMemoryTime(minutes);
   }
 
   String _recordTitle(MemoryItem item, String locale) {

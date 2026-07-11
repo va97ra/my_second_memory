@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:record/record.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/async/sequential_task_queue.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../notifications/data/notification_service.dart';
@@ -21,6 +22,8 @@ import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
 import '../domain/memory_type.dart';
 import '../state/memory_items_controller.dart';
+import '../state/memory_editor_draft.dart';
+import 'widgets/memory_item_presentation.dart';
 
 class MemoryItemDetailScreen extends ConsumerStatefulWidget {
   const MemoryItemDetailScreen({
@@ -66,7 +69,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   bool _isLeaving = false;
   int _saveRevision = 0;
   Timer? _autosaveTimer;
-  Future<void> _saveTail = Future.value();
+  final _saves = SequentialTaskQueue();
 
   @override
   void initState() {
@@ -372,9 +375,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     if (minutes == null) {
       return null;
     }
-    final hour = (minutes ~/ 60).toString().padLeft(2, '0');
-    final minute = (minutes % 60).toString().padLeft(2, '0');
-    return '$hour:$minute';
+    return formatMemoryTime(minutes);
   }
 
   Future<void> _openTimeAndReminder() async {
@@ -525,9 +526,9 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     }
 
     final now = DateTime.now();
-    final snapshot = _MemoryEditorSnapshot(
+    final snapshot = MemoryEditorDraft(
       type: _type,
-      title: _titleFromRecord(
+      title: memoryTitleFromRecord(
         _bodyController.text,
         _type,
         Localizations.localeOf(context).languageCode,
@@ -557,8 +558,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
       });
     }
 
-    final operation = _saveTail.then((_) => _persistSnapshot(snapshot));
-    _saveTail = operation.then<void>((_) {}, onError: (_, __) {});
+    final operation = _saves.add(() => _persistSnapshot(snapshot));
 
     try {
       await operation;
@@ -582,7 +582,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     }
   }
 
-  Future<void> _persistSnapshot(_MemoryEditorSnapshot snapshot) async {
+  Future<void> _persistSnapshot(MemoryEditorDraft snapshot) async {
     final item = _readItem();
     if (item == null) {
       final created = MemoryItem(
@@ -656,7 +656,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     if (_hasPendingAutosave && !_isRecording && _hasContent()) {
       await _save(showMessage: false);
     }
-    await _saveTail;
+    await _saves.idle;
   }
 
   Future<void> _confirmDelete(MemoryItem item) async {
@@ -691,21 +691,6 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     }
   }
 
-  String _titleFromRecord(
-    String body,
-    MemoryType type,
-    String languageCode,
-  ) {
-    final compact = body.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (compact.isEmpty) {
-      return type.label(languageCode);
-    }
-    if (compact.length <= 48) {
-      return compact;
-    }
-    return '${compact.substring(0, 48)}...';
-  }
-
   Future<void> _goBack({bool skipSave = false}) async {
     if (_isLeaving) {
       return;
@@ -728,38 +713,6 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     }
     context.go('/');
   }
-}
-
-class _MemoryEditorSnapshot {
-  const _MemoryEditorSnapshot({
-    required this.type,
-    required this.title,
-    required this.body,
-    required this.timeMinutes,
-    required this.remindAt,
-    required this.reminderSoundUri,
-    required this.reminderSoundName,
-    required this.memoryDate,
-    required this.status,
-    required this.audioPath,
-    required this.audioDurationSeconds,
-    required this.imagePaths,
-    required this.savedAt,
-  });
-
-  final MemoryType type;
-  final String title;
-  final String body;
-  final int? timeMinutes;
-  final DateTime? remindAt;
-  final String? reminderSoundUri;
-  final String? reminderSoundName;
-  final DateTime memoryDate;
-  final MemoryStatus status;
-  final String? audioPath;
-  final int? audioDurationSeconds;
-  final List<String> imagePaths;
-  final DateTime savedAt;
 }
 
 class _TimeReminderDraft {
@@ -923,8 +876,7 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
     if (minutes == null) {
       return strings.timeNotSet;
     }
-    return '${(minutes ~/ 60).toString().padLeft(2, '0')}:'
-        '${(minutes % 60).toString().padLeft(2, '0')}';
+    return formatMemoryTime(minutes);
   }
 
   Future<bool> _pickTime() async {
@@ -1150,7 +1102,7 @@ class _EditorMetadataBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).languageCode;
-    final typeColor = _typeColor(selectedType);
+    final typeColor = memoryTypeColor(selectedType);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -1173,7 +1125,7 @@ class _EditorMetadataBar extends StatelessWidget {
               flex: 11,
               child: _MetadataAction(
                 key: const ValueKey('memory_type_picker'),
-                icon: _iconFor(selectedType),
+                icon: memoryTypeIcon(selectedType),
                 label: strings.recordType,
                 value: selectedType.label(locale),
                 color: typeColor,
@@ -1633,7 +1585,7 @@ class _TypePickerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _typeColor(type);
+    final color = memoryTypeColor(type);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1650,7 +1602,7 @@ class _TypePickerRow extends StatelessWidget {
         ),
         child: ListTile(
           onTap: onTap,
-          leading: Icon(_iconFor(type), color: color),
+          leading: Icon(memoryTypeIcon(type), color: color),
           title: Text(
             label,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -1663,36 +1615,4 @@ class _TypePickerRow extends StatelessWidget {
       ),
     );
   }
-}
-
-IconData _iconFor(MemoryType type) {
-  return switch (type) {
-    MemoryType.task => Icons.check_circle_outline,
-    MemoryType.note => Icons.notes,
-    MemoryType.voiceNote => Icons.mic_none,
-    MemoryType.event => Icons.event,
-    MemoryType.person => Icons.person_outline,
-    MemoryType.habit => Icons.repeat,
-    MemoryType.goal => Icons.flag_outlined,
-    MemoryType.project => Icons.folder_outlined,
-    MemoryType.purchase => Icons.shopping_bag_outlined,
-    MemoryType.document => Icons.description_outlined,
-    MemoryType.place => Icons.place_outlined,
-  };
-}
-
-Color _typeColor(MemoryType type) {
-  return switch (type) {
-    MemoryType.task => const Color(0xFF16A34A),
-    MemoryType.note => const Color(0xFF2563EB),
-    MemoryType.voiceNote => const Color(0xFFDB2777),
-    MemoryType.event => const Color(0xFF7C3AED),
-    MemoryType.person => const Color(0xFF0891B2),
-    MemoryType.habit => const Color(0xFF059669),
-    MemoryType.goal => const Color(0xFFEA580C),
-    MemoryType.project => const Color(0xFF4F46E5),
-    MemoryType.purchase => const Color(0xFFCA8A04),
-    MemoryType.document => const Color(0xFF475569),
-    MemoryType.place => const Color(0xFFDC2626),
-  };
 }

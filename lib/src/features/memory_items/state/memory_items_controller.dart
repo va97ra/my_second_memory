@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/async/sequential_task_queue.dart';
 import '../../security/data/encrypted_json_store.dart';
 import '../../security/state/security_provider.dart';
 import '../../notifications/data/notification_service.dart';
@@ -50,7 +51,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   final MemoryRepository _repository;
   final ReminderScheduler? _reminders;
   late final Future<void> _loadFuture;
-  Future<void> _writeTail = Future.value();
+  final _writes = SequentialTaskQueue();
 
   Future<void> load() => _loadFuture;
 
@@ -63,7 +64,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   Future<void> add(MemoryItem item) async {
     await _loadFuture;
     state = _sort([...state, item]);
-    await _enqueueWrite(() => _repository.upsert(item));
+    await _writes.add(() => _repository.upsert(item));
     unawaited(_safeSchedule(item));
   }
 
@@ -73,7 +74,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
       for (final existing in state)
         if (existing.id == item.id) item else existing,
     ]);
-    await _enqueueWrite(() => _repository.upsert(item));
+    await _writes.add(() => _repository.upsert(item));
     unawaited(_safeSchedule(item));
   }
 
@@ -89,7 +90,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     ]);
     final archived = _findById(id);
     if (archived != null) {
-      await _enqueueWrite(() => _repository.upsert(archived));
+      await _writes.add(() => _repository.upsert(archived));
     }
     unawaited(_safeCancel(id));
   }
@@ -106,7 +107,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     ]);
     final restored = _findById(id);
     if (restored != null) {
-      await _enqueueWrite(() => _repository.upsert(restored));
+      await _writes.add(() => _repository.upsert(restored));
       unawaited(_safeSchedule(restored));
     }
   }
@@ -126,7 +127,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     ]);
     final updated = _findById(id);
     if (updated != null) {
-      await _enqueueWrite(() => _repository.upsert(updated));
+      await _writes.add(() => _repository.upsert(updated));
     }
     if (updated == null || updated.status != MemoryStatus.active) {
       unawaited(_safeCancel(id));
@@ -141,14 +142,14 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
       for (final item in state)
         if (item.id != id) item,
     ];
-    await _enqueueWrite(() => _repository.delete(id));
+    await _writes.add(() => _repository.delete(id));
     unawaited(_safeCancel(id));
   }
 
   Future<void> replaceAll(List<MemoryItem> items) async {
     await _loadFuture;
     state = _sort(items);
-    await _enqueueWrite(() => _repository.replaceAll(state));
+    await _writes.add(() => _repository.replaceAll(state));
     unawaited(_safeReconcile());
   }
 
@@ -174,15 +175,6 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     } catch (_) {
       // A later app launch or edit will retry notification reconciliation.
     }
-  }
-
-  Future<void> _enqueueWrite(Future<void> Function() operation) {
-    final next = _writeTail.then((_) => operation());
-    _writeTail = next.then<void>(
-      (_) {},
-      onError: (_, __) {},
-    );
-    return next;
   }
 
   MemoryItem? _findById(String id) {
