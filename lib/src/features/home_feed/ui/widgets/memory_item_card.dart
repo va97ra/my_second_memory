@@ -244,7 +244,7 @@ class _ImageThumbnail extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                MemoryImagePreview(path: path),
+                MemoryImagePreview(path: path, cacheWidth: 720),
                 if (paths.length > 1)
                   Positioned(
                     right: 4,

@@ -6,6 +6,7 @@ import '../../../core/async/sequential_task_queue.dart';
 import '../../security/data/encrypted_json_store.dart';
 import '../../security/state/security_provider.dart';
 import '../../notifications/data/notification_service.dart';
+import '../../media/data/media_storage.dart';
 import '../data/encrypted_memory_repository.dart';
 import '../data/memory_repository.dart';
 import '../data/memory_repository_factory.dart';
@@ -36,20 +37,28 @@ final memoryItemsControllerProvider =
   return MemoryItemsController(
     ref.watch(memoryRepositoryProvider),
     ref.watch(notificationServiceProvider),
+    ref.watch(mediaStorageProvider),
   );
 });
+
+final mediaStorageProvider = Provider<MediaStorage>((ref) => MediaStorage());
 
 final memoryItemsLoadProvider = FutureProvider<void>((ref) {
   return ref.watch(memoryItemsControllerProvider.notifier).load();
 });
 
 class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
-  MemoryItemsController(this._repository, [this._reminders]) : super(const []) {
+  MemoryItemsController(
+    this._repository, [
+    this._reminders,
+    this._mediaStorage,
+  ]) : super(const []) {
     _loadFuture = _load();
   }
 
   final MemoryRepository _repository;
   final ReminderScheduler? _reminders;
+  final MediaStorage? _mediaStorage;
   late final Future<void> _loadFuture;
   final _writes = SequentialTaskQueue();
 
@@ -70,11 +79,15 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
 
   Future<void> update(MemoryItem item) async {
     await _loadFuture;
+    final previous = _findById(item.id);
     state = _sort([
       for (final existing in state)
         if (existing.id == item.id) item else existing,
     ]);
     await _writes.add(() => _repository.upsert(item));
+    if (previous != null) {
+      await _cleanupRemovedMedia(previous, item);
+    }
     unawaited(_safeSchedule(item));
   }
 
@@ -138,11 +151,15 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
 
   Future<void> delete(String id) async {
     await _loadFuture;
+    final removed = _findById(id);
     state = [
       for (final item in state)
         if (item.id != id) item,
     ];
     await _writes.add(() => _repository.delete(id));
+    if (removed != null) {
+      await _deleteUnusedMedia(_mediaPaths(removed));
+    }
     unawaited(_safeCancel(id));
   }
 
@@ -176,6 +193,30 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
       // A later app launch or edit will retry notification reconciliation.
     }
   }
+
+  Future<void> _cleanupRemovedMedia(
+    MemoryItem previous,
+    MemoryItem current,
+  ) async {
+    final removed = _mediaPaths(previous)..removeAll(_mediaPaths(current));
+    await _deleteUnusedMedia(removed);
+  }
+
+  Future<void> _deleteUnusedMedia(Iterable<String> paths) async {
+    try {
+      await _mediaStorage?.deleteOwnedFiles(
+        paths,
+        usedPaths: {for (final item in state) ..._mediaPaths(item)},
+      );
+    } catch (_) {
+      // A later maintenance pass can retry orphan cleanup.
+    }
+  }
+
+  Set<String> _mediaPaths(MemoryItem item) => {
+        ...item.imagePaths,
+        if (item.audioPath != null) item.audioPath!,
+      };
 
   MemoryItem? _findById(String id) {
     for (final item in state) {

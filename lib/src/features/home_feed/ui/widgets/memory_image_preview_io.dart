@@ -7,11 +7,15 @@ class MemoryImagePreview extends StatelessWidget {
   const MemoryImagePreview({
     required this.path,
     this.fit = BoxFit.cover,
+    this.cacheWidth,
+    this.cacheHeight,
     super.key,
   });
 
   final String path;
   final BoxFit fit;
+  final int? cacheWidth;
+  final int? cacheHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +26,8 @@ class MemoryImagePreview extends StatelessWidget {
         ? Image.memory(
             base64Decode(path.substring(path.indexOf(',') + 1)),
             fit: fit,
+            cacheWidth: cacheWidth,
+            cacheHeight: cacheHeight,
             errorBuilder: (context, error, stackTrace) =>
                 const _BrokenImagePlaceholder(),
           )
@@ -29,12 +35,16 @@ class MemoryImagePreview extends StatelessWidget {
             ? Image.network(
                 path,
                 fit: fit,
+                cacheWidth: cacheWidth,
+                cacheHeight: cacheHeight,
                 errorBuilder: (context, error, stackTrace) =>
                     const _BrokenImagePlaceholder(),
               )
             : Image.file(
                 File(path),
                 fit: fit,
+                cacheWidth: cacheWidth,
+                cacheHeight: cacheHeight,
                 errorBuilder: (context, error, stackTrace) =>
                     const _BrokenImagePlaceholder(),
               );

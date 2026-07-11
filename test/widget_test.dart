@@ -245,15 +245,17 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('en'),
-        home: Scaffold(
-          body: MemoryItemCard(
-            item: item,
-            showDate: false,
-            onOpen: () {},
-            onToggleDone: () {},
-            onArchive: () {},
+      ProviderScope(
+        child: MaterialApp(
+          locale: const Locale('en'),
+          home: Scaffold(
+            body: MemoryItemCard(
+              item: item,
+              showDate: false,
+              onOpen: () {},
+              onToggleDone: () {},
+              onArchive: () {},
+            ),
           ),
         ),
       ),

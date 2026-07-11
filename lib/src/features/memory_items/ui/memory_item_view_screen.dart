@@ -267,6 +267,7 @@ class _ReadonlyImageGrid extends StatelessWidget {
                       child: MemoryImagePreview(
                         path: path,
                         fit: BoxFit.contain,
+                        cacheWidth: 1200,
                       ),
                     ),
                   ),

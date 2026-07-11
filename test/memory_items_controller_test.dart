@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/data/memory_repository.dart';
+import 'package:ezhednevnik_v2/src/features/media/data/media_storage.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_status.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
@@ -99,6 +100,18 @@ class _ReminderScheduler implements ReminderScheduler {
       null;
 }
 
+class _TrackingMediaStorage extends MediaStorage {
+  final deleted = <String>[];
+
+  @override
+  Future<void> deleteOwnedFiles(
+    Iterable<String> paths, {
+    required Set<String> usedPaths,
+  }) async {
+    deleted.addAll(paths.where((path) => !usedPaths.contains(path)));
+  }
+}
+
 void main() {
   test('update persists only the changed record', () async {
     final date = DateTime(2026, 6, 30);
@@ -143,6 +156,29 @@ void main() {
 
     expect(repository.writtenBodies, ['First', 'Second']);
     expect(repository.items.single.body, 'Second');
+  });
+
+  test('media is removed only after it is no longer referenced', () async {
+    final date = DateTime(2026, 6, 30);
+    MemoryItem item(String id) => MemoryItem(
+          id: id,
+          type: MemoryType.note,
+          title: id,
+          memoryDate: date,
+          createdAt: date,
+          updatedAt: date,
+          imagePaths: const ['/app/image_shared.jpg'],
+        );
+    final repository = _MemoryRepository([item('first'), item('second')]);
+    final mediaStorage = _TrackingMediaStorage();
+    final controller = MemoryItemsController(repository, null, mediaStorage);
+
+    await controller.load();
+    await controller.delete('first');
+    expect(mediaStorage.deleted, isEmpty);
+
+    await controller.delete('second');
+    expect(mediaStorage.deleted, ['/app/image_shared.jpg']);
   });
 
   test('delete removes item from state and repository', () async {

@@ -14,10 +14,9 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/async/sequential_task_queue.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../home_feed/ui/widgets/memory_image_viewer.dart';
+import '../../media/data/media_storage.dart';
 import '../../notifications/data/notification_service.dart';
-import '../../voice_notes/data/voice_note_storage.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
-import '../data/memory_image_storage.dart';
 import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
 import '../domain/memory_type.dart';
@@ -45,8 +44,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   final _formKey = GlobalKey<FormState>();
   final _bodyController = TextEditingController();
   final _recorder = AudioRecorder();
-  final _voiceStorage = VoiceNoteStorage();
-  final _imageStorage = MemoryImageStorage();
+  final _mediaStorage = MediaStorage();
   final _imagePicker = ImagePicker();
   final _imagePaths = <String>[];
 
@@ -430,7 +428,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
       return;
     }
 
-    final savedPath = await _imageStorage.savePickedImage(file);
+    final savedPath = await _mediaStorage.saveImage(file);
     setState(() => _imagePaths.add(savedPath));
     _scheduleAutosave();
   }
@@ -478,7 +476,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
       return;
     }
 
-    final path = await _voiceStorage.buildNewPath();
+    final path = await _mediaStorage.createVoicePath();
     await _recorder.start(const RecordConfig(), path: path);
     setState(() {
       _recordingStartedAt = DateTime.now();
@@ -1395,7 +1393,10 @@ class _RecordEditor extends StatelessWidget {
                                   key: ValueKey('editor_image_$path'),
                                   onTap: () =>
                                       openMemoryImageViewer(context, path),
-                                  child: MemoryImagePreview(path: path),
+                                  child: MemoryImagePreview(
+                                    path: path,
+                                    cacheWidth: 720,
+                                  ),
                                 ),
                               ),
                             ),
