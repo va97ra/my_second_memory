@@ -16,6 +16,7 @@ import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../media/data/media_storage.dart';
 import '../../notifications/data/notification_service.dart';
+import '../../notifications/ui/reminder_sound_picker.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
 import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
@@ -152,7 +153,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF202531),
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                     ),
@@ -168,7 +169,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                           ? Theme.of(context).colorScheme.error
                           : _isSaving
                               ? const Color(0xFF9A6A32)
-                              : const Color(0xFF6B7280),
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w700,
                     ),
               ),
@@ -381,7 +382,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: const Color(0xFFFFFCF6),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (context) => _TimeReminderSheet(
         initialTimeMinutes: _timeMinutes,
         initialReminderEnabled: _remindAt != null,
@@ -803,10 +804,12 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
             ),
             const SizedBox(height: 8),
             Material(
-              color: const Color(0xFFFFFDF8),
+              color: Theme.of(context).colorScheme.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
-                side: const BorderSide(color: Color(0xFFD8C8B4)),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
               ),
               child: SwitchListTile.adaptive(
                 secondary: const Icon(Icons.notifications_active_outlined),
@@ -928,7 +931,11 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
     setState(() => _busy = true);
     ReminderSoundSelection? selected;
     try {
-      selected = await widget.scheduler.selectSound(currentUri: _soundUri);
+      selected = await pickReminderSound(
+        context,
+        widget.scheduler,
+        currentUri: _soundUri,
+      );
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -997,13 +1004,15 @@ class _ReminderSheetTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFFFFDF8),
+      color: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: Color(0xFFD8C8B4)),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
       ),
       child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF425D85)),
+        leading: Icon(icon, color: const Color(0xFFC98A70)),
         title: Text(title),
         subtitle: Text(value),
         trailing: trailing ?? const Icon(Icons.chevron_right),
@@ -1104,9 +1113,9 @@ class _EditorMetadataBar extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFDF8).withValues(alpha: 0.96),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFD8C8B4)),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF6B4F35).withValues(alpha: 0.08),
@@ -1138,7 +1147,7 @@ class _EditorMetadataBar extends StatelessWidget {
                 icon: Icons.event_outlined,
                 label: strings.date,
                 value: dateText,
-                color: const Color(0xFF425D85),
+                color: const Color(0xFFC98A70),
                 onTap: onDateTap,
               ),
             ),
@@ -1151,7 +1160,7 @@ class _EditorMetadataBar extends StatelessWidget {
                 label: strings.time,
                 value: timeText ?? strings.timeNotSet,
                 isPlaceholder: timeText == null,
-                color: const Color(0xFF425D85),
+                color: const Color(0xFFC98A70),
                 onTap: onTimeTap,
                 onClear: onClearTime,
                 badgeIcon: reminderEnabled ? Icons.notifications_active : null,
@@ -1167,7 +1176,7 @@ class _EditorMetadataBar extends StatelessWidget {
     final selected = await showModalBottomSheet<MemoryType>(
       context: context,
       showDragHandle: true,
-      backgroundColor: const Color(0xFFFFFCF6),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (context) {
         final locale = Localizations.localeOf(context).languageCode;
         final strings = AppStrings.of(context);
@@ -1213,7 +1222,7 @@ class _MetadataDivider extends StatelessWidget {
     return Container(
       width: 1,
       height: 34,
-      color: const Color(0xFFE6D9C9),
+      color: Theme.of(context).colorScheme.outlineVariant,
     );
   }
 }
@@ -1265,7 +1274,8 @@ class _MetadataAction extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: const Color(0xFF81776D),
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 9.5,
                             fontWeight: FontWeight.w600,
                             height: 1,
@@ -1355,9 +1365,11 @@ class _RecordEditor extends StatelessWidget {
         return DecoratedBox(
           key: const ValueKey('record_editor_panel'),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFDF8).withValues(alpha: 0.97),
+            color:
+                Theme.of(context).colorScheme.surface.withValues(alpha: 0.97),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFD8C8B4)),
+            border:
+                Border.all(color: Theme.of(context).colorScheme.outlineVariant),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF6B4F35).withValues(alpha: 0.09),
@@ -1444,19 +1456,22 @@ class _RecordEditor extends StatelessWidget {
                     textAlignVertical: TextAlignVertical.top,
                     scrollPadding: const EdgeInsets.only(bottom: 120),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: const Color(0xFF292A2D),
-                          fontSize: 15.5,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 17,
                           fontWeight: FontWeight.w500,
                           height: 1.5,
                         ),
                     decoration: InputDecoration(
                       labelText: strings.description,
                       alignLabelWithHint: true,
-                      labelStyle:
-                          Theme.of(context).textTheme.labelMedium?.copyWith(
-                                color: const Color(0xFF81776D),
-                                fontWeight: FontWeight.w600,
-                              ),
+                      labelStyle: Theme.of(context)
+                          .textTheme
+                          .labelMedium
+                          ?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -1474,7 +1489,7 @@ class _RecordEditor extends StatelessWidget {
                       _SquareActionButton(
                         tooltip: strings.addImage,
                         icon: Icons.photo_camera_outlined,
-                        color: const Color(0xFF2563EB),
+                        color: const Color(0xFFD97757),
                         size: buttonSize,
                         onPressed: onPickImage,
                       ),
@@ -1510,9 +1525,9 @@ class _RecordingPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFFEE2E2),
+        color: Theme.of(context).colorScheme.errorContainer,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFFCA5A5)),
+        border: Border.all(color: Theme.of(context).colorScheme.error),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -1591,14 +1606,15 @@ class _TypePickerRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Material(
-        color:
-            selected ? color.withValues(alpha: 0.12) : const Color(0xFFFFFDF8),
+        color: selected
+            ? color.withValues(alpha: 0.12)
+            : Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(
             color: selected
                 ? color.withValues(alpha: 0.36)
-                : const Color(0xFFD8C8B4),
+                : Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
         child: ListTile(

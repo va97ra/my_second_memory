@@ -18,7 +18,7 @@ IconData memoryTypeIcon(MemoryType type) => switch (type) {
 
 Color memoryTypeColor(MemoryType type) => switch (type) {
       MemoryType.task => const Color(0xFF16A34A),
-      MemoryType.note => const Color(0xFF2563EB),
+      MemoryType.note => const Color(0xFF5B7FA3),
       MemoryType.voiceNote => const Color(0xFFDB2777),
       MemoryType.event => const Color(0xFF7C3AED),
       MemoryType.person => const Color(0xFF0891B2),
@@ -26,7 +26,7 @@ Color memoryTypeColor(MemoryType type) => switch (type) {
       MemoryType.goal => const Color(0xFFEA580C),
       MemoryType.project => const Color(0xFF4F46E5),
       MemoryType.purchase => const Color(0xFFCA8A04),
-      MemoryType.document => const Color(0xFF475569),
+      MemoryType.document => const Color(0xFFC2BFB6),
       MemoryType.place => const Color(0xFFDC2626),
     };
 

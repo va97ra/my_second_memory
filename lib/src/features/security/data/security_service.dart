@@ -10,7 +10,14 @@ class SecurityService {
   SecurityService({
     FlutterSecureStorage? storage,
     LocalAuthentication? localAuthentication,
-  })  : _storage = storage ?? const FlutterSecureStorage(),
+  })  : _storage = storage ??
+            const FlutterSecureStorage(
+              aOptions: AndroidOptions(
+                resetOnError: false,
+                migrateOnAlgorithmChange: true,
+                migrateWithBackup: true,
+              ),
+            ),
         _localAuthentication = localAuthentication ?? LocalAuthentication();
 
   static const _pinKey = 'app_pin_v1';

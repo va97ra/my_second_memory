@@ -118,7 +118,7 @@ class _FeedFilterButton extends StatelessWidget {
                         size: 19,
                         color: filter == selected
                             ? Theme.of(context).colorScheme.primary
-                            : const Color(0xFF64748B),
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 10),
                       Text(_labelFor(context, filter)),
@@ -129,9 +129,10 @@ class _FeedFilterButton extends StatelessWidget {
           },
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFD6E2EF)),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant),
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
@@ -141,13 +142,13 @@ class _FeedFilterButton extends StatelessWidget {
                   const Icon(
                     Icons.tune,
                     size: 18,
-                    color: Color(0xFF2563EB),
+                    color: Color(0xFFD97757),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     label,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: const Color(0xFF172033),
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.w800,
                         ),
                   ),
@@ -224,7 +225,10 @@ class _MemoryBanner extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       Colors.white.withValues(alpha: 0.24),
-                      const Color(0xFFDBEAFE).withValues(alpha: 0.32),
+                      Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.32),
                       Colors.white.withValues(alpha: 0.1),
                     ],
                   ),
@@ -262,7 +266,7 @@ class _FeedSectionHeader extends StatelessWidget {
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xFF2563EB),
+                color: const Color(0xFFD97757),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const SizedBox(width: 4, height: 22),
@@ -272,7 +276,7 @@ class _FeedSectionHeader extends StatelessWidget {
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
-                    color: const Color(0xFF172033),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
             ),
           ],

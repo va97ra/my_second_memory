@@ -53,7 +53,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
   Future<void> add(ShiftSchedule schedule) async {
     state = _sort([...state, schedule]);
     await _repository.saveSchedules(state);
-    await _safeReconcileAlarms();
+    await _safeReconcileAlarms(force: true);
   }
 
   Future<void> update(ShiftSchedule schedule) async {
@@ -62,7 +62,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
         if (existing.id == schedule.id) schedule else existing,
     ]);
     await _repository.saveSchedules(state);
-    await _safeReconcileAlarms();
+    await _safeReconcileAlarms(force: true);
   }
 
   Future<void> toggleEnabled(String id) async {
@@ -74,7 +74,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
           schedule,
     ]);
     await _repository.saveSchedules(state);
-    await _safeReconcileAlarms();
+    await _safeReconcileAlarms(force: true);
   }
 
   Future<void> delete(String id) async {
@@ -83,13 +83,13 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
         if (schedule.id != id) schedule,
     ];
     await _repository.saveSchedules(state);
-    await _safeReconcileAlarms();
+    await _safeReconcileAlarms(force: true);
   }
 
   Future<void> replaceAll(List<ShiftSchedule> schedules) async {
     state = _sort(schedules);
     await _repository.saveSchedules(state);
-    await _safeReconcileAlarms();
+    await _safeReconcileAlarms(force: true);
   }
 
   List<ShiftSchedule> workingOn(DateTime date) {
@@ -99,9 +99,9 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
     ];
   }
 
-  Future<void> _safeReconcileAlarms() async {
+  Future<void> _safeReconcileAlarms({bool force = false}) async {
     try {
-      await _alarms?.reconcileShiftAlarms(state);
+      await _alarms?.reconcileShiftAlarms(state, force: force);
     } catch (_) {
       // The schedule remains saved if Android rejects an exact alarm.
     }

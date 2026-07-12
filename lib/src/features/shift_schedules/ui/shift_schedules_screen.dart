@@ -6,6 +6,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../notifications/data/notification_service.dart';
+import '../../notifications/ui/reminder_sound_picker.dart';
 import '../domain/shift_schedule.dart';
 import '../state/shift_schedules_controller.dart';
 
@@ -19,7 +20,7 @@ class ShiftSchedulesScreen extends ConsumerWidget {
     final schedules = ref.watch(shiftSchedulesControllerProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
@@ -27,17 +28,20 @@ class ShiftSchedulesScreen extends ConsumerWidget {
         title: Text(
           strings.shiftSchedules,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: const Color(0xFF172033),
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w900,
               ),
         ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: Color(0xFFDDE7F3)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
       ),
       body: ColoredBox(
-        color: const Color(0x12A66F3F),
+        color: const Color(0x12D97757),
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
           children: [
@@ -164,11 +168,14 @@ class _ShiftScheduleTile extends StatelessWidget {
               border: Border.all(
                 color: schedule.isEnabled
                     ? color.withValues(alpha: 0.34)
-                    : const Color(0xFFDDE7F3),
+                    : Theme.of(context).colorScheme.outlineVariant,
               ),
               color: schedule.isEnabled
                   ? color.withValues(alpha: 0.1)
-                  : const Color(0xFFFFFCF7).withValues(alpha: 0.92),
+                  : Theme.of(context)
+                      .colorScheme
+                      .surface
+                      .withValues(alpha: 0.92),
               boxShadow: [
                 BoxShadow(
                   color: color.withValues(alpha: schedule.isEnabled ? 0.1 : 0),
@@ -197,40 +204,62 @@ class _ShiftScheduleTile extends StatelessWidget {
                           schedule.organizationName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: const Color(0xFF172033),
-                                    fontWeight: FontWeight.w900,
-                                  ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w900,
+                              ),
                         ),
                         const SizedBox(height: 3),
                         Text(
                           '${schedule.workDays}/${schedule.restDays} · $dateText',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: const Color(0xFF64748B),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                     fontWeight: FontWeight.w700,
                                   ),
                         ),
-                        if (schedule.alarmEnabled) ...[
+                        if (schedule.alarms.asMap().entries.any((entry) =>
+                            entry.value.isEnabled &&
+                            (entry.key == 0 ||
+                                schedule.supportsNextDayAlarm))) ...[
                           const SizedBox(height: 3),
                           Row(
                             children: [
                               const Icon(
                                 Icons.alarm_outlined,
                                 size: 15,
-                                color: Color(0xFF2563EB),
+                                color: Color(0xFFD97757),
                               ),
                               const SizedBox(width: 5),
-                              Text(
-                                _formatMinutes(schedule.alarmTimeMinutes),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelMedium
-                                    ?.copyWith(
-                                      color: const Color(0xFF2563EB),
-                                      fontWeight: FontWeight.w900,
-                                    ),
+                              Expanded(
+                                child: Text(
+                                  schedule.alarms
+                                      .asMap()
+                                      .entries
+                                      .where((entry) =>
+                                          entry.value.isEnabled &&
+                                          (entry.key == 0 ||
+                                              schedule.supportsNextDayAlarm))
+                                      .map((entry) => entry.key == 1
+                                          ? '+1 д. ${_formatMinutes(entry.value.timeMinutes)}'
+                                          : _formatMinutes(
+                                              entry.value.timeMinutes))
+                                      .join(' · '),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium
+                                      ?.copyWith(
+                                        color: const Color(0xFFD97757),
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
                               ),
                             ],
                           ),
@@ -285,14 +314,14 @@ class _ShiftScheduleEditorSheet extends ConsumerStatefulWidget {
 class _ShiftScheduleEditorSheetState
     extends ConsumerState<_ShiftScheduleEditorSheet> {
   static const _colors = [
-    Color(0xFF2563EB),
+    Color(0xFF5B7FA3),
     Color(0xFF0891B2),
     Color(0xFF16A34A),
     Color(0xFFF59E0B),
     Color(0xFFEA580C),
     Color(0xFFDB2777),
     Color(0xFF7C3AED),
-    Color(0xFF475569),
+    Color(0xFFC2BFB6),
   ];
 
   static const _presets = [
@@ -307,10 +336,7 @@ class _ShiftScheduleEditorSheetState
   late DateTime _startDate;
   late Color _selectedColor;
   late bool _isEnabled;
-  late bool _alarmEnabled;
-  late int _alarmTimeMinutes;
-  String? _alarmSoundUri;
-  String? _alarmSoundName;
+  late List<ShiftAlarm> _alarms;
   late bool _showManualSchedule;
   String? _selectedPresetKey;
 
@@ -330,10 +356,10 @@ class _ShiftScheduleEditorSheetState
     _startDate = schedule?.startDate ?? _dateOnly(DateTime.now());
     _selectedColor = Color(schedule?.colorValue ?? _colors.first.toARGB32());
     _isEnabled = schedule?.isEnabled ?? true;
-    _alarmEnabled = schedule?.alarmEnabled ?? false;
-    _alarmTimeMinutes = schedule?.alarmTimeMinutes ?? 7 * 60;
-    _alarmSoundUri = schedule?.alarmSoundUri;
-    _alarmSoundName = schedule?.alarmSoundName;
+    _alarms = List.of(schedule?.alarms ?? const [ShiftAlarm(), ShiftAlarm()]);
+    while (_alarms.length < 2) {
+      _alarms.add(const ShiftAlarm());
+    }
     _selectedPresetKey = _presetKeyFor(
       int.tryParse(_workDaysController.text) ?? 5,
       int.tryParse(_restDaysController.text) ?? 2,
@@ -360,19 +386,23 @@ class _ShiftScheduleEditorSheetState
       child: Align(
         alignment: Alignment.bottomCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
+          constraints: BoxConstraints(
+            maxWidth: 720,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.94,
+          ),
           child: Material(
-            color: const Color(0xFFFFFCF7),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(8),
+            color: Theme.of(context).colorScheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(8)),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
               ),
-              side: BorderSide(color: Color(0xFFDDE7F3)),
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
@@ -382,11 +412,13 @@ class _ShiftScheduleEditorSheetState
                           widget.schedule == null
                               ? strings.addShiftSchedule
                               : strings.editShiftSchedule,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: const Color(0xFF172033),
-                                    fontWeight: FontWeight.w900,
-                                  ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ),
                       IconButton(
@@ -397,59 +429,74 @@ class _ShiftScheduleEditorSheetState
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _organizationController,
-                    textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(
-                      labelText: strings.organization,
-                      filled: true,
-                      fillColor: const Color(0xFFFFF8EE),
+                  const SizedBox(height: 8),
+                  _SectionLabel(strings.mainSettings),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 52,
+                    child: TextFormField(
+                      controller: _organizationController,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: strings.organization,
+                        filled: true,
+                        fillColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: _pickStartDate,
-                    icon: const Icon(Icons.today_outlined),
-                    label: Text(
-                      '${strings.startDate}: '
-                      '${DateFormat.yMMMd(locale).format(_startDate)}',
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    strings.schedulePreset,
-                    style: Theme.of(context).textTheme.labelLarge,
                   ),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final preset in _presets)
-                        ChoiceChip(
-                          label: Text(preset.label(locale)),
-                          selected: _selectedPresetKey == preset.key,
-                          onSelected: (_) => _applyPreset(preset),
+                  SizedBox(
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed: _pickStartDate,
+                      icon: const Icon(Icons.today_outlined, size: 20),
+                      label: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${strings.startDate}: '
+                          '${DateFormat.yMMMd(locale).format(_startDate)}',
                         ),
-                    ],
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () => setState(() {
-                        _showManualSchedule = !_showManualSchedule;
-                        if (_showManualSchedule) _selectedPresetKey = null;
-                      }),
-                      icon: Icon(
-                        _showManualSchedule
-                            ? Icons.expand_less
-                            : Icons.tune_outlined,
                       ),
-                      label: Text(strings.manualSchedule),
                     ),
                   ),
-                  if (_showManualSchedule)
+                  const SizedBox(height: 12),
+                  _SectionLabel(strings.scheduleSettings),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      for (var index = 0; index < _presets.length; index++) ...[
+                        if (index > 0) const SizedBox(width: 8),
+                        Expanded(
+                          child: _PresetButton(
+                            label: _presets[index].label(locale),
+                            isSelected:
+                                _selectedPresetKey == _presets[index].key,
+                            onTap: () => _applyPreset(_presets[index]),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  TextButton.icon(
+                    onPressed: () => setState(() {
+                      _showManualSchedule = !_showManualSchedule;
+                      if (_showManualSchedule) _selectedPresetKey = null;
+                    }),
+                    icon: Icon(
+                      _showManualSchedule
+                          ? Icons.expand_less
+                          : Icons.tune_outlined,
+                    ),
+                    label: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(strings.manualSchedule),
+                    ),
+                  ),
+                  if (_showManualSchedule) ...[
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         Expanded(
@@ -459,12 +506,14 @@ class _ShiftScheduleEditorSheetState
                             decoration: InputDecoration(
                               labelText: strings.workDays,
                               filled: true,
-                              fillColor: const Color(0xFFFFF8EE),
+                              fillColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                             ),
                             onChanged: (_) => _syncPreset(),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: TextFormField(
                             controller: _restDaysController,
@@ -472,80 +521,80 @@ class _ShiftScheduleEditorSheetState
                             decoration: InputDecoration(
                               labelText: strings.restDays,
                               filled: true,
-                              fillColor: const Color(0xFFFFF8EE),
+                              fillColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                             ),
                             onChanged: (_) => _syncPreset(),
                           ),
                         ),
                       ],
                     ),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final color in _colors)
-                        _ColorSwatch(
-                          color: color,
-                          isSelected:
-                              color.toARGB32() == _selectedColor.toARGB32(),
-                          onTap: () => setState(() {
-                            _selectedColor = color;
-                          }),
-                        ),
-                    ],
+                  ],
+                  const SizedBox(height: 12),
+                  _SectionLabel(strings.scheduleColor),
+                  const SizedBox(height: 8),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      const spacing = 8.0;
+                      final width = (constraints.maxWidth - spacing * 3) / 4;
+                      return Wrap(
+                        spacing: spacing,
+                        runSpacing: spacing,
+                        children: [
+                          for (final color in _colors)
+                            SizedBox(
+                              width: width,
+                              child: _ColorSwatch(
+                                color: color,
+                                isSelected: color.toARGB32() ==
+                                    _selectedColor.toARGB32(),
+                                onTap: () =>
+                                    setState(() => _selectedColor = color),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 8),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(strings.enabled),
+                  _SettingsSwitchRow(
+                    icon: Icons.work_outline,
+                    title: strings.enabled,
                     value: _isEnabled,
-                    onChanged: (value) => setState(() {
-                      _isEnabled = value;
-                    }),
+                    onChanged: (value) => setState(() => _isEnabled = value),
                   ),
-                  const Divider(height: 24),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    secondary: const Icon(Icons.alarm_outlined),
-                    title: Text(strings.shiftAlarm),
-                    subtitle: Text(strings.shiftAlarmSubtitle),
-                    value: _alarmEnabled,
-                    onChanged: _toggleAlarm,
-                  ),
-                  if (_alarmEnabled) ...[
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.schedule_outlined),
-                      title: Text(strings.time),
-                      subtitle: Text(_formatMinutes(_alarmTimeMinutes)),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: _pickAlarmTime,
+                  const SizedBox(height: 12),
+                  _SectionLabel(strings.reminders),
+                  const SizedBox(height: 8),
+                  for (var index = 0;
+                      index < (_supportsNextDayAlarm ? 2 : 1);
+                      index++) ...[
+                    _AlarmEditorCard(
+                      title: index == 1
+                          ? strings.nextDayShiftAlarm
+                          : strings.shiftAlarmNumber(1),
+                      subtitle: index == 1
+                          ? strings.nextDayShiftAlarmSubtitle
+                          : strings.shiftAlarmSubtitle,
+                      alarm: _alarms[index],
+                      systemSoundLabel: strings.systemAlarmSound,
+                      timeLabel: strings.time,
+                      soundLabel: strings.chooseSound,
+                      onToggle: (value) => _toggleAlarm(index, value),
+                      onPickTime: () => _pickAlarmTime(index),
+                      onPickSound: () => _pickAlarmSound(index),
                     ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.music_note_outlined),
-                      title: Text(strings.chooseSound),
-                      subtitle: Text(
-                        _alarmSoundName ?? strings.systemAlarmSound,
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: _pickAlarmSound,
-                    ),
+                    if (index == 0 && _supportsNextDayAlarm)
+                      const SizedBox(height: 8),
                   ],
                   const SizedBox(height: 12),
                   SizedBox(
-                    width: double.infinity,
+                    height: 48,
                     child: FilledButton.icon(
                       onPressed: _save,
                       icon: const Icon(Icons.save_outlined),
                       label: Text(strings.save),
-                      style: FilledButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                      ),
                     ),
                   ),
                 ],
@@ -578,10 +627,13 @@ class _ShiftScheduleEditorSheetState
       _showManualSchedule = false;
       _workDaysController.text = '${preset.workDays}';
       _restDaysController.text = '${preset.restDays}';
+      if (preset.key != '1/3') {
+        _alarms[1] = _alarms[1].copyWith(isEnabled: false);
+      }
     });
   }
 
-  Future<void> _toggleAlarm(bool enabled) async {
+  Future<void> _toggleAlarm(int index, bool enabled) async {
     if (enabled) {
       final allowed =
           await ref.read(notificationServiceProvider).requestPermissions();
@@ -594,31 +646,57 @@ class _ShiftScheduleEditorSheetState
         return;
       }
     }
-    if (mounted) setState(() => _alarmEnabled = enabled);
+    if (mounted) {
+      setState(() {
+        _alarms[index] = _alarms[index].copyWith(isEnabled: enabled);
+      });
+    }
   }
 
-  Future<void> _pickAlarmTime() async {
+  Future<void> _pickAlarmTime(int index) async {
+    final alarm = _alarms[index];
     final picked = await showTimePicker(
       context: context,
       initialEntryMode: TimePickerEntryMode.inputOnly,
       initialTime: TimeOfDay(
-        hour: _alarmTimeMinutes ~/ 60,
-        minute: _alarmTimeMinutes % 60,
+        hour: alarm.timeMinutes ~/ 60,
+        minute: alarm.timeMinutes % 60,
       ),
     );
     if (picked != null && mounted) {
-      setState(() => _alarmTimeMinutes = picked.hour * 60 + picked.minute);
+      setState(() {
+        _alarms[index] = alarm.copyWith(
+          timeMinutes: picked.hour * 60 + picked.minute,
+        );
+      });
     }
   }
 
-  Future<void> _pickAlarmSound() async {
-    final sound = await ref
-        .read(notificationServiceProvider)
-        .selectSound(currentUri: _alarmSoundUri);
+  Future<void> _pickAlarmSound(int index) async {
+    final alarm = _alarms[index];
+    ReminderSoundSelection? sound;
+    try {
+      sound = await pickReminderSound(
+        context,
+        ref.read(notificationServiceProvider),
+        currentUri: alarm.soundUri,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(AppStrings.of(context).soundPickerUnavailable)),
+        );
+      }
+      return;
+    }
     if (sound != null && mounted) {
+      final selected = sound;
       setState(() {
-        _alarmSoundUri = sound.uri;
-        _alarmSoundName = sound.name;
+        _alarms[index] = alarm.copyWith(
+          soundUri: selected.uri,
+          soundName: selected.name,
+        );
       });
     }
   }
@@ -633,6 +711,9 @@ class _ShiftScheduleEditorSheetState
               workDays,
               restDays,
             );
+      if (workDays != 1 || restDays != 3) {
+        _alarms[1] = _alarms[1].copyWith(isEnabled: false);
+      }
     });
   }
 
@@ -657,10 +738,12 @@ class _ShiftScheduleEditorSheetState
       workDays: workDays,
       restDays: restDays,
       isEnabled: _isEnabled,
-      alarmEnabled: _alarmEnabled,
-      alarmTimeMinutes: _alarmTimeMinutes,
-      alarmSoundUri: _alarmSoundUri,
-      alarmSoundName: _alarmSoundName,
+      alarms: List.unmodifiable([
+        _alarms.first,
+        _supportsNextDayAlarm
+            ? _alarms[1]
+            : _alarms[1].copyWith(isEnabled: false),
+      ]),
     );
 
     final controller = ref.read(shiftSchedulesControllerProvider.notifier);
@@ -684,6 +767,11 @@ class _ShiftScheduleEditorSheetState
     return null;
   }
 
+  bool get _supportsNextDayAlarm {
+    return int.tryParse(_workDaysController.text) == 1 &&
+        int.tryParse(_restDaysController.text) == 3;
+  }
+
   DateTime _dateOnly(DateTime value) {
     return DateTime(value.year, value.month, value.day);
   }
@@ -693,6 +781,282 @@ String _formatMinutes(int minutes) {
   final hour = (minutes ~/ 60).toString().padLeft(2, '0');
   final minute = (minutes % 60).toString().padLeft(2, '0');
   return '$hour:$minute';
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+    );
+  }
+}
+
+class _PresetButton extends StatelessWidget {
+  const _PresetButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.14)
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFFD97757)
+                : Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isSelected) ...[
+              const Icon(Icons.check, size: 16, color: Color(0xFFD97757)),
+              const SizedBox(width: 5),
+            ],
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: isSelected
+                          ? const Color(0xFFD97757)
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsSwitchRow extends StatelessWidget {
+  const _SettingsSwitchRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 56,
+      padding: const EdgeInsets.only(left: 12, right: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Icon(icon,
+              size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+          Switch(value: value, onChanged: onChanged),
+        ],
+      ),
+    );
+  }
+}
+
+class _AlarmEditorCard extends StatelessWidget {
+  const _AlarmEditorCard({
+    required this.title,
+    required this.subtitle,
+    required this.alarm,
+    required this.systemSoundLabel,
+    required this.timeLabel,
+    required this.soundLabel,
+    required this.onToggle,
+    required this.onPickTime,
+    required this.onPickSound,
+  });
+
+  final String title;
+  final String subtitle;
+  final ShiftAlarm alarm;
+  final String systemSoundLabel;
+  final String timeLabel;
+  final String soundLabel;
+  final ValueChanged<bool> onToggle;
+  final VoidCallback onPickTime;
+  final VoidCallback onPickSound;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 12, right: 6),
+            child: SizedBox(
+              height: 64,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.alarm_outlined,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(value: alarm.isEnabled, onChanged: onToggle),
+                ],
+              ),
+            ),
+          ),
+          if (alarm.isEnabled) ...[
+            const Divider(height: 1, indent: 12, endIndent: 12),
+            _AlarmActionRow(
+              icon: Icons.schedule_outlined,
+              title: timeLabel,
+              value: _formatMinutes(alarm.timeMinutes),
+              onTap: onPickTime,
+            ),
+            const Divider(height: 1, indent: 44, endIndent: 12),
+            _AlarmActionRow(
+              icon: Icons.music_note_outlined,
+              title: soundLabel,
+              value: alarm.soundName ?? systemSoundLabel,
+              onTap: onPickSound,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AlarmActionRow extends StatelessWidget {
+  const _AlarmActionRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: 56,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              Icon(icon,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+              Flexible(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ColorSwatch extends StatelessWidget {
@@ -713,8 +1077,8 @@ class _ColorSwatch extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
-        width: 38,
-        height: 38,
+        width: double.infinity,
+        height: 40,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(8),

@@ -32,9 +32,10 @@ class VoiceNotePlayer extends ConsumerWidget {
             playback.activePath == path && (snapshot.data?.playing ?? false);
         return DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFDDE7F3)),
+            border:
+                Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(8, 7, 10, 7),
@@ -67,7 +68,7 @@ class VoiceNotePlayer extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: const Color(0xFF172033),
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.w900,
                             ),
                       ),
@@ -79,7 +80,9 @@ class VoiceNotePlayer extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                           style:
                               Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: const Color(0xFF64748B),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                     fontWeight: FontWeight.w700,
                                   ),
                         ),

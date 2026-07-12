@@ -69,7 +69,7 @@ class AccountsScreen extends ConsumerWidget {
       isScrollControlled: true,
       showDragHandle: true,
       useSafeArea: true,
-      backgroundColor: const Color(0xFFFFFBF5),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (context) => _AccountEditor(account: account, ref: ref),
     );
   }
@@ -104,9 +104,10 @@ class _AccountCardState extends State<_AccountCard> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.94),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFD6E2EF)),
+          border:
+              Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
@@ -150,18 +151,19 @@ class _AccountCardState extends State<_AccountCard> {
               const SizedBox(height: 8),
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F7FA),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFE0E6ED)),
+                  border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.lock_outline,
                         size: 18,
-                        color: Color(0xFF64748B),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -208,9 +210,11 @@ class _AccountCardState extends State<_AccountCard> {
                 const SizedBox(height: 10),
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8F5EF),
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE7DED2)),
+                    border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(10),
@@ -246,7 +250,7 @@ class _ServiceAvatar extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAFE),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFC7D2FE)),
       ),
@@ -257,7 +261,7 @@ class _ServiceAvatar extends StatelessWidget {
           child: Text(
             letter,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF3157C8),
+                  color: const Color(0xFFD97757),
                   fontWeight: FontWeight.w900,
                 ),
           ),
@@ -279,7 +283,8 @@ class _AccountInfoLine extends StatelessWidget {
       padding: const EdgeInsets.only(top: 6),
       child: Row(
         children: [
-          Icon(icon, size: 17, color: const Color(0xFF64748B)),
+          Icon(icon,
+              size: 17, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -354,13 +359,16 @@ class _AccountEditorState extends State<_AccountEditor> {
               children: [
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8EAFE),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const SizedBox(
                     width: 42,
                     height: 42,
-                    child: Icon(Icons.key_outlined, color: Color(0xFF3157C8)),
+                    child: Icon(Icons.key_outlined, color: Color(0xFFD97757)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -539,7 +547,7 @@ class _AccountTextField extends StatelessWidget {
           prefixIcon: Icon(icon),
           suffixIcon: suffixIcon,
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.82),
+          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         ),
       ),
     );

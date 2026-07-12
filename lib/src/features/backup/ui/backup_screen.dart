@@ -34,7 +34,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           title: Text(strings.backup),
         ),
         body: ColoredBox(
-          color: const Color(0x12A66F3F),
+          color: const Color(0x12D97757),
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
             children: [
@@ -43,9 +43,10 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                   constraints: const BoxConstraints(maxWidth: 680),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.94),
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFD6E2EF)),
+                      border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(14),
@@ -56,7 +57,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                           const SizedBox(height: 10),
                           _BackupActionButton(
                             icon: Icons.upload_file_outlined,
-                            color: const Color(0xFF2563EB),
+                            color: const Color(0xFFD97757),
                             title: strings.exportBackup,
                             onPressed: _isBusy ? null : _exportBackup,
                           ),
@@ -282,7 +283,10 @@ class _BackupHint extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFDBEAFE).withValues(alpha: 0.62),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFBFDBFE)),
       ),
@@ -292,7 +296,7 @@ class _BackupHint extends StatelessWidget {
           children: [
             const Icon(
               Icons.download_done_outlined,
-              color: Color(0xFF2563EB),
+              color: Color(0xFFD97757),
               size: 20,
             ),
             const SizedBox(width: 9),
@@ -300,7 +304,7 @@ class _BackupHint extends StatelessWidget {
               child: Text(
                 text,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: const Color(0xFF334155),
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
                     ),
               ),

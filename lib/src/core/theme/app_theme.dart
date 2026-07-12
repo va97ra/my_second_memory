@@ -1,28 +1,38 @@
 import 'package:flutter/material.dart';
 
-ThemeData buildAppTheme() {
-  const seed = Color(0xFF2563EB);
-  const background = Color(0xFFE9DECF);
-  const surface = Color(0xFFFFFCF7);
-  const border = Color(0xFFDED3C5);
-  const onSurface = Color(0xFF1F2933);
+ThemeData buildAppTheme({required Brightness brightness}) {
+  final isDark = brightness == Brightness.dark;
+  final seed = isDark ? const Color(0xFFD97757) : const Color(0xFFC56F50);
+  final background = isDark ? const Color(0xFF20211F) : const Color(0xFFF0EEE8);
+  final surface = isDark ? const Color(0xFF2B2C29) : const Color(0xFFF9F7F2);
+  final surfaceAlt = isDark ? const Color(0xFF30312E) : const Color(0xFFEAE7DF);
+  final border = isDark ? const Color(0xFF464743) : const Color(0xFFCEC9BE);
+  final onSurface = isDark ? const Color(0xFFF0EEE7) : const Color(0xFF2B2925);
+  final secondary = isDark ? const Color(0xFFC5C2BA) : const Color(0xFF68635B);
+  final scheme = ColorScheme.fromSeed(
+    seedColor: seed,
+    brightness: brightness,
+  ).copyWith(
+    primary: seed,
+    surface: surface,
+    surfaceContainerHighest: surfaceAlt,
+    outlineVariant: border,
+    onSurface: onSurface,
+    onSurfaceVariant: secondary,
+  );
 
   return ThemeData(
     useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: seed,
-      brightness: Brightness.light,
-      surface: surface,
-    ),
-    scaffoldBackgroundColor: Colors.transparent,
+    colorScheme: scheme,
+    scaffoldBackgroundColor: background,
     canvasColor: background,
     fontFamily: 'Manrope',
-    dividerTheme: const DividerThemeData(
+    dividerTheme: DividerThemeData(
       color: border,
       thickness: 1,
       space: 1,
     ),
-    textTheme: ThemeData.light()
+    textTheme: (isDark ? ThemeData.dark() : ThemeData.light())
         .textTheme
         .apply(
           fontFamily: 'Manrope',
@@ -67,7 +77,7 @@ ThemeData buildAppTheme() {
             letterSpacing: 0,
           ),
         ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       centerTitle: false,
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
@@ -83,8 +93,9 @@ ThemeData buildAppTheme() {
     ),
     navigationBarTheme: NavigationBarThemeData(
       height: 64,
-      backgroundColor: const Color(0xFFFFFAF3),
-      indicatorColor: const Color(0xFFEAD9FF),
+      backgroundColor: surface,
+      indicatorColor:
+          isDark ? const Color(0xFF4A352D) : const Color(0xFFE8D7CD),
       indicatorShape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
       ),
@@ -100,7 +111,7 @@ ThemeData buildAppTheme() {
       iconTheme: WidgetStateProperty.resolveWith((states) {
         final selected = states.contains(WidgetState.selected);
         return IconThemeData(
-          color: selected ? seed : const Color(0xFF52616F),
+          color: selected ? seed : secondary,
           size: 22,
         );
       }),
@@ -111,7 +122,7 @@ ThemeData buildAppTheme() {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: border),
+        side: BorderSide(color: border),
       ),
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.black.withValues(alpha: 0.08),
@@ -122,16 +133,21 @@ ThemeData buildAppTheme() {
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: border),
+        borderSide: BorderSide(color: border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: border),
+        borderSide: BorderSide(color: border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: seed, width: 1.4),
+        borderSide: BorderSide(color: seed, width: 1.4),
       ),
+    ),
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: seed,
+      selectionColor: const Color(0x667D4A39),
+      selectionHandleColor: seed,
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
@@ -146,7 +162,7 @@ ThemeData buildAppTheme() {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        side: const BorderSide(color: border),
+        side: BorderSide(color: border),
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -172,9 +188,9 @@ ThemeData buildAppTheme() {
         borderRadius: BorderRadius.all(Radius.circular(8)),
       ),
     ),
-    listTileTheme: const ListTileThemeData(
-      iconColor: Color(0xFF52616F),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    listTileTheme: ListTileThemeData(
+      iconColor: secondary,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       titleTextStyle: TextStyle(
         color: onSurface,
         fontFamily: 'Manrope',
@@ -182,7 +198,7 @@ ThemeData buildAppTheme() {
         fontWeight: FontWeight.w600,
       ),
       subtitleTextStyle: TextStyle(
-        color: Color(0xFF64748B),
+        color: secondary,
         fontFamily: 'Manrope',
         fontSize: 13,
       ),
@@ -197,11 +213,11 @@ ThemeData buildAppTheme() {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
-    bottomSheetTheme: const BottomSheetThemeData(
+    bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: surface,
       modalBackgroundColor: surface,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
       ),
     ),
@@ -226,7 +242,7 @@ ThemeData buildAppTheme() {
     ),
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-        color: const Color(0xFF3F3A35),
+        color: isDark ? const Color(0xFF151613) : const Color(0xFF3F3A35),
         borderRadius: BorderRadius.circular(8),
       ),
     ),

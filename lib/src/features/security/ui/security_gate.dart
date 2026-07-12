@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
@@ -25,6 +28,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
   bool _setupBusy = false;
   bool _offerBiometrics = false;
   String? _error;
+  String? _startupError;
 
   @override
   void initState() {
@@ -44,6 +48,49 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
 
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_startupError != null) {
+      return _SecurityScaffold(
+        child: _SecurityCard(
+          children: [
+            const Icon(
+              Icons.shield_outlined,
+              size: 52,
+              color: Color(0xFFD97757),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              AppStrings.of(context).secureStorageStartFailed,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              AppStrings.of(context).secureStorageStartFailedSubtitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _load,
+                icon: const Icon(Icons.refresh),
+                label: Text(AppStrings.of(context).retry),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: SystemNavigator.pop,
+                child: Text(AppStrings.of(context).closeApp),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (_setupBusy) {
@@ -119,9 +166,25 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
   }
 
   Future<void> _load() async {
-    await ref.read(securitySessionProvider.notifier).load();
     if (mounted) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = true;
+        _startupError = null;
+      });
+    }
+    try {
+      await ref
+          .read(securitySessionProvider.notifier)
+          .load()
+          .timeout(const Duration(seconds: 8));
+    } on Object catch (error) {
+      if (mounted) {
+        setState(() => _startupError = error.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -217,7 +280,7 @@ class _SecurityScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: ColoredBox(
-        color: const Color(0x12A66F3F),
+        color: const Color(0x12D97757),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -243,9 +306,9 @@ class _SecurityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFCF7).withValues(alpha: 0.92),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -280,7 +343,7 @@ class _SetupPinCard extends StatelessWidget {
     final strings = AppStrings.of(context);
     return _SecurityCard(
       children: [
-        const Icon(Icons.shield_outlined, size: 42, color: Color(0xFF2563EB)),
+        const Icon(Icons.shield_outlined, size: 42, color: Color(0xFFD97757)),
         const SizedBox(height: 12),
         Text(
           strings.setupPinTitle,
@@ -295,7 +358,7 @@ class _SetupPinCard extends StatelessWidget {
           strings.setupPinSubtitle,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF5F6B7A),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
               ),
         ),
@@ -339,7 +402,7 @@ class _BiometricUnlockCard extends StatelessWidget {
     final strings = AppStrings.of(context);
     return _SecurityCard(
       children: [
-        const Icon(Icons.fingerprint, size: 52, color: Color(0xFF2563EB)),
+        const Icon(Icons.fingerprint, size: 52, color: Color(0xFFD97757)),
         const SizedBox(height: 12),
         Text(
           strings.appTitle,
@@ -394,7 +457,7 @@ class _EnableBiometricsCard extends StatelessWidget {
     final strings = AppStrings.of(context);
     return _SecurityCard(
       children: [
-        const Icon(Icons.fingerprint, size: 52, color: Color(0xFF2563EB)),
+        const Icon(Icons.fingerprint, size: 52, color: Color(0xFFD97757)),
         const SizedBox(height: 12),
         Text(
           strings.enableBiometricsQuestion,
@@ -449,7 +512,7 @@ class _PinUnlockCard extends StatelessWidget {
     final strings = AppStrings.of(context);
     return _SecurityCard(
       children: [
-        const Icon(Icons.lock_outline, size: 42, color: Color(0xFF2563EB)),
+        const Icon(Icons.lock_outline, size: 42, color: Color(0xFFD97757)),
         const SizedBox(height: 12),
         Text(
           strings.appTitle,

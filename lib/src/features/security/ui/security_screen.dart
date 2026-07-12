@@ -47,7 +47,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFDDE3EA)),
+                border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.035),
@@ -63,14 +64,16 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                   children: [
                     DecoratedBox(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEAF3FF),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const SizedBox(
                         height: 74,
                         child: Icon(
                           Icons.verified_user_outlined,
-                          color: Color(0xFF2563EB),
+                          color: Color(0xFFD97757),
                           size: 34,
                         ),
                       ),
@@ -274,13 +277,22 @@ class _StatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isEnabled ? const Color(0xFF16A34A) : const Color(0xFF6B7280);
+    final color = isEnabled
+        ? const Color(0xFF16A34A)
+        : Theme.of(context).colorScheme.onSurfaceVariant;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isEnabled ? const Color(0xFFEAF7EE) : const Color(0xFFF7F4EF),
+        color: isEnabled
+            ? Color.alphaBlend(
+                const Color(0xFF16A34A).withValues(alpha: 0.12),
+                Theme.of(context).colorScheme.surface,
+              )
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isEnabled ? const Color(0xFFBFE8C9) : const Color(0xFFE4DDD2),
+          color: isEnabled
+              ? const Color(0xFFBFE8C9)
+              : Theme.of(context).colorScheme.outlineVariant,
         ),
       ),
       child: Padding(

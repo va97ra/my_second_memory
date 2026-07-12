@@ -29,7 +29,11 @@ class AppShell extends StatelessWidget {
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           color: colors.surface,
-          border: const Border(top: BorderSide(color: Color(0xFFDDE3EA))),
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),

@@ -30,7 +30,7 @@ class CalendarDayScreen extends ConsumerWidget {
         .toList();
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
@@ -42,16 +42,19 @@ class CalendarDayScreen extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFF172033),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
         ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: Color(0xFFDDE7F3)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
       ),
       body: ColoredBox(
-        color: const Color(0x12A66F3F),
+        color: const Color(0x12D97757),
         child: SafeArea(
           top: false,
           child: Column(
@@ -165,11 +168,13 @@ class _WorkingShiftChips extends StatelessWidget {
                       const SizedBox(width: 7),
                       Text(
                         '${strings.workingToday}: ${schedule.organizationName}',
-                        style:
-                            Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: const Color(0xFF172033),
-                                  fontWeight: FontWeight.w800,
-                                ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelMedium
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
                     ],
                   ),
@@ -193,11 +198,16 @@ class _AddRecordBar extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFCF7).withValues(alpha: 0.96),
-        border: const Border(top: BorderSide(color: Color(0xFFDED3C5))),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.08),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, -7),
           ),

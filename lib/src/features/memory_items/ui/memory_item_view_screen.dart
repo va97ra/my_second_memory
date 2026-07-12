@@ -82,9 +82,14 @@ class MemoryItemViewScreen extends ConsumerWidget {
                     height: constraints.maxHeight - 18,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFFDF8).withValues(alpha: 0.97),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surface
+                            .withValues(alpha: 0.97),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFD8C8B4)),
+                        border: Border.all(
+                            color:
+                                Theme.of(context).colorScheme.outlineVariant),
                         boxShadow: [
                           BoxShadow(
                             color:
@@ -184,7 +189,9 @@ class MemoryItemViewScreen extends ConsumerWidget {
                                           .textTheme
                                           .bodyLarge
                                           ?.copyWith(
-                                            color: const Color(0xFF241F1A),
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface,
                                             height: 1.36,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -260,7 +267,9 @@ class _ReadonlyImageGrid extends StatelessWidget {
                     height: height,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE0D3C0)),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),

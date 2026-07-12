@@ -24,6 +24,8 @@ class ReminderSoundSelection {
   final String name;
 }
 
+enum ReminderSoundSource { system, audioFile }
+
 abstract class ReminderScheduler {
   Stream<String> get openedItemIds;
 
@@ -33,7 +35,12 @@ abstract class ReminderScheduler {
 
   Future<bool> requestPermissions();
 
-  Future<ReminderSoundSelection?> selectSound({String? currentUri});
+  Future<List<ReminderSoundSelection>> systemSounds();
+
+  Future<ReminderSoundSelection?> selectSound({
+    String? currentUri,
+    ReminderSoundSource source = ReminderSoundSource.system,
+  });
 
   Future<void> schedule(MemoryItem item);
 
@@ -43,7 +50,10 @@ abstract class ReminderScheduler {
 }
 
 abstract class ShiftAlarmScheduler {
-  Future<void> reconcileShiftAlarms(List<ShiftSchedule> schedules);
+  Future<void> reconcileShiftAlarms(
+    List<ShiftSchedule> schedules, {
+    bool force = false,
+  });
 }
 
 final notificationServiceProvider = Provider<ReminderScheduler>((ref) {
@@ -130,12 +140,33 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
   }
 
   @override
-  Future<ReminderSoundSelection?> selectSound({String? currentUri}) async {
+  Future<List<ReminderSoundSelection>> systemSounds() async {
+    if (!isSupported) return const [];
+    final result = await _notificationChannel.invokeListMethod<Object?>(
+      'listSystemAlarmSounds',
+    );
+    return [
+      for (final entry in result ?? const [])
+        if (entry is Map)
+          ReminderSoundSelection(
+            uri: entry['uri'] as String,
+            name: entry['name'] as String? ?? 'Системный звук',
+          ),
+    ];
+  }
+
+  @override
+  Future<ReminderSoundSelection?> selectSound({
+    String? currentUri,
+    ReminderSoundSource source = ReminderSoundSource.system,
+  }) async {
     if (!isSupported) {
       return null;
     }
     final result = await _notificationChannel.invokeMapMethod<String, Object?>(
-      'selectReminderSound',
+      source == ReminderSoundSource.audioFile
+          ? 'selectReminderAudioFile'
+          : 'selectReminderSound',
       {'currentUri': currentUri},
     );
     final uri = result?['uri'] as String?;
@@ -276,64 +307,98 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
   }
 
   @override
-  Future<void> reconcileShiftAlarms(List<ShiftSchedule> schedules) async {
+  Future<void> reconcileShiftAlarms(
+    List<ShiftSchedule> schedules, {
+    bool force = false,
+  }) async {
     if (!isSupported) return;
     await initialize();
     final pending = await _plugin.pendingNotificationRequests();
-    for (final notification in pending) {
-      final data = decodeReminderPayload(notification.payload);
-      if (data?['source'] == 'shift_alarm') {
-        await _plugin.cancel(notification.id);
-      }
-    }
+    final pendingShiftIds = <int>{
+      for (final notification in pending)
+        if (decodeReminderPayload(notification.payload)?['source'] ==
+            'shift_alarm')
+          notification.id,
+    };
 
     final now = DateTime.now();
-    final lastDay = now.add(const Duration(days: 366));
+    final lastDay = now.add(const Duration(days: 45));
+    final desiredIds = <int>{};
     for (final schedule in schedules) {
-      if (!schedule.isEnabled || !schedule.alarmEnabled) continue;
-      var soundUri = schedule.alarmSoundUri ??
-          await _notificationChannel.invokeMethod<String>(
-            'getDefaultAlarmSound',
+      if (!schedule.isEnabled) continue;
+      for (var alarmIndex = 0;
+          alarmIndex < schedule.alarms.length;
+          alarmIndex++) {
+        final alarm = schedule.alarms[alarmIndex];
+        if (!alarm.isEnabled) continue;
+        if (alarmIndex == 1 && !schedule.supportsNextDayAlarm) continue;
+        var soundUri = alarm.soundUri ??
+            await _notificationChannel.invokeMethod<String>(
+              'getDefaultAlarmSound',
+            );
+        for (var day = DateTime(now.year, now.month, now.day);
+            !day.isAfter(lastDay);
+            day = day.add(const Duration(days: 1))) {
+          if (!schedule.isWorkday(day)) continue;
+          final alarmDay =
+              alarmIndex == 1 ? day.add(const Duration(days: 1)) : day;
+          final alarmAt = DateTime(
+            alarmDay.year,
+            alarmDay.month,
+            alarmDay.day,
+            alarm.timeMinutes ~/ 60,
+            alarm.timeMinutes % 60,
           );
-      for (var day = DateTime(now.year, now.month, now.day);
-          !day.isAfter(lastDay);
-          day = day.add(const Duration(days: 1))) {
-        if (!schedule.isWorkday(day)) continue;
-        final alarmAt = DateTime(
-          day.year,
-          day.month,
-          day.day,
-          schedule.alarmTimeMinutes ~/ 60,
-          schedule.alarmTimeMinutes % 60,
-        );
-        if (alarmAt.isAfter(now)) {
+          if (!alarmAt.isAfter(now)) continue;
+          final notificationId = _shiftAlarmId(
+            schedule.id,
+            alarmIndex,
+            alarmAt,
+          );
+          desiredIds.add(notificationId);
+          if (!force && pendingShiftIds.contains(notificationId)) continue;
           try {
-            await _scheduleShiftAlarm(schedule, alarmAt, soundUri);
+            await _scheduleShiftAlarm(
+              schedule,
+              alarm,
+              alarmIndex,
+              alarmAt,
+              soundUri,
+            );
           } catch (_) {
             if (soundUri != null) {
               soundUri = null;
-              await _scheduleShiftAlarm(schedule, alarmAt, null);
+              await _scheduleShiftAlarm(
+                schedule,
+                alarm,
+                alarmIndex,
+                alarmAt,
+                null,
+              );
             }
           }
         }
       }
     }
+    for (final id in pendingShiftIds.difference(desiredIds)) {
+      await _plugin.cancel(id);
+    }
   }
 
   Future<void> _scheduleShiftAlarm(
     ShiftSchedule schedule,
+    ShiftAlarm alarm,
+    int alarmIndex,
     DateTime alarmAt,
     String? soundUri,
   ) async {
     final channelId = soundUri == null
         ? 'shift_alarms_default_v1'
         : 'shift_alarms_${stableNotificationId(soundUri)}_v1';
-    final id = stableNotificationId(
-      'shift:${schedule.id}:${alarmAt.year}-${alarmAt.month}-${alarmAt.day}',
-    );
+    final id = _shiftAlarmId(schedule.id, alarmIndex, alarmAt);
     final details = AndroidNotificationDetails(
       channelId,
-      schedule.alarmSoundName ?? 'Будильники смен',
+      alarm.soundName ?? 'Будильники смен',
       channelDescription: 'Будильники рабочих смен Ежедневника V2',
       importance: Importance.max,
       priority: Priority.max,
@@ -357,12 +422,13 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     await _plugin.zonedSchedule(
       id,
       schedule.organizationName,
-      'Сегодня рабочая смена',
+      alarmIndex == 1 ? 'Утро после суточной смены' : 'Сегодня рабочая смена',
       timezone.TZDateTime.from(alarmAt, timezone.local),
       NotificationDetails(android: details),
       payload: jsonEncode({
         'source': 'shift_alarm',
         'scheduleId': schedule.id,
+        'alarmIndex': alarmIndex,
         'notificationId': id,
       }),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -395,7 +461,17 @@ class _NoopShiftAlarmScheduler implements ShiftAlarmScheduler {
   const _NoopShiftAlarmScheduler();
 
   @override
-  Future<void> reconcileShiftAlarms(List<ShiftSchedule> schedules) async {}
+  Future<void> reconcileShiftAlarms(
+    List<ShiftSchedule> schedules, {
+    bool force = false,
+  }) async {}
+}
+
+int _shiftAlarmId(String scheduleId, int alarmIndex, DateTime alarmAt) {
+  return stableNotificationId(
+    'shift:$scheduleId:$alarmIndex:'
+    '${alarmAt.year}-${alarmAt.month}-${alarmAt.day}',
+  );
 }
 
 Map<String, Object?>? decodeReminderPayload(String? payload) {

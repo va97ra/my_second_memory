@@ -156,10 +156,26 @@ class AppStrings {
   String get schedulePreset => isRu ? 'Шаблон' : 'Pattern';
   String get customSchedule => isRu ? 'Свой' : 'Custom';
   String get manualSchedule => isRu ? 'Настроить вручную' : 'Set manually';
+  String get mainSettings => isRu ? 'Основное' : 'Main';
+  String get scheduleSettings => isRu ? 'График' : 'Schedule';
+  String get scheduleColor => isRu ? 'Цвет' : 'Color';
+  String get reminders => isRu ? 'Напоминания' : 'Reminders';
+  String shiftAlarmNumber(int number) =>
+      isRu ? 'Будильник $number' : 'Alarm $number';
+  String get nextDayShiftAlarm =>
+      isRu ? 'Будильник 2 · после смены' : 'Alarm 2 · after shift';
   String get shiftAlarm => isRu ? 'Будильник смены' : 'Shift alarm';
+  String get systemMelody => isRu ? 'Системная мелодия' : 'System melody';
+  String get chooseAudioFile =>
+      isRu ? 'Выбрать аудиофайл' : 'Choose audio file';
+  String get chooseAudioFileSubtitle =>
+      isRu ? 'Открыть проводник телефона' : 'Open the device file browser';
   String get shiftAlarmSubtitle => isRu
       ? 'Сработает в начале каждого рабочего дня'
       : 'Rings at the start of every work day';
+  String get nextDayShiftAlarmSubtitle => isRu
+      ? 'Сработает утром следующего дня после суточной смены'
+      : 'Rings the next morning after a 24-hour shift';
   String get enabled => isRu ? 'Включен' : 'Enabled';
   String get disabled => isRu ? 'Выключен' : 'Disabled';
   String get noShiftSchedules =>
@@ -168,6 +184,9 @@ class AppStrings {
       isRu ? 'Удалить этот график?' : 'Delete this schedule?';
   String get workingToday => isRu ? 'Рабочий день' : 'Workday';
   String get language => isRu ? 'Язык' : 'Language';
+  String get appearance => isRu ? 'Оформление' : 'Appearance';
+  String get lightTheme => isRu ? 'Светлая тема' : 'Light theme';
+  String get darkTheme => isRu ? 'Тёмная тема' : 'Dark theme';
   String get unlock => isRu ? 'Открыть' : 'Unlock';
   String get setupPinTitle =>
       isRu ? 'Создайте PIN для защиты данных' : 'Create a PIN to protect data';
@@ -200,6 +219,14 @@ class AppStrings {
   String get biometricsUnavailable =>
       isRu ? 'Биометрия недоступна' : 'Biometrics unavailable';
   String get biometricsOk => isRu ? 'Биометрия подтверждена' : 'Biometrics ok';
+  String get secureStorageStartFailed => isRu
+      ? 'Не удалось запустить защищённое хранилище'
+      : 'Could not start secure storage';
+  String get secureStorageStartFailedSubtitle => isRu
+      ? 'Данные остаются защищёнными. Попробуйте запустить приложение ещё раз.'
+      : 'Your data remains protected. Try starting the app again.';
+  String get retry => isRu ? 'Повторить' : 'Retry';
+  String get closeApp => isRu ? 'Закрыть приложение' : 'Close app';
   String get pinSaved => isRu ? 'PIN сохранен' : 'PIN saved';
   String get recordAudioBeforeSaving => isRu
       ? 'Сначала запишите голосовую заметку'

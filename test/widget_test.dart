@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,7 +18,6 @@ import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dar
 import 'package:ezhednevnik_v2/src/features/shift_schedules/data/shift_schedule_repository.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/domain/shift_schedule.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
-import 'package:ezhednevnik_v2/src/shared/ui/screen_chrome.dart';
 
 const _pixelImageDataUrl =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
@@ -50,6 +51,11 @@ class _BiometricFailsSecurityService extends SecurityService {
 
   @override
   Future<AppCipher?> unlockWithBiometrics() async => null;
+}
+
+class _HangingSecurityService extends SecurityService {
+  @override
+  Future<bool> hasPin() => Completer<bool>().future;
 }
 
 abstract class _TestMemoryRepository implements MemoryRepository {
@@ -292,6 +298,27 @@ void main() {
     expect(find.text('Лента дня'), findsNothing);
   });
 
+  testWidgets('secure storage timeout shows a retry screen', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_HangingSecurityService()),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+
+    await tester.pump(const Duration(seconds: 9));
+    await tester.pump();
+
+    expect(
+      find.text('Не удалось запустить защищённое хранилище'),
+      findsOneWidget,
+    );
+    expect(find.text('Повторить'), findsOneWidget);
+    expect(find.text('Лента дня'), findsNothing);
+  });
+
   testWidgets('biometric unlock hides pin until fallback is requested',
       (tester) async {
     await tester.pumpWidget(
@@ -346,17 +373,13 @@ void main() {
     await tester.pumpAndSettle();
 
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
-    expect(app.theme?.scaffoldBackgroundColor, Colors.transparent);
-    expect(find.byType(PaperTextureBackground), findsOneWidget);
-    final paperBackgroundState = tester.state(
-      find.byType(PaperTextureBackground),
+    expect(
+      app.darkTheme?.scaffoldBackgroundColor,
+      const Color(0xFF20211F),
     );
     expect(
-      find.ancestor(
-        of: find.byType(MaterialApp),
-        matching: find.byType(PaperTextureBackground),
-      ),
-      findsOneWidget,
+      app.theme?.scaffoldBackgroundColor,
+      const Color(0xFFF0EEE8),
     );
     final cardShape = app.theme?.cardTheme.shape as RoundedRectangleBorder;
     final dialogShape = app.theme?.dialogTheme.shape as RoundedRectangleBorder;
@@ -400,10 +423,6 @@ void main() {
 
     await tester.tap(find.text('Календарь'));
     await tester.pumpAndSettle();
-    expect(
-      tester.state(find.byType(PaperTextureBackground)),
-      same(paperBackgroundState),
-    );
   });
 
   testWidgets('hides empty previous day sections', (tester) async {
@@ -986,13 +1005,19 @@ void main() {
     expect(find.text('сутки/трое'), findsOneWidget);
     expect(find.text('7/7'), findsNothing);
     expect(find.text('14/14'), findsNothing);
-    expect(find.text('Будильник смены'), findsOneWidget);
+    expect(find.text('Будильник 1'), findsOneWidget);
+    expect(find.textContaining('Будильник 2'), findsNothing);
+    await tester.tap(find.text('сутки/трое'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Будильник 2'), findsOneWidget);
     expect(find.text('Рабочих дней'), findsNothing);
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Организация'),
       'Завод',
     );
     await tester.tap(find.text('2/2'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Сохранить'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Сохранить'));
     await tester.pumpAndSettle();

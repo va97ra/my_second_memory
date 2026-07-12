@@ -31,9 +31,14 @@ class MemoryItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typeColor = memoryTypeColor(item.type);
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = item.isDone
-        ? const Color(0xFFEAF8EF)
-        : Colors.white.withValues(alpha: 0.92);
+        ? Color.alphaBlend(
+            const Color(0xFF16A34A).withValues(alpha: isDark ? 0.14 : 0.08),
+            colors.surface,
+          )
+        : colors.surface;
     final borderColor = item.isDone
         ? const Color(0xFF86EFAC)
         : typeColor.withValues(alpha: 0.34);
@@ -180,6 +185,8 @@ class _CardContent extends StatelessWidget {
     final text = item.title.trim().isNotEmpty ? item.title.trim() : item.body;
     final hasAudio = item.audioPath != null;
     final hasImage = item.imagePaths.isNotEmpty;
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
@@ -197,8 +204,10 @@ class _CardContent extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: item.isDone
-                              ? const Color(0xFF14532D)
-                              : const Color(0xFF172033),
+                              ? (isDark
+                                  ? const Color(0xFF86EFAC)
+                                  : const Color(0xFF14532D))
+                              : colors.onSurface,
                           fontWeight: FontWeight.w700,
                           height: 1.25,
                         ),

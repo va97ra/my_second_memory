@@ -1,50 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class PaperTextureBackground extends StatefulWidget {
-  const PaperTextureBackground({required this.child, super.key});
-
-  final Widget child;
-
-  @override
-  State<PaperTextureBackground> createState() => _PaperTextureBackgroundState();
-}
-
-class _PaperTextureBackgroundState extends State<PaperTextureBackground> {
-  static const _texturePath = 'assets/images/paper_texture.jpg';
-  static const _texture = AssetImage(_texturePath);
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    precacheImage(_texture, context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: const Color(0xFFE8DCCB),
-      child: Stack(
-        fit: StackFit.expand,
-        alignment: Alignment.topLeft,
-        children: [
-          const Opacity(
-            opacity: 0.9,
-            child: Image(
-              image: _texture,
-              fit: BoxFit.cover,
-              filterQuality: FilterQuality.medium,
-              gaplessPlayback: true,
-            ),
-          ),
-          const ColoredBox(color: Color(0x0FFFF7EA)),
-          widget.child,
-        ],
-      ),
-    );
-  }
-}
-
 class WarmGradientBackground extends StatelessWidget {
   const WarmGradientBackground({
     required this.child,
@@ -56,7 +12,7 @@ class WarmGradientBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: const Color(0x16A66F3F),
+      color: const Color(0x08D97757),
       child: child,
     );
   }
@@ -133,7 +89,7 @@ class MainPageHeader extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w900,
-                      color: const Color(0xFF172033),
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
               ),
             ),

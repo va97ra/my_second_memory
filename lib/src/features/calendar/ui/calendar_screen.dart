@@ -187,7 +187,7 @@ class _CalendarPanel extends StatelessWidget {
               DecoratedBox(
                 key: const ValueKey('calendar_weekdays'),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Padding(
@@ -205,7 +205,7 @@ class _CalendarPanel extends StatelessWidget {
                                   ?.copyWith(
                                     color: index >= 5
                                         ? const Color(0xFFEA580C)
-                                        : const Color(0xFF475569),
+                                        : const Color(0xFFC2BFB6),
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 0,
                                   ),
@@ -276,7 +276,10 @@ class _CalendarPanel extends StatelessWidget {
               DecoratedBox(
                 key: const ValueKey('calendar_hint'),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDBEAFE).withValues(alpha: 0.55),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest
+                      .withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: const Color(0xFFBFDBFE)),
                 ),
@@ -288,17 +291,19 @@ class _CalendarPanel extends StatelessWidget {
                       const Icon(
                         Icons.touch_app_outlined,
                         size: 18,
-                        color: Color(0xFF2563EB),
+                        color: Color(0xFFD97757),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           AppStrings.of(context).calendarTapHint,
-                          style:
-                              Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: const Color(0xFF334155),
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w800,
+                              ),
                         ),
                       ),
                     ],
@@ -335,12 +340,13 @@ class _CalendarMonthHeader extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFCF7).withValues(alpha: 0.94),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDED3C5)),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -362,7 +368,7 @@ class _CalendarMonthHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFF0F172A),
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w900,
                       height: 1,
                     ),
@@ -375,8 +381,9 @@ class _CalendarMonthHeader extends StatelessWidget {
               icon: const Icon(Icons.today),
               style: IconButton.styleFrom(
                 fixedSize: const Size(40, 40),
-                backgroundColor: const Color(0xFFDBEAFE),
-                foregroundColor: const Color(0xFF2563EB),
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                foregroundColor: const Color(0xFFD97757),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -468,7 +475,7 @@ class _ShiftLegendChip extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: const Color(0xFF172033),
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.w900,
                     height: 1,
                   ),
@@ -476,7 +483,7 @@ class _ShiftLegendChip extends StatelessWidget {
             const SizedBox(width: 6),
             DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.82),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Padding(
@@ -484,7 +491,7 @@ class _ShiftLegendChip extends StatelessWidget {
                 child: Text(
                   '${schedule.workDays}/${schedule.restDays}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: const Color(0xFF475569),
+                        color: const Color(0xFFC2BFB6),
                         fontWeight: FontWeight.w800,
                         height: 1,
                       ),
@@ -517,8 +524,8 @@ class _MonthIconButton extends StatelessWidget {
       icon: Icon(icon),
       style: IconButton.styleFrom(
         fixedSize: const Size(40, 40),
-        backgroundColor: Colors.white.withValues(alpha: 0.88),
-        foregroundColor: const Color(0xFF2563EB),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: const Color(0xFFD97757),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
@@ -569,13 +576,13 @@ class _CalendarDayCell extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFF0F172A)
+                ? Theme.of(context).colorScheme.onSurface
                 : isToday
-                    ? const Color(0xFF2563EB)
+                    ? const Color(0xFFD97757)
                     : hasItems && isInVisibleMonth
                         ? const Color(0xFFBFDBFE)
                         : isInVisibleMonth
-                            ? const Color(0xFFE2E8F0)
+                            ? Theme.of(context).colorScheme.outlineVariant
                             : Colors.transparent,
             width: isSelected
                 ? 2
@@ -586,7 +593,10 @@ class _CalendarDayCell extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.16),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.16),
                     blurRadius: 14,
                     offset: const Offset(0, 7),
                   ),
@@ -639,9 +649,12 @@ class _CalendarDayCell extends StatelessWidget {
                               child: FittedBox(
                                 child: Icon(
                                   Icons.archive_outlined,
-                                  color: const Color(0xFF64748B).withValues(
-                                    alpha: isInVisibleMonth ? 0.8 : 0.35,
-                                  ),
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant
+                                      .withValues(
+                                        alpha: isInVisibleMonth ? 0.8 : 0.35,
+                                      ),
                                 ),
                               ),
                             ),
@@ -669,7 +682,7 @@ class _CalendarDayCell extends StatelessWidget {
                                 .textTheme
                                 .labelSmall
                                 ?.copyWith(
-                                  color: const Color(0xFF475569),
+                                  color: const Color(0xFFC2BFB6),
                                   fontSize: 9,
                                   fontWeight: FontWeight.w900,
                                   height: 1,
@@ -689,19 +702,19 @@ class _CalendarDayCell extends StatelessWidget {
 
   Color _cellColor(ColorScheme colors, bool hasItems, bool hasShift) {
     if (hasShift) {
-      return Colors.white;
+      return colors.surface;
     }
     if (isSelected) {
       return colors.primary;
     }
     if (isToday) {
-      return const Color(0xFFEAF3FF);
+      return colors.surfaceContainerHighest;
     }
     if (hasItems && isInVisibleMonth) {
-      return const Color(0xFFF0F7FF);
+      return colors.surfaceContainerHighest;
     }
     if (isInVisibleMonth) {
-      return const Color(0xFFF8FAFC);
+      return colors.surfaceContainerHighest;
     }
     return Colors.transparent;
   }
@@ -745,10 +758,15 @@ class _DayNumber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final content = Text(
       '$day',
       style: TextStyle(
-        color: isToday || isSelected ? Colors.white : color,
+        color: isSelected
+            ? colors.surface
+            : isToday
+                ? colors.onPrimary
+                : color,
         fontSize: 12.5,
         fontWeight: isSelected || isToday ? FontWeight.w900 : FontWeight.w800,
         height: 1,
@@ -761,7 +779,7 @@ class _DayNumber extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF2563EB),
+        color: isSelected ? colors.onSurface : colors.primary,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(

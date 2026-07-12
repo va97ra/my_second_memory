@@ -93,10 +93,20 @@ void main() {
       workDays: 7,
       restDays: 7,
       isEnabled: false,
-      alarmEnabled: true,
-      alarmTimeMinutes: 6 * 60 + 30,
-      alarmSoundUri: 'content://alarm/1',
-      alarmSoundName: 'Будильник',
+      alarms: const [
+        ShiftAlarm(
+          isEnabled: true,
+          timeMinutes: 6 * 60 + 30,
+          soundUri: 'content://alarm/1',
+          soundName: 'Будильник',
+        ),
+        ShiftAlarm(
+          isEnabled: true,
+          timeMinutes: 23 * 60,
+          soundUri: 'content://alarm/2',
+          soundName: 'Ночная смена',
+        ),
+      ],
     );
 
     final restored = ShiftSchedule.fromJson(schedule.toJson());
@@ -108,8 +118,32 @@ void main() {
     expect(restored.workDays, schedule.workDays);
     expect(restored.restDays, schedule.restDays);
     expect(restored.isEnabled, isFalse);
-    expect(restored.alarmEnabled, isTrue);
-    expect(restored.alarmTimeMinutes, 6 * 60 + 30);
-    expect(restored.alarmSoundUri, 'content://alarm/1');
+    expect(restored.alarms, hasLength(2));
+    expect(restored.alarms.first.isEnabled, isTrue);
+    expect(restored.alarms.first.timeMinutes, 6 * 60 + 30);
+    expect(restored.alarms.first.soundUri, 'content://alarm/1');
+    expect(restored.alarms.last.timeMinutes, 23 * 60);
+    expect(restored.alarms.last.soundUri, 'content://alarm/2');
+  });
+
+  test('migrates the old single alarm into the first slot', () {
+    final restored = ShiftSchedule.fromJson({
+      'id': 'legacy',
+      'organizationName': 'Завод',
+      'colorValue': 0xFF16A34A,
+      'startDate': '2026-07-12T00:00:00.000',
+      'workDays': 1,
+      'restDays': 3,
+      'alarmEnabled': true,
+      'alarmTimeMinutes': 360,
+      'alarmSoundUri': 'content://legacy',
+      'alarmSoundName': 'Старый звук',
+    });
+
+    expect(restored.alarms, hasLength(2));
+    expect(restored.alarms.first.isEnabled, isTrue);
+    expect(restored.alarms.first.timeMinutes, 360);
+    expect(restored.alarms.first.soundUri, 'content://legacy');
+    expect(restored.alarms.last.isEnabled, isFalse);
   });
 }

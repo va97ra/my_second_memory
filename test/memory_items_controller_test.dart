@@ -93,10 +93,16 @@ class _ReminderScheduler implements ReminderScheduler {
   Future<bool> requestPermissions() async => true;
 
   @override
+  Future<List<ReminderSoundSelection>> systemSounds() async => const [];
+
+  @override
   Future<void> schedule(MemoryItem item) async => scheduled.add(item.id);
 
   @override
-  Future<ReminderSoundSelection?> selectSound({String? currentUri}) async =>
+  Future<ReminderSoundSelection?> selectSound({
+    String? currentUri,
+    ReminderSoundSource source = ReminderSoundSource.system,
+  }) async =>
       null;
 }
 

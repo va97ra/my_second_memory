@@ -17,12 +17,15 @@ void main() {
       startDate: DateTime(2026, 7, 12),
       workDays: 1,
       restDays: 3,
-      alarmEnabled: true,
-      alarmTimeMinutes: 6 * 60,
+      alarms: const [
+        ShiftAlarm(isEnabled: true, timeMinutes: 6 * 60),
+        ShiftAlarm(isEnabled: true, timeMinutes: 23 * 60),
+      ],
     );
 
     await controller.add(schedule);
-    expect(alarms.last.single.alarmEnabled, isTrue);
+    expect(alarms.last.single.alarms.where((alarm) => alarm.isEnabled),
+        hasLength(2));
 
     await controller.toggleEnabled('work');
     expect(alarms.last.single.isEnabled, isFalse);
@@ -48,7 +51,10 @@ class _AlarmScheduler implements ShiftAlarmScheduler {
   List<ShiftSchedule> last = [];
 
   @override
-  Future<void> reconcileShiftAlarms(List<ShiftSchedule> schedules) async {
+  Future<void> reconcileShiftAlarms(
+    List<ShiftSchedule> schedules, {
+    bool force = false,
+  }) async {
     last = [...schedules];
   }
 }

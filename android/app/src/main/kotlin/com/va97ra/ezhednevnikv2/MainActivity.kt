@@ -6,6 +6,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.provider.OpenableColumns
 import android.provider.MediaStore
 import androidx.activity.result.contract.ActivityResultContracts
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -16,6 +17,28 @@ import java.time.ZoneId
 
 class MainActivity : FlutterFragmentActivity() {
     private var pendingSoundResult: MethodChannel.Result? = null
+
+    private val audioFilePicker = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        val result = pendingSoundResult ?: return@registerForActivityResult
+        pendingSoundResult = null
+        if (uri == null) {
+            result.success(null)
+            return@registerForActivityResult
+        }
+        try {
+            contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+            val name = displayName(uri) ?: "Мелодия будильника"
+            val storedUri = copyAudioToNotifications(uri, name)
+            result.success(mapOf("uri" to storedUri.toString(), "name" to name))
+        } catch (error: Exception) {
+            result.error("audio_file_unavailable", error.message, null)
+        }
+    }
 
     private val ringtonePicker = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -93,10 +116,12 @@ class MainActivity : FlutterFragmentActivity() {
                 "getDefaultAlarmSound" -> result.success(
                     RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)?.toString()
                 )
+                "listSystemAlarmSounds" -> listSystemAlarmSounds(result)
                 "selectReminderSound" -> selectReminderSound(
                     call.argument<String>("currentUri"),
                     result
                 )
+                "selectReminderAudioFile" -> selectReminderAudioFile(result)
                 else -> result.notImplemented()
             }
         }
@@ -127,6 +152,106 @@ class MainActivity : FlutterFragmentActivity() {
         } catch (error: Exception) {
             pendingSoundResult = null
             result.error("picker_unavailable", error.message, null)
+        }
+    }
+
+    private fun listSystemAlarmSounds(result: MethodChannel.Result) {
+        try {
+            val sounds = mutableListOf<Map<String, String>>()
+            val seen = mutableSetOf<String>()
+            val defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            if (defaultUri != null) {
+                val uri = defaultUri.toString()
+                seen.add(uri)
+                sounds.add(mapOf("uri" to uri, "name" to "По умолчанию"))
+            }
+
+            val manager = RingtoneManager(this).apply {
+                setType(RingtoneManager.TYPE_ALARM)
+            }
+            manager.cursor.use { cursor ->
+                var position = 0
+                while (cursor.moveToNext()) {
+                    val soundUri = manager.getRingtoneUri(position++) ?: continue
+                    val uri = soundUri.toString()
+                    if (!seen.add(uri)) continue
+                    val title = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX)
+                    sounds.add(
+                        mapOf(
+                            "uri" to uri,
+                            "name" to (title ?: "Системный звук")
+                        )
+                    )
+                }
+            }
+            result.success(sounds)
+        } catch (error: Exception) {
+            result.error("sounds_unavailable", error.message, null)
+        }
+    }
+
+    private fun selectReminderAudioFile(result: MethodChannel.Result) {
+        if (pendingSoundResult != null) {
+            result.error("picker_busy", "Sound picker is already open", null)
+            return
+        }
+        pendingSoundResult = result
+        try {
+            audioFilePicker.launch(arrayOf("audio/*"))
+        } catch (error: Exception) {
+            pendingSoundResult = null
+            result.error("picker_unavailable", error.message, null)
+        }
+    }
+
+    private fun displayName(uri: Uri): String? {
+        contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (index >= 0) return cursor.getString(index)
+                }
+            }
+        return null
+    }
+
+    private fun copyAudioToNotifications(source: Uri, originalName: String): Uri {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return source
+        }
+        val safeName = originalName.replace(Regex("[^a-zA-Zа-яА-Я0-9._ -]"), "_")
+        val values = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, safeName)
+            put(
+                MediaStore.MediaColumns.MIME_TYPE,
+                contentResolver.getType(source) ?: "audio/mpeg"
+            )
+            put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                "${Environment.DIRECTORY_NOTIFICATIONS}/Ezhednevnik V2"
+            )
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
+        }
+        val target = contentResolver.insert(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            values
+        ) ?: throw IllegalStateException("Cannot create notification sound")
+        try {
+            contentResolver.openInputStream(source)?.use { input ->
+                contentResolver.openOutputStream(target)?.use { output ->
+                    input.copyTo(output)
+                } ?: throw IllegalStateException("Cannot write notification sound")
+            } ?: throw IllegalStateException("Cannot read selected audio")
+            contentResolver.update(
+                target,
+                ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) },
+                null,
+                null
+            )
+            return target
+        } catch (error: Exception) {
+            contentResolver.delete(target, null, null)
+            throw error
         }
     }
 

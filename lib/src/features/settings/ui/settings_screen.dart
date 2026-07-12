@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_locale_controller.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/app_theme_controller.dart';
 import '../../../shared/ui/screen_chrome.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -14,6 +15,7 @@ class SettingsScreen extends ConsumerWidget {
     final strings = AppStrings.of(context);
     final locale = ref.watch(appLocaleControllerProvider);
     final isRu = locale.languageCode == 'ru';
+    final isLight = ref.watch(appThemeControllerProvider) == ThemeMode.light;
 
     return WarmGradientBackground(
       child: CustomScrollView(
@@ -46,6 +48,21 @@ class SettingsScreen extends ConsumerWidget {
                                 ? controller.setRussian()
                                 : controller.setEnglish();
                           },
+                        ),
+                      ),
+                      _SettingsTile(
+                        icon: isLight
+                            ? Icons.light_mode_outlined
+                            : Icons.dark_mode_outlined,
+                        iconColor: const Color(0xFFD97757),
+                        title: strings.appearance,
+                        subtitle:
+                            isLight ? strings.lightTheme : strings.darkTheme,
+                        trailing: Switch(
+                          value: isLight,
+                          onChanged: (value) => ref
+                              .read(appThemeControllerProvider.notifier)
+                              .setLight(value),
                         ),
                       ),
                     ],
@@ -83,7 +100,7 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SettingsTile(
                         icon: Icons.backup_outlined,
-                        iconColor: const Color(0xFF2563EB),
+                        iconColor: const Color(0xFFD97757),
                         title: strings.backup,
                         subtitle: strings.backupSubtitle,
                         trailing: const Icon(Icons.chevron_right),
@@ -117,16 +134,17 @@ class _SettingsSection extends StatelessWidget {
           child: Text(
             title,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: const Color(0xFF64748B),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w900,
                 ),
           ),
         ),
         DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.88),
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFDED8CF)),
+            border:
+                Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           child: Material(
             color: Colors.transparent,
@@ -134,10 +152,10 @@ class _SettingsSection extends StatelessWidget {
               children: [
                 for (var index = 0; index < children.length; index++) ...[
                   if (index > 0)
-                    const Divider(
+                    Divider(
                       height: 1,
                       indent: 64,
-                      color: Color(0xFFE7E1D9),
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                   children[index],
                 ],
@@ -185,7 +203,7 @@ class _SettingsTile extends StatelessWidget {
       title: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: const Color(0xFF172033),
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w800,
             ),
       ),
