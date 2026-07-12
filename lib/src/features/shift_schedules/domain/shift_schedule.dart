@@ -7,6 +7,10 @@ class ShiftSchedule {
     required this.workDays,
     required this.restDays,
     this.isEnabled = true,
+    this.alarmEnabled = false,
+    this.alarmTimeMinutes = 7 * 60,
+    this.alarmSoundUri,
+    this.alarmSoundName,
   });
 
   final String id;
@@ -16,6 +20,10 @@ class ShiftSchedule {
   final int workDays;
   final int restDays;
   final bool isEnabled;
+  final bool alarmEnabled;
+  final int alarmTimeMinutes;
+  final String? alarmSoundUri;
+  final String? alarmSoundName;
 
   bool isWorkday(DateTime date) {
     if (!isEnabled || workDays <= 0 || restDays < 0) {
@@ -45,6 +53,11 @@ class ShiftSchedule {
     int? workDays,
     int? restDays,
     bool? isEnabled,
+    bool? alarmEnabled,
+    int? alarmTimeMinutes,
+    String? alarmSoundUri,
+    String? alarmSoundName,
+    bool clearAlarmSound = false,
   }) {
     return ShiftSchedule(
       id: id ?? this.id,
@@ -54,6 +67,12 @@ class ShiftSchedule {
       workDays: workDays ?? this.workDays,
       restDays: restDays ?? this.restDays,
       isEnabled: isEnabled ?? this.isEnabled,
+      alarmEnabled: alarmEnabled ?? this.alarmEnabled,
+      alarmTimeMinutes: alarmTimeMinutes ?? this.alarmTimeMinutes,
+      alarmSoundUri:
+          clearAlarmSound ? null : alarmSoundUri ?? this.alarmSoundUri,
+      alarmSoundName:
+          clearAlarmSound ? null : alarmSoundName ?? this.alarmSoundName,
     );
   }
 
@@ -66,6 +85,10 @@ class ShiftSchedule {
       'workDays': workDays,
       'restDays': restDays,
       'isEnabled': isEnabled,
+      'alarmEnabled': alarmEnabled,
+      'alarmTimeMinutes': alarmTimeMinutes,
+      'alarmSoundUri': alarmSoundUri,
+      'alarmSoundName': alarmSoundName,
     };
   }
 
@@ -78,6 +101,10 @@ class ShiftSchedule {
       workDays: json['workDays'] as int,
       restDays: json['restDays'] as int,
       isEnabled: json['isEnabled'] as bool? ?? true,
+      alarmEnabled: json['alarmEnabled'] as bool? ?? false,
+      alarmTimeMinutes: json['alarmTimeMinutes'] as int? ?? 7 * 60,
+      alarmSoundUri: json['alarmSoundUri'] as String?,
+      alarmSoundName: json['alarmSoundName'] as String?,
     );
   }
 

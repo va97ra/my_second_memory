@@ -980,6 +980,14 @@ void main() {
 
     await tester.tap(find.text('Добавить график').last);
     await tester.pumpAndSettle();
+
+    expect(find.text('5/2'), findsOneWidget);
+    expect(find.text('2/2'), findsOneWidget);
+    expect(find.text('сутки/трое'), findsOneWidget);
+    expect(find.text('7/7'), findsNothing);
+    expect(find.text('14/14'), findsNothing);
+    expect(find.text('Будильник смены'), findsOneWidget);
+    expect(find.text('Рабочих дней'), findsNothing);
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Организация'),
       'Завод',

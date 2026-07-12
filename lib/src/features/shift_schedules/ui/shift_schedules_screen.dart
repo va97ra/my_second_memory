@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
+import '../../notifications/data/notification_service.dart';
 import '../domain/shift_schedule.dart';
 import '../state/shift_schedules_controller.dart';
 
@@ -211,6 +212,29 @@ class _ShiftScheduleTile extends StatelessWidget {
                                     fontWeight: FontWeight.w700,
                                   ),
                         ),
+                        if (schedule.alarmEnabled) ...[
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.alarm_outlined,
+                                size: 15,
+                                color: Color(0xFF2563EB),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                _formatMinutes(schedule.alarmTimeMinutes),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium
+                                    ?.copyWith(
+                                      color: const Color(0xFF2563EB),
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -275,10 +299,6 @@ class _ShiftScheduleEditorSheetState
     _ShiftPreset('5/2', '5/2', '5/2', 5, 2),
     _ShiftPreset('2/2', '2/2', '2/2', 2, 2),
     _ShiftPreset('1/3', 'сутки/трое', '24h/3 off', 1, 3),
-    _ShiftPreset('7/7', '7/7', '7/7', 7, 7),
-    _ShiftPreset('14/14', '14/14', '14/14', 14, 14),
-    _ShiftPreset('15/15', '15/15', '15/15', 15, 15),
-    _ShiftPreset('30/30', '30/30', '30/30', 30, 30),
   ];
 
   late final TextEditingController _organizationController;
@@ -287,6 +307,11 @@ class _ShiftScheduleEditorSheetState
   late DateTime _startDate;
   late Color _selectedColor;
   late bool _isEnabled;
+  late bool _alarmEnabled;
+  late int _alarmTimeMinutes;
+  String? _alarmSoundUri;
+  String? _alarmSoundName;
+  late bool _showManualSchedule;
   String? _selectedPresetKey;
 
   @override
@@ -305,10 +330,15 @@ class _ShiftScheduleEditorSheetState
     _startDate = schedule?.startDate ?? _dateOnly(DateTime.now());
     _selectedColor = Color(schedule?.colorValue ?? _colors.first.toARGB32());
     _isEnabled = schedule?.isEnabled ?? true;
+    _alarmEnabled = schedule?.alarmEnabled ?? false;
+    _alarmTimeMinutes = schedule?.alarmTimeMinutes ?? 7 * 60;
+    _alarmSoundUri = schedule?.alarmSoundUri;
+    _alarmSoundName = schedule?.alarmSoundName;
     _selectedPresetKey = _presetKeyFor(
       int.tryParse(_workDaysController.text) ?? 5,
       int.tryParse(_restDaysController.text) ?? 2,
     );
+    _showManualSchedule = _selectedPresetKey == null;
   }
 
   @override
@@ -402,45 +432,53 @@ class _ShiftScheduleEditorSheetState
                           selected: _selectedPresetKey == preset.key,
                           onSelected: (_) => _applyPreset(preset),
                         ),
-                      ChoiceChip(
-                        label: Text(strings.customSchedule),
-                        selected: _selectedPresetKey == null,
-                        onSelected: (_) => setState(() {
-                          _selectedPresetKey = null;
-                        }),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _workDaysController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: strings.workDays,
-                            filled: true,
-                            fillColor: const Color(0xFFFFF8EE),
-                          ),
-                          onChanged: (_) => _syncPreset(),
-                        ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => setState(() {
+                        _showManualSchedule = !_showManualSchedule;
+                        if (_showManualSchedule) _selectedPresetKey = null;
+                      }),
+                      icon: Icon(
+                        _showManualSchedule
+                            ? Icons.expand_less
+                            : Icons.tune_outlined,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _restDaysController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: strings.restDays,
-                            filled: true,
-                            fillColor: const Color(0xFFFFF8EE),
-                          ),
-                          onChanged: (_) => _syncPreset(),
-                        ),
-                      ),
-                    ],
+                      label: Text(strings.manualSchedule),
+                    ),
                   ),
+                  if (_showManualSchedule)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _workDaysController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: strings.workDays,
+                              filled: true,
+                              fillColor: const Color(0xFFFFF8EE),
+                            ),
+                            onChanged: (_) => _syncPreset(),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _restDaysController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: strings.restDays,
+                              filled: true,
+                              fillColor: const Color(0xFFFFF8EE),
+                            ),
+                            onChanged: (_) => _syncPreset(),
+                          ),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 14),
                   Wrap(
                     spacing: 8,
@@ -466,6 +504,35 @@ class _ShiftScheduleEditorSheetState
                       _isEnabled = value;
                     }),
                   ),
+                  const Divider(height: 24),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    secondary: const Icon(Icons.alarm_outlined),
+                    title: Text(strings.shiftAlarm),
+                    subtitle: Text(strings.shiftAlarmSubtitle),
+                    value: _alarmEnabled,
+                    onChanged: _toggleAlarm,
+                  ),
+                  if (_alarmEnabled) ...[
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.schedule_outlined),
+                      title: Text(strings.time),
+                      subtitle: Text(_formatMinutes(_alarmTimeMinutes)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _pickAlarmTime,
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.music_note_outlined),
+                      title: Text(strings.chooseSound),
+                      subtitle: Text(
+                        _alarmSoundName ?? strings.systemAlarmSound,
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _pickAlarmSound,
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
@@ -508,9 +575,52 @@ class _ShiftScheduleEditorSheetState
   void _applyPreset(_ShiftPreset preset) {
     setState(() {
       _selectedPresetKey = preset.key;
+      _showManualSchedule = false;
       _workDaysController.text = '${preset.workDays}';
       _restDaysController.text = '${preset.restDays}';
     });
+  }
+
+  Future<void> _toggleAlarm(bool enabled) async {
+    if (enabled) {
+      final allowed =
+          await ref.read(notificationServiceProvider).requestPermissions();
+      if (!allowed && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Разрешите уведомления и точные будильники'),
+          ),
+        );
+        return;
+      }
+    }
+    if (mounted) setState(() => _alarmEnabled = enabled);
+  }
+
+  Future<void> _pickAlarmTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialEntryMode: TimePickerEntryMode.inputOnly,
+      initialTime: TimeOfDay(
+        hour: _alarmTimeMinutes ~/ 60,
+        minute: _alarmTimeMinutes % 60,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _alarmTimeMinutes = picked.hour * 60 + picked.minute);
+    }
+  }
+
+  Future<void> _pickAlarmSound() async {
+    final sound = await ref
+        .read(notificationServiceProvider)
+        .selectSound(currentUri: _alarmSoundUri);
+    if (sound != null && mounted) {
+      setState(() {
+        _alarmSoundUri = sound.uri;
+        _alarmSoundName = sound.name;
+      });
+    }
   }
 
   void _syncPreset() {
@@ -547,6 +657,10 @@ class _ShiftScheduleEditorSheetState
       workDays: workDays,
       restDays: restDays,
       isEnabled: _isEnabled,
+      alarmEnabled: _alarmEnabled,
+      alarmTimeMinutes: _alarmTimeMinutes,
+      alarmSoundUri: _alarmSoundUri,
+      alarmSoundName: _alarmSoundName,
     );
 
     final controller = ref.read(shiftSchedulesControllerProvider.notifier);
@@ -573,6 +687,12 @@ class _ShiftScheduleEditorSheetState
   DateTime _dateOnly(DateTime value) {
     return DateTime(value.year, value.month, value.day);
   }
+}
+
+String _formatMinutes(int minutes) {
+  final hour = (minutes ~/ 60).toString().padLeft(2, '0');
+  final minute = (minutes % 60).toString().padLeft(2, '0');
+  return '$hour:$minute';
 }
 
 class _ColorSwatch extends StatelessWidget {

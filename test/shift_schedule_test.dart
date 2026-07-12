@@ -93,6 +93,10 @@ void main() {
       workDays: 7,
       restDays: 7,
       isEnabled: false,
+      alarmEnabled: true,
+      alarmTimeMinutes: 6 * 60 + 30,
+      alarmSoundUri: 'content://alarm/1',
+      alarmSoundName: 'Будильник',
     );
 
     final restored = ShiftSchedule.fromJson(schedule.toJson());
@@ -104,5 +108,8 @@ void main() {
     expect(restored.workDays, schedule.workDays);
     expect(restored.restDays, schedule.restDays);
     expect(restored.isEnabled, isFalse);
+    expect(restored.alarmEnabled, isTrue);
+    expect(restored.alarmTimeMinutes, 6 * 60 + 30);
+    expect(restored.alarmSoundUri, 'content://alarm/1');
   });
 }

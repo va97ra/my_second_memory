@@ -155,6 +155,11 @@ class AppStrings {
   String get restDays => isRu ? 'Выходных дней' : 'Rest days';
   String get schedulePreset => isRu ? 'Шаблон' : 'Pattern';
   String get customSchedule => isRu ? 'Свой' : 'Custom';
+  String get manualSchedule => isRu ? 'Настроить вручную' : 'Set manually';
+  String get shiftAlarm => isRu ? 'Будильник смены' : 'Shift alarm';
+  String get shiftAlarmSubtitle => isRu
+      ? 'Сработает в начале каждого рабочего дня'
+      : 'Rings at the start of every work day';
   String get enabled => isRu ? 'Включен' : 'Enabled';
   String get disabled => isRu ? 'Выключен' : 'Disabled';
   String get noShiftSchedules =>

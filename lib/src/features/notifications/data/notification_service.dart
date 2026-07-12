@@ -10,6 +10,7 @@ import 'package:timezone/timezone.dart' as timezone;
 
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_status.dart';
+import '../../shift_schedules/domain/shift_schedule.dart';
 
 const _notificationChannel = MethodChannel('ezhednevnik_v2/notifications');
 const _openAction = 'open_record';
@@ -41,13 +42,24 @@ abstract class ReminderScheduler {
   Future<void> reconcile(List<MemoryItem> items);
 }
 
+abstract class ShiftAlarmScheduler {
+  Future<void> reconcileShiftAlarms(List<ShiftSchedule> schedules);
+}
+
 final notificationServiceProvider = Provider<ReminderScheduler>((ref) {
   final service = NotificationService();
   ref.onDispose(service.dispose);
   return service;
 });
 
-class NotificationService implements ReminderScheduler {
+final shiftAlarmSchedulerProvider = Provider<ShiftAlarmScheduler>((ref) {
+  final scheduler = ref.watch(notificationServiceProvider);
+  return scheduler is ShiftAlarmScheduler
+      ? scheduler as ShiftAlarmScheduler
+      : const _NoopShiftAlarmScheduler();
+});
+
+class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
@@ -263,6 +275,102 @@ class NotificationService implements ReminderScheduler {
     }
   }
 
+  @override
+  Future<void> reconcileShiftAlarms(List<ShiftSchedule> schedules) async {
+    if (!isSupported) return;
+    await initialize();
+    final pending = await _plugin.pendingNotificationRequests();
+    for (final notification in pending) {
+      final data = decodeReminderPayload(notification.payload);
+      if (data?['source'] == 'shift_alarm') {
+        await _plugin.cancel(notification.id);
+      }
+    }
+
+    final now = DateTime.now();
+    final lastDay = now.add(const Duration(days: 366));
+    for (final schedule in schedules) {
+      if (!schedule.isEnabled || !schedule.alarmEnabled) continue;
+      var soundUri = schedule.alarmSoundUri ??
+          await _notificationChannel.invokeMethod<String>(
+            'getDefaultAlarmSound',
+          );
+      for (var day = DateTime(now.year, now.month, now.day);
+          !day.isAfter(lastDay);
+          day = day.add(const Duration(days: 1))) {
+        if (!schedule.isWorkday(day)) continue;
+        final alarmAt = DateTime(
+          day.year,
+          day.month,
+          day.day,
+          schedule.alarmTimeMinutes ~/ 60,
+          schedule.alarmTimeMinutes % 60,
+        );
+        if (alarmAt.isAfter(now)) {
+          try {
+            await _scheduleShiftAlarm(schedule, alarmAt, soundUri);
+          } catch (_) {
+            if (soundUri != null) {
+              soundUri = null;
+              await _scheduleShiftAlarm(schedule, alarmAt, null);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> _scheduleShiftAlarm(
+    ShiftSchedule schedule,
+    DateTime alarmAt,
+    String? soundUri,
+  ) async {
+    final channelId = soundUri == null
+        ? 'shift_alarms_default_v1'
+        : 'shift_alarms_${stableNotificationId(soundUri)}_v1';
+    final id = stableNotificationId(
+      'shift:${schedule.id}:${alarmAt.year}-${alarmAt.month}-${alarmAt.day}',
+    );
+    final details = AndroidNotificationDetails(
+      channelId,
+      schedule.alarmSoundName ?? 'Будильники смен',
+      channelDescription: 'Будильники рабочих смен Ежедневника V2',
+      importance: Importance.max,
+      priority: Priority.max,
+      category: AndroidNotificationCategory.alarm,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      sound: soundUri == null ? null : UriAndroidNotificationSound(soundUri),
+      playSound: true,
+      enableVibration: true,
+      ongoing: true,
+      autoCancel: false,
+      visibility: NotificationVisibility.public,
+      additionalFlags: Int32List.fromList(const [4]),
+      actions: const [
+        AndroidNotificationAction(
+          _stopAction,
+          'Выключить звук',
+          cancelNotification: true,
+        ),
+      ],
+    );
+    await _plugin.zonedSchedule(
+      id,
+      schedule.organizationName,
+      'Сегодня рабочая смена',
+      timezone.TZDateTime.from(alarmAt, timezone.local),
+      NotificationDetails(android: details),
+      payload: jsonEncode({
+        'source': 'shift_alarm',
+        'scheduleId': schedule.id,
+        'notificationId': id,
+      }),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
   Future<void> _handleResponse(NotificationResponse response) async {
     final id = response.id;
     if (id != null) {
@@ -281,6 +389,13 @@ class NotificationService implements ReminderScheduler {
   void dispose() {
     _openedItems.close();
   }
+}
+
+class _NoopShiftAlarmScheduler implements ShiftAlarmScheduler {
+  const _NoopShiftAlarmScheduler();
+
+  @override
+  Future<void> reconcileShiftAlarms(List<ShiftSchedule> schedules) async {}
 }
 
 Map<String, Object?>? decodeReminderPayload(String? payload) {
