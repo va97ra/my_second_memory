@@ -5,6 +5,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../accounts/state/accounts_controller.dart';
+import '../../recurrence/state/recurrence_controller.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
 import '../data/security_data_migration_service.dart';
@@ -259,6 +260,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     ref.invalidate(shiftSchedulesControllerProvider);
     ref.invalidate(accountRepositoryProvider);
     ref.invalidate(accountsControllerProvider);
+    ref.invalidate(recurrenceRepositoryProvider);
+    ref.invalidate(recurrenceSeriesControllerProvider);
   }
 }
 

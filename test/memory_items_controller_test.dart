@@ -16,6 +16,7 @@ class _MemoryRepository implements MemoryRepository {
   final upsertedIds = <String>[];
   final deletedIds = <String>[];
   int replaceAllCount = 0;
+  int upsertAllCount = 0;
 
   @override
   Future<List<MemoryItem>> loadAll() async => items;
@@ -28,6 +29,17 @@ class _MemoryRepository implements MemoryRepository {
         if (existing.id == item.id) item else existing,
       if (!items.any((existing) => existing.id == item.id)) item,
     ];
+  }
+
+  @override
+  Future<void> upsertAll(List<MemoryItem> incoming) async {
+    upsertAllCount++;
+    upsertedIds.addAll(incoming.map((item) => item.id));
+    final byId = {
+      for (final item in items) item.id: item,
+      for (final item in incoming) item.id: item,
+    };
+    items = byId.values.toList();
   }
 
   @override
@@ -119,6 +131,30 @@ class _TrackingMediaStorage extends MediaStorage {
 }
 
 void main() {
+  test('addAll persists generated records in one batch', () async {
+    final date = DateTime(2026, 6, 30);
+    final repository = _MemoryRepository(const []);
+    final controller = MemoryItemsController(repository);
+    final items = [
+      for (var index = 0; index < 20; index++)
+        MemoryItem(
+          id: 'generated-$index',
+          type: MemoryType.note,
+          title: 'Generated $index',
+          memoryDate: DateTime(date.year, date.month + index),
+          createdAt: date,
+          updatedAt: date,
+        ),
+    ];
+
+    await controller.load();
+    await controller.addAll(items);
+
+    expect(repository.upsertAllCount, 1);
+    expect(repository.items, hasLength(20));
+    expect(controller.state, hasLength(20));
+  });
+
   test('update persists only the changed record', () async {
     final date = DateTime(2026, 6, 30);
     final item = MemoryItem(

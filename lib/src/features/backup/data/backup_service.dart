@@ -9,6 +9,8 @@ import '../../accounts/data/account_repository.dart';
 import '../../accounts/domain/account_item.dart';
 import '../../memory_items/data/memory_repository.dart';
 import '../../memory_items/domain/memory_item.dart';
+import '../../recurrence/data/recurrence_repository.dart';
+import '../../recurrence/domain/recurrence_series.dart';
 import '../../shift_schedules/data/shift_schedule_repository.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 import 'backup_media_store.dart';
@@ -19,6 +21,7 @@ class BackupService {
     required this.memoryRepository,
     required this.shiftScheduleRepository,
     required this.accountRepository,
+    this.recurrenceRepository,
   });
 
   static const format = 'ezhednevnik_v2_backup';
@@ -31,11 +34,13 @@ class BackupService {
   final MemoryRepository memoryRepository;
   final ShiftScheduleRepository shiftScheduleRepository;
   final AccountRepository accountRepository;
+  final RecurrenceRepository? recurrenceRepository;
 
   Future<String> createBackupJson() async {
     final memoryItems = await memoryRepository.loadAll();
     final shiftSchedules = await shiftScheduleRepository.loadSchedules();
     final accounts = await accountRepository.loadAccounts();
+    final recurrenceSeries = await recurrenceRepository?.loadAll() ?? const [];
     final mediaFiles = await collectBackupMedia(memoryItems);
 
     return const JsonEncoder.withIndent('  ').convert({
@@ -45,6 +50,8 @@ class BackupService {
       'memoryItems': memoryItems.map((item) => item.toJson()).toList(),
       'shiftSchedules': shiftSchedules.map((item) => item.toJson()).toList(),
       'accounts': accounts.map((item) => item.toJson()).toList(),
+      'recurrenceSeries':
+          recurrenceSeries.map((item) => item.toJson()).toList(),
       'mediaFiles': mediaFiles,
     });
   }
@@ -91,6 +98,7 @@ class BackupService {
       memoryItems: await memoryRepository.loadAll(),
       shiftSchedules: await shiftScheduleRepository.loadSchedules(),
       accounts: await accountRepository.loadAccounts(),
+      recurrenceSeries: await recurrenceRepository?.loadAll() ?? const [],
       temporaryRoot: temporaryRoot,
     );
   }
@@ -160,10 +168,18 @@ class BackupService {
         (manifest['accounts'] as List<dynamic>? ?? const []).map((entry) {
       return AccountItem.fromJson(Map<String, Object?>.from(entry as Map));
     }).toList();
+    final recurrenceSeries =
+        (manifest['recurrenceSeries'] as List<dynamic>? ?? const [])
+            .map((entry) {
+      return RecurrenceSeries.fromJson(
+        Map<String, Object?>.from(entry as Map),
+      );
+    }).toList();
     return BackupRestoreData(
       memoryItems: restoredItems,
       shiftSchedules: shifts,
       accounts: accounts,
+      recurrenceSeries: recurrenceSeries,
     );
   }
 
@@ -191,11 +207,19 @@ class BackupService {
         (decoded['accounts'] as List<dynamic>? ?? const []).map((entry) {
       return AccountItem.fromJson(Map<String, Object?>.from(entry as Map));
     }).toList();
+    final recurrenceSeries =
+        (decoded['recurrenceSeries'] as List<dynamic>? ?? const [])
+            .map((entry) {
+      return RecurrenceSeries.fromJson(
+        Map<String, Object?>.from(entry as Map),
+      );
+    }).toList();
 
     return BackupRestoreData(
       memoryItems: restoredItems,
       shiftSchedules: shiftSchedules,
       accounts: accounts,
+      recurrenceSeries: recurrenceSeries,
     );
   }
 
@@ -261,9 +285,11 @@ class BackupRestoreData {
     required this.memoryItems,
     required this.shiftSchedules,
     required this.accounts,
+    this.recurrenceSeries = const [],
   });
 
   final List<MemoryItem> memoryItems;
   final List<ShiftSchedule> shiftSchedules;
   final List<AccountItem> accounts;
+  final List<RecurrenceSeries> recurrenceSeries;
 }

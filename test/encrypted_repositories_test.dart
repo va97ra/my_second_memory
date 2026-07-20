@@ -144,6 +144,15 @@ class _MemoryRepository implements MemoryRepository {
   }
 
   @override
+  Future<void> upsertAll(List<MemoryItem> incoming) async {
+    final byId = {
+      for (final item in items) item.id: item,
+      for (final item in incoming) item.id: item,
+    };
+    items = byId.values.toList();
+  }
+
+  @override
   Future<void> delete(String id) async {
     items = [
       for (final item in items)

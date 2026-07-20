@@ -19,6 +19,11 @@ void main() {
       audioPath: '/local/voice.m4a',
       audioDurationSeconds: 12,
       imagePaths: const ['/local/photo.jpg'],
+      seriesId: 'series-1',
+      amountMinor: 129900,
+      paymentCategory: 'subscription',
+      birthYear: 1990,
+      isGeneratedOccurrence: true,
     );
 
     final restored = MemoryItem.fromJson(item.toJson());
@@ -32,5 +37,10 @@ void main() {
     expect(restored.audioPath, '/local/voice.m4a');
     expect(restored.audioDurationSeconds, 12);
     expect(restored.imagePaths, ['/local/photo.jpg']);
+    expect(restored.seriesId, 'series-1');
+    expect(restored.amountMinor, 129900);
+    expect(restored.paymentCategory, 'subscription');
+    expect(restored.birthYear, 1990);
+    expect(restored.isGeneratedOccurrence, isTrue);
   });
 }

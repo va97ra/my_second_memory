@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../accounts/domain/account_item.dart';
 import '../../memory_items/domain/memory_item.dart';
+import '../../recurrence/domain/recurrence_series.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 
 Future<String?> createStreamingBackup({
@@ -16,6 +17,7 @@ Future<String?> createStreamingBackup({
   required List<MemoryItem> memoryItems,
   required List<ShiftSchedule> shiftSchedules,
   required List<AccountItem> accounts,
+  required List<RecurrenceSeries> recurrenceSeries,
   String? temporaryRoot,
 }) async {
   final temp = temporaryRoot == null
@@ -60,6 +62,7 @@ Future<String?> createStreamingBackup({
     'memoryItems': memoryItems.map((item) => item.toJson()).toList(),
     'shiftSchedules': shiftSchedules.map((item) => item.toJson()).toList(),
     'accounts': accounts.map((item) => item.toJson()).toList(),
+    'recurrenceSeries': recurrenceSeries.map((item) => item.toJson()).toList(),
     'mediaEntries': mediaEntries,
   }));
 

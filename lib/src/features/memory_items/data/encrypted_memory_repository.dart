@@ -77,6 +77,30 @@ class EncryptedMemoryRepository implements MemoryRepository {
   }
 
   @override
+  Future<void> upsertAll(List<MemoryItem> items) async {
+    if (items.isEmpty) return;
+    final backend = _backend;
+    if (backend != null) {
+      final records = <SecureEntityRecord>[];
+      for (var offset = 0; offset < items.length; offset += 32) {
+        final end = offset + 32 < items.length ? offset + 32 : items.length;
+        records.addAll(await Future.wait([
+          for (final item in items.sublist(offset, end))
+            _codec.encode(item.id, item.toJson()),
+        ]));
+        await Future<void>.delayed(Duration.zero);
+      }
+      await backend.upsertSecureEntities(entityKind, records);
+      return;
+    }
+    final itemsById = {
+      for (final item in await loadAll()) item.id: item,
+      for (final item in items) item.id: item,
+    };
+    await replaceAll(itemsById.values.toList());
+  }
+
+  @override
   Future<void> delete(String id) async {
     final backend = _backend;
     if (backend != null) {

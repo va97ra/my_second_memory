@@ -14,14 +14,17 @@ class SqliteMemoryRepository implements MemoryRepository, SecureEntityBackend {
   SqliteMemoryRepository({
     AppDatabase? database,
     SharedPreferences? legacyPreferences,
+    bool closeDatabase = true,
   })  : _database = database ?? AppDatabase(),
-        _legacyPreferences = legacyPreferences;
+        _legacyPreferences = legacyPreferences,
+        _closeDatabase = closeDatabase;
 
   static const legacyStorageKey = 'memory_items_v1';
   static const legacyMigrationKey = 'memory_items_sqlite_migrated_v1';
 
   final AppDatabase _database;
   final SharedPreferences? _legacyPreferences;
+  final bool _closeDatabase;
 
   @override
   Future<List<SecureEntityRecord>> loadSecureEntities(String kind) async {
@@ -59,6 +62,36 @@ class SqliteMemoryRepository implements MemoryRepository, SecureEntityBackend {
               encryptedPayload: encryptedPayload,
             ),
           );
+    });
+  }
+
+  @override
+  Future<void> upsertSecureEntities(
+    String kind,
+    List<SecureEntityRecord> records,
+  ) async {
+    if (records.isEmpty) return;
+    await _database.transaction(() async {
+      final lookupKeys = [for (final record in records) record.lookupKey];
+      await (_database.delete(_database.secureEntities)
+            ..where(
+              (row) => row.kind.equals(kind) & row.lookupKey.isIn(lookupKeys),
+            ))
+          .go();
+      await _database.batch((batch) {
+        batch.insertAll(
+          _database.secureEntities,
+          [
+            for (final record in records)
+              SecureEntitiesCompanion.insert(
+                kind: kind,
+                rowKey: record.rowKey,
+                lookupKey: record.lookupKey,
+                encryptedPayload: record.encryptedPayload,
+              ),
+          ],
+        );
+      });
     });
   }
 
@@ -127,6 +160,22 @@ class SqliteMemoryRepository implements MemoryRepository, SecureEntityBackend {
   }
 
   @override
+  Future<void> upsertAll(List<domain.MemoryItem> items) async {
+    await _migrateLegacyItemsIfNeeded();
+    final userItems = [
+      for (final item in items)
+        if (!_isStarterId(item.id)) item,
+    ];
+    if (userItems.isEmpty) return;
+    await _database.batch((batch) {
+      batch.insertAllOnConflictUpdate(
+        _database.memoryItems,
+        userItems.map(_toCompanion).toList(),
+      );
+    });
+  }
+
+  @override
   Future<void> delete(String id) async {
     await _migrateLegacyItemsIfNeeded();
     await (_database.delete(_database.memoryItems)
@@ -162,7 +211,8 @@ class SqliteMemoryRepository implements MemoryRepository, SecureEntityBackend {
   }
 
   @override
-  Future<void> close() => _database.close();
+  Future<void> close() =>
+      _closeDatabase ? _database.close() : Future<void>.value();
 
   Future<void> _migrateLegacyItemsIfNeeded() async {
     final prefs = _legacyPreferences ?? await SharedPreferences.getInstance();
@@ -232,6 +282,11 @@ class SqliteMemoryRepository implements MemoryRepository, SecureEntityBackend {
       audioDurationSeconds: Value(item.audioDurationSeconds),
       imagePathsJson: Value(jsonEncode(item.imagePaths)),
       transcript: Value(item.transcript),
+      seriesId: Value(item.seriesId),
+      amountMinor: Value(item.amountMinor),
+      paymentCategory: Value(item.paymentCategory),
+      birthYear: Value(item.birthYear),
+      isGeneratedOccurrence: Value(item.isGeneratedOccurrence),
     );
   }
 
@@ -259,6 +314,11 @@ class SqliteMemoryRepository implements MemoryRepository, SecureEntityBackend {
       audioDurationSeconds: row.audioDurationSeconds,
       imagePaths: _decodeStringList(row.imagePathsJson),
       transcript: row.transcript,
+      seriesId: row.seriesId,
+      amountMinor: row.amountMinor,
+      paymentCategory: row.paymentCategory,
+      birthYear: row.birthYear,
+      isGeneratedOccurrence: row.isGeneratedOccurrence,
     );
   }
 

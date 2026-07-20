@@ -70,6 +70,13 @@ abstract class _TestMemoryRepository implements MemoryRepository {
   }
 
   @override
+  Future<void> upsertAll(List<MemoryItem> items) async {
+    for (final item in items) {
+      await upsert(item);
+    }
+  }
+
+  @override
   Future<void> delete(String id) async {
     await replaceAll([
       for (final item in await loadAll())

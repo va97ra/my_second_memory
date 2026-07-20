@@ -1,5 +1,6 @@
 import '../../accounts/domain/account_item.dart';
 import '../../memory_items/domain/memory_item.dart';
+import '../../recurrence/domain/recurrence_series.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 
 Future<String?> createStreamingBackup({
@@ -9,6 +10,7 @@ Future<String?> createStreamingBackup({
   required List<MemoryItem> memoryItems,
   required List<ShiftSchedule> shiftSchedules,
   required List<AccountItem> accounts,
+  required List<RecurrenceSeries> recurrenceSeries,
   String? temporaryRoot,
 }) async =>
     null;

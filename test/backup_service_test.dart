@@ -9,6 +9,8 @@ import 'package:ezhednevnik_v2/src/features/memory_items/data/memory_repository.
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_status.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/data/recurrence_repository.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_series.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/data/shift_schedule_repository.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/domain/shift_schedule.dart';
 
@@ -42,6 +44,15 @@ void main() {
         restDays: 2,
       ),
     ]);
+    final recurringTemplate = MemoryItem(
+      id: 'payment',
+      type: MemoryType.payment,
+      title: 'Интернет',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+      amountMinor: 90000,
+    );
     final service = BackupService(
       memoryRepository: memoryRepository,
       shiftScheduleRepository: shiftRepository,
@@ -51,6 +62,17 @@ void main() {
           serviceName: 'Mail',
           login: 'user',
           password: 'secret',
+          createdAt: date,
+          updatedAt: date,
+        ),
+      ]),
+      recurrenceRepository: _RecurrenceRepository([
+        RecurrenceSeries(
+          id: 'monthly-payment',
+          frequency: RecurrenceFrequency.monthly,
+          template: recurringTemplate,
+          startDate: date,
+          originItemId: recurringTemplate.id,
           createdAt: date,
           updatedAt: date,
         ),
@@ -75,6 +97,8 @@ void main() {
     expect(restored.shiftSchedules.single.organizationName, 'Завод');
     expect(restored.accounts, hasLength(1));
     expect(restored.accounts.single.password, 'secret');
+    expect(restored.recurrenceSeries.single.id, 'monthly-payment');
+    expect(restored.recurrenceSeries.single.template.amountMinor, 90000);
   });
 
   test('exports and restores encrypted zip with password', () async {
@@ -186,6 +210,9 @@ class _MemoryRepository implements MemoryRepository {
   Future<void> upsert(MemoryItem item) async {}
 
   @override
+  Future<void> upsertAll(List<MemoryItem> items) async {}
+
+  @override
   Future<void> delete(String id) async {}
 
   @override
@@ -217,4 +244,28 @@ class _AccountRepository implements AccountRepository {
 
   @override
   Future<void> saveAccounts(List<AccountItem> accounts) async {}
+}
+
+class _RecurrenceRepository implements RecurrenceRepository {
+  _RecurrenceRepository(this.series);
+
+  final List<RecurrenceSeries> series;
+
+  @override
+  Future<List<RecurrenceSeries>> loadAll() async => series;
+
+  @override
+  Future<void> upsert(RecurrenceSeries series) async {}
+
+  @override
+  Future<void> upsertAll(List<RecurrenceSeries> series) async {}
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<void> replaceAll(List<RecurrenceSeries> series) async {}
+
+  @override
+  Future<void> close() async {}
 }

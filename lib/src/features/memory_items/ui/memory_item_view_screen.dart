@@ -9,6 +9,7 @@ import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
 import '../state/memory_items_controller.dart';
 import '../state/memory_item_selectors.dart';
+import '../domain/memory_type.dart';
 import 'widgets/memory_item_presentation.dart';
 
 class MemoryItemViewScreen extends ConsumerWidget {
@@ -194,6 +195,38 @@ class MemoryItemViewScreen extends ConsumerWidget {
                                                 .onSurface,
                                             height: 1.36,
                                             fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ],
+                                  if (item.type == MemoryType.payment &&
+                                      item.amountMinor != null) ...[
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      '${NumberFormat.decimalPattern('ru').format(item.amountMinor! ~/ 100)} ₽',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: typeColor,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                    ),
+                                  ],
+                                  if (item.type == MemoryType.birthday &&
+                                      item.birthYear != null) ...[
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      locale == 'ru'
+                                          ? '${item.memoryDate.year - item.birthYear!} лет'
+                                          : '${item.memoryDate.year - item.birthYear!} years',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                            fontWeight: FontWeight.w800,
                                           ),
                                     ),
                                   ],

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/localization/app_strings.dart';
 import '../../../memory_items/domain/memory_item.dart';
+import '../../../memory_items/domain/memory_type.dart';
 import '../../../memory_items/ui/widgets/memory_item_presentation.dart';
 import '../../../voice_notes/ui/widgets/voice_note_player.dart';
 import 'memory_image_preview.dart';
@@ -212,6 +213,30 @@ class _CardContent extends StatelessWidget {
                           height: 1.25,
                         ),
                   ),
+                if (item.type == MemoryType.payment &&
+                    item.amountMinor != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${NumberFormat.decimalPattern('ru').format(item.amountMinor! ~/ 100)} ₽',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: memoryTypeColor(item.type),
+                          fontWeight: FontWeight.w900,
+                        ),
+                  ),
+                ],
+                if (item.type == MemoryType.birthday &&
+                    item.birthYear != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    Localizations.localeOf(context).languageCode == 'ru'
+                        ? '${item.memoryDate.year - item.birthYear!} лет'
+                        : '${item.memoryDate.year - item.birthYear!} years',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ],
                 if (hasAudio) ...[
                   const Spacer(),
                   VoiceNotePlayer(
@@ -308,7 +333,11 @@ class _ActionRail extends StatelessWidget {
     final status = item.isArchived
         ? strings.archive
         : item.isDone
-            ? strings.completed
+            ? item.type == MemoryType.payment
+                ? (Localizations.localeOf(context).languageCode == 'ru'
+                    ? 'Оплачено'
+                    : 'Paid')
+                : strings.completed
             : null;
 
     return SizedBox(

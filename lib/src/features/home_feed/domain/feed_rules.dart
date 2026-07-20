@@ -23,7 +23,9 @@ enum FeedFilter {
   project,
   purchase,
   document,
-  place;
+  place,
+  birthday,
+  payment;
 }
 
 List<MemoryItem> smartFeedForDay(List<MemoryItem> items, DateTime date) {
@@ -58,8 +60,18 @@ List<FeedDay> groupItemsByDate(
   List<MemoryItem> items, {
   FeedFilter filter = FeedFilter.all,
 }) {
+  final today = DateTime.now();
+  final day = DateTime(today.year, today.month, today.day);
   final visible = items.where((item) {
-    return !item.isArchived && _matchesFilter(item, filter);
+    final hiddenFutureOccurrence = item.isGeneratedOccurrence &&
+        DateTime(
+          item.memoryDate.year,
+          item.memoryDate.month,
+          item.memoryDate.day,
+        ).isAfter(day);
+    return !item.isArchived &&
+        !hiddenFutureOccurrence &&
+        _matchesFilter(item, filter);
   }).toList()
     ..sort((a, b) {
       final byDate = b.memoryDate.compareTo(a.memoryDate);
@@ -107,6 +119,8 @@ bool _matchesFilter(MemoryItem item, FeedFilter filter) {
     FeedFilter.purchase => item.type == MemoryType.purchase,
     FeedFilter.document => item.type == MemoryType.document,
     FeedFilter.place => item.type == MemoryType.place,
+    FeedFilter.birthday => item.type == MemoryType.birthday,
+    FeedFilter.payment => item.type == MemoryType.payment,
   };
 }
 

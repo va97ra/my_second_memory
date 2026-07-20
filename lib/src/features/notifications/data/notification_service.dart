@@ -291,17 +291,26 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
           stableNotificationId(item.id),
     };
     final pending = await _plugin.pendingNotificationRequests();
+    final pendingMemoryIds = <int>{};
     for (final notification in pending) {
       final data = decodeReminderPayload(notification.payload);
-      if (data?['source'] == 'memory_reminder' &&
-          !desired.contains(notification.id)) {
-        await _plugin.cancel(notification.id);
+      if (data?['source'] == 'memory_reminder') {
+        if (!desired.contains(notification.id)) {
+          await _plugin.cancel(notification.id);
+        } else {
+          pendingMemoryIds.add(notification.id);
+        }
       }
     }
+    var scheduled = 0;
     for (final item in items) {
       if (item.status == MemoryStatus.active &&
-          item.remindAt?.isAfter(DateTime.now()) == true) {
+          item.remindAt?.isAfter(DateTime.now()) == true &&
+          !pendingMemoryIds.contains(stableNotificationId(item.id))) {
         await schedule(item);
+        if (++scheduled % 8 == 0) {
+          await Future<void>.delayed(Duration.zero);
+        }
       }
     }
   }

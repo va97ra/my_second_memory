@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/localization/app_locale_controller.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme_controller.dart';
+import '../../calendar/state/calendar_preferences_controller.dart';
 import '../../../shared/ui/screen_chrome.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -16,6 +17,7 @@ class SettingsScreen extends ConsumerWidget {
     final locale = ref.watch(appLocaleControllerProvider);
     final isRu = locale.languageCode == 'ru';
     final isLight = ref.watch(appThemeControllerProvider) == ThemeMode.light;
+    final showHints = ref.watch(appHintsProvider);
 
     return WarmGradientBackground(
       child: CustomScrollView(
@@ -48,6 +50,20 @@ class SettingsScreen extends ConsumerWidget {
                                 ? controller.setRussian()
                                 : controller.setEnglish();
                           },
+                        ),
+                      ),
+                      _SettingsTile(
+                        icon: Icons.tips_and_updates_outlined,
+                        iconColor: const Color(0xFF0F766E),
+                        title: isRu ? 'Показывать подсказки' : 'Show hints',
+                        subtitle: isRu
+                            ? 'Подсказки для новых пользователей'
+                            : 'Hints for new users',
+                        trailing: Switch(
+                          value: showHints,
+                          onChanged: ref
+                              .read(appHintsProvider.notifier)
+                              .setEnabled,
                         ),
                       ),
                       _SettingsTile(

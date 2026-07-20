@@ -6,11 +6,13 @@ import 'package:intl/intl.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../state/calendar_month_data.dart';
+import '../state/calendar_preferences_controller.dart';
 import '../../home_feed/domain/feed_rules.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../memory_items/ui/widgets/memory_item_presentation.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
+import '../../recurrence/state/recurrence_controller.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -37,6 +39,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final locale = Localizations.localeOf(context).languageCode;
     final loadState = ref.watch(memoryItemsLoadProvider);
     final monthData = ref.watch(calendarMonthDataProvider(_visibleMonth));
+    final showHints = ref.watch(appHintsProvider);
+    ref.watch(recurrenceLoadProvider);
 
     if (loadState.isLoading || loadState.hasError) {
       return WarmGradientBackground(
@@ -61,7 +65,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             viewportConstraints.maxWidth > viewportConstraints.maxHeight;
         final needsLandscapeScroll =
             isLandscape && viewportConstraints.maxHeight < 680;
-        final panel = _buildPanel(locale, monthData);
+        final panel = _buildPanel(locale, monthData, showHints);
 
         return WarmGradientBackground(
           child: needsLandscapeScroll
@@ -98,6 +102,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _buildPanel(
     String locale,
     CalendarMonthData monthData,
+    bool showHints,
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
@@ -106,18 +111,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         visibleMonth: _visibleMonth,
         selectedDate: _selectedDate,
         monthData: monthData,
-        onPreviousMonth: () => setState(() {
-          _visibleMonth = DateTime(
-            _visibleMonth.year,
-            _visibleMonth.month - 1,
-          );
-        }),
-        onNextMonth: () => setState(() {
-          _visibleMonth = DateTime(
-            _visibleMonth.year,
-            _visibleMonth.month + 1,
-          );
-        }),
+        showHints: showHints,
+        onPreviousMonth: () => _changeMonth(-1),
+        onNextMonth: () => _changeMonth(1),
         onToday: () {
           final now = DateTime.now();
           final today = DateTime(now.year, now.month, now.day);
@@ -129,6 +125,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         onSelectDate: _openDayDialog,
       ),
     );
+  }
+
+  void _changeMonth(int offset) {
+    setState(() {
+      _visibleMonth = DateTime(
+        _visibleMonth.year,
+        _visibleMonth.month + offset,
+      );
+    });
+    ref
+        .read(recurrenceSeriesControllerProvider.notifier)
+        .ensureHorizonFor(_visibleMonth);
   }
 
   Future<void> _openDayDialog(DateTime date) async {
@@ -149,6 +157,7 @@ class _CalendarPanel extends StatelessWidget {
     required this.visibleMonth,
     required this.selectedDate,
     required this.monthData,
+    required this.showHints,
     required this.onPreviousMonth,
     required this.onNextMonth,
     required this.onToday,
@@ -159,6 +168,7 @@ class _CalendarPanel extends StatelessWidget {
   final DateTime visibleMonth;
   final DateTime selectedDate;
   final CalendarMonthData monthData;
+  final bool showHints;
   final VoidCallback onPreviousMonth;
   final VoidCallback onNextMonth;
   final VoidCallback onToday;
@@ -205,7 +215,9 @@ class _CalendarPanel extends StatelessWidget {
                                   ?.copyWith(
                                     color: index >= 5
                                         ? const Color(0xFFEA580C)
-                                        : const Color(0xFFC2BFB6),
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 0,
                                   ),
@@ -272,44 +284,47 @@ class _CalendarPanel extends StatelessWidget {
                   },
                 ),
               ),
-              const SizedBox(height: 7),
-              DecoratedBox(
-                key: const ValueKey('calendar_hint'),
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest
-                      .withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
-                ),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.touch_app_outlined,
-                        size: 18,
-                        color: Color(0xFFD97757),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          AppStrings.of(context).calendarTapHint,
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelMedium
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface,
-                                fontWeight: FontWeight.w800,
-                              ),
+              if (showHints) ...[
+                const SizedBox(height: 7),
+                DecoratedBox(
+                  key: const ValueKey('calendar_hint'),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.touch_app_outlined,
+                          size: 18,
+                          color: Color(0xFFD97757),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            AppStrings.of(context).calendarTapHint,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         );
@@ -566,135 +581,147 @@ class _CalendarDayCell extends StatelessWidget {
         ? colors.onSurface
         : colors.onSurface.withValues(alpha: 0.38);
 
+    final usesGradientBorder =
+        isInVisibleMonth && !isSelected && !isToday && !hasItems;
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        decoration: BoxDecoration(
-          color: _cellColor(colors, hasItems, hasShift),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.onSurface
-                : isToday
-                    ? const Color(0xFFD97757)
-                    : hasItems && isInVisibleMonth
-                        ? const Color(0xFFBFDBFE)
-                        : isInVisibleMonth
-                            ? Theme.of(context).colorScheme.outlineVariant
-                            : Colors.transparent,
-            width: isSelected
-                ? 2
-                : isToday
-                    ? 1.5
-                    : 1,
+      child: CustomPaint(
+        foregroundPainter: usesGradientBorder
+            ? _CalendarCellBorderPainter(
+                isDark: Theme.of(context).brightness == Brightness.dark,
+                colorScheme: colors,
+              )
+            : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          decoration: BoxDecoration(
+            color: _cellColor(colors, hasItems, hasShift),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected
+                  ? Theme.of(context).colorScheme.onSurface
+                  : isToday
+                      ? const Color(0xFFD97757)
+                      : hasItems && isInVisibleMonth
+                          ? const Color(0xFFBFDBFE)
+                          : Colors.transparent,
+              width: isSelected
+                  ? 2
+                  : isToday
+                      ? 1.5
+                      : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.16),
+                      blurRadius: 14,
+                      offset: const Offset(0, 7),
+                    ),
+                  ]
+                : null,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.16),
-                    blurRadius: 14,
-                    offset: const Offset(0, 7),
-                  ),
-                ]
-              : null,
-        ),
-        child: LayoutBuilder(
-          builder: (context, cellConstraints) {
-            final maxEvents = cellConstraints.maxHeight >= 88
-                ? 3
-                : cellConstraints.maxHeight >= 66
-                    ? 2
-                    : cellConstraints.maxHeight >= 48
-                        ? 1
-                        : 0;
-            final visibleItems = _sortedItems(items).take(maxEvents).toList();
-            final overflowCount = items.length - visibleItems.length;
+          child: LayoutBuilder(
+            builder: (context, cellConstraints) {
+              final maxEvents = cellConstraints.maxHeight >= 130
+                  ? 5
+                  : cellConstraints.maxHeight >= 112
+                      ? 4
+                      : cellConstraints.maxHeight >= 94
+                          ? 3
+                          : cellConstraints.maxHeight >= 76
+                              ? 2
+                              : cellConstraints.maxHeight >= 58
+                                  ? 1
+                                  : 0;
+              final visibleItems = _sortedItems(items).take(maxEvents).toList();
+              final overflowCount = items.length - visibleItems.length;
 
-            return Stack(
-              children: [
-                if (hasShift)
-                  Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: _ShiftFill(
-                        key: ValueKey('shift_fill_${_dateKey(date)}'),
-                        colors: shiftColors,
-                        isSelected: isSelected,
+              return Stack(
+                children: [
+                  if (hasShift)
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: _ShiftFill(
+                          key: ValueKey('shift_fill_${_dateKey(date)}'),
+                          colors: shiftColors,
+                          isSelected: isSelected,
+                        ),
                       ),
                     ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 3, 4, 3),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          _DayNumber(
-                            day: date.day,
-                            isToday: isToday,
-                            isSelected: isSelected,
-                            color: foreground,
-                          ),
-                          const Spacer(),
-                          if (items.any((item) => item.isArchived))
-                            SizedBox(
-                              width: 9,
-                              height: 9,
-                              child: FittedBox(
-                                child: Icon(
-                                  Icons.archive_outlined,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant
-                                      .withValues(
-                                        alpha: isInVisibleMonth ? 0.8 : 0.35,
-                                      ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 3, 4, 3),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            _DayNumber(
+                              day: date.day,
+                              isToday: isToday,
+                              isSelected: isSelected,
+                              color: foreground,
+                            ),
+                            const Spacer(),
+                            if (items.any((item) => item.isArchived))
+                              SizedBox(
+                                width: 9,
+                                height: 9,
+                                child: FittedBox(
+                                  child: Icon(
+                                    Icons.archive_outlined,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                        .withValues(
+                                          alpha: isInVisibleMonth ? 0.8 : 0.35,
+                                        ),
+                                  ),
                                 ),
                               ),
+                          ],
+                        ),
+                        if (maxEvents > 0) ...[
+                          const SizedBox(height: 3),
+                          for (final item in visibleItems) ...[
+                            _CalendarEventBar(
+                              item: item,
+                              locale: locale,
+                              isMuted: !isInVisibleMonth,
+                            ),
+                            const SizedBox(height: 2),
+                          ],
+                          if (overflowCount > 0 &&
+                              cellConstraints.maxHeight >= 70)
+                            Text(
+                              locale == 'ru'
+                                  ? '+ ещё $overflowCount'
+                                  : '+ $overflowCount more',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: const Color(0xFFC2BFB6),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
+                                  ),
                             ),
                         ],
-                      ),
-                      if (maxEvents > 0) ...[
-                        const SizedBox(height: 3),
-                        for (final item in visibleItems) ...[
-                          _CalendarEventBar(
-                            item: item,
-                            locale: locale,
-                            isMuted: !isInVisibleMonth,
-                          ),
-                          const SizedBox(height: 2),
-                        ],
-                        if (overflowCount > 0 &&
-                            cellConstraints.maxHeight >= 70)
-                          Text(
-                            locale == 'ru'
-                                ? '+ ещё $overflowCount'
-                                : '+ $overflowCount more',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(
-                                  color: const Color(0xFFC2BFB6),
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1,
-                                ),
-                          ),
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -740,6 +767,51 @@ class _CalendarDayCell extends StatelessWidget {
         }
         return a.createdAt.compareTo(b.createdAt);
       });
+  }
+}
+
+class _CalendarCellBorderPainter extends CustomPainter {
+  const _CalendarCellBorderPainter({
+    required this.isDark,
+    required this.colorScheme,
+  });
+
+  final bool isDark;
+  final ColorScheme colorScheme;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(0.5),
+      const Radius.circular(8),
+    );
+    final gradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: isDark
+          ? [
+              colorScheme.onSurface.withValues(alpha: 0.3),
+              colorScheme.outlineVariant.withValues(alpha: 0.78),
+            ]
+          : [
+              colorScheme.onSurface.withValues(alpha: 0.26),
+              colorScheme.outlineVariant.withValues(alpha: 0.48),
+            ],
+    );
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..shader = gradient.createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _CalendarCellBorderPainter oldDelegate) {
+    return oldDelegate.isDark != isDark ||
+        oldDelegate.colorScheme != colorScheme;
   }
 }
 

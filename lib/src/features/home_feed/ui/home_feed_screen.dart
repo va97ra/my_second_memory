@@ -6,9 +6,11 @@ import 'package:intl/intl.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
+import '../../calendar/state/calendar_preferences_controller.dart';
 import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../memory_items/state/memory_item_selectors.dart';
+import '../../recurrence/ui/recurring_informers.dart';
 import '../domain/feed_rules.dart';
 import '../state/feed_providers.dart';
 import 'widgets/memory_item_card.dart';
@@ -28,6 +30,7 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     final filter = ref.watch(feedFilterProvider);
     final layout = ref.watch(feedLayoutProvider);
     final isEmpty = layout.days.isEmpty;
+    final showHints = ref.watch(appHintsProvider);
 
     if (loadState.isLoading || loadState.hasError) {
       return WarmGradientBackground(
@@ -59,7 +62,8 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
               },
             ),
           ),
-          const SliverToBoxAdapter(child: _MemoryBanner()),
+          if (showHints) const SliverToBoxAdapter(child: _FeedUsageHint()),
+          const SliverToBoxAdapter(child: RecurringInformers()),
           if (isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
@@ -78,6 +82,100 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
               _MemorySliverList(itemIds: group.itemIds),
             ],
           const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedUsageHint extends StatelessWidget {
+  const _FeedUsageHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final ru = Localizations.localeOf(context).languageCode == 'ru';
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
+      child: Material(
+        color: colors.primaryContainer.withValues(alpha: 0.42),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: colors.primary.withValues(alpha: 0.32)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                ru ? 'Как пользоваться' : 'How to use the app',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
+              const SizedBox(height: 5),
+              _HintLine(
+                icon: Icons.calendar_month_outlined,
+                text: ru
+                    ? 'Календарь → дата → «Добавить запись»'
+                    : 'Calendar → date → Add record',
+              ),
+              _HintLine(
+                icon: Icons.event_repeat,
+                text: ru
+                    ? '↻ включает повтор, галочка завершает запись'
+                    : '↻ repeats; the check mark completes a record',
+              ),
+              _HintLine(
+                icon: Icons.archive_outlined,
+                text: ru
+                    ? 'Архив переносит запись в Базу памяти'
+                    : 'Archive moves a record to Memory library',
+              ),
+              const SizedBox(height: 3),
+              Text(
+                ru
+                    ? 'Подсказки отключаются в Настройки → Показывать подсказки.'
+                    : 'Turn hints off in Settings → Show hints.',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HintLine extends StatelessWidget {
+  const _HintLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(
+        children: [
+          Icon(icon, size: 15, color: colors.primary),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
         ],
       ),
     );
@@ -179,6 +277,8 @@ class _FeedFilterButton extends StatelessWidget {
       FeedFilter.purchase => MemoryType.purchase.label(locale),
       FeedFilter.document => MemoryType.document.label(locale),
       FeedFilter.place => MemoryType.place.label(locale),
+      FeedFilter.birthday => MemoryType.birthday.label(locale),
+      FeedFilter.payment => MemoryType.payment.label(locale),
     };
   }
 
@@ -195,53 +295,9 @@ class _FeedFilterButton extends StatelessWidget {
       FeedFilter.purchase => Icons.shopping_bag_outlined,
       FeedFilter.document => Icons.description_outlined,
       FeedFilter.place => Icons.place_outlined,
+      FeedFilter.birthday => Icons.cake_outlined,
+      FeedFilter.payment => Icons.payments_outlined,
     };
-  }
-}
-
-class _MemoryBanner extends StatelessWidget {
-  const _MemoryBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Stack(
-          children: [
-            AspectRatio(
-              aspectRatio: 2.45,
-              child: Image.asset(
-                'assets/images/memory_banner.png',
-                fit: BoxFit.cover,
-              ),
-            ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.24),
-                      Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHighest
-                          .withValues(alpha: 0.32),
-                      Colors.white.withValues(alpha: 0.1),
-                    ],
-                  ),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.55),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

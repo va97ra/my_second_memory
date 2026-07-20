@@ -148,6 +148,40 @@ class $MemoryItemsTable extends MemoryItems
   late final GeneratedColumn<String> transcript = GeneratedColumn<String>(
       'transcript', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _seriesIdMeta =
+      const VerificationMeta('seriesId');
+  @override
+  late final GeneratedColumn<String> seriesId = GeneratedColumn<String>(
+      'series_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _amountMinorMeta =
+      const VerificationMeta('amountMinor');
+  @override
+  late final GeneratedColumn<int> amountMinor = GeneratedColumn<int>(
+      'amount_minor', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _paymentCategoryMeta =
+      const VerificationMeta('paymentCategory');
+  @override
+  late final GeneratedColumn<String> paymentCategory = GeneratedColumn<String>(
+      'payment_category', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _birthYearMeta =
+      const VerificationMeta('birthYear');
+  @override
+  late final GeneratedColumn<int> birthYear = GeneratedColumn<int>(
+      'birth_year', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _isGeneratedOccurrenceMeta =
+      const VerificationMeta('isGeneratedOccurrence');
+  @override
+  late final GeneratedColumn<bool> isGeneratedOccurrence =
+      GeneratedColumn<bool>('is_generated_occurrence', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: false,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("is_generated_occurrence" IN (0, 1))'),
+          defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -171,7 +205,12 @@ class $MemoryItemsTable extends MemoryItems
         audioPath,
         audioDurationSeconds,
         imagePathsJson,
-        transcript
+        transcript,
+        seriesId,
+        amountMinor,
+        paymentCategory,
+        birthYear,
+        isGeneratedOccurrence
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -300,6 +339,32 @@ class $MemoryItemsTable extends MemoryItems
           transcript.isAcceptableOrUnknown(
               data['transcript']!, _transcriptMeta));
     }
+    if (data.containsKey('series_id')) {
+      context.handle(_seriesIdMeta,
+          seriesId.isAcceptableOrUnknown(data['series_id']!, _seriesIdMeta));
+    }
+    if (data.containsKey('amount_minor')) {
+      context.handle(
+          _amountMinorMeta,
+          amountMinor.isAcceptableOrUnknown(
+              data['amount_minor']!, _amountMinorMeta));
+    }
+    if (data.containsKey('payment_category')) {
+      context.handle(
+          _paymentCategoryMeta,
+          paymentCategory.isAcceptableOrUnknown(
+              data['payment_category']!, _paymentCategoryMeta));
+    }
+    if (data.containsKey('birth_year')) {
+      context.handle(_birthYearMeta,
+          birthYear.isAcceptableOrUnknown(data['birth_year']!, _birthYearMeta));
+    }
+    if (data.containsKey('is_generated_occurrence')) {
+      context.handle(
+          _isGeneratedOccurrenceMeta,
+          isGeneratedOccurrence.isAcceptableOrUnknown(
+              data['is_generated_occurrence']!, _isGeneratedOccurrenceMeta));
+    }
     return context;
   }
 
@@ -353,6 +418,17 @@ class $MemoryItemsTable extends MemoryItems
           DriftSqlType.string, data['${effectivePrefix}image_paths_json'])!,
       transcript: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}transcript']),
+      seriesId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}series_id']),
+      amountMinor: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}amount_minor']),
+      paymentCategory: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}payment_category']),
+      birthYear: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}birth_year']),
+      isGeneratedOccurrence: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool,
+          data['${effectivePrefix}is_generated_occurrence'])!,
     );
   }
 
@@ -385,6 +461,11 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
   final int? audioDurationSeconds;
   final String imagePathsJson;
   final String? transcript;
+  final String? seriesId;
+  final int? amountMinor;
+  final String? paymentCategory;
+  final int? birthYear;
+  final bool isGeneratedOccurrence;
   const MemoryItemRow(
       {required this.id,
       required this.type,
@@ -407,7 +488,12 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       this.audioPath,
       this.audioDurationSeconds,
       required this.imagePathsJson,
-      this.transcript});
+      this.transcript,
+      this.seriesId,
+      this.amountMinor,
+      this.paymentCategory,
+      this.birthYear,
+      required this.isGeneratedOccurrence});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -453,6 +539,19 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
     if (!nullToAbsent || transcript != null) {
       map['transcript'] = Variable<String>(transcript);
     }
+    if (!nullToAbsent || seriesId != null) {
+      map['series_id'] = Variable<String>(seriesId);
+    }
+    if (!nullToAbsent || amountMinor != null) {
+      map['amount_minor'] = Variable<int>(amountMinor);
+    }
+    if (!nullToAbsent || paymentCategory != null) {
+      map['payment_category'] = Variable<String>(paymentCategory);
+    }
+    if (!nullToAbsent || birthYear != null) {
+      map['birth_year'] = Variable<int>(birthYear);
+    }
+    map['is_generated_occurrence'] = Variable<bool>(isGeneratedOccurrence);
     return map;
   }
 
@@ -500,6 +599,19 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       transcript: transcript == null && nullToAbsent
           ? const Value.absent()
           : Value(transcript),
+      seriesId: seriesId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(seriesId),
+      amountMinor: amountMinor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amountMinor),
+      paymentCategory: paymentCategory == null && nullToAbsent
+          ? const Value.absent()
+          : Value(paymentCategory),
+      birthYear: birthYear == null && nullToAbsent
+          ? const Value.absent()
+          : Value(birthYear),
+      isGeneratedOccurrence: Value(isGeneratedOccurrence),
     );
   }
 
@@ -531,6 +643,12 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           serializer.fromJson<int?>(json['audioDurationSeconds']),
       imagePathsJson: serializer.fromJson<String>(json['imagePathsJson']),
       transcript: serializer.fromJson<String?>(json['transcript']),
+      seriesId: serializer.fromJson<String?>(json['seriesId']),
+      amountMinor: serializer.fromJson<int?>(json['amountMinor']),
+      paymentCategory: serializer.fromJson<String?>(json['paymentCategory']),
+      birthYear: serializer.fromJson<int?>(json['birthYear']),
+      isGeneratedOccurrence:
+          serializer.fromJson<bool>(json['isGeneratedOccurrence']),
     );
   }
   @override
@@ -559,6 +677,11 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       'audioDurationSeconds': serializer.toJson<int?>(audioDurationSeconds),
       'imagePathsJson': serializer.toJson<String>(imagePathsJson),
       'transcript': serializer.toJson<String?>(transcript),
+      'seriesId': serializer.toJson<String?>(seriesId),
+      'amountMinor': serializer.toJson<int?>(amountMinor),
+      'paymentCategory': serializer.toJson<String?>(paymentCategory),
+      'birthYear': serializer.toJson<int?>(birthYear),
+      'isGeneratedOccurrence': serializer.toJson<bool>(isGeneratedOccurrence),
     };
   }
 
@@ -584,7 +707,12 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           Value<String?> audioPath = const Value.absent(),
           Value<int?> audioDurationSeconds = const Value.absent(),
           String? imagePathsJson,
-          Value<String?> transcript = const Value.absent()}) =>
+          Value<String?> transcript = const Value.absent(),
+          Value<String?> seriesId = const Value.absent(),
+          Value<int?> amountMinor = const Value.absent(),
+          Value<String?> paymentCategory = const Value.absent(),
+          Value<int?> birthYear = const Value.absent(),
+          bool? isGeneratedOccurrence}) =>
       MemoryItemRow(
         id: id ?? this.id,
         type: type ?? this.type,
@@ -614,6 +742,14 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
             : this.audioDurationSeconds,
         imagePathsJson: imagePathsJson ?? this.imagePathsJson,
         transcript: transcript.present ? transcript.value : this.transcript,
+        seriesId: seriesId.present ? seriesId.value : this.seriesId,
+        amountMinor: amountMinor.present ? amountMinor.value : this.amountMinor,
+        paymentCategory: paymentCategory.present
+            ? paymentCategory.value
+            : this.paymentCategory,
+        birthYear: birthYear.present ? birthYear.value : this.birthYear,
+        isGeneratedOccurrence:
+            isGeneratedOccurrence ?? this.isGeneratedOccurrence,
       );
   MemoryItemRow copyWithCompanion(MemoryItemsCompanion data) {
     return MemoryItemRow(
@@ -653,6 +789,16 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           : this.imagePathsJson,
       transcript:
           data.transcript.present ? data.transcript.value : this.transcript,
+      seriesId: data.seriesId.present ? data.seriesId.value : this.seriesId,
+      amountMinor:
+          data.amountMinor.present ? data.amountMinor.value : this.amountMinor,
+      paymentCategory: data.paymentCategory.present
+          ? data.paymentCategory.value
+          : this.paymentCategory,
+      birthYear: data.birthYear.present ? data.birthYear.value : this.birthYear,
+      isGeneratedOccurrence: data.isGeneratedOccurrence.present
+          ? data.isGeneratedOccurrence.value
+          : this.isGeneratedOccurrence,
     );
   }
 
@@ -680,7 +826,12 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           ..write('audioPath: $audioPath, ')
           ..write('audioDurationSeconds: $audioDurationSeconds, ')
           ..write('imagePathsJson: $imagePathsJson, ')
-          ..write('transcript: $transcript')
+          ..write('transcript: $transcript, ')
+          ..write('seriesId: $seriesId, ')
+          ..write('amountMinor: $amountMinor, ')
+          ..write('paymentCategory: $paymentCategory, ')
+          ..write('birthYear: $birthYear, ')
+          ..write('isGeneratedOccurrence: $isGeneratedOccurrence')
           ..write(')'))
         .toString();
   }
@@ -708,7 +859,12 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
         audioPath,
         audioDurationSeconds,
         imagePathsJson,
-        transcript
+        transcript,
+        seriesId,
+        amountMinor,
+        paymentCategory,
+        birthYear,
+        isGeneratedOccurrence
       ]);
   @override
   bool operator ==(Object other) =>
@@ -735,7 +891,12 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           other.audioPath == this.audioPath &&
           other.audioDurationSeconds == this.audioDurationSeconds &&
           other.imagePathsJson == this.imagePathsJson &&
-          other.transcript == this.transcript);
+          other.transcript == this.transcript &&
+          other.seriesId == this.seriesId &&
+          other.amountMinor == this.amountMinor &&
+          other.paymentCategory == this.paymentCategory &&
+          other.birthYear == this.birthYear &&
+          other.isGeneratedOccurrence == this.isGeneratedOccurrence);
 }
 
 class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
@@ -761,6 +922,11 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
   final Value<int?> audioDurationSeconds;
   final Value<String> imagePathsJson;
   final Value<String?> transcript;
+  final Value<String?> seriesId;
+  final Value<int?> amountMinor;
+  final Value<String?> paymentCategory;
+  final Value<int?> birthYear;
+  final Value<bool> isGeneratedOccurrence;
   final Value<int> rowid;
   const MemoryItemsCompanion({
     this.id = const Value.absent(),
@@ -785,6 +951,11 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     this.audioDurationSeconds = const Value.absent(),
     this.imagePathsJson = const Value.absent(),
     this.transcript = const Value.absent(),
+    this.seriesId = const Value.absent(),
+    this.amountMinor = const Value.absent(),
+    this.paymentCategory = const Value.absent(),
+    this.birthYear = const Value.absent(),
+    this.isGeneratedOccurrence = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MemoryItemsCompanion.insert({
@@ -810,6 +981,11 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     this.audioDurationSeconds = const Value.absent(),
     this.imagePathsJson = const Value.absent(),
     this.transcript = const Value.absent(),
+    this.seriesId = const Value.absent(),
+    this.amountMinor = const Value.absent(),
+    this.paymentCategory = const Value.absent(),
+    this.birthYear = const Value.absent(),
+    this.isGeneratedOccurrence = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         type = Value(type),
@@ -840,6 +1016,11 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     Expression<int>? audioDurationSeconds,
     Expression<String>? imagePathsJson,
     Expression<String>? transcript,
+    Expression<String>? seriesId,
+    Expression<int>? amountMinor,
+    Expression<String>? paymentCategory,
+    Expression<int>? birthYear,
+    Expression<bool>? isGeneratedOccurrence,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -866,6 +1047,12 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
         'audio_duration_seconds': audioDurationSeconds,
       if (imagePathsJson != null) 'image_paths_json': imagePathsJson,
       if (transcript != null) 'transcript': transcript,
+      if (seriesId != null) 'series_id': seriesId,
+      if (amountMinor != null) 'amount_minor': amountMinor,
+      if (paymentCategory != null) 'payment_category': paymentCategory,
+      if (birthYear != null) 'birth_year': birthYear,
+      if (isGeneratedOccurrence != null)
+        'is_generated_occurrence': isGeneratedOccurrence,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -893,6 +1080,11 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       Value<int?>? audioDurationSeconds,
       Value<String>? imagePathsJson,
       Value<String?>? transcript,
+      Value<String?>? seriesId,
+      Value<int?>? amountMinor,
+      Value<String?>? paymentCategory,
+      Value<int?>? birthYear,
+      Value<bool>? isGeneratedOccurrence,
       Value<int>? rowid}) {
     return MemoryItemsCompanion(
       id: id ?? this.id,
@@ -917,6 +1109,12 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       audioDurationSeconds: audioDurationSeconds ?? this.audioDurationSeconds,
       imagePathsJson: imagePathsJson ?? this.imagePathsJson,
       transcript: transcript ?? this.transcript,
+      seriesId: seriesId ?? this.seriesId,
+      amountMinor: amountMinor ?? this.amountMinor,
+      paymentCategory: paymentCategory ?? this.paymentCategory,
+      birthYear: birthYear ?? this.birthYear,
+      isGeneratedOccurrence:
+          isGeneratedOccurrence ?? this.isGeneratedOccurrence,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -990,6 +1188,22 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     if (transcript.present) {
       map['transcript'] = Variable<String>(transcript.value);
     }
+    if (seriesId.present) {
+      map['series_id'] = Variable<String>(seriesId.value);
+    }
+    if (amountMinor.present) {
+      map['amount_minor'] = Variable<int>(amountMinor.value);
+    }
+    if (paymentCategory.present) {
+      map['payment_category'] = Variable<String>(paymentCategory.value);
+    }
+    if (birthYear.present) {
+      map['birth_year'] = Variable<int>(birthYear.value);
+    }
+    if (isGeneratedOccurrence.present) {
+      map['is_generated_occurrence'] =
+          Variable<bool>(isGeneratedOccurrence.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1021,6 +1235,498 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
           ..write('audioDurationSeconds: $audioDurationSeconds, ')
           ..write('imagePathsJson: $imagePathsJson, ')
           ..write('transcript: $transcript, ')
+          ..write('seriesId: $seriesId, ')
+          ..write('amountMinor: $amountMinor, ')
+          ..write('paymentCategory: $paymentCategory, ')
+          ..write('birthYear: $birthYear, ')
+          ..write('isGeneratedOccurrence: $isGeneratedOccurrence, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecurrenceSeriesRowsTable extends RecurrenceSeriesRows
+    with TableInfo<$RecurrenceSeriesRowsTable, RecurrenceSeriesRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecurrenceSeriesRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _frequencyMeta =
+      const VerificationMeta('frequency');
+  @override
+  late final GeneratedColumn<String> frequency = GeneratedColumn<String>(
+      'frequency', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _templateJsonMeta =
+      const VerificationMeta('templateJson');
+  @override
+  late final GeneratedColumn<String> templateJson = GeneratedColumn<String>(
+      'template_json', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _startDateMeta =
+      const VerificationMeta('startDate');
+  @override
+  late final GeneratedColumn<DateTime> startDate = GeneratedColumn<DateTime>(
+      'start_date', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _originItemIdMeta =
+      const VerificationMeta('originItemId');
+  @override
+  late final GeneratedColumn<String> originItemId = GeneratedColumn<String>(
+      'origin_item_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _isEnabledMeta =
+      const VerificationMeta('isEnabled');
+  @override
+  late final GeneratedColumn<bool> isEnabled = GeneratedColumn<bool>(
+      'is_enabled', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_enabled" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _generatedThroughMeta =
+      const VerificationMeta('generatedThrough');
+  @override
+  late final GeneratedColumn<DateTime> generatedThrough =
+      GeneratedColumn<DateTime>('generated_through', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        frequency,
+        templateJson,
+        startDate,
+        originItemId,
+        isEnabled,
+        createdAt,
+        updatedAt,
+        generatedThrough
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recurrence_series_rows';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<RecurrenceSeriesRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('frequency')) {
+      context.handle(_frequencyMeta,
+          frequency.isAcceptableOrUnknown(data['frequency']!, _frequencyMeta));
+    } else if (isInserting) {
+      context.missing(_frequencyMeta);
+    }
+    if (data.containsKey('template_json')) {
+      context.handle(
+          _templateJsonMeta,
+          templateJson.isAcceptableOrUnknown(
+              data['template_json']!, _templateJsonMeta));
+    } else if (isInserting) {
+      context.missing(_templateJsonMeta);
+    }
+    if (data.containsKey('start_date')) {
+      context.handle(_startDateMeta,
+          startDate.isAcceptableOrUnknown(data['start_date']!, _startDateMeta));
+    } else if (isInserting) {
+      context.missing(_startDateMeta);
+    }
+    if (data.containsKey('origin_item_id')) {
+      context.handle(
+          _originItemIdMeta,
+          originItemId.isAcceptableOrUnknown(
+              data['origin_item_id']!, _originItemIdMeta));
+    } else if (isInserting) {
+      context.missing(_originItemIdMeta);
+    }
+    if (data.containsKey('is_enabled')) {
+      context.handle(_isEnabledMeta,
+          isEnabled.isAcceptableOrUnknown(data['is_enabled']!, _isEnabledMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('generated_through')) {
+      context.handle(
+          _generatedThroughMeta,
+          generatedThrough.isAcceptableOrUnknown(
+              data['generated_through']!, _generatedThroughMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RecurrenceSeriesRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecurrenceSeriesRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      frequency: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}frequency'])!,
+      templateJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}template_json'])!,
+      startDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}start_date'])!,
+      originItemId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}origin_item_id'])!,
+      isEnabled: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_enabled'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      generatedThrough: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}generated_through']),
+    );
+  }
+
+  @override
+  $RecurrenceSeriesRowsTable createAlias(String alias) {
+    return $RecurrenceSeriesRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecurrenceSeriesRow extends DataClass
+    implements Insertable<RecurrenceSeriesRow> {
+  final String id;
+  final String frequency;
+  final String templateJson;
+  final DateTime startDate;
+  final String originItemId;
+  final bool isEnabled;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? generatedThrough;
+  const RecurrenceSeriesRow(
+      {required this.id,
+      required this.frequency,
+      required this.templateJson,
+      required this.startDate,
+      required this.originItemId,
+      required this.isEnabled,
+      required this.createdAt,
+      required this.updatedAt,
+      this.generatedThrough});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['frequency'] = Variable<String>(frequency);
+    map['template_json'] = Variable<String>(templateJson);
+    map['start_date'] = Variable<DateTime>(startDate);
+    map['origin_item_id'] = Variable<String>(originItemId);
+    map['is_enabled'] = Variable<bool>(isEnabled);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || generatedThrough != null) {
+      map['generated_through'] = Variable<DateTime>(generatedThrough);
+    }
+    return map;
+  }
+
+  RecurrenceSeriesRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecurrenceSeriesRowsCompanion(
+      id: Value(id),
+      frequency: Value(frequency),
+      templateJson: Value(templateJson),
+      startDate: Value(startDate),
+      originItemId: Value(originItemId),
+      isEnabled: Value(isEnabled),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      generatedThrough: generatedThrough == null && nullToAbsent
+          ? const Value.absent()
+          : Value(generatedThrough),
+    );
+  }
+
+  factory RecurrenceSeriesRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecurrenceSeriesRow(
+      id: serializer.fromJson<String>(json['id']),
+      frequency: serializer.fromJson<String>(json['frequency']),
+      templateJson: serializer.fromJson<String>(json['templateJson']),
+      startDate: serializer.fromJson<DateTime>(json['startDate']),
+      originItemId: serializer.fromJson<String>(json['originItemId']),
+      isEnabled: serializer.fromJson<bool>(json['isEnabled']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      generatedThrough:
+          serializer.fromJson<DateTime?>(json['generatedThrough']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'frequency': serializer.toJson<String>(frequency),
+      'templateJson': serializer.toJson<String>(templateJson),
+      'startDate': serializer.toJson<DateTime>(startDate),
+      'originItemId': serializer.toJson<String>(originItemId),
+      'isEnabled': serializer.toJson<bool>(isEnabled),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'generatedThrough': serializer.toJson<DateTime?>(generatedThrough),
+    };
+  }
+
+  RecurrenceSeriesRow copyWith(
+          {String? id,
+          String? frequency,
+          String? templateJson,
+          DateTime? startDate,
+          String? originItemId,
+          bool? isEnabled,
+          DateTime? createdAt,
+          DateTime? updatedAt,
+          Value<DateTime?> generatedThrough = const Value.absent()}) =>
+      RecurrenceSeriesRow(
+        id: id ?? this.id,
+        frequency: frequency ?? this.frequency,
+        templateJson: templateJson ?? this.templateJson,
+        startDate: startDate ?? this.startDate,
+        originItemId: originItemId ?? this.originItemId,
+        isEnabled: isEnabled ?? this.isEnabled,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        generatedThrough: generatedThrough.present
+            ? generatedThrough.value
+            : this.generatedThrough,
+      );
+  RecurrenceSeriesRow copyWithCompanion(RecurrenceSeriesRowsCompanion data) {
+    return RecurrenceSeriesRow(
+      id: data.id.present ? data.id.value : this.id,
+      frequency: data.frequency.present ? data.frequency.value : this.frequency,
+      templateJson: data.templateJson.present
+          ? data.templateJson.value
+          : this.templateJson,
+      startDate: data.startDate.present ? data.startDate.value : this.startDate,
+      originItemId: data.originItemId.present
+          ? data.originItemId.value
+          : this.originItemId,
+      isEnabled: data.isEnabled.present ? data.isEnabled.value : this.isEnabled,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      generatedThrough: data.generatedThrough.present
+          ? data.generatedThrough.value
+          : this.generatedThrough,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecurrenceSeriesRow(')
+          ..write('id: $id, ')
+          ..write('frequency: $frequency, ')
+          ..write('templateJson: $templateJson, ')
+          ..write('startDate: $startDate, ')
+          ..write('originItemId: $originItemId, ')
+          ..write('isEnabled: $isEnabled, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('generatedThrough: $generatedThrough')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, frequency, templateJson, startDate,
+      originItemId, isEnabled, createdAt, updatedAt, generatedThrough);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecurrenceSeriesRow &&
+          other.id == this.id &&
+          other.frequency == this.frequency &&
+          other.templateJson == this.templateJson &&
+          other.startDate == this.startDate &&
+          other.originItemId == this.originItemId &&
+          other.isEnabled == this.isEnabled &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.generatedThrough == this.generatedThrough);
+}
+
+class RecurrenceSeriesRowsCompanion
+    extends UpdateCompanion<RecurrenceSeriesRow> {
+  final Value<String> id;
+  final Value<String> frequency;
+  final Value<String> templateJson;
+  final Value<DateTime> startDate;
+  final Value<String> originItemId;
+  final Value<bool> isEnabled;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> generatedThrough;
+  final Value<int> rowid;
+  const RecurrenceSeriesRowsCompanion({
+    this.id = const Value.absent(),
+    this.frequency = const Value.absent(),
+    this.templateJson = const Value.absent(),
+    this.startDate = const Value.absent(),
+    this.originItemId = const Value.absent(),
+    this.isEnabled = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.generatedThrough = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecurrenceSeriesRowsCompanion.insert({
+    required String id,
+    required String frequency,
+    required String templateJson,
+    required DateTime startDate,
+    required String originItemId,
+    this.isEnabled = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.generatedThrough = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        frequency = Value(frequency),
+        templateJson = Value(templateJson),
+        startDate = Value(startDate),
+        originItemId = Value(originItemId),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<RecurrenceSeriesRow> custom({
+    Expression<String>? id,
+    Expression<String>? frequency,
+    Expression<String>? templateJson,
+    Expression<DateTime>? startDate,
+    Expression<String>? originItemId,
+    Expression<bool>? isEnabled,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? generatedThrough,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (frequency != null) 'frequency': frequency,
+      if (templateJson != null) 'template_json': templateJson,
+      if (startDate != null) 'start_date': startDate,
+      if (originItemId != null) 'origin_item_id': originItemId,
+      if (isEnabled != null) 'is_enabled': isEnabled,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (generatedThrough != null) 'generated_through': generatedThrough,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecurrenceSeriesRowsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? frequency,
+      Value<String>? templateJson,
+      Value<DateTime>? startDate,
+      Value<String>? originItemId,
+      Value<bool>? isEnabled,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<DateTime?>? generatedThrough,
+      Value<int>? rowid}) {
+    return RecurrenceSeriesRowsCompanion(
+      id: id ?? this.id,
+      frequency: frequency ?? this.frequency,
+      templateJson: templateJson ?? this.templateJson,
+      startDate: startDate ?? this.startDate,
+      originItemId: originItemId ?? this.originItemId,
+      isEnabled: isEnabled ?? this.isEnabled,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      generatedThrough: generatedThrough ?? this.generatedThrough,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (frequency.present) {
+      map['frequency'] = Variable<String>(frequency.value);
+    }
+    if (templateJson.present) {
+      map['template_json'] = Variable<String>(templateJson.value);
+    }
+    if (startDate.present) {
+      map['start_date'] = Variable<DateTime>(startDate.value);
+    }
+    if (originItemId.present) {
+      map['origin_item_id'] = Variable<String>(originItemId.value);
+    }
+    if (isEnabled.present) {
+      map['is_enabled'] = Variable<bool>(isEnabled.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (generatedThrough.present) {
+      map['generated_through'] = Variable<DateTime>(generatedThrough.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecurrenceSeriesRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('frequency: $frequency, ')
+          ..write('templateJson: $templateJson, ')
+          ..write('startDate: $startDate, ')
+          ..write('originItemId: $originItemId, ')
+          ..write('isEnabled: $isEnabled, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('generatedThrough: $generatedThrough, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1311,13 +2017,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $MemoryItemsTable memoryItems = $MemoryItemsTable(this);
+  late final $RecurrenceSeriesRowsTable recurrenceSeriesRows =
+      $RecurrenceSeriesRowsTable(this);
   late final $SecureEntitiesTable secureEntities = $SecureEntitiesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [memoryItems, secureEntities];
+      [memoryItems, recurrenceSeriesRows, secureEntities];
 }
 
 typedef $$MemoryItemsTableCreateCompanionBuilder = MemoryItemsCompanion
@@ -1344,6 +2052,11 @@ typedef $$MemoryItemsTableCreateCompanionBuilder = MemoryItemsCompanion
   Value<int?> audioDurationSeconds,
   Value<String> imagePathsJson,
   Value<String?> transcript,
+  Value<String?> seriesId,
+  Value<int?> amountMinor,
+  Value<String?> paymentCategory,
+  Value<int?> birthYear,
+  Value<bool> isGeneratedOccurrence,
   Value<int> rowid,
 });
 typedef $$MemoryItemsTableUpdateCompanionBuilder = MemoryItemsCompanion
@@ -1370,6 +2083,11 @@ typedef $$MemoryItemsTableUpdateCompanionBuilder = MemoryItemsCompanion
   Value<int?> audioDurationSeconds,
   Value<String> imagePathsJson,
   Value<String?> transcript,
+  Value<String?> seriesId,
+  Value<int?> amountMinor,
+  Value<String?> paymentCategory,
+  Value<int?> birthYear,
+  Value<bool> isGeneratedOccurrence,
   Value<int> rowid,
 });
 
@@ -1451,6 +2169,23 @@ class $$MemoryItemsTableFilterComposer
 
   ColumnFilters<String> get transcript => $composableBuilder(
       column: $table.transcript, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get seriesId => $composableBuilder(
+      column: $table.seriesId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get amountMinor => $composableBuilder(
+      column: $table.amountMinor, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get paymentCategory => $composableBuilder(
+      column: $table.paymentCategory,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get birthYear => $composableBuilder(
+      column: $table.birthYear, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isGeneratedOccurrence => $composableBuilder(
+      column: $table.isGeneratedOccurrence,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$MemoryItemsTableOrderingComposer
@@ -1532,6 +2267,23 @@ class $$MemoryItemsTableOrderingComposer
 
   ColumnOrderings<String> get transcript => $composableBuilder(
       column: $table.transcript, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get seriesId => $composableBuilder(
+      column: $table.seriesId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get amountMinor => $composableBuilder(
+      column: $table.amountMinor, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get paymentCategory => $composableBuilder(
+      column: $table.paymentCategory,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get birthYear => $composableBuilder(
+      column: $table.birthYear, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isGeneratedOccurrence => $composableBuilder(
+      column: $table.isGeneratedOccurrence,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$MemoryItemsTableAnnotationComposer
@@ -1608,6 +2360,21 @@ class $$MemoryItemsTableAnnotationComposer
 
   GeneratedColumn<String> get transcript => $composableBuilder(
       column: $table.transcript, builder: (column) => column);
+
+  GeneratedColumn<String> get seriesId =>
+      $composableBuilder(column: $table.seriesId, builder: (column) => column);
+
+  GeneratedColumn<int> get amountMinor => $composableBuilder(
+      column: $table.amountMinor, builder: (column) => column);
+
+  GeneratedColumn<String> get paymentCategory => $composableBuilder(
+      column: $table.paymentCategory, builder: (column) => column);
+
+  GeneratedColumn<int> get birthYear =>
+      $composableBuilder(column: $table.birthYear, builder: (column) => column);
+
+  GeneratedColumn<bool> get isGeneratedOccurrence => $composableBuilder(
+      column: $table.isGeneratedOccurrence, builder: (column) => column);
 }
 
 class $$MemoryItemsTableTableManager extends RootTableManager<
@@ -1658,6 +2425,11 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             Value<int?> audioDurationSeconds = const Value.absent(),
             Value<String> imagePathsJson = const Value.absent(),
             Value<String?> transcript = const Value.absent(),
+            Value<String?> seriesId = const Value.absent(),
+            Value<int?> amountMinor = const Value.absent(),
+            Value<String?> paymentCategory = const Value.absent(),
+            Value<int?> birthYear = const Value.absent(),
+            Value<bool> isGeneratedOccurrence = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               MemoryItemsCompanion(
@@ -1683,6 +2455,11 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             audioDurationSeconds: audioDurationSeconds,
             imagePathsJson: imagePathsJson,
             transcript: transcript,
+            seriesId: seriesId,
+            amountMinor: amountMinor,
+            paymentCategory: paymentCategory,
+            birthYear: birthYear,
+            isGeneratedOccurrence: isGeneratedOccurrence,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -1708,6 +2485,11 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             Value<int?> audioDurationSeconds = const Value.absent(),
             Value<String> imagePathsJson = const Value.absent(),
             Value<String?> transcript = const Value.absent(),
+            Value<String?> seriesId = const Value.absent(),
+            Value<int?> amountMinor = const Value.absent(),
+            Value<String?> paymentCategory = const Value.absent(),
+            Value<int?> birthYear = const Value.absent(),
+            Value<bool> isGeneratedOccurrence = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               MemoryItemsCompanion.insert(
@@ -1733,6 +2515,11 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             audioDurationSeconds: audioDurationSeconds,
             imagePathsJson: imagePathsJson,
             transcript: transcript,
+            seriesId: seriesId,
+            amountMinor: amountMinor,
+            paymentCategory: paymentCategory,
+            birthYear: birthYear,
+            isGeneratedOccurrence: isGeneratedOccurrence,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -1757,6 +2544,249 @@ typedef $$MemoryItemsTableProcessedTableManager = ProcessedTableManager<
     ),
     MemoryItemRow,
     PrefetchHooks Function()>;
+typedef $$RecurrenceSeriesRowsTableCreateCompanionBuilder
+    = RecurrenceSeriesRowsCompanion Function({
+  required String id,
+  required String frequency,
+  required String templateJson,
+  required DateTime startDate,
+  required String originItemId,
+  Value<bool> isEnabled,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<DateTime?> generatedThrough,
+  Value<int> rowid,
+});
+typedef $$RecurrenceSeriesRowsTableUpdateCompanionBuilder
+    = RecurrenceSeriesRowsCompanion Function({
+  Value<String> id,
+  Value<String> frequency,
+  Value<String> templateJson,
+  Value<DateTime> startDate,
+  Value<String> originItemId,
+  Value<bool> isEnabled,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> generatedThrough,
+  Value<int> rowid,
+});
+
+class $$RecurrenceSeriesRowsTableFilterComposer
+    extends Composer<_$AppDatabase, $RecurrenceSeriesRowsTable> {
+  $$RecurrenceSeriesRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get frequency => $composableBuilder(
+      column: $table.frequency, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get templateJson => $composableBuilder(
+      column: $table.templateJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get startDate => $composableBuilder(
+      column: $table.startDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get originItemId => $composableBuilder(
+      column: $table.originItemId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isEnabled => $composableBuilder(
+      column: $table.isEnabled, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get generatedThrough => $composableBuilder(
+      column: $table.generatedThrough,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$RecurrenceSeriesRowsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RecurrenceSeriesRowsTable> {
+  $$RecurrenceSeriesRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get frequency => $composableBuilder(
+      column: $table.frequency, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get templateJson => $composableBuilder(
+      column: $table.templateJson,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get startDate => $composableBuilder(
+      column: $table.startDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get originItemId => $composableBuilder(
+      column: $table.originItemId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isEnabled => $composableBuilder(
+      column: $table.isEnabled, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get generatedThrough => $composableBuilder(
+      column: $table.generatedThrough,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$RecurrenceSeriesRowsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RecurrenceSeriesRowsTable> {
+  $$RecurrenceSeriesRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get frequency =>
+      $composableBuilder(column: $table.frequency, builder: (column) => column);
+
+  GeneratedColumn<String> get templateJson => $composableBuilder(
+      column: $table.templateJson, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startDate =>
+      $composableBuilder(column: $table.startDate, builder: (column) => column);
+
+  GeneratedColumn<String> get originItemId => $composableBuilder(
+      column: $table.originItemId, builder: (column) => column);
+
+  GeneratedColumn<bool> get isEnabled =>
+      $composableBuilder(column: $table.isEnabled, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get generatedThrough => $composableBuilder(
+      column: $table.generatedThrough, builder: (column) => column);
+}
+
+class $$RecurrenceSeriesRowsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $RecurrenceSeriesRowsTable,
+    RecurrenceSeriesRow,
+    $$RecurrenceSeriesRowsTableFilterComposer,
+    $$RecurrenceSeriesRowsTableOrderingComposer,
+    $$RecurrenceSeriesRowsTableAnnotationComposer,
+    $$RecurrenceSeriesRowsTableCreateCompanionBuilder,
+    $$RecurrenceSeriesRowsTableUpdateCompanionBuilder,
+    (
+      RecurrenceSeriesRow,
+      BaseReferences<_$AppDatabase, $RecurrenceSeriesRowsTable,
+          RecurrenceSeriesRow>
+    ),
+    RecurrenceSeriesRow,
+    PrefetchHooks Function()> {
+  $$RecurrenceSeriesRowsTableTableManager(
+      _$AppDatabase db, $RecurrenceSeriesRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecurrenceSeriesRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecurrenceSeriesRowsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RecurrenceSeriesRowsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> frequency = const Value.absent(),
+            Value<String> templateJson = const Value.absent(),
+            Value<DateTime> startDate = const Value.absent(),
+            Value<String> originItemId = const Value.absent(),
+            Value<bool> isEnabled = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> generatedThrough = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              RecurrenceSeriesRowsCompanion(
+            id: id,
+            frequency: frequency,
+            templateJson: templateJson,
+            startDate: startDate,
+            originItemId: originItemId,
+            isEnabled: isEnabled,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            generatedThrough: generatedThrough,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String frequency,
+            required String templateJson,
+            required DateTime startDate,
+            required String originItemId,
+            Value<bool> isEnabled = const Value.absent(),
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<DateTime?> generatedThrough = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              RecurrenceSeriesRowsCompanion.insert(
+            id: id,
+            frequency: frequency,
+            templateJson: templateJson,
+            startDate: startDate,
+            originItemId: originItemId,
+            isEnabled: isEnabled,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            generatedThrough: generatedThrough,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$RecurrenceSeriesRowsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $RecurrenceSeriesRowsTable,
+        RecurrenceSeriesRow,
+        $$RecurrenceSeriesRowsTableFilterComposer,
+        $$RecurrenceSeriesRowsTableOrderingComposer,
+        $$RecurrenceSeriesRowsTableAnnotationComposer,
+        $$RecurrenceSeriesRowsTableCreateCompanionBuilder,
+        $$RecurrenceSeriesRowsTableUpdateCompanionBuilder,
+        (
+          RecurrenceSeriesRow,
+          BaseReferences<_$AppDatabase, $RecurrenceSeriesRowsTable,
+              RecurrenceSeriesRow>
+        ),
+        RecurrenceSeriesRow,
+        PrefetchHooks Function()>;
 typedef $$SecureEntitiesTableCreateCompanionBuilder = SecureEntitiesCompanion
     Function({
   required String kind,
@@ -1924,6 +2954,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$MemoryItemsTableTableManager get memoryItems =>
       $$MemoryItemsTableTableManager(_db, _db.memoryItems);
+  $$RecurrenceSeriesRowsTableTableManager get recurrenceSeriesRows =>
+      $$RecurrenceSeriesRowsTableTableManager(_db, _db.recurrenceSeriesRows);
   $$SecureEntitiesTableTableManager get secureEntities =>
       $$SecureEntitiesTableTableManager(_db, _db.secureEntities);
 }

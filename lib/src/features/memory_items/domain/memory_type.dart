@@ -9,7 +9,9 @@ enum MemoryType {
   project,
   purchase,
   document,
-  place;
+  place,
+  birthday,
+  payment;
 
   String label(String languageCode) {
     final ru = languageCode == 'ru';
@@ -25,6 +27,8 @@ enum MemoryType {
       MemoryType.purchase => ru ? 'Покупка' : 'Purchase',
       MemoryType.document => ru ? 'Документ' : 'Document',
       MemoryType.place => ru ? 'Место' : 'Place',
+      MemoryType.birthday => ru ? 'День рождения' : 'Birthday',
+      MemoryType.payment => ru ? 'Платёж' : 'Payment',
     };
   }
 }
@@ -38,4 +42,6 @@ const editableMemoryTypes = [
   MemoryType.purchase,
   MemoryType.document,
   MemoryType.place,
+  MemoryType.birthday,
+  MemoryType.payment,
 ];

@@ -12,6 +12,7 @@ release/*.zip
 release/*.txt
 release/*.pem
 release/**/*.png
+release/**
 signing/
 pepk.jar
 

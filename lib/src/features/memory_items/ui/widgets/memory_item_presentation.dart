@@ -14,6 +14,8 @@ IconData memoryTypeIcon(MemoryType type) => switch (type) {
       MemoryType.purchase => Icons.shopping_bag_outlined,
       MemoryType.document => Icons.description_outlined,
       MemoryType.place => Icons.place_outlined,
+      MemoryType.birthday => Icons.cake_outlined,
+      MemoryType.payment => Icons.payments_outlined,
     };
 
 Color memoryTypeColor(MemoryType type) => switch (type) {
@@ -28,6 +30,8 @@ Color memoryTypeColor(MemoryType type) => switch (type) {
       MemoryType.purchase => const Color(0xFFCA8A04),
       MemoryType.document => const Color(0xFFC2BFB6),
       MemoryType.place => const Color(0xFFDC2626),
+      MemoryType.birthday => const Color(0xFFDB2777),
+      MemoryType.payment => const Color(0xFF0F766E),
     };
 
 String formatMemoryTime(int minutes) {

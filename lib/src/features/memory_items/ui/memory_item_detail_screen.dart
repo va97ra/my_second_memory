@@ -12,11 +12,14 @@ import 'package:record/record.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/async/sequential_task_queue.dart';
+import '../../calendar/state/calendar_preferences_controller.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../media/data/media_storage.dart';
 import '../../notifications/data/notification_service.dart';
 import '../../notifications/ui/reminder_sound_picker.dart';
+import '../../recurrence/domain/recurrence_series.dart';
+import '../../recurrence/state/recurrence_controller.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
 import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
@@ -44,6 +47,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   final _bodyController = TextEditingController();
+  final _amountController = TextEditingController();
   final _recorder = AudioRecorder();
   final _mediaStorage = MediaStorage();
   final _imagePicker = ImagePicker();
@@ -59,6 +63,11 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   MemoryType _type = MemoryType.note;
   String? _audioPath;
   int? _audioDurationSeconds;
+  RecurrenceFrequency? _recurrenceFrequency;
+  PaymentCategory _paymentCategory = PaymentCategory.other;
+  int? _birthYear;
+  bool _editFutureOccurrences = false;
+  bool _scopeRequested = false;
   DateTime? _recordingStartedAt;
   bool _isRecording = false;
   bool _isSaving = false;
@@ -81,6 +90,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     WidgetsBinding.instance.removeObserver(this);
     _autosaveTimer?.cancel();
     _bodyController.dispose();
+    _amountController.dispose();
     _recorder.dispose();
     super.dispose();
   }
@@ -99,6 +109,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     final strings = AppStrings.of(context);
     final loadState = ref.watch(memoryItemsLoadProvider);
     final item = _watchItem();
+    final showHints = ref.watch(appHintsProvider);
 
     if (loadState.isLoading) {
       return const Scaffold(
@@ -218,21 +229,86 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                 ),
               ),
             ),
-            if (item != null)
-              PopupMenuButton<String>(
-                tooltip: strings.delete,
-                onSelected: (value) {
-                  if (value == 'delete') {
-                    _confirmDelete(item);
-                  }
-                },
-                itemBuilder: (context) => [
+            PopupMenuButton<String>(
+              tooltip: Localizations.localeOf(context).languageCode == 'ru'
+                  ? 'Повтор и действия'
+                  : 'Repeat and actions',
+              icon: Icon(
+                Icons.event_repeat,
+                color: _recurrenceFrequency == null
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.primary,
+              ),
+              onSelected: (value) {
+                if (value == 'repeat') {
+                  _openRepeatPicker();
+                }
+                if (value == 'duplicate' && item != null) {
+                  _duplicateToDates(item);
+                }
+                if (value == 'future' && item != null) {
+                  setState(() => _editFutureOccurrences = true);
+                  ref
+                      .read(recurrenceSeriesControllerProvider.notifier)
+                      .applyToFuture(item);
+                }
+                if (value == 'delete') {
+                  _confirmDelete(item!);
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'repeat',
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.event_repeat),
+                    title: Text(
+                      Localizations.localeOf(context).languageCode == 'ru'
+                          ? 'Настроить повтор'
+                          : 'Set recurrence',
+                    ),
+                  ),
+                ),
+                if (item != null)
+                  PopupMenuItem(
+                    value: 'duplicate',
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.content_copy_outlined),
+                      title: Text(
+                        Localizations.localeOf(context).languageCode == 'ru'
+                            ? 'Дублировать на даты'
+                            : 'Duplicate to dates',
+                      ),
+                    ),
+                  ),
+                if (item?.seriesId != null)
+                  PopupMenuItem(
+                    value: 'future',
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.update_outlined),
+                      title: Text(
+                        Localizations.localeOf(context).languageCode == 'ru'
+                            ? 'Применить к будущим'
+                            : 'Apply to future',
+                      ),
+                    ),
+                  ),
+                if (item != null)
                   PopupMenuItem(
                     value: 'delete',
-                    child: Text(strings.delete),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        Icons.delete_outline,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      title: Text(strings.delete),
+                    ),
                   ),
-                ],
-              ),
+              ],
+            ),
           ],
         ),
         body: SafeArea(
@@ -255,9 +331,12 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                       _scheduleAutosave();
                     },
               onTypeChanged: (type) {
-                setState(() => _type = type);
+                _changeType(type);
                 _scheduleAutosave();
               },
+              specialFields: _buildSpecialFields(),
+              showRecurrenceHint: showHints && _recurrenceFrequency == null,
+              onRecurrenceHintTap: _openRepeatPicker,
               recordEditor: _RecordEditor(
                 controller: _bodyController,
                 imagePaths: _imagePaths,
@@ -265,6 +344,8 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                 audioDurationSeconds: _audioDurationSeconds,
                 memoryDate: _memoryDate,
                 isRecording: _isRecording,
+                recurrenceFrequency: _recurrenceFrequency,
+                onRecurrenceTap: _openRepeatPicker,
                 onPickImage: _pickImage,
                 onRemoveImage: (path) => setState(() {
                   _imagePaths.remove(path);
@@ -323,6 +404,26 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     _imagePaths
       ..clear()
       ..addAll(item.imagePaths);
+    _recurrenceFrequency = switch (item.repeatRule) {
+      'monthly' => RecurrenceFrequency.monthly,
+      'yearly' => RecurrenceFrequency.yearly,
+      _ => null,
+    };
+    _amountController.text = item.amountMinor == null
+        ? ''
+        : (item.amountMinor! / 100).toStringAsFixed(2).replaceFirst('.00', '');
+    _paymentCategory = PaymentCategory.other;
+    for (final category in PaymentCategory.values) {
+      if (category.name == item.paymentCategory) {
+        _paymentCategory = category;
+        break;
+      }
+    }
+    _birthYear = item.birthYear;
+    if (item.seriesId != null && !_scopeRequested) {
+      _scopeRequested = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _askEditScope());
+    }
   }
 
   void _initializeNew() {
@@ -342,6 +443,211 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     _audioPath = null;
     _audioDurationSeconds = null;
     _imagePaths.clear();
+    _recurrenceFrequency = null;
+    _amountController.clear();
+    _paymentCategory = PaymentCategory.other;
+    _birthYear = null;
+  }
+
+  void _changeType(MemoryType type) {
+    setState(() {
+      _type = type;
+      if (type == MemoryType.birthday) {
+        _recurrenceFrequency = RecurrenceFrequency.yearly;
+        _timeMinutes ??= 9 * 60;
+        _remindAt = _dateTimeFor(_memoryDate, _timeMinutes!)
+            .subtract(const Duration(days: 1));
+      } else if (type == MemoryType.payment) {
+        _recurrenceFrequency = RecurrenceFrequency.monthly;
+        _timeMinutes ??= 9 * 60;
+        _remindAt = _dateTimeFor(_memoryDate, _timeMinutes!)
+            .subtract(const Duration(days: 3));
+      }
+    });
+  }
+
+  Widget? _buildSpecialFields() {
+    final locale = Localizations.localeOf(context).languageCode;
+    if (_type == MemoryType.payment) {
+      return _PaymentFields(
+        amountController: _amountController,
+        category: _paymentCategory,
+        locale: locale,
+        onCategoryChanged: (category) {
+          setState(() => _paymentCategory = category);
+          _scheduleAutosave();
+        },
+        onChanged: _scheduleAutosave,
+      );
+    }
+    if (_type == MemoryType.birthday) {
+      return _BirthdayFields(
+        birthYear: _birthYear,
+        locale: locale,
+        onTap: _pickBirthYear,
+        onClear: _birthYear == null
+            ? null
+            : () {
+                setState(() => _birthYear = null);
+                _scheduleAutosave();
+              },
+      );
+    }
+    return null;
+  }
+
+  Future<void> _pickBirthYear() async {
+    final controller = TextEditingController(
+      text: _birthYear?.toString() ?? '',
+    );
+    final value = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          Localizations.localeOf(context).languageCode == 'ru'
+              ? 'Год рождения'
+              : 'Birth year',
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          maxLength: 4,
+          decoration: const InputDecoration(hintText: '1985'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(AppStrings.of(context).cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final year = int.tryParse(controller.text);
+              Navigator.of(context).pop(
+                year != null && year >= 1900 && year <= DateTime.now().year
+                    ? year
+                    : null,
+              );
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value == null || !mounted) return;
+    setState(() => _birthYear = value);
+    _scheduleAutosave();
+  }
+
+  Future<void> _openRepeatPicker() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        final locale = Localizations.localeOf(context).languageCode;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.event_busy_outlined),
+                title: Text(locale == 'ru' ? 'Не повторять' : 'Do not repeat'),
+                trailing: _recurrenceFrequency == null
+                    ? const Icon(Icons.check)
+                    : null,
+                onTap: () => Navigator.of(context).pop('none'),
+              ),
+              for (final frequency in RecurrenceFrequency.values)
+                ListTile(
+                  leading: Icon(frequency == RecurrenceFrequency.monthly
+                      ? Icons.sync_outlined
+                      : Icons.event_repeat),
+                  title: Text(frequency.label(locale)),
+                  trailing: _recurrenceFrequency == frequency
+                      ? const Icon(Icons.check)
+                      : null,
+                  onTap: () => Navigator.of(context).pop(frequency.name),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    if (selected == null || !mounted) return;
+    final item = _readItem();
+    if (selected == 'none') {
+      setState(() => _recurrenceFrequency = null);
+      if (item != null && item.seriesId != null) {
+        await ref
+            .read(recurrenceSeriesControllerProvider.notifier)
+            .clearFrequency(item);
+      }
+    } else {
+      setState(() {
+        _recurrenceFrequency = RecurrenceFrequency.values.byName(selected);
+      });
+    }
+    _scheduleAutosave();
+  }
+
+  Future<void> _askEditScope() async {
+    if (!mounted) return;
+    final locale = Localizations.localeOf(context).languageCode;
+    final applyFuture = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.event_note_outlined),
+              title: Text(locale == 'ru'
+                  ? 'Редактировать только эту запись'
+                  : 'Edit only this record'),
+              onTap: () => Navigator.of(context).pop(false),
+            ),
+            ListTile(
+              leading: const Icon(Icons.event_repeat),
+              title: Text(locale == 'ru'
+                  ? 'Эту и будущие записи'
+                  : 'This and future records'),
+              onTap: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (mounted && applyFuture != null) {
+      setState(() => _editFutureOccurrences = applyFuture);
+    }
+  }
+
+  Future<void> _duplicateToDates(MemoryItem item) async {
+    await _flushAutosave();
+    if (!mounted) return;
+    final dates = await showModalBottomSheet<List<DateTime>>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => _MultiDatePickerSheet(sourceDate: item.memoryDate),
+    );
+    if (dates == null || dates.isEmpty || !mounted) return;
+    final copies = await ref
+        .read(memoryItemsControllerProvider.notifier)
+        .duplicateToDates(item, dates);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            Localizations.localeOf(context).languageCode == 'ru'
+                ? 'Создано копий: ${copies.length}'
+                : 'Copies created: ${copies.length}',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _pickDate() async {
@@ -547,6 +853,11 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
       audioDurationSeconds: _audioDurationSeconds,
       imagePaths: List.unmodifiable(_imagePaths),
       savedAt: now,
+      repeatRule: _recurrenceFrequency?.name,
+      amountMinor: _parseAmountMinor(_amountController.text),
+      paymentCategory:
+          _type == MemoryType.payment ? _paymentCategory.name : null,
+      birthYear: _type == MemoryType.birthday ? _birthYear : null,
     );
     final revision = ++_saveRevision;
     _hasPendingAutosave = false;
@@ -600,8 +911,17 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
         audioPath: snapshot.audioPath,
         audioDurationSeconds: snapshot.audioDurationSeconds,
         imagePaths: snapshot.imagePaths,
+        repeatRule: snapshot.repeatRule,
+        amountMinor: snapshot.amountMinor,
+        paymentCategory: snapshot.paymentCategory,
+        birthYear: snapshot.birthYear,
       );
       await ref.read(memoryItemsControllerProvider.notifier).add(created);
+      if (_recurrenceFrequency != null) {
+        await ref
+            .read(recurrenceSeriesControllerProvider.notifier)
+            .setFrequency(created, _recurrenceFrequency!);
+      }
       _loadedItemId = created.id;
 
       if (mounted && widget.itemId == null) {
@@ -625,15 +945,44 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
       audioPath: snapshot.audioPath,
       audioDurationSeconds: snapshot.audioDurationSeconds,
       imagePaths: snapshot.imagePaths,
+      repeatRule: snapshot.repeatRule,
+      clearRepeatRule: snapshot.repeatRule == null,
+      amountMinor: snapshot.amountMinor,
+      clearAmount: snapshot.amountMinor == null,
+      paymentCategory: snapshot.paymentCategory,
+      clearPaymentCategory: snapshot.paymentCategory == null,
+      birthYear: snapshot.birthYear,
+      clearBirthYear: snapshot.birthYear == null,
       updatedAt: snapshot.savedAt,
     );
     await ref.read(memoryItemsControllerProvider.notifier).update(updated);
+    if (_recurrenceFrequency != null) {
+      if (item.repeatRule != _recurrenceFrequency!.name ||
+          item.seriesId == null) {
+        await ref
+            .read(recurrenceSeriesControllerProvider.notifier)
+            .setFrequency(updated, _recurrenceFrequency!);
+      } else if (_editFutureOccurrences) {
+        await ref
+            .read(recurrenceSeriesControllerProvider.notifier)
+            .applyToFuture(updated);
+      }
+    }
   }
 
   bool _hasContent() {
     return _bodyController.text.trim().isNotEmpty ||
         _imagePaths.isNotEmpty ||
-        _audioPath != null;
+        _audioPath != null ||
+        (_type == MemoryType.payment &&
+            _parseAmountMinor(_amountController.text) != null);
+  }
+
+  int? _parseAmountMinor(String raw) {
+    final normalized = raw.trim().replaceAll(' ', '').replaceAll(',', '.');
+    final value = double.tryParse(normalized);
+    if (value == null || value < 0) return null;
+    return (value * 100).round();
   }
 
   void _scheduleAutosave() {
@@ -660,6 +1009,45 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
 
   Future<void> _confirmDelete(MemoryItem item) async {
     final strings = AppStrings.of(context);
+    final deleteScope = item.seriesId == null
+        ? 'one'
+        : await showModalBottomSheet<String>(
+            context: context,
+            showDragHandle: true,
+            builder: (context) {
+              final ru = Localizations.localeOf(context).languageCode == 'ru';
+              return SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.event_note_outlined),
+                      title: Text(ru
+                          ? 'Удалить только эту запись'
+                          : 'Delete only this record'),
+                      onTap: () => Navigator.of(context).pop('one'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.event_busy_outlined),
+                      title: Text(ru
+                          ? 'Удалить эту и будущие'
+                          : 'Delete this and future records'),
+                      onTap: () => Navigator.of(context).pop('future'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.delete_sweep_outlined),
+                      title: Text(ru
+                          ? 'Удалить всю серию'
+                          : 'Delete the entire series'),
+                      onTap: () => Navigator.of(context).pop('series'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+    if (deleteScope == null) return;
+    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -683,7 +1071,17 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     }
     _autosaveTimer?.cancel();
     _hasPendingAutosave = false;
-    await ref.read(memoryItemsControllerProvider.notifier).delete(item.id);
+    if (deleteScope == 'series' && item.seriesId != null) {
+      await ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .deleteSeries(item.seriesId!);
+    } else if (deleteScope == 'future' && item.seriesId != null) {
+      await ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .deleteFromDate(item.seriesId!, item.memoryDate);
+    } else {
+      await ref.read(memoryItemsControllerProvider.notifier).delete(item.id);
+    }
 
     if (mounted) {
       await _goBack(skipSave: true);
@@ -1032,6 +1430,9 @@ class _EditorBody extends StatelessWidget {
     required this.onTimeTap,
     required this.onClearTime,
     required this.onTypeChanged,
+    required this.specialFields,
+    required this.showRecurrenceHint,
+    required this.onRecurrenceHintTap,
     required this.recordEditor,
   });
 
@@ -1043,6 +1444,9 @@ class _EditorBody extends StatelessWidget {
   final VoidCallback onTimeTap;
   final VoidCallback? onClearTime;
   final ValueChanged<MemoryType> onTypeChanged;
+  final Widget? specialFields;
+  final bool showRecurrenceHint;
+  final VoidCallback onRecurrenceHintTap;
   final Widget recordEditor;
 
   @override
@@ -1072,6 +1476,14 @@ class _EditorBody extends StatelessWidget {
                     onClearTime: onClearTime,
                     onTypeChanged: onTypeChanged,
                   ),
+                  if (specialFields != null) ...[
+                    SizedBox(height: compact ? 6 : 8),
+                    specialFields!,
+                  ],
+                  if (showRecurrenceHint) ...[
+                    SizedBox(height: compact ? 6 : 8),
+                    _RecurrenceHint(onTap: onRecurrenceHintTap),
+                  ],
                   SizedBox(height: compact ? 8 : 10),
                   Expanded(child: recordEditor),
                 ],
@@ -1080,6 +1492,49 @@ class _EditorBody extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _RecurrenceHint extends StatelessWidget {
+  const _RecurrenceHint({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ru = Localizations.localeOf(context).languageCode == 'ru';
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: colors.primaryContainer.withValues(alpha: 0.38),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: colors.primary.withValues(alpha: 0.3)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            children: [
+              Icon(Icons.event_repeat, size: 17, color: colors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  ru
+                      ? 'Чтобы повторять запись, нажмите ↻ в правом верхнем углу.'
+                      : 'To repeat a record, tap ↻ in the top-right corner.',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1214,6 +1669,179 @@ class _EditorMetadataBar extends StatelessWidget {
   }
 }
 
+class _RecurrenceBadge extends StatelessWidget {
+  const _RecurrenceBadge({
+    required this.frequency,
+    required this.onTap,
+  });
+
+  final RecurrenceFrequency frequency;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: colors.primaryContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: colors.primary.withValues(alpha: 0.38)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.event_repeat,
+                size: 17,
+                color: colors.onPrimaryContainer,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                frequency.label(locale),
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: colors.onPrimaryContainer,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentFields extends StatelessWidget {
+  const _PaymentFields({
+    required this.amountController,
+    required this.category,
+    required this.locale,
+    required this.onCategoryChanged,
+    required this.onChanged,
+  });
+
+  final TextEditingController amountController;
+  final PaymentCategory category;
+  final String locale;
+  final ValueChanged<PaymentCategory> onCategoryChanged;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 42),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<PaymentCategory>(
+                value: category,
+                isExpanded: true,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                items: [
+                  for (final value in PaymentCategory.values)
+                    DropdownMenuItem(
+                      value: value,
+                      child: Text(value.label(locale),
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                ],
+                onChanged: (value) {
+                  if (value != null) onCategoryChanged(value);
+                },
+              ),
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 28,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+          SizedBox(
+            width: 104,
+            child: TextField(
+              controller: amountController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              textAlign: TextAlign.end,
+              decoration: InputDecoration(
+                hintText: locale == 'ru' ? 'Сумма ₽' : 'Amount ₽',
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+              ),
+              onChanged: (_) => onChanged(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BirthdayFields extends StatelessWidget {
+  const _BirthdayFields({
+    required this.birthYear,
+    required this.locale,
+    required this.onTap,
+    required this.onClear,
+  });
+
+  final int? birthYear;
+  final String locale;
+  final VoidCallback onTap;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 42),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Row(
+            children: [
+              const Icon(Icons.cake_outlined, size: 18),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  birthYear == null
+                      ? (locale == 'ru' ? 'Год рождения' : 'Birth year')
+                      : birthYear.toString(),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (onClear != null)
+                IconButton(
+                  tooltip: AppStrings.of(context).delete,
+                  onPressed: onClear,
+                  icon: const Icon(Icons.close, size: 16),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MetadataDivider extends StatelessWidget {
   const _MetadataDivider();
 
@@ -1334,6 +1962,8 @@ class _RecordEditor extends StatelessWidget {
     required this.audioDurationSeconds,
     required this.memoryDate,
     required this.isRecording,
+    required this.recurrenceFrequency,
+    required this.onRecurrenceTap,
     required this.onPickImage,
     required this.onRemoveImage,
     required this.onVoicePressed,
@@ -1346,6 +1976,8 @@ class _RecordEditor extends StatelessWidget {
   final int? audioDurationSeconds;
   final DateTime memoryDate;
   final bool isRecording;
+  final RecurrenceFrequency? recurrenceFrequency;
+  final VoidCallback onRecurrenceTap;
   final VoidCallback onPickImage;
   final ValueChanged<String> onRemoveImage;
   final VoidCallback onVoicePressed;
@@ -1481,31 +2113,33 @@ class _RecordEditor extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: compact ? 8 : 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _SquareActionButton(
-                        tooltip: strings.addImage,
-                        icon: Icons.photo_camera_outlined,
-                        color: const Color(0xFFD97757),
-                        size: buttonSize,
-                        onPressed: onPickImage,
+                Row(
+                  children: [
+                    if (recurrenceFrequency != null)
+                      _RecurrenceBadge(
+                        frequency: recurrenceFrequency!,
+                        onTap: onRecurrenceTap,
                       ),
-                      const SizedBox(width: 8),
-                      _SquareActionButton(
-                        tooltip:
-                            isRecording ? strings.stopRecording : strings.voice,
-                        icon: isRecording ? Icons.stop : Icons.mic_none,
-                        color: isRecording
-                            ? const Color(0xFFDC2626)
-                            : const Color(0xFFDB2777),
-                        size: buttonSize,
-                        onPressed: onVoicePressed,
-                      ),
-                    ],
-                  ),
+                    const Spacer(),
+                    _SquareActionButton(
+                      tooltip: strings.addImage,
+                      icon: Icons.photo_camera_outlined,
+                      color: const Color(0xFFD97757),
+                      size: buttonSize,
+                      onPressed: onPickImage,
+                    ),
+                    const SizedBox(width: 8),
+                    _SquareActionButton(
+                      tooltip:
+                          isRecording ? strings.stopRecording : strings.voice,
+                      icon: isRecording ? Icons.stop : Icons.mic_none,
+                      color: isRecording
+                          ? const Color(0xFFDC2626)
+                          : const Color(0xFFDB2777),
+                      size: buttonSize,
+                      onPressed: onVoicePressed,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1633,3 +2267,167 @@ class _TypePickerRow extends StatelessWidget {
     );
   }
 }
+
+class _MultiDatePickerSheet extends StatefulWidget {
+  const _MultiDatePickerSheet({required this.sourceDate});
+
+  final DateTime sourceDate;
+
+  @override
+  State<_MultiDatePickerSheet> createState() => _MultiDatePickerSheetState();
+}
+
+class _MultiDatePickerSheetState extends State<_MultiDatePickerSheet> {
+  late DateTime _month = DateTime(
+    widget.sourceDate.year,
+    widget.sourceDate.month,
+  );
+  final Set<int> _selected = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    final first = DateTime(_month.year, _month.month, 1);
+    final offset = first.weekday - DateTime.monday;
+    final days = DateTime(_month.year, _month.month + 1, 0).day;
+    final cells = ((offset + days + 6) ~/ 7) * 7;
+    final weekdays = locale == 'ru'
+        ? const ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+        : const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    return SafeArea(
+      child: FractionallySizedBox(
+        heightFactor: 0.82,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      locale == 'ru'
+                          ? 'Дублировать на даты'
+                          : 'Duplicate to dates',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => _moveMonth(-1),
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Text(
+                    DateFormat.yMMMM(locale).format(_month),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  IconButton(
+                    onPressed: () => _moveMonth(1),
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  for (final day in weekdays)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          day,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              Expanded(
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    childAspectRatio: 1,
+                    mainAxisSpacing: 4,
+                    crossAxisSpacing: 4,
+                  ),
+                  itemCount: cells,
+                  itemBuilder: (context, index) {
+                    final day = index - offset + 1;
+                    if (day < 1 || day > days) return const SizedBox.shrink();
+                    final date = DateTime(_month.year, _month.month, day);
+                    final key = _dateKeyForPicker(date);
+                    final selected = _selected.contains(key);
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => setState(() {
+                        if (!_selected.add(key)) _selected.remove(key);
+                      }),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.surfaceContainer,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: selected
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.outlineVariant,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$day',
+                            style: TextStyle(
+                              color: selected
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(context).colorScheme.onSurface,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _selected.isEmpty
+                      ? null
+                      : () {
+                          final dates = _selected.map((key) {
+                            final year = key ~/ 10000;
+                            final month = (key ~/ 100) % 100;
+                            return DateTime(year, month, key % 100);
+                          }).toList()
+                            ..sort();
+                          Navigator.of(context).pop(dates);
+                        },
+                  icon: const Icon(Icons.copy_all_outlined),
+                  label: Text(
+                    locale == 'ru'
+                        ? 'Создать копии (${_selected.length})'
+                        : 'Create copies (${_selected.length})',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _moveMonth(int offset) {
+    setState(() => _month = DateTime(_month.year, _month.month + offset));
+  }
+}
+
+int _dateKeyForPicker(DateTime value) =>
+    value.year * 10000 + value.month * 100 + value.day;

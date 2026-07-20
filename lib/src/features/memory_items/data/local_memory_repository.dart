@@ -45,6 +45,16 @@ class LocalMemoryRepository implements MemoryRepository {
   }
 
   @override
+  Future<void> upsertAll(List<MemoryItem> incoming) async {
+    if (incoming.isEmpty) return;
+    final itemsById = {
+      for (final item in await loadAll()) item.id: item,
+      for (final item in incoming) item.id: item,
+    };
+    await replaceAll(itemsById.values.toList());
+  }
+
+  @override
   Future<void> delete(String id) async {
     await replaceAll([
       for (final item in await loadAll())

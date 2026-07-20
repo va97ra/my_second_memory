@@ -25,6 +25,11 @@ class MemoryItem {
     this.audioDurationSeconds,
     this.imagePaths = const [],
     this.transcript,
+    this.seriesId,
+    this.amountMinor,
+    this.paymentCategory,
+    this.birthYear,
+    this.isGeneratedOccurrence = false,
   });
 
   final String id;
@@ -49,6 +54,11 @@ class MemoryItem {
   final int? audioDurationSeconds;
   final List<String> imagePaths;
   final String? transcript;
+  final String? seriesId;
+  final int? amountMinor;
+  final String? paymentCategory;
+  final int? birthYear;
+  final bool isGeneratedOccurrence;
 
   bool get isArchived => status == MemoryStatus.archived;
 
@@ -75,6 +85,7 @@ class MemoryItem {
     String? reminderSoundName,
     bool clearReminderSound = false,
     String? repeatRule,
+    bool clearRepeatRule = false,
     String? projectId,
     List<String>? personIds,
     String? placeId,
@@ -82,6 +93,15 @@ class MemoryItem {
     int? audioDurationSeconds,
     List<String>? imagePaths,
     String? transcript,
+    String? seriesId,
+    bool clearSeries = false,
+    int? amountMinor,
+    bool clearAmount = false,
+    String? paymentCategory,
+    bool clearPaymentCategory = false,
+    int? birthYear,
+    bool clearBirthYear = false,
+    bool? isGeneratedOccurrence,
   }) {
     return MemoryItem(
       id: id ?? this.id,
@@ -101,7 +121,7 @@ class MemoryItem {
       reminderSoundName: clearReminderSound
           ? null
           : reminderSoundName ?? this.reminderSoundName,
-      repeatRule: repeatRule ?? this.repeatRule,
+      repeatRule: clearRepeatRule ? null : repeatRule ?? this.repeatRule,
       projectId: projectId ?? this.projectId,
       personIds: personIds ?? this.personIds,
       placeId: placeId ?? this.placeId,
@@ -109,6 +129,13 @@ class MemoryItem {
       audioDurationSeconds: audioDurationSeconds ?? this.audioDurationSeconds,
       imagePaths: imagePaths ?? this.imagePaths,
       transcript: transcript ?? this.transcript,
+      seriesId: clearSeries ? null : seriesId ?? this.seriesId,
+      amountMinor: clearAmount ? null : amountMinor ?? this.amountMinor,
+      paymentCategory:
+          clearPaymentCategory ? null : paymentCategory ?? this.paymentCategory,
+      birthYear: clearBirthYear ? null : birthYear ?? this.birthYear,
+      isGeneratedOccurrence:
+          isGeneratedOccurrence ?? this.isGeneratedOccurrence,
     );
   }
 
@@ -136,6 +163,11 @@ class MemoryItem {
       'audioDurationSeconds': audioDurationSeconds,
       'imagePaths': imagePaths,
       'transcript': transcript,
+      'seriesId': seriesId,
+      'amountMinor': amountMinor,
+      'paymentCategory': paymentCategory,
+      'birthYear': birthYear,
+      'isGeneratedOccurrence': isGeneratedOccurrence,
     };
   }
 
@@ -168,6 +200,11 @@ class MemoryItem {
       imagePaths:
           (json['imagePaths'] as List<dynamic>? ?? const []).cast<String>(),
       transcript: json['transcript'] as String?,
+      seriesId: json['seriesId'] as String?,
+      amountMinor: json['amountMinor'] as int?,
+      paymentCategory: json['paymentCategory'] as String?,
+      birthYear: json['birthYear'] as int?,
+      isGeneratedOccurrence: json['isGeneratedOccurrence'] as bool? ?? false,
     );
   }
 }

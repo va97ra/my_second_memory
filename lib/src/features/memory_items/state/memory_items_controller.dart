@@ -74,7 +74,19 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     await _loadFuture;
     state = _sort([...state, item]);
     await _writes.add(() => _repository.upsert(item));
-    unawaited(_safeSchedule(item));
+    if (_hasFutureReminder(item)) unawaited(_safeSchedule(item));
+  }
+
+  Future<void> addAll(List<MemoryItem> items) async {
+    if (items.isEmpty) return;
+    await _loadFuture;
+    final itemsById = {
+      for (final item in state) item.id: item,
+      for (final item in items) item.id: item,
+    };
+    state = _sort(itemsById.values.toList());
+    await _writes.add(() => _repository.upsertAll(items));
+    unawaited(_safeScheduleAll(items));
   }
 
   Future<void> update(MemoryItem item) async {
@@ -88,7 +100,11 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     if (previous != null) {
       await _cleanupRemovedMedia(previous, item);
     }
-    unawaited(_safeSchedule(item));
+    if (_hasFutureReminder(item)) {
+      unawaited(_safeSchedule(item));
+    } else if (previous?.remindAt != null) {
+      unawaited(_safeCancel(item.id));
+    }
   }
 
   Future<void> archive(String id) async {
@@ -121,7 +137,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     final restored = _findById(id);
     if (restored != null) {
       await _writes.add(() => _repository.upsert(restored));
-      unawaited(_safeSchedule(restored));
+      if (_hasFutureReminder(restored)) unawaited(_safeSchedule(restored));
     }
   }
 
@@ -163,6 +179,36 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     unawaited(_safeCancel(id));
   }
 
+  Future<List<MemoryItem>> duplicateToDates(
+    MemoryItem source,
+    Iterable<DateTime> dates,
+  ) async {
+    await _loadFuture;
+    final created = <MemoryItem>[];
+    final now = DateTime.now();
+    var index = 0;
+    for (final rawDate in dates) {
+      final date = DateTime(rawDate.year, rawDate.month, rawDate.day);
+      if (_sameDay(date, source.memoryDate)) continue;
+      final reminder = _movedReminder(source, date, now);
+      final copy = source.copyWith(
+        id: '${now.microsecondsSinceEpoch}_${index++}',
+        memoryDate: date,
+        createdAt: now,
+        updatedAt: now,
+        status: MemoryStatus.active,
+        remindAt: reminder,
+        clearReminder: reminder == null,
+        clearSeries: true,
+        clearRepeatRule: true,
+        isGeneratedOccurrence: false,
+      );
+      await add(copy);
+      created.add(copy);
+    }
+    return created;
+  }
+
   Future<void> replaceAll(List<MemoryItem> items) async {
     await _loadFuture;
     state = _sort(items);
@@ -175,6 +221,16 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
       await _reminders?.schedule(item);
     } catch (_) {
       // Saving the record must not fail if Android rejects a notification.
+    }
+  }
+
+  Future<void> _safeScheduleAll(Iterable<MemoryItem> items) async {
+    var scheduled = 0;
+    for (final item in items.where(_hasFutureReminder)) {
+      await _safeSchedule(item);
+      if (++scheduled % 8 == 0) {
+        await Future<void>.delayed(Duration.zero);
+      }
     }
   }
 
@@ -236,4 +292,30 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
         return b.priority.compareTo(a.priority);
       });
   }
+
+  DateTime? _movedReminder(
+    MemoryItem source,
+    DateTime targetDate,
+    DateTime now,
+  ) {
+    final reminder = source.remindAt;
+    if (reminder == null) return null;
+    final sourceDate = DateTime(
+      source.memoryDate.year,
+      source.memoryDate.month,
+      source.memoryDate.day,
+    );
+    final dayOffset = reminder.difference(sourceDate);
+    final moved = targetDate.add(dayOffset);
+    return moved.isAfter(now) ? moved : null;
+  }
+
+  bool _sameDay(DateTime left, DateTime right) =>
+      left.year == right.year &&
+      left.month == right.month &&
+      left.day == right.day;
 }
+
+bool _hasFutureReminder(MemoryItem item) =>
+    item.status == MemoryStatus.active &&
+    item.remindAt?.isAfter(DateTime.now()) == true;

@@ -20,6 +20,11 @@ abstract interface class SecureEntityBackend {
     required String encryptedPayload,
   });
 
+  Future<void> upsertSecureEntities(
+    String kind,
+    List<SecureEntityRecord> records,
+  );
+
   Future<void> deleteSecureEntity(String kind, String lookupKey);
 
   Future<void> replaceSecureEntities(

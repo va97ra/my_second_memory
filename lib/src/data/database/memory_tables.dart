@@ -24,6 +24,28 @@ class MemoryItems extends Table {
   IntColumn get audioDurationSeconds => integer().nullable()();
   TextColumn get imagePathsJson => text().withDefault(const Constant('[]'))();
   TextColumn get transcript => text().nullable()();
+  TextColumn get seriesId => text().nullable()();
+  IntColumn get amountMinor => integer().nullable()();
+  TextColumn get paymentCategory => text().nullable()();
+  IntColumn get birthYear => integer().nullable()();
+  BoolColumn get isGeneratedOccurrence =>
+      boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+@DataClassName('RecurrenceSeriesRow')
+class RecurrenceSeriesRows extends Table {
+  TextColumn get id => text()();
+  TextColumn get frequency => text()();
+  TextColumn get templateJson => text()();
+  DateTimeColumn get startDate => dateTime()();
+  TextColumn get originItemId => text()();
+  BoolColumn get isEnabled => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get generatedThrough => dateTime().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

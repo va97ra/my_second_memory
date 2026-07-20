@@ -16,6 +16,10 @@ class MemoryEditorDraft {
     required this.audioDurationSeconds,
     required this.imagePaths,
     required this.savedAt,
+    required this.repeatRule,
+    required this.amountMinor,
+    required this.paymentCategory,
+    required this.birthYear,
   });
 
   final MemoryType type;
@@ -31,4 +35,8 @@ class MemoryEditorDraft {
   final int? audioDurationSeconds;
   final List<String> imagePaths;
   final DateTime savedAt;
+  final String? repeatRule;
+  final int? amountMinor;
+  final String? paymentCategory;
+  final int? birthYear;
 }

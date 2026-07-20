@@ -10,6 +10,8 @@ import '../../features/memory_items/ui/memory_item_detail_screen.dart';
 import '../../features/memory_items/ui/memory_library_screen.dart';
 import '../../features/memory_items/ui/memory_item_view_screen.dart';
 import '../../features/security/ui/security_screen.dart';
+import '../../features/recurrence/domain/recurrence_series.dart';
+import '../../features/recurrence/ui/recurring_overview_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
 import '../../features/shift_schedules/ui/shift_schedules_screen.dart';
 import '../../shared/ui/app_shell.dart';
@@ -56,6 +58,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/recurring/:frequency',
+        builder: (context, state) {
+          final frequency = state.pathParameters['frequency'] == 'yearly'
+              ? RecurrenceFrequency.yearly
+              : RecurrenceFrequency.monthly;
+          return RecurringOverviewScreen(frequency: frequency);
+        },
       ),
       GoRoute(
         path: '/memory',

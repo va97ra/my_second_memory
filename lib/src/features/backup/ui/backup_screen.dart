@@ -8,6 +8,7 @@ import '../../../shared/ui/app_shell.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../accounts/state/accounts_controller.dart';
 import '../../memory_items/state/memory_items_controller.dart';
+import '../../recurrence/state/recurrence_controller.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
 import '../data/backup_file_saver.dart';
 import '../data/backup_service.dart';
@@ -86,6 +87,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       memoryRepository: ref.read(memoryRepositoryProvider),
       shiftScheduleRepository: ref.read(shiftScheduleRepositoryProvider),
       accountRepository: ref.read(accountRepositoryProvider),
+      recurrenceRepository: ref.read(recurrenceRepositoryProvider),
     );
   }
 
@@ -211,6 +213,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       await ref
           .read(accountsControllerProvider.notifier)
           .replaceAll(data.accounts);
+      await ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .replaceAll(data.recurrenceSeries);
 
       if (mounted) {
         _showMessage(strings.backupRestored);
