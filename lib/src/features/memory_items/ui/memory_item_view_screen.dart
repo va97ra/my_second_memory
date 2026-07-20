@@ -10,6 +10,7 @@ import '../../voice_notes/ui/widgets/voice_note_player.dart';
 import '../state/memory_items_controller.dart';
 import '../state/memory_item_selectors.dart';
 import '../domain/memory_type.dart';
+import '../../recurrence/state/recurrence_controller.dart';
 import 'widgets/memory_item_presentation.dart';
 
 class MemoryItemViewScreen extends ConsumerWidget {
@@ -24,14 +25,16 @@ class MemoryItemViewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
     final loadState = ref.watch(memoryItemsLoadProvider);
+    final recurrenceLoadState = ref.watch(recurrenceLoadProvider);
     final item = ref.watch(memoryItemByIdProvider(itemId));
 
-    if (loadState.isLoading) {
+    if (loadState.isLoading ||
+        (item == null && recurrenceLoadState.isLoading)) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    if (loadState.hasError) {
+    if (loadState.hasError || recurrenceLoadState.hasError) {
       return Scaffold(body: Center(child: Text(strings.loadFailed)));
     }
 

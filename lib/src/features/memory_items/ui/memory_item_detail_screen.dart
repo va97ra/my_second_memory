@@ -25,6 +25,7 @@ import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
 import '../domain/memory_type.dart';
 import '../state/memory_items_controller.dart';
+import '../state/memory_item_selectors.dart';
 import '../state/memory_editor_draft.dart';
 import 'widgets/memory_item_presentation.dart';
 
@@ -55,6 +56,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
 
   String? _loadedItemId;
   DateTime _memoryDate = DateTime.now();
+  DateTime? _originalOccurrenceDate;
   int? _timeMinutes;
   DateTime? _remindAt;
   String? _reminderSoundUri;
@@ -108,15 +110,19 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final loadState = ref.watch(memoryItemsLoadProvider);
+    final recurrenceLoadState = ref.watch(recurrenceLoadProvider);
     final item = _watchItem();
     final showHints = ref.watch(appHintsProvider);
 
-    if (loadState.isLoading) {
+    if (loadState.isLoading ||
+        (item == null &&
+            widget.itemId != null &&
+            recurrenceLoadState.isLoading)) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    if (loadState.hasError) {
+    if (loadState.hasError || recurrenceLoadState.hasError) {
       return Scaffold(body: Center(child: Text(strings.loadFailed)));
     }
 
@@ -362,27 +368,20 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   }
 
   MemoryItem? _watchItem() {
-    return _findItem(ref.watch(memoryItemsControllerProvider));
+    final id = _currentItemId();
+    return id == null ? null : ref.watch(memoryItemByIdProvider(id));
   }
 
   MemoryItem? _readItem() {
-    return _findItem(ref.read(memoryItemsControllerProvider));
+    final id = _currentItemId();
+    return id == null ? null : ref.read(memoryItemByIdProvider(id));
   }
 
-  MemoryItem? _findItem(List<MemoryItem> items) {
-    final itemId = widget.itemId ??
+  String? _currentItemId() {
+    return widget.itemId ??
         (_loadedItemId == null || _loadedItemId == '__new__'
             ? null
             : _loadedItemId);
-    if (itemId == null) {
-      return null;
-    }
-    for (final item in items) {
-      if (item.id == itemId) {
-        return item;
-      }
-    }
-    return null;
   }
 
   void _initializeFrom(MemoryItem item) {
@@ -392,6 +391,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     _loadedItemId = item.id;
     _bodyController.text = item.body;
     _memoryDate = item.memoryDate;
+    _originalOccurrenceDate = item.seriesId == null ? null : item.memoryDate;
     _timeMinutes = item.timeMinutes;
     _remindAt = item.remindAt;
     _reminderSoundUri = item.reminderSoundUri;
@@ -434,6 +434,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     _loadedItemId = '__new__';
     _bodyController.clear();
     _memoryDate = DateTime(date.year, date.month, date.day);
+    _originalOccurrenceDate = null;
     _timeMinutes = null;
     _remindAt = null;
     _reminderSoundUri = null;
@@ -955,18 +956,39 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
       clearBirthYear: snapshot.birthYear == null,
       updatedAt: snapshot.savedAt,
     );
-    await ref.read(memoryItemsControllerProvider.notifier).update(updated);
+    final persisted = ref
+        .read(memoryItemsControllerProvider)
+        .any((entry) => entry.id == item.id);
     if (_recurrenceFrequency != null) {
       if (item.repeatRule != _recurrenceFrequency!.name ||
           item.seriesId == null) {
+        if (persisted) {
+          await ref
+              .read(memoryItemsControllerProvider.notifier)
+              .update(updated);
+        }
         await ref
             .read(recurrenceSeriesControllerProvider.notifier)
             .setFrequency(updated, _recurrenceFrequency!);
       } else if (_editFutureOccurrences) {
         await ref
             .read(recurrenceSeriesControllerProvider.notifier)
-            .applyToFuture(updated);
+            .applyToFuture(
+              updated,
+              occurrenceDate: _originalOccurrenceDate,
+            );
+      } else if (!persisted || item.isGeneratedOccurrence) {
+        await ref
+            .read(recurrenceSeriesControllerProvider.notifier)
+            .saveOccurrenceOverride(
+              updated,
+              occurrenceDate: _originalOccurrenceDate,
+            );
+      } else {
+        await ref.read(memoryItemsControllerProvider.notifier).update(updated);
       }
+    } else {
+      await ref.read(memoryItemsControllerProvider.notifier).update(updated);
     }
   }
 
@@ -1080,7 +1102,13 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
           .read(recurrenceSeriesControllerProvider.notifier)
           .deleteFromDate(item.seriesId!, item.memoryDate);
     } else {
-      await ref.read(memoryItemsControllerProvider.notifier).delete(item.id);
+      if (item.seriesId != null) {
+        await ref
+            .read(recurrenceSeriesControllerProvider.notifier)
+            .deleteOccurrence(item);
+      } else {
+        await ref.read(memoryItemsControllerProvider.notifier).delete(item.id);
+      }
     }
 
     if (mounted) {
@@ -2124,7 +2152,7 @@ class _RecordEditor extends StatelessWidget {
                     _SquareActionButton(
                       tooltip: strings.addImage,
                       icon: Icons.photo_camera_outlined,
-                      color: const Color(0xFFD97757),
+                      color: Theme.of(context).colorScheme.primary,
                       size: buttonSize,
                       onPressed: onPickImage,
                     ),

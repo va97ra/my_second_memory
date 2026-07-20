@@ -46,6 +46,22 @@ class RecurrenceSeriesRows extends Table {
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get generatedThrough => dateTime().nullable()();
+  DateTimeColumn get endDate => dateTime().nullable()();
+  DateTimeColumn get historyThrough => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+@DataClassName('RecurrenceOccurrenceExceptionRow')
+class RecurrenceOccurrenceExceptionRows extends Table {
+  TextColumn get id => text()();
+  TextColumn get seriesId => text()();
+  DateTimeColumn get occurrenceDate => dateTime()();
+  TextColumn get kind => text()();
+  TextColumn get itemJson => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

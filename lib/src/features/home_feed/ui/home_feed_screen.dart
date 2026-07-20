@@ -237,10 +237,10 @@ class _FeedFilterButton extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.tune,
                     size: 18,
-                    color: Color(0xFFD97757),
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -322,7 +322,7 @@ class _FeedSectionHeader extends StatelessWidget {
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xFFD97757),
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const SizedBox(width: 4, height: 22),

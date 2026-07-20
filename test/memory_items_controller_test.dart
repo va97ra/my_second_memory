@@ -102,6 +102,9 @@ class _ReminderScheduler implements ReminderScheduler {
   }
 
   @override
+  Future<void> reconcileRecurring(List<MemoryItem> items) async {}
+
+  @override
   Future<bool> requestPermissions() async => true;
 
   @override

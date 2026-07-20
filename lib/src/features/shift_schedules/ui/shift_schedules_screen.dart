@@ -40,8 +40,7 @@ class ShiftSchedulesScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: ColoredBox(
-        color: const Color(0x12D97757),
+      body: WarmGradientBackground(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
           children: [
@@ -230,10 +229,10 @@ class _ShiftScheduleTile extends StatelessWidget {
                           const SizedBox(height: 3),
                           Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.alarm_outlined,
                                 size: 15,
-                                color: Color(0xFFD97757),
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                               const SizedBox(width: 5),
                               Expanded(
@@ -256,7 +255,9 @@ class _ShiftScheduleTile extends StatelessWidget {
                                       .textTheme
                                       .labelMedium
                                       ?.copyWith(
-                                        color: const Color(0xFFD97757),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
                                         fontWeight: FontWeight.w800,
                                       ),
                                 ),
@@ -827,7 +828,7 @@ class _PresetButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFFD97757)
+                ? Theme.of(context).colorScheme.primary
                 : Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
@@ -835,7 +836,11 @@ class _PresetButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (isSelected) ...[
-              const Icon(Icons.check, size: 16, color: Color(0xFFD97757)),
+              Icon(
+                Icons.check,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(width: 5),
             ],
             Flexible(
@@ -845,7 +850,7 @@ class _PresetButton extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: isSelected
-                          ? const Color(0xFFD97757)
+                          ? Theme.of(context).colorScheme.primary
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
                     ),

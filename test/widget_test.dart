@@ -382,11 +382,11 @@ void main() {
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(
       app.darkTheme?.scaffoldBackgroundColor,
-      const Color(0xFF20211F),
+      Colors.transparent,
     );
     expect(
       app.theme?.scaffoldBackgroundColor,
-      const Color(0xFFF0EEE8),
+      Colors.transparent,
     );
     final cardShape = app.theme?.cardTheme.shape as RoundedRectangleBorder;
     final dialogShape = app.theme?.dialogTheme.shape as RoundedRectangleBorder;

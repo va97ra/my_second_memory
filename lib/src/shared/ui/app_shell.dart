@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/localization/app_strings.dart';
+import '../../core/theme/app_surface_palette.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({
@@ -21,14 +22,14 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    final colors = Theme.of(context).colorScheme;
+    final palette = AppSurfacePalette.of(context);
 
     return Scaffold(
       body: navigationShell ?? child,
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
-          color: colors.surface,
+          color: palette.navigationSurface,
           border: Border(
             top: BorderSide(
               color: Theme.of(context).colorScheme.outlineVariant,

@@ -10,6 +10,7 @@ import 'core/localization/app_strings.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_controller.dart';
+import 'core/theme/app_surface_palette.dart';
 import 'features/security/ui/security_gate.dart';
 import 'features/notifications/data/notification_service.dart';
 
@@ -76,15 +77,21 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
           statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-          systemNavigationBarColor: Theme.of(context).colorScheme.surface,
+          systemNavigationBarColor:
+              AppSurfacePalette.of(context).navigationSurface,
           systemNavigationBarIconBrightness:
               isDark ? Brightness.light : Brightness.dark,
         );
 
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: overlayStyle,
-          child: SecurityGate(
-            child: child ?? const SizedBox.shrink(),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: AppSurfacePalette.of(context).backgroundGradient,
+            ),
+            child: SecurityGate(
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },

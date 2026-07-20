@@ -9,12 +9,17 @@ import 'memory_tables.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [MemoryItems, RecurrenceSeriesRows, SecureEntities])
+@DriftDatabase(tables: [
+  MemoryItems,
+  RecurrenceSeriesRows,
+  RecurrenceOccurrenceExceptionRows,
+  SecureEntities,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -54,6 +59,17 @@ class AppDatabase extends _$AppDatabase {
               recurrenceSeriesRows,
               recurrenceSeriesRows.generatedThrough,
             );
+          }
+          if (from < 7) {
+            await migrator.addColumn(
+              recurrenceSeriesRows,
+              recurrenceSeriesRows.endDate,
+            );
+            await migrator.addColumn(
+              recurrenceSeriesRows,
+              recurrenceSeriesRows.historyThrough,
+            );
+            await migrator.createTable(recurrenceOccurrenceExceptionRows);
           }
         },
       );

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/app_surface_palette.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../state/calendar_month_data.dart';
 import '../state/calendar_preferences_controller.dart';
@@ -134,9 +135,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         _visibleMonth.month + offset,
       );
     });
-    ref
-        .read(recurrenceSeriesControllerProvider.notifier)
-        .ensureHorizonFor(_visibleMonth);
   }
 
   Future<void> _openDayDialog(DateTime date) async {
@@ -197,8 +195,11 @@ class _CalendarPanel extends StatelessWidget {
               DecoratedBox(
                 key: const ValueKey('calendar_weekdays'),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  color: AppSurfacePalette.of(context).weekdaySurface,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 5),
@@ -289,22 +290,21 @@ class _CalendarPanel extends StatelessWidget {
                 DecoratedBox(
                   key: const ValueKey('calendar_hint'),
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest
-                        .withValues(alpha: 0.55),
+                    color: AppSurfacePalette.of(context).raisedSurface,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                    border: Border.all(
+                      color: AppSurfacePalette.of(context).borderStart,
+                    ),
                   ),
                   child: Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.touch_app_outlined,
                           size: 18,
-                          color: Color(0xFFD97757),
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -355,7 +355,7 @@ class _CalendarMonthHeader extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.94),
+        color: AppSurfacePalette.of(context).panelSurface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: [
@@ -398,7 +398,7 @@ class _CalendarMonthHeader extends StatelessWidget {
                 fixedSize: const Size(40, 40),
                 backgroundColor:
                     Theme.of(context).colorScheme.surfaceContainerHighest,
-                foregroundColor: const Color(0xFFD97757),
+                foregroundColor: Theme.of(context).colorScheme.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -506,7 +506,7 @@ class _ShiftLegendChip extends StatelessWidget {
                 child: Text(
                   '${schedule.workDays}/${schedule.restDays}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: const Color(0xFFC2BFB6),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w800,
                         height: 1,
                       ),
@@ -540,7 +540,7 @@ class _MonthIconButton extends StatelessWidget {
       style: IconButton.styleFrom(
         fixedSize: const Size(40, 40),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: const Color(0xFFD97757),
+        foregroundColor: Theme.of(context).colorScheme.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
@@ -572,6 +572,7 @@ class _CalendarDayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final palette = AppSurfacePalette.of(context);
     final hasItems = items.isNotEmpty;
     final shiftColors = [
       for (final schedule in shiftSchedules) Color(schedule.colorValue),
@@ -589,22 +590,25 @@ class _CalendarDayCell extends StatelessWidget {
       child: CustomPaint(
         foregroundPainter: usesGradientBorder
             ? _CalendarCellBorderPainter(
-                isDark: Theme.of(context).brightness == Brightness.dark,
-                colorScheme: colors,
+                borderStart: palette.borderStart,
+                borderEnd: palette.borderEnd,
               )
             : null,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           decoration: BoxDecoration(
-            color: _cellColor(colors, hasItems, hasShift),
+            color: isSelected
+                ? null
+                : _cellColor(colors, palette, hasItems, hasShift),
+            gradient: isSelected ? palette.accentGradient : null,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
                   ? Theme.of(context).colorScheme.onSurface
                   : isToday
-                      ? const Color(0xFFD97757)
+                      ? colors.primary
                       : hasItems && isInVisibleMonth
-                          ? const Color(0xFFBFDBFE)
+                          ? colors.outline
                           : Colors.transparent,
               width: isSelected
                   ? 2
@@ -708,7 +712,7 @@ class _CalendarDayCell extends StatelessWidget {
                                   .textTheme
                                   .labelSmall
                                   ?.copyWith(
-                                    color: const Color(0xFFC2BFB6),
+                                    color: colors.onSurfaceVariant,
                                     fontSize: 9,
                                     fontWeight: FontWeight.w900,
                                     height: 1,
@@ -727,21 +731,23 @@ class _CalendarDayCell extends StatelessWidget {
     );
   }
 
-  Color _cellColor(ColorScheme colors, bool hasItems, bool hasShift) {
+  Color _cellColor(
+    ColorScheme colors,
+    AppSurfacePalette palette,
+    bool hasItems,
+    bool hasShift,
+  ) {
     if (hasShift) {
       return colors.surface;
     }
-    if (isSelected) {
-      return colors.primary;
-    }
     if (isToday) {
-      return colors.surfaceContainerHighest;
+      return palette.calendarTile;
     }
     if (hasItems && isInVisibleMonth) {
-      return colors.surfaceContainerHighest;
+      return palette.calendarTile;
     }
     if (isInVisibleMonth) {
-      return colors.surfaceContainerHighest;
+      return palette.calendarTile;
     }
     return Colors.transparent;
   }
@@ -772,12 +778,12 @@ class _CalendarDayCell extends StatelessWidget {
 
 class _CalendarCellBorderPainter extends CustomPainter {
   const _CalendarCellBorderPainter({
-    required this.isDark,
-    required this.colorScheme,
+    required this.borderStart,
+    required this.borderEnd,
   });
 
-  final bool isDark;
-  final ColorScheme colorScheme;
+  final Color borderStart;
+  final Color borderEnd;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -789,15 +795,7 @@ class _CalendarCellBorderPainter extends CustomPainter {
     final gradient = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: isDark
-          ? [
-              colorScheme.onSurface.withValues(alpha: 0.3),
-              colorScheme.outlineVariant.withValues(alpha: 0.78),
-            ]
-          : [
-              colorScheme.onSurface.withValues(alpha: 0.26),
-              colorScheme.outlineVariant.withValues(alpha: 0.48),
-            ],
+      colors: [borderStart, borderEnd],
     );
     canvas.drawRRect(
       rrect,
@@ -810,8 +808,8 @@ class _CalendarCellBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CalendarCellBorderPainter oldDelegate) {
-    return oldDelegate.isDark != isDark ||
-        oldDelegate.colorScheme != colorScheme;
+    return oldDelegate.borderStart != borderStart ||
+        oldDelegate.borderEnd != borderEnd;
   }
 }
 
@@ -831,11 +829,12 @@ class _DayNumber extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final palette = AppSurfacePalette.of(context);
     final content = Text(
       '$day',
       style: TextStyle(
         color: isSelected
-            ? colors.surface
+            ? colors.onPrimary
             : isToday
                 ? colors.onPrimary
                 : color,
@@ -851,7 +850,8 @@ class _DayNumber extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isSelected ? colors.onSurface : colors.primary,
+        color: isSelected ? colors.onPrimary.withValues(alpha: 0.18) : null,
+        gradient: isSelected ? null : palette.accentGradient,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(

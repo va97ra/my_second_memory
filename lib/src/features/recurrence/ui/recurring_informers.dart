@@ -46,18 +46,12 @@ class _RecurringInformer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = Localizations.localeOf(context).languageCode;
     final monthly = frequency == RecurrenceFrequency.monthly;
-    final matchingSeries = ref.watch(
-      recurrenceSeriesControllerProvider.select(
-        (series) => series
-            .where((entry) => entry.isEnabled && entry.frequency == frequency)
-            .length,
-      ),
-    );
-    final upcoming = ref.watch(recurringUpcomingItemsProvider(frequency));
+    final upcoming = ref.watch(recurringCurrentPeriodItemsProvider(frequency));
     final colors = Theme.of(context).colorScheme;
+    final now = DateTime.now();
     final title = monthly
-        ? (locale == 'ru' ? 'Каждый месяц' : 'Every month')
-        : (locale == 'ru' ? 'Каждый год' : 'Every year');
+        ? _capitalize(DateFormat.MMMM(locale).format(now))
+        : (locale == 'ru' ? '${now.year} год' : '${now.year}');
     final route = monthly ? '/recurring/monthly' : '/recurring/yearly';
 
     return SizedBox(
@@ -98,7 +92,7 @@ class _RecurringInformer extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        '$matchingSeries',
+                        '${upcoming.length}',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: colors.onSurfaceVariant,
                               fontWeight: FontWeight.w800,
@@ -148,6 +142,11 @@ class _RecurringInformer extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _capitalize(String value) {
+    if (value.isEmpty) return value;
+    return '${value[0].toUpperCase()}${value.substring(1)}';
   }
 }
 

@@ -11,6 +11,8 @@ import '../../memory_items/data/memory_repository.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../recurrence/data/recurrence_repository.dart';
 import '../../recurrence/domain/recurrence_series.dart';
+import '../../recurrence/data/recurrence_exception_repository.dart';
+import '../../recurrence/domain/recurrence_occurrence_exception.dart';
 import '../../shift_schedules/data/shift_schedule_repository.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 import 'backup_media_store.dart';
@@ -22,6 +24,7 @@ class BackupService {
     required this.shiftScheduleRepository,
     required this.accountRepository,
     this.recurrenceRepository,
+    this.recurrenceExceptionRepository,
   });
 
   static const format = 'ezhednevnik_v2_backup';
@@ -29,18 +32,21 @@ class BackupService {
   static const legacyVersion = 1;
   static const encryptedZipFormat = 'ezhednevnik_v2_encrypted_zip';
   static const streamingZipFormat = 'ezhednevnik_v2_streaming_zip';
-  static const streamingZipVersion = 3;
+  static const streamingZipVersion = 4;
 
   final MemoryRepository memoryRepository;
   final ShiftScheduleRepository shiftScheduleRepository;
   final AccountRepository accountRepository;
   final RecurrenceRepository? recurrenceRepository;
+  final RecurrenceExceptionRepository? recurrenceExceptionRepository;
 
   Future<String> createBackupJson() async {
     final memoryItems = await memoryRepository.loadAll();
     final shiftSchedules = await shiftScheduleRepository.loadSchedules();
     final accounts = await accountRepository.loadAccounts();
     final recurrenceSeries = await recurrenceRepository?.loadAll() ?? const [];
+    final recurrenceExceptions =
+        await recurrenceExceptionRepository?.loadAll() ?? const [];
     final mediaFiles = await collectBackupMedia(memoryItems);
 
     return const JsonEncoder.withIndent('  ').convert({
@@ -52,6 +58,8 @@ class BackupService {
       'accounts': accounts.map((item) => item.toJson()).toList(),
       'recurrenceSeries':
           recurrenceSeries.map((item) => item.toJson()).toList(),
+      'recurrenceExceptions':
+          recurrenceExceptions.map((item) => item.toJson()).toList(),
       'mediaFiles': mediaFiles,
     });
   }
@@ -99,6 +107,8 @@ class BackupService {
       shiftSchedules: await shiftScheduleRepository.loadSchedules(),
       accounts: await accountRepository.loadAccounts(),
       recurrenceSeries: await recurrenceRepository?.loadAll() ?? const [],
+      recurrenceExceptions:
+          await recurrenceExceptionRepository?.loadAll() ?? const [],
       temporaryRoot: temporaryRoot,
     );
   }
@@ -142,8 +152,9 @@ class BackupService {
     } catch (_) {
       return null;
     }
+    final manifestVersion = manifest['version'];
     if (manifest['format'] != streamingZipFormat ||
-        manifest['version'] != streamingZipVersion) {
+        (manifestVersion != streamingZipVersion && manifestVersion != 3)) {
       return null;
     }
     final items = (manifest['memoryItems'] as List<dynamic>? ?? const [])
@@ -175,11 +186,18 @@ class BackupService {
         Map<String, Object?>.from(entry as Map),
       );
     }).toList();
+    final recurrenceExceptions =
+        (manifest['recurrenceExceptions'] as List<dynamic>? ?? const [])
+            .map((entry) => RecurrenceOccurrenceException.fromJson(
+                  Map<String, Object?>.from(entry as Map),
+                ))
+            .toList();
     return BackupRestoreData(
       memoryItems: restoredItems,
       shiftSchedules: shifts,
       accounts: accounts,
       recurrenceSeries: recurrenceSeries,
+      recurrenceExceptions: recurrenceExceptions,
     );
   }
 
@@ -214,12 +232,19 @@ class BackupService {
         Map<String, Object?>.from(entry as Map),
       );
     }).toList();
+    final recurrenceExceptions =
+        (decoded['recurrenceExceptions'] as List<dynamic>? ?? const [])
+            .map((entry) => RecurrenceOccurrenceException.fromJson(
+                  Map<String, Object?>.from(entry as Map),
+                ))
+            .toList();
 
     return BackupRestoreData(
       memoryItems: restoredItems,
       shiftSchedules: shiftSchedules,
       accounts: accounts,
       recurrenceSeries: recurrenceSeries,
+      recurrenceExceptions: recurrenceExceptions,
     );
   }
 
@@ -286,10 +311,12 @@ class BackupRestoreData {
     required this.shiftSchedules,
     required this.accounts,
     this.recurrenceSeries = const [],
+    this.recurrenceExceptions = const [],
   });
 
   final List<MemoryItem> memoryItems;
   final List<ShiftSchedule> shiftSchedules;
   final List<AccountItem> accounts;
   final List<RecurrenceSeries> recurrenceSeries;
+  final List<RecurrenceOccurrenceException> recurrenceExceptions;
 }

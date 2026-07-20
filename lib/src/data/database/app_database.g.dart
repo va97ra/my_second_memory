@@ -1309,6 +1309,18 @@ class $RecurrenceSeriesRowsTable extends RecurrenceSeriesRows
   late final GeneratedColumn<DateTime> generatedThrough =
       GeneratedColumn<DateTime>('generated_through', aliasedName, true,
           type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _endDateMeta =
+      const VerificationMeta('endDate');
+  @override
+  late final GeneratedColumn<DateTime> endDate = GeneratedColumn<DateTime>(
+      'end_date', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _historyThroughMeta =
+      const VerificationMeta('historyThrough');
+  @override
+  late final GeneratedColumn<DateTime> historyThrough =
+      GeneratedColumn<DateTime>('history_through', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -1319,7 +1331,9 @@ class $RecurrenceSeriesRowsTable extends RecurrenceSeriesRows
         isEnabled,
         createdAt,
         updatedAt,
-        generatedThrough
+        generatedThrough,
+        endDate,
+        historyThrough
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1387,6 +1401,16 @@ class $RecurrenceSeriesRowsTable extends RecurrenceSeriesRows
           generatedThrough.isAcceptableOrUnknown(
               data['generated_through']!, _generatedThroughMeta));
     }
+    if (data.containsKey('end_date')) {
+      context.handle(_endDateMeta,
+          endDate.isAcceptableOrUnknown(data['end_date']!, _endDateMeta));
+    }
+    if (data.containsKey('history_through')) {
+      context.handle(
+          _historyThroughMeta,
+          historyThrough.isAcceptableOrUnknown(
+              data['history_through']!, _historyThroughMeta));
+    }
     return context;
   }
 
@@ -1414,6 +1438,10 @@ class $RecurrenceSeriesRowsTable extends RecurrenceSeriesRows
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
       generatedThrough: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}generated_through']),
+      endDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}end_date']),
+      historyThrough: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}history_through']),
     );
   }
 
@@ -1434,6 +1462,8 @@ class RecurrenceSeriesRow extends DataClass
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? generatedThrough;
+  final DateTime? endDate;
+  final DateTime? historyThrough;
   const RecurrenceSeriesRow(
       {required this.id,
       required this.frequency,
@@ -1443,7 +1473,9 @@ class RecurrenceSeriesRow extends DataClass
       required this.isEnabled,
       required this.createdAt,
       required this.updatedAt,
-      this.generatedThrough});
+      this.generatedThrough,
+      this.endDate,
+      this.historyThrough});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1457,6 +1489,12 @@ class RecurrenceSeriesRow extends DataClass
     map['updated_at'] = Variable<DateTime>(updatedAt);
     if (!nullToAbsent || generatedThrough != null) {
       map['generated_through'] = Variable<DateTime>(generatedThrough);
+    }
+    if (!nullToAbsent || endDate != null) {
+      map['end_date'] = Variable<DateTime>(endDate);
+    }
+    if (!nullToAbsent || historyThrough != null) {
+      map['history_through'] = Variable<DateTime>(historyThrough);
     }
     return map;
   }
@@ -1474,6 +1512,12 @@ class RecurrenceSeriesRow extends DataClass
       generatedThrough: generatedThrough == null && nullToAbsent
           ? const Value.absent()
           : Value(generatedThrough),
+      endDate: endDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endDate),
+      historyThrough: historyThrough == null && nullToAbsent
+          ? const Value.absent()
+          : Value(historyThrough),
     );
   }
 
@@ -1491,6 +1535,8 @@ class RecurrenceSeriesRow extends DataClass
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       generatedThrough:
           serializer.fromJson<DateTime?>(json['generatedThrough']),
+      endDate: serializer.fromJson<DateTime?>(json['endDate']),
+      historyThrough: serializer.fromJson<DateTime?>(json['historyThrough']),
     );
   }
   @override
@@ -1506,6 +1552,8 @@ class RecurrenceSeriesRow extends DataClass
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'generatedThrough': serializer.toJson<DateTime?>(generatedThrough),
+      'endDate': serializer.toJson<DateTime?>(endDate),
+      'historyThrough': serializer.toJson<DateTime?>(historyThrough),
     };
   }
 
@@ -1518,7 +1566,9 @@ class RecurrenceSeriesRow extends DataClass
           bool? isEnabled,
           DateTime? createdAt,
           DateTime? updatedAt,
-          Value<DateTime?> generatedThrough = const Value.absent()}) =>
+          Value<DateTime?> generatedThrough = const Value.absent(),
+          Value<DateTime?> endDate = const Value.absent(),
+          Value<DateTime?> historyThrough = const Value.absent()}) =>
       RecurrenceSeriesRow(
         id: id ?? this.id,
         frequency: frequency ?? this.frequency,
@@ -1531,6 +1581,9 @@ class RecurrenceSeriesRow extends DataClass
         generatedThrough: generatedThrough.present
             ? generatedThrough.value
             : this.generatedThrough,
+        endDate: endDate.present ? endDate.value : this.endDate,
+        historyThrough:
+            historyThrough.present ? historyThrough.value : this.historyThrough,
       );
   RecurrenceSeriesRow copyWithCompanion(RecurrenceSeriesRowsCompanion data) {
     return RecurrenceSeriesRow(
@@ -1549,6 +1602,10 @@ class RecurrenceSeriesRow extends DataClass
       generatedThrough: data.generatedThrough.present
           ? data.generatedThrough.value
           : this.generatedThrough,
+      endDate: data.endDate.present ? data.endDate.value : this.endDate,
+      historyThrough: data.historyThrough.present
+          ? data.historyThrough.value
+          : this.historyThrough,
     );
   }
 
@@ -1563,14 +1620,26 @@ class RecurrenceSeriesRow extends DataClass
           ..write('isEnabled: $isEnabled, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('generatedThrough: $generatedThrough')
+          ..write('generatedThrough: $generatedThrough, ')
+          ..write('endDate: $endDate, ')
+          ..write('historyThrough: $historyThrough')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, frequency, templateJson, startDate,
-      originItemId, isEnabled, createdAt, updatedAt, generatedThrough);
+  int get hashCode => Object.hash(
+      id,
+      frequency,
+      templateJson,
+      startDate,
+      originItemId,
+      isEnabled,
+      createdAt,
+      updatedAt,
+      generatedThrough,
+      endDate,
+      historyThrough);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1583,7 +1652,9 @@ class RecurrenceSeriesRow extends DataClass
           other.isEnabled == this.isEnabled &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.generatedThrough == this.generatedThrough);
+          other.generatedThrough == this.generatedThrough &&
+          other.endDate == this.endDate &&
+          other.historyThrough == this.historyThrough);
 }
 
 class RecurrenceSeriesRowsCompanion
@@ -1597,6 +1668,8 @@ class RecurrenceSeriesRowsCompanion
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime?> generatedThrough;
+  final Value<DateTime?> endDate;
+  final Value<DateTime?> historyThrough;
   final Value<int> rowid;
   const RecurrenceSeriesRowsCompanion({
     this.id = const Value.absent(),
@@ -1608,6 +1681,8 @@ class RecurrenceSeriesRowsCompanion
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.generatedThrough = const Value.absent(),
+    this.endDate = const Value.absent(),
+    this.historyThrough = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   RecurrenceSeriesRowsCompanion.insert({
@@ -1620,6 +1695,8 @@ class RecurrenceSeriesRowsCompanion
     required DateTime createdAt,
     required DateTime updatedAt,
     this.generatedThrough = const Value.absent(),
+    this.endDate = const Value.absent(),
+    this.historyThrough = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         frequency = Value(frequency),
@@ -1638,6 +1715,8 @@ class RecurrenceSeriesRowsCompanion
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? generatedThrough,
+    Expression<DateTime>? endDate,
+    Expression<DateTime>? historyThrough,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1650,6 +1729,8 @@ class RecurrenceSeriesRowsCompanion
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (generatedThrough != null) 'generated_through': generatedThrough,
+      if (endDate != null) 'end_date': endDate,
+      if (historyThrough != null) 'history_through': historyThrough,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1664,6 +1745,8 @@ class RecurrenceSeriesRowsCompanion
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<DateTime?>? generatedThrough,
+      Value<DateTime?>? endDate,
+      Value<DateTime?>? historyThrough,
       Value<int>? rowid}) {
     return RecurrenceSeriesRowsCompanion(
       id: id ?? this.id,
@@ -1675,6 +1758,8 @@ class RecurrenceSeriesRowsCompanion
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       generatedThrough: generatedThrough ?? this.generatedThrough,
+      endDate: endDate ?? this.endDate,
+      historyThrough: historyThrough ?? this.historyThrough,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1709,6 +1794,12 @@ class RecurrenceSeriesRowsCompanion
     if (generatedThrough.present) {
       map['generated_through'] = Variable<DateTime>(generatedThrough.value);
     }
+    if (endDate.present) {
+      map['end_date'] = Variable<DateTime>(endDate.value);
+    }
+    if (historyThrough.present) {
+      map['history_through'] = Variable<DateTime>(historyThrough.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1727,6 +1818,404 @@ class RecurrenceSeriesRowsCompanion
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('generatedThrough: $generatedThrough, ')
+          ..write('endDate: $endDate, ')
+          ..write('historyThrough: $historyThrough, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RecurrenceOccurrenceExceptionRowsTable
+    extends RecurrenceOccurrenceExceptionRows
+    with
+        TableInfo<$RecurrenceOccurrenceExceptionRowsTable,
+            RecurrenceOccurrenceExceptionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecurrenceOccurrenceExceptionRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _seriesIdMeta =
+      const VerificationMeta('seriesId');
+  @override
+  late final GeneratedColumn<String> seriesId = GeneratedColumn<String>(
+      'series_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _occurrenceDateMeta =
+      const VerificationMeta('occurrenceDate');
+  @override
+  late final GeneratedColumn<DateTime> occurrenceDate =
+      GeneratedColumn<DateTime>('occurrence_date', aliasedName, false,
+          type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+      'kind', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _itemJsonMeta =
+      const VerificationMeta('itemJson');
+  @override
+  late final GeneratedColumn<String> itemJson = GeneratedColumn<String>(
+      'item_json', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, seriesId, occurrenceDate, kind, itemJson, createdAt, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recurrence_occurrence_exception_rows';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<RecurrenceOccurrenceExceptionRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('series_id')) {
+      context.handle(_seriesIdMeta,
+          seriesId.isAcceptableOrUnknown(data['series_id']!, _seriesIdMeta));
+    } else if (isInserting) {
+      context.missing(_seriesIdMeta);
+    }
+    if (data.containsKey('occurrence_date')) {
+      context.handle(
+          _occurrenceDateMeta,
+          occurrenceDate.isAcceptableOrUnknown(
+              data['occurrence_date']!, _occurrenceDateMeta));
+    } else if (isInserting) {
+      context.missing(_occurrenceDateMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+          _kindMeta, kind.isAcceptableOrUnknown(data['kind']!, _kindMeta));
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('item_json')) {
+      context.handle(_itemJsonMeta,
+          itemJson.isAcceptableOrUnknown(data['item_json']!, _itemJsonMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RecurrenceOccurrenceExceptionRow map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecurrenceOccurrenceExceptionRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      seriesId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}series_id'])!,
+      occurrenceDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}occurrence_date'])!,
+      kind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}kind'])!,
+      itemJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}item_json']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $RecurrenceOccurrenceExceptionRowsTable createAlias(String alias) {
+    return $RecurrenceOccurrenceExceptionRowsTable(attachedDatabase, alias);
+  }
+}
+
+class RecurrenceOccurrenceExceptionRow extends DataClass
+    implements Insertable<RecurrenceOccurrenceExceptionRow> {
+  final String id;
+  final String seriesId;
+  final DateTime occurrenceDate;
+  final String kind;
+  final String? itemJson;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const RecurrenceOccurrenceExceptionRow(
+      {required this.id,
+      required this.seriesId,
+      required this.occurrenceDate,
+      required this.kind,
+      this.itemJson,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['series_id'] = Variable<String>(seriesId);
+    map['occurrence_date'] = Variable<DateTime>(occurrenceDate);
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || itemJson != null) {
+      map['item_json'] = Variable<String>(itemJson);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  RecurrenceOccurrenceExceptionRowsCompanion toCompanion(bool nullToAbsent) {
+    return RecurrenceOccurrenceExceptionRowsCompanion(
+      id: Value(id),
+      seriesId: Value(seriesId),
+      occurrenceDate: Value(occurrenceDate),
+      kind: Value(kind),
+      itemJson: itemJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(itemJson),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory RecurrenceOccurrenceExceptionRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecurrenceOccurrenceExceptionRow(
+      id: serializer.fromJson<String>(json['id']),
+      seriesId: serializer.fromJson<String>(json['seriesId']),
+      occurrenceDate: serializer.fromJson<DateTime>(json['occurrenceDate']),
+      kind: serializer.fromJson<String>(json['kind']),
+      itemJson: serializer.fromJson<String?>(json['itemJson']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'seriesId': serializer.toJson<String>(seriesId),
+      'occurrenceDate': serializer.toJson<DateTime>(occurrenceDate),
+      'kind': serializer.toJson<String>(kind),
+      'itemJson': serializer.toJson<String?>(itemJson),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  RecurrenceOccurrenceExceptionRow copyWith(
+          {String? id,
+          String? seriesId,
+          DateTime? occurrenceDate,
+          String? kind,
+          Value<String?> itemJson = const Value.absent(),
+          DateTime? createdAt,
+          DateTime? updatedAt}) =>
+      RecurrenceOccurrenceExceptionRow(
+        id: id ?? this.id,
+        seriesId: seriesId ?? this.seriesId,
+        occurrenceDate: occurrenceDate ?? this.occurrenceDate,
+        kind: kind ?? this.kind,
+        itemJson: itemJson.present ? itemJson.value : this.itemJson,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  RecurrenceOccurrenceExceptionRow copyWithCompanion(
+      RecurrenceOccurrenceExceptionRowsCompanion data) {
+    return RecurrenceOccurrenceExceptionRow(
+      id: data.id.present ? data.id.value : this.id,
+      seriesId: data.seriesId.present ? data.seriesId.value : this.seriesId,
+      occurrenceDate: data.occurrenceDate.present
+          ? data.occurrenceDate.value
+          : this.occurrenceDate,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      itemJson: data.itemJson.present ? data.itemJson.value : this.itemJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecurrenceOccurrenceExceptionRow(')
+          ..write('id: $id, ')
+          ..write('seriesId: $seriesId, ')
+          ..write('occurrenceDate: $occurrenceDate, ')
+          ..write('kind: $kind, ')
+          ..write('itemJson: $itemJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, seriesId, occurrenceDate, kind, itemJson, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecurrenceOccurrenceExceptionRow &&
+          other.id == this.id &&
+          other.seriesId == this.seriesId &&
+          other.occurrenceDate == this.occurrenceDate &&
+          other.kind == this.kind &&
+          other.itemJson == this.itemJson &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class RecurrenceOccurrenceExceptionRowsCompanion
+    extends UpdateCompanion<RecurrenceOccurrenceExceptionRow> {
+  final Value<String> id;
+  final Value<String> seriesId;
+  final Value<DateTime> occurrenceDate;
+  final Value<String> kind;
+  final Value<String?> itemJson;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const RecurrenceOccurrenceExceptionRowsCompanion({
+    this.id = const Value.absent(),
+    this.seriesId = const Value.absent(),
+    this.occurrenceDate = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.itemJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecurrenceOccurrenceExceptionRowsCompanion.insert({
+    required String id,
+    required String seriesId,
+    required DateTime occurrenceDate,
+    required String kind,
+    this.itemJson = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        seriesId = Value(seriesId),
+        occurrenceDate = Value(occurrenceDate),
+        kind = Value(kind),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<RecurrenceOccurrenceExceptionRow> custom({
+    Expression<String>? id,
+    Expression<String>? seriesId,
+    Expression<DateTime>? occurrenceDate,
+    Expression<String>? kind,
+    Expression<String>? itemJson,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (seriesId != null) 'series_id': seriesId,
+      if (occurrenceDate != null) 'occurrence_date': occurrenceDate,
+      if (kind != null) 'kind': kind,
+      if (itemJson != null) 'item_json': itemJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecurrenceOccurrenceExceptionRowsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? seriesId,
+      Value<DateTime>? occurrenceDate,
+      Value<String>? kind,
+      Value<String?>? itemJson,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<int>? rowid}) {
+    return RecurrenceOccurrenceExceptionRowsCompanion(
+      id: id ?? this.id,
+      seriesId: seriesId ?? this.seriesId,
+      occurrenceDate: occurrenceDate ?? this.occurrenceDate,
+      kind: kind ?? this.kind,
+      itemJson: itemJson ?? this.itemJson,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (seriesId.present) {
+      map['series_id'] = Variable<String>(seriesId.value);
+    }
+    if (occurrenceDate.present) {
+      map['occurrence_date'] = Variable<DateTime>(occurrenceDate.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (itemJson.present) {
+      map['item_json'] = Variable<String>(itemJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecurrenceOccurrenceExceptionRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('seriesId: $seriesId, ')
+          ..write('occurrenceDate: $occurrenceDate, ')
+          ..write('kind: $kind, ')
+          ..write('itemJson: $itemJson, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2019,13 +2508,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MemoryItemsTable memoryItems = $MemoryItemsTable(this);
   late final $RecurrenceSeriesRowsTable recurrenceSeriesRows =
       $RecurrenceSeriesRowsTable(this);
+  late final $RecurrenceOccurrenceExceptionRowsTable
+      recurrenceOccurrenceExceptionRows =
+      $RecurrenceOccurrenceExceptionRowsTable(this);
   late final $SecureEntitiesTable secureEntities = $SecureEntitiesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [memoryItems, recurrenceSeriesRows, secureEntities];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        memoryItems,
+        recurrenceSeriesRows,
+        recurrenceOccurrenceExceptionRows,
+        secureEntities
+      ];
 }
 
 typedef $$MemoryItemsTableCreateCompanionBuilder = MemoryItemsCompanion
@@ -2555,6 +3051,8 @@ typedef $$RecurrenceSeriesRowsTableCreateCompanionBuilder
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<DateTime?> generatedThrough,
+  Value<DateTime?> endDate,
+  Value<DateTime?> historyThrough,
   Value<int> rowid,
 });
 typedef $$RecurrenceSeriesRowsTableUpdateCompanionBuilder
@@ -2568,6 +3066,8 @@ typedef $$RecurrenceSeriesRowsTableUpdateCompanionBuilder
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<DateTime?> generatedThrough,
+  Value<DateTime?> endDate,
+  Value<DateTime?> historyThrough,
   Value<int> rowid,
 });
 
@@ -2606,6 +3106,13 @@ class $$RecurrenceSeriesRowsTableFilterComposer
 
   ColumnFilters<DateTime> get generatedThrough => $composableBuilder(
       column: $table.generatedThrough,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get endDate => $composableBuilder(
+      column: $table.endDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get historyThrough => $composableBuilder(
+      column: $table.historyThrough,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -2647,6 +3154,13 @@ class $$RecurrenceSeriesRowsTableOrderingComposer
   ColumnOrderings<DateTime> get generatedThrough => $composableBuilder(
       column: $table.generatedThrough,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get endDate => $composableBuilder(
+      column: $table.endDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get historyThrough => $composableBuilder(
+      column: $table.historyThrough,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$RecurrenceSeriesRowsTableAnnotationComposer
@@ -2684,6 +3198,12 @@ class $$RecurrenceSeriesRowsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get generatedThrough => $composableBuilder(
       column: $table.generatedThrough, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endDate =>
+      $composableBuilder(column: $table.endDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get historyThrough => $composableBuilder(
+      column: $table.historyThrough, builder: (column) => column);
 }
 
 class $$RecurrenceSeriesRowsTableTableManager extends RootTableManager<
@@ -2725,6 +3245,8 @@ class $$RecurrenceSeriesRowsTableTableManager extends RootTableManager<
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<DateTime?> generatedThrough = const Value.absent(),
+            Value<DateTime?> endDate = const Value.absent(),
+            Value<DateTime?> historyThrough = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               RecurrenceSeriesRowsCompanion(
@@ -2737,6 +3259,8 @@ class $$RecurrenceSeriesRowsTableTableManager extends RootTableManager<
             createdAt: createdAt,
             updatedAt: updatedAt,
             generatedThrough: generatedThrough,
+            endDate: endDate,
+            historyThrough: historyThrough,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -2749,6 +3273,8 @@ class $$RecurrenceSeriesRowsTableTableManager extends RootTableManager<
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<DateTime?> generatedThrough = const Value.absent(),
+            Value<DateTime?> endDate = const Value.absent(),
+            Value<DateTime?> historyThrough = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               RecurrenceSeriesRowsCompanion.insert(
@@ -2761,6 +3287,8 @@ class $$RecurrenceSeriesRowsTableTableManager extends RootTableManager<
             createdAt: createdAt,
             updatedAt: updatedAt,
             generatedThrough: generatedThrough,
+            endDate: endDate,
+            historyThrough: historyThrough,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -2786,6 +3314,219 @@ typedef $$RecurrenceSeriesRowsTableProcessedTableManager
               RecurrenceSeriesRow>
         ),
         RecurrenceSeriesRow,
+        PrefetchHooks Function()>;
+typedef $$RecurrenceOccurrenceExceptionRowsTableCreateCompanionBuilder
+    = RecurrenceOccurrenceExceptionRowsCompanion Function({
+  required String id,
+  required String seriesId,
+  required DateTime occurrenceDate,
+  required String kind,
+  Value<String?> itemJson,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<int> rowid,
+});
+typedef $$RecurrenceOccurrenceExceptionRowsTableUpdateCompanionBuilder
+    = RecurrenceOccurrenceExceptionRowsCompanion Function({
+  Value<String> id,
+  Value<String> seriesId,
+  Value<DateTime> occurrenceDate,
+  Value<String> kind,
+  Value<String?> itemJson,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$RecurrenceOccurrenceExceptionRowsTableFilterComposer
+    extends Composer<_$AppDatabase, $RecurrenceOccurrenceExceptionRowsTable> {
+  $$RecurrenceOccurrenceExceptionRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get seriesId => $composableBuilder(
+      column: $table.seriesId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get occurrenceDate => $composableBuilder(
+      column: $table.occurrenceDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemJson => $composableBuilder(
+      column: $table.itemJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$RecurrenceOccurrenceExceptionRowsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RecurrenceOccurrenceExceptionRowsTable> {
+  $$RecurrenceOccurrenceExceptionRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get seriesId => $composableBuilder(
+      column: $table.seriesId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get occurrenceDate => $composableBuilder(
+      column: $table.occurrenceDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemJson => $composableBuilder(
+      column: $table.itemJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$RecurrenceOccurrenceExceptionRowsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RecurrenceOccurrenceExceptionRowsTable> {
+  $$RecurrenceOccurrenceExceptionRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get seriesId =>
+      $composableBuilder(column: $table.seriesId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get occurrenceDate => $composableBuilder(
+      column: $table.occurrenceDate, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get itemJson =>
+      $composableBuilder(column: $table.itemJson, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$RecurrenceOccurrenceExceptionRowsTableTableManager
+    extends RootTableManager<
+        _$AppDatabase,
+        $RecurrenceOccurrenceExceptionRowsTable,
+        RecurrenceOccurrenceExceptionRow,
+        $$RecurrenceOccurrenceExceptionRowsTableFilterComposer,
+        $$RecurrenceOccurrenceExceptionRowsTableOrderingComposer,
+        $$RecurrenceOccurrenceExceptionRowsTableAnnotationComposer,
+        $$RecurrenceOccurrenceExceptionRowsTableCreateCompanionBuilder,
+        $$RecurrenceOccurrenceExceptionRowsTableUpdateCompanionBuilder,
+        (
+          RecurrenceOccurrenceExceptionRow,
+          BaseReferences<_$AppDatabase, $RecurrenceOccurrenceExceptionRowsTable,
+              RecurrenceOccurrenceExceptionRow>
+        ),
+        RecurrenceOccurrenceExceptionRow,
+        PrefetchHooks Function()> {
+  $$RecurrenceOccurrenceExceptionRowsTableTableManager(
+      _$AppDatabase db, $RecurrenceOccurrenceExceptionRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecurrenceOccurrenceExceptionRowsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecurrenceOccurrenceExceptionRowsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RecurrenceOccurrenceExceptionRowsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> seriesId = const Value.absent(),
+            Value<DateTime> occurrenceDate = const Value.absent(),
+            Value<String> kind = const Value.absent(),
+            Value<String?> itemJson = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              RecurrenceOccurrenceExceptionRowsCompanion(
+            id: id,
+            seriesId: seriesId,
+            occurrenceDate: occurrenceDate,
+            kind: kind,
+            itemJson: itemJson,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String seriesId,
+            required DateTime occurrenceDate,
+            required String kind,
+            Value<String?> itemJson = const Value.absent(),
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              RecurrenceOccurrenceExceptionRowsCompanion.insert(
+            id: id,
+            seriesId: seriesId,
+            occurrenceDate: occurrenceDate,
+            kind: kind,
+            itemJson: itemJson,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$RecurrenceOccurrenceExceptionRowsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $RecurrenceOccurrenceExceptionRowsTable,
+        RecurrenceOccurrenceExceptionRow,
+        $$RecurrenceOccurrenceExceptionRowsTableFilterComposer,
+        $$RecurrenceOccurrenceExceptionRowsTableOrderingComposer,
+        $$RecurrenceOccurrenceExceptionRowsTableAnnotationComposer,
+        $$RecurrenceOccurrenceExceptionRowsTableCreateCompanionBuilder,
+        $$RecurrenceOccurrenceExceptionRowsTableUpdateCompanionBuilder,
+        (
+          RecurrenceOccurrenceExceptionRow,
+          BaseReferences<_$AppDatabase, $RecurrenceOccurrenceExceptionRowsTable,
+              RecurrenceOccurrenceExceptionRow>
+        ),
+        RecurrenceOccurrenceExceptionRow,
         PrefetchHooks Function()>;
 typedef $$SecureEntitiesTableCreateCompanionBuilder = SecureEntitiesCompanion
     Function({
@@ -2956,6 +3697,10 @@ class $AppDatabaseManager {
       $$MemoryItemsTableTableManager(_db, _db.memoryItems);
   $$RecurrenceSeriesRowsTableTableManager get recurrenceSeriesRows =>
       $$RecurrenceSeriesRowsTableTableManager(_db, _db.recurrenceSeriesRows);
+  $$RecurrenceOccurrenceExceptionRowsTableTableManager
+      get recurrenceOccurrenceExceptionRows =>
+          $$RecurrenceOccurrenceExceptionRowsTableTableManager(
+              _db, _db.recurrenceOccurrenceExceptionRows);
   $$SecureEntitiesTableTableManager get secureEntities =>
       $$SecureEntitiesTableTableManager(_db, _db.secureEntities);
 }

@@ -47,6 +47,8 @@ abstract class ReminderScheduler {
   Future<void> cancel(String itemId);
 
   Future<void> reconcile(List<MemoryItem> items);
+
+  Future<void> reconcileRecurring(List<MemoryItem> items);
 }
 
 abstract class ShiftAlarmScheduler {
@@ -250,9 +252,17 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
         ),
       ],
     );
+    final recurring = item.isGeneratedOccurrence && item.seriesId != null;
     final payload = jsonEncode({
-      'source': 'memory_reminder',
+      'source': recurring ? 'recurrence_reminder' : 'memory_reminder',
       'itemId': item.id,
+      if (recurring) 'seriesId': item.seriesId,
+      if (recurring)
+        'occurrenceDate': DateTime(
+          item.memoryDate.year,
+          item.memoryDate.month,
+          item.memoryDate.day,
+        ).toIso8601String(),
       'notificationId': stableNotificationId(item.id),
     });
     final body = item.body.trim();
@@ -311,6 +321,41 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
         if (++scheduled % 8 == 0) {
           await Future<void>.delayed(Duration.zero);
         }
+      }
+    }
+  }
+
+  @override
+  Future<void> reconcileRecurring(List<MemoryItem> items) async {
+    if (!isSupported) return;
+    await initialize();
+    final desired = {
+      for (final item in items)
+        if (item.status == MemoryStatus.active &&
+            item.remindAt?.isAfter(DateTime.now()) == true)
+          stableNotificationId(item.id),
+    };
+    final pending = await _plugin.pendingNotificationRequests();
+    final existing = <int>{};
+    for (final notification in pending) {
+      final data = decodeReminderPayload(notification.payload);
+      if (data?['source'] != 'recurrence_reminder') continue;
+      if (!desired.contains(notification.id)) {
+        await _plugin.cancel(notification.id);
+      } else {
+        existing.add(notification.id);
+      }
+    }
+    var scheduled = 0;
+    for (final item in items) {
+      if (item.status != MemoryStatus.active ||
+          item.remindAt?.isAfter(DateTime.now()) != true ||
+          existing.contains(stableNotificationId(item.id))) {
+        continue;
+      }
+      await schedule(item);
+      if (++scheduled % 8 == 0) {
+        await Future<void>.delayed(Duration.zero);
       }
     }
   }

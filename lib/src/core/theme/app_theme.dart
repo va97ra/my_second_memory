@@ -1,21 +1,54 @@
 import 'package:flutter/material.dart';
 
+import 'app_surface_palette.dart';
+
 ThemeData buildAppTheme({required Brightness brightness}) {
   final isDark = brightness == Brightness.dark;
-  final seed = isDark ? const Color(0xFFD97757) : const Color(0xFFC56F50);
-  final background = isDark ? const Color(0xFF20211F) : const Color(0xFFF0EEE8);
-  final surface = isDark ? const Color(0xFF2B2C29) : const Color(0xFFF9F7F2);
-  final surfaceAlt = isDark ? const Color(0xFF30312E) : const Color(0xFFEAE7DF);
-  final border = isDark ? const Color(0xFF464743) : const Color(0xFFCEC9BE);
-  final onSurface = isDark ? const Color(0xFFF0EEE7) : const Color(0xFF2B2925);
-  final secondary = isDark ? const Color(0xFFC5C2BA) : const Color(0xFF68635B);
+  final seed = isDark ? const Color(0xFFE47A57) : const Color(0xFFD87352);
+  final background = isDark ? const Color(0xFF000000) : const Color(0xFFF4F1EB);
+  final surface = isDark ? const Color(0xFF1A1C19) : const Color(0xFFFFFDF9);
+  final surfaceLow = isDark ? const Color(0xFF121311) : const Color(0xFFF8F5EF);
+  final surfaceContainer =
+      isDark ? const Color(0xFF1A1C19) : const Color(0xFFF0ECE4);
+  final surfaceHigh =
+      isDark ? const Color(0xFF20231F) : const Color(0xFFE6E1D8);
+  final surfaceAlt = isDark ? const Color(0xFF242722) : const Color(0xFFDAD7CF);
+  final border = isDark ? const Color(0xFF454A42) : const Color(0xFFAFAAA0);
+  final onSurface = isDark ? const Color(0xFFF5F2EC) : const Color(0xFF282722);
+  final secondary = isDark ? const Color(0xFFC3BFB7) : const Color(0xFF69655E);
+  final onPrimary = isDark ? const Color(0xFF1B0D08) : const Color(0xFFFFFFFF);
+  final palette = AppSurfacePalette(
+    backgroundStart: background,
+    backgroundEnd: isDark ? const Color(0xFF12100F) : const Color(0xFFE9E4DB),
+    navigationSurface:
+        isDark ? const Color(0xFF121311) : const Color(0xFFFFFDF9),
+    panelSurface: surface,
+    raisedSurface: surfaceHigh,
+    calendarTile: isDark ? const Color(0xFF242722) : const Color(0xFFDAD7CF),
+    weekdaySurface: isDark ? const Color(0xFF171916) : const Color(0xFFCBC8C0),
+    borderStart: isDark ? const Color(0xFF5C6257) : const Color(0xFFA7A197),
+    borderEnd: isDark ? const Color(0xFF2A2D28) : const Color(0xFFD3CEC5),
+    accentStart: seed,
+    accentEnd: isDark ? const Color(0xFFBF543B) : const Color(0xFFB9553D),
+  );
   final scheme = ColorScheme.fromSeed(
     seedColor: seed,
     brightness: brightness,
   ).copyWith(
     primary: seed,
+    onPrimary: onPrimary,
+    primaryContainer:
+        isDark ? const Color(0xFF4B2A21) : const Color(0xFFF2D9CF),
+    onPrimaryContainer:
+        isDark ? const Color(0xFFFFDACE) : const Color(0xFF522014),
     surface: surface,
+    surfaceContainerLowest:
+        isDark ? const Color(0xFF080908) : const Color(0xFFFFFFFF),
+    surfaceContainerLow: surfaceLow,
+    surfaceContainer: surfaceContainer,
+    surfaceContainerHigh: surfaceHigh,
     surfaceContainerHighest: surfaceAlt,
+    outline: border,
     outlineVariant: border,
     onSurface: onSurface,
     onSurfaceVariant: secondary,
@@ -24,8 +57,9 @@ ThemeData buildAppTheme({required Brightness brightness}) {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    scaffoldBackgroundColor: background,
+    scaffoldBackgroundColor: Colors.transparent,
     canvasColor: background,
+    extensions: [palette],
     fontFamily: 'Manrope',
     dividerTheme: DividerThemeData(
       color: border,
@@ -93,9 +127,9 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     ),
     navigationBarTheme: NavigationBarThemeData(
       height: 64,
-      backgroundColor: surface,
+      backgroundColor: palette.navigationSurface,
       indicatorColor:
-          isDark ? const Color(0xFF4A352D) : const Color(0xFFE8D7CD),
+          isDark ? const Color(0xFF4B2A21) : const Color(0xFFF0D8CF),
       indicatorShape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
       ),
@@ -118,7 +152,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     ),
     cardTheme: CardThemeData(
       elevation: 0,
-      color: surface,
+      color: palette.panelSurface,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
@@ -129,7 +163,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: surface,
+      fillColor: palette.panelSurface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -180,6 +214,15 @@ ThemeData buildAppTheme({required Brightness brightness}) {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     ),
+    switchTheme: SwitchThemeData(
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        return states.contains(WidgetState.selected) ? seed : surfaceAlt;
+      }),
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        return states.contains(WidgetState.selected) ? onPrimary : secondary;
+      }),
+      trackOutlineColor: WidgetStateProperty.all(border),
+    ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       elevation: 3,
       focusElevation: 3,
@@ -204,18 +247,18 @@ ThemeData buildAppTheme({required Brightness brightness}) {
       ),
     ),
     popupMenuTheme: PopupMenuThemeData(
-      color: surface,
+      color: palette.panelSurface,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     dialogTheme: DialogThemeData(
-      backgroundColor: surface,
+      backgroundColor: palette.panelSurface,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: surface,
-      modalBackgroundColor: surface,
+      backgroundColor: palette.panelSurface,
+      modalBackgroundColor: palette.panelSurface,
       surfaceTintColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
@@ -226,12 +269,12 @@ ThemeData buildAppTheme({required Brightness brightness}) {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     datePickerTheme: DatePickerThemeData(
-      backgroundColor: surface,
+      backgroundColor: palette.panelSurface,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     timePickerTheme: TimePickerThemeData(
-      backgroundColor: surface,
+      backgroundColor: palette.panelSurface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       hourMinuteShape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),

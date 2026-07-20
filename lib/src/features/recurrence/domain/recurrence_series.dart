@@ -40,6 +40,8 @@ class RecurrenceSeries {
     required this.updatedAt,
     this.isEnabled = true,
     this.generatedThrough,
+    this.endDate,
+    this.historyThrough,
   });
 
   final String id;
@@ -51,6 +53,8 @@ class RecurrenceSeries {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? generatedThrough;
+  final DateTime? endDate;
+  final DateTime? historyThrough;
 
   RecurrenceSeries copyWith({
     RecurrenceFrequency? frequency,
@@ -60,6 +64,9 @@ class RecurrenceSeries {
     DateTime? updatedAt,
     DateTime? generatedThrough,
     bool clearGeneratedThrough = false,
+    DateTime? endDate,
+    bool clearEndDate = false,
+    DateTime? historyThrough,
   }) {
     return RecurrenceSeries(
       id: id,
@@ -73,6 +80,8 @@ class RecurrenceSeries {
       generatedThrough: clearGeneratedThrough
           ? null
           : generatedThrough ?? this.generatedThrough,
+      endDate: clearEndDate ? null : endDate ?? this.endDate,
+      historyThrough: historyThrough ?? this.historyThrough,
     );
   }
 
@@ -86,6 +95,8 @@ class RecurrenceSeries {
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
         'generatedThrough': generatedThrough?.toIso8601String(),
+        'endDate': endDate?.toIso8601String(),
+        'historyThrough': historyThrough?.toIso8601String(),
       };
 
   factory RecurrenceSeries.fromJson(Map<String, Object?> json) {
@@ -105,6 +116,12 @@ class RecurrenceSeries {
       generatedThrough: json['generatedThrough'] == null
           ? null
           : DateTime.parse(json['generatedThrough'] as String),
+      endDate: json['endDate'] == null
+          ? null
+          : DateTime.parse(json['endDate'] as String),
+      historyThrough: json['historyThrough'] == null
+          ? null
+          : DateTime.parse(json['historyThrough'] as String),
     );
   }
 }

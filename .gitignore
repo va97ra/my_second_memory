@@ -13,6 +13,8 @@ release/*.txt
 release/*.pem
 release/**/*.png
 release/**
+RuStore Release/
+kiwihug-qv05FvdE26k-unsplash.jpg
 signing/
 pepk.jar
 

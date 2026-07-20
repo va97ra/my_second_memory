@@ -34,8 +34,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           leading: const AppBackButton(fallbackLocation: '/settings'),
           title: Text(strings.backup),
         ),
-        body: ColoredBox(
-          color: const Color(0x12D97757),
+        body: WarmGradientBackground(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
             children: [
@@ -58,7 +57,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                           const SizedBox(height: 10),
                           _BackupActionButton(
                             icon: Icons.upload_file_outlined,
-                            color: const Color(0xFFD97757),
+                            color: Theme.of(context).colorScheme.primary,
                             title: strings.exportBackup,
                             onPressed: _isBusy ? null : _exportBackup,
                           ),
@@ -88,6 +87,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       shiftScheduleRepository: ref.read(shiftScheduleRepositoryProvider),
       accountRepository: ref.read(accountRepositoryProvider),
       recurrenceRepository: ref.read(recurrenceRepositoryProvider),
+      recurrenceExceptionRepository:
+          ref.read(recurrenceExceptionRepositoryProvider),
     );
   }
 
@@ -214,6 +215,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           .read(accountsControllerProvider.notifier)
           .replaceAll(data.accounts);
       await ref
+          .read(recurrenceExceptionControllerProvider.notifier)
+          .replaceAll(data.recurrenceExceptions);
+      await ref
           .read(recurrenceSeriesControllerProvider.notifier)
           .replaceAll(data.recurrenceSeries);
 
@@ -293,15 +297,17 @@ class _BackupHint extends StatelessWidget {
             .surfaceContainerHighest
             .withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFBFDBFE)),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.download_done_outlined,
-              color: Color(0xFFD97757),
+              color: Theme.of(context).colorScheme.primary,
               size: 20,
             ),
             const SizedBox(width: 9),

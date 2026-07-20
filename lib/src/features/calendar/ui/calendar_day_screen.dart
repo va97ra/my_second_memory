@@ -10,6 +10,7 @@ import '../../home_feed/ui/widgets/memory_item_card.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../memory_items/state/memory_item_selectors.dart';
+import '../../recurrence/state/recurrence_controller.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
 
@@ -53,8 +54,7 @@ class CalendarDayScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: ColoredBox(
-        color: const Color(0x12D97757),
+      body: WarmGradientBackground(
         child: SafeArea(
           top: false,
           child: Column(
@@ -83,20 +83,12 @@ class CalendarDayScreen extends ConsumerWidget {
                             onOpen: () => context.push(
                               '/memory/item/${Uri.encodeComponent(item.id)}',
                             ),
-                            onToggleDone: () => ref
-                                .read(memoryItemsControllerProvider.notifier)
-                                .toggleDone(item.id),
+                            onToggleDone: () => _toggleDone(ref, item),
                             onArchive: item.isArchived
                                 ? null
-                                : () => ref
-                                    .read(
-                                        memoryItemsControllerProvider.notifier)
-                                    .archive(item.id),
+                                : () => _archive(ref, item),
                             onRestore: item.isArchived
-                                ? () => ref
-                                    .read(
-                                        memoryItemsControllerProvider.notifier)
-                                    .restore(item.id)
+                                ? () => _restore(ref, item)
                                 : null,
                           );
                         },
@@ -114,6 +106,36 @@ class CalendarDayScreen extends ConsumerWidget {
     context.push(
       '/memory/new?date=${DateFormat('yyyy-MM-dd').format(date)}',
     );
+  }
+
+  void _toggleDone(WidgetRef ref, MemoryItem item) {
+    if (item.isGeneratedOccurrence) {
+      ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .toggleOccurrenceDone(item);
+    } else {
+      ref.read(memoryItemsControllerProvider.notifier).toggleDone(item.id);
+    }
+  }
+
+  void _archive(WidgetRef ref, MemoryItem item) {
+    if (item.isGeneratedOccurrence) {
+      ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .archiveOccurrence(item);
+    } else {
+      ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
+    }
+  }
+
+  void _restore(WidgetRef ref, MemoryItem item) {
+    if (item.isGeneratedOccurrence) {
+      ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .restoreOccurrence(item);
+    } else {
+      ref.read(memoryItemsControllerProvider.notifier).restore(item.id);
+    }
   }
 
   static int _compareDayItems(MemoryItem a, MemoryItem b) {

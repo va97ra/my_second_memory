@@ -70,11 +70,11 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                             .surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const SizedBox(
+                      child: SizedBox(
                         height: 74,
                         child: Icon(
                           Icons.verified_user_outlined,
-                          color: Color(0xFFD97757),
+                          color: Theme.of(context).colorScheme.primary,
                           size: 34,
                         ),
                       ),
@@ -261,6 +261,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     ref.invalidate(accountRepositoryProvider);
     ref.invalidate(accountsControllerProvider);
     ref.invalidate(recurrenceRepositoryProvider);
+    ref.invalidate(recurrenceExceptionRepositoryProvider);
+    ref.invalidate(recurrenceExceptionControllerProvider);
     ref.invalidate(recurrenceSeriesControllerProvider);
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_surface_palette.dart';
+
 class WarmGradientBackground extends StatelessWidget {
   const WarmGradientBackground({
     required this.child,
@@ -11,8 +13,10 @@ class WarmGradientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: const Color(0x08D97757),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: AppSurfacePalette.of(context).backgroundGradient,
+      ),
       child: child,
     );
   }

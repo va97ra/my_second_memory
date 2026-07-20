@@ -61,16 +61,15 @@ class SettingsScreen extends ConsumerWidget {
                             : 'Hints for new users',
                         trailing: Switch(
                           value: showHints,
-                          onChanged: ref
-                              .read(appHintsProvider.notifier)
-                              .setEnabled,
+                          onChanged:
+                              ref.read(appHintsProvider.notifier).setEnabled,
                         ),
                       ),
                       _SettingsTile(
                         icon: isLight
                             ? Icons.light_mode_outlined
                             : Icons.dark_mode_outlined,
-                        iconColor: const Color(0xFFD97757),
+                        iconColor: Theme.of(context).colorScheme.primary,
                         title: strings.appearance,
                         subtitle:
                             isLight ? strings.lightTheme : strings.darkTheme,
@@ -116,7 +115,7 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SettingsTile(
                         icon: Icons.backup_outlined,
-                        iconColor: const Color(0xFFD97757),
+                        iconColor: Theme.of(context).colorScheme.primary,
                         title: strings.backup,
                         subtitle: strings.backupSubtitle,
                         trailing: const Icon(Icons.chevron_right),

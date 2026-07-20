@@ -26,7 +26,8 @@ class AppEmptyState extends StatelessWidget {
               Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFD97757).withValues(alpha: 0.06),
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
               blurRadius: 18,
               offset: const Offset(0, 8),
             ),
@@ -39,13 +40,20 @@ class AppEmptyState extends StatelessWidget {
             children: [
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD97757).withValues(alpha: 0.1),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer
+                      .withValues(alpha: 0.72),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: SizedBox(
                   width: 44,
                   height: 44,
-                  child: Icon(icon, color: const Color(0xFFD97757), size: 24),
+                  child: Icon(
+                    icon,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 24,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -53,7 +61,7 @@ class AppEmptyState extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFFC2BFB6),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w800,
                     ),
               ),

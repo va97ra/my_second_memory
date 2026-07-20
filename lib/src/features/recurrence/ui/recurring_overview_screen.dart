@@ -10,6 +10,7 @@ import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../memory_items/ui/widgets/memory_item_presentation.dart';
 import '../domain/recurrence_series.dart';
+import '../domain/recurrence_projection_service.dart';
 import '../state/recurrence_controller.dart';
 
 class RecurringOverviewScreen extends ConsumerStatefulWidget {
@@ -34,14 +35,27 @@ class _RecurringOverviewScreenState
         .where((item) => item.frequency == widget.frequency)
         .toList();
     final seriesById = {for (final item in series) item.id: item};
-    final occurrences = ref.watch(memoryItemsControllerProvider).where((item) {
-      if (!seriesById.containsKey(item.seriesId)) return false;
-      return widget.frequency == RecurrenceFrequency.monthly
-          ? item.memoryDate.year == _period.year &&
-              item.memoryDate.month == _period.month
-          : item.memoryDate.year == _period.year;
-    }).toList()
-      ..sort((a, b) => a.memoryDate.compareTo(b.memoryDate));
+    final rangeStart = widget.frequency == RecurrenceFrequency.monthly
+        ? DateTime(_period.year, _period.month)
+        : DateTime(_period.year);
+    final rangeEnd = widget.frequency == RecurrenceFrequency.monthly
+        ? DateTime(_period.year, _period.month + 1, 0)
+        : DateTime(_period.year, 12, 31);
+    final projected = ref.watch(
+      recurrenceItemsForRangeProvider(RecurrenceRange(rangeStart, rangeEnd)),
+    );
+    final persisted = [
+      for (final item in ref.watch(memoryItemsControllerProvider))
+        if (seriesById.containsKey(item.seriesId) &&
+            !item.memoryDate.isBefore(rangeStart) &&
+            !item.memoryDate.isAfter(rangeEnd))
+          item,
+    ];
+    final occurrences = [
+      ...persisted,
+      for (final item in projected)
+        if (seriesById.containsKey(item.seriesId)) item,
+    ]..sort(compareOccurrences);
     final title = widget.frequency == RecurrenceFrequency.monthly
         ? (locale == 'ru' ? 'Каждый месяц' : 'Every month')
         : (locale == 'ru' ? 'Каждый год' : 'Every year');
@@ -93,7 +107,8 @@ class _RecurringOverviewScreenState
                         itemCount: occurrences.length,
                         itemBuilder: (context, index) {
                           final item = occurrences[index];
-                          final entry = seriesById[item.seriesId]!;
+                          final entry = seriesById[item.seriesId];
+                          if (entry == null) return const SizedBox.shrink();
                           return _OccurrenceTile(
                             item: item,
                             enabled: entry.isEnabled,

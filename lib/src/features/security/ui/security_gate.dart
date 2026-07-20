@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/app_surface_palette.dart';
 import '../state/security_provider.dart';
 
 class SecurityGate extends ConsumerStatefulWidget {
@@ -54,10 +55,10 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
       return _SecurityScaffold(
         child: _SecurityCard(
           children: [
-            const Icon(
+            Icon(
               Icons.shield_outlined,
               size: 52,
-              color: Color(0xFFD97757),
+              color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 16),
             Text(
@@ -279,8 +280,10 @@ class _SecurityScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ColoredBox(
-        color: const Color(0x12D97757),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: AppSurfacePalette.of(context).backgroundGradient,
+        ),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -343,7 +346,11 @@ class _SetupPinCard extends StatelessWidget {
     final strings = AppStrings.of(context);
     return _SecurityCard(
       children: [
-        const Icon(Icons.shield_outlined, size: 42, color: Color(0xFFD97757)),
+        Icon(
+          Icons.shield_outlined,
+          size: 42,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         const SizedBox(height: 12),
         Text(
           strings.setupPinTitle,
@@ -402,7 +409,11 @@ class _BiometricUnlockCard extends StatelessWidget {
     final strings = AppStrings.of(context);
     return _SecurityCard(
       children: [
-        const Icon(Icons.fingerprint, size: 52, color: Color(0xFFD97757)),
+        Icon(
+          Icons.fingerprint,
+          size: 52,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         const SizedBox(height: 12),
         Text(
           strings.appTitle,
@@ -457,7 +468,11 @@ class _EnableBiometricsCard extends StatelessWidget {
     final strings = AppStrings.of(context);
     return _SecurityCard(
       children: [
-        const Icon(Icons.fingerprint, size: 52, color: Color(0xFFD97757)),
+        Icon(
+          Icons.fingerprint,
+          size: 52,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         const SizedBox(height: 12),
         Text(
           strings.enableBiometricsQuestion,
@@ -512,7 +527,11 @@ class _PinUnlockCard extends StatelessWidget {
     final strings = AppStrings.of(context);
     return _SecurityCard(
       children: [
-        const Icon(Icons.lock_outline, size: 42, color: Color(0xFFD97757)),
+        Icon(
+          Icons.lock_outline,
+          size: 42,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         const SizedBox(height: 12),
         Text(
           strings.appTitle,

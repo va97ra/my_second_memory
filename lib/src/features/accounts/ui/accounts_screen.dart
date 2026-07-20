@@ -261,7 +261,7 @@ class _ServiceAvatar extends StatelessWidget {
           child: Text(
             letter,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFFD97757),
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w900,
                 ),
           ),
@@ -365,10 +365,13 @@ class _AccountEditorState extends State<_AccountEditor> {
                         .withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const SizedBox(
+                  child: SizedBox(
                     width: 42,
                     height: 42,
-                    child: Icon(Icons.key_outlined, color: Color(0xFFD97757)),
+                    child: Icon(
+                      Icons.key_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),

@@ -7,9 +7,13 @@ import '../../memory_items/data/memory_repository.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../media/data/media_storage.dart';
 import '../../recurrence/data/encrypted_recurrence_repository.dart';
+import '../../recurrence/data/encrypted_recurrence_exception_repository.dart';
+import '../../recurrence/data/recurrence_exception_repository.dart';
+import '../../recurrence/data/recurrence_exception_repository_factory.dart';
 import '../../recurrence/data/recurrence_repository.dart';
 import '../../recurrence/data/recurrence_repository_factory.dart';
 import '../../recurrence/domain/recurrence_series.dart';
+import '../../recurrence/domain/recurrence_occurrence_exception.dart';
 import '../../shift_schedules/data/encrypted_shift_schedule_repository.dart';
 import '../../shift_schedules/data/local_shift_schedule_repository.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
@@ -23,12 +27,14 @@ class SecurityDataMigrationSnapshot {
     this.shiftSchedules,
     this.accounts,
     this.recurrenceSeries,
+    this.recurrenceExceptions,
   });
 
   final List<MemoryItem>? memoryItems;
   final List<ShiftSchedule>? shiftSchedules;
   final List<AccountItem>? accounts;
   final List<RecurrenceSeries>? recurrenceSeries;
+  final List<RecurrenceOccurrenceException>? recurrenceExceptions;
 }
 
 class SecurityDataMigrationService {
@@ -44,6 +50,7 @@ class SecurityDataMigrationService {
     final store = EncryptedJsonStore(cipher: cipher);
     final plainMemory = createMemoryRepository();
     final plainRecurrence = createRecurrenceRepository();
+    final plainRecurrenceExceptions = createRecurrenceExceptionRepository();
     final backend = plainMemory is SecureEntityBackend
         ? plainMemory as SecureEntityBackend
         : null;
@@ -68,10 +75,16 @@ class SecurityDataMigrationService {
           plainRepository: plainRecurrence,
           backend: backend,
         ).loadAll(),
+        recurrenceExceptions: await EncryptedRecurrenceExceptionRepository(
+          store: store,
+          plainRepository: plainRecurrenceExceptions,
+          backend: backend,
+        ).loadAll(),
       );
     } finally {
       await plainMemory.close();
       await plainRecurrence.close();
+      await plainRecurrenceExceptions.close();
     }
   }
 
@@ -118,6 +131,13 @@ class SecurityDataMigrationService {
         await repositories.recurrence.loadAll();
       }
       await repositories.plainRecurrence.replaceAll(const []);
+      if (snapshot.recurrenceExceptions != null) {
+        await repositories.recurrenceExceptions
+            .replaceAll(snapshot.recurrenceExceptions!);
+      } else {
+        await repositories.recurrenceExceptions.loadAll();
+      }
+      await repositories.plainRecurrenceExceptions.replaceAll(const []);
       await mediaStorage.commitMigration(mediaMigration);
     } catch (_) {
       await mediaStorage.rollbackMigration(mediaMigration);
@@ -140,6 +160,7 @@ class SecurityDataMigrationService {
     );
     final encryptedItems = await memoryRepository.loadAll();
     final plainRecurrence = createRecurrenceRepository();
+    final plainRecurrenceExceptions = createRecurrenceExceptionRepository();
     final mediaStorage = MediaStorage();
     final mediaMigration = await mediaStorage.stageDecryption(
       _mediaPaths(encryptedItems),
@@ -192,6 +213,19 @@ class SecurityDataMigrationService {
         const [],
       );
       await store.remove(EncryptedRecurrenceRepository.storageKey);
+      final exceptionRepository = EncryptedRecurrenceExceptionRepository(
+        store: store,
+        plainRepository: plainRecurrenceExceptions,
+        backend: backend,
+      );
+      await plainRecurrenceExceptions.replaceAll(
+        await exceptionRepository.loadAll(),
+      );
+      await backend?.replaceSecureEntities(
+        EncryptedRecurrenceExceptionRepository.entityKind,
+        const [],
+      );
+      await store.remove(EncryptedRecurrenceExceptionRepository.storageKey);
       await mediaStorage.commitMigration(mediaMigration);
     } catch (_) {
       await mediaStorage.rollbackMigration(mediaMigration);
@@ -199,6 +233,7 @@ class SecurityDataMigrationService {
     } finally {
       await plainMemory.close();
       await plainRecurrence.close();
+      await plainRecurrenceExceptions.close();
     }
   }
 }
@@ -229,11 +264,13 @@ class _EncryptedRepositories {
   _EncryptedRepositories(AppCipher cipher)
       : store = EncryptedJsonStore(cipher: cipher),
         plainMemory = createMemoryRepository(),
-        plainRecurrence = createRecurrenceRepository();
+        plainRecurrence = createRecurrenceRepository(),
+        plainRecurrenceExceptions = createRecurrenceExceptionRepository();
 
   final EncryptedJsonStore store;
   final MemoryRepository plainMemory;
   final RecurrenceRepository plainRecurrence;
+  final RecurrenceExceptionRepository plainRecurrenceExceptions;
 
   SecureEntityBackend? get backend => plainMemory is SecureEntityBackend
       ? plainMemory as SecureEntityBackend
@@ -263,8 +300,16 @@ class _EncryptedRepositories {
         backend: backend,
       );
 
+  EncryptedRecurrenceExceptionRepository get recurrenceExceptions =>
+      EncryptedRecurrenceExceptionRepository(
+        store: store,
+        plainRepository: plainRecurrenceExceptions,
+        backend: backend,
+      );
+
   Future<void> close() async {
     await plainMemory.close();
     await plainRecurrence.close();
+    await plainRecurrenceExceptions.close();
   }
 }
