@@ -40,4 +40,54 @@ void main() {
     );
     expect(data.shiftsByDay, isNotEmpty);
   });
+
+  test('month data includes reminder and shift alarm dates', () {
+    final reminder = MemoryItem(
+      id: 'reminder',
+      type: MemoryType.note,
+      title: 'Reminder',
+      memoryDate: DateTime(2026, 7, 8),
+      remindAt: DateTime(2026, 7, 9, 12),
+      createdAt: DateTime(2026, 7, 8),
+      updatedAt: DateTime(2026, 7, 8),
+    );
+    final schedule = ShiftSchedule(
+      id: 'shift',
+      organizationName: 'Work',
+      colorValue: 0xFF16A34A,
+      startDate: DateTime(2026, 7, 10),
+      workDays: 1,
+      restDays: 3,
+      alarms: const [
+        ShiftAlarm(isEnabled: true),
+        ShiftAlarm(isEnabled: true),
+      ],
+    );
+
+    final data = CalendarMonthData.build(
+      month: DateTime(2026, 7),
+      items: [reminder],
+      allItems: [reminder],
+      shiftSchedules: [schedule],
+    );
+
+    expect(data.alarmDays, contains(calendarDateKey(DateTime(2026, 7, 9))));
+    expect(data.alarmDays, contains(calendarDateKey(DateTime(2026, 7, 10))));
+    expect(data.alarmDays, contains(calendarDateKey(DateTime(2026, 7, 11))));
+    expect(
+      data.holidaysByDay[calendarDateKey(DateTime(2026, 7, 8))],
+      isNotEmpty,
+    );
+  });
+
+  test('holidays can be excluded from month data', () {
+    final data = CalendarMonthData.build(
+      month: DateTime(2026, 7),
+      items: const [],
+      shiftSchedules: const [],
+      showHolidays: false,
+    );
+
+    expect(data.holidaysByDay, isEmpty);
+  });
 }

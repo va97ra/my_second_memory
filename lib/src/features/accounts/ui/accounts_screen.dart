@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/notebook/notebook_background.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../domain/account_item.dart';
@@ -108,6 +109,10 @@ class _AccountCardState extends State<_AccountCard> {
           borderRadius: BorderRadius.circular(8),
           border:
               Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          boxShadow: notebookSurfaceShadow(
+            context,
+            NotebookSurfaceDepth.card,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),

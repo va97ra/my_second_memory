@@ -30,8 +30,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     return AppShell(
       currentIndex: 3,
       child: Scaffold(
-        appBar: AppBar(
-          leading: const AppBackButton(fallbackLocation: '/settings'),
+        appBar: AppPageAppBar(
+          fallbackLocation: '/settings',
           title: Text(strings.backup),
         ),
         body: WarmGradientBackground(

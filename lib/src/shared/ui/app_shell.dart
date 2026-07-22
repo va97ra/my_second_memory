@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_surface_palette.dart';
+import 'page_turn_transition.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({
@@ -25,7 +26,12 @@ class AppShell extends StatelessWidget {
     final palette = AppSurfacePalette.of(context);
 
     return Scaffold(
-      body: navigationShell ?? child,
+      body: navigationShell == null
+          ? child
+          : PageTurnTabFrame(
+              index: navigationShell!.currentIndex,
+              child: navigationShell!,
+            ),
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(

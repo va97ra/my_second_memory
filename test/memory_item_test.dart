@@ -43,4 +43,23 @@ void main() {
     expect(restored.birthYear, 1990);
     expect(restored.isGeneratedOccurrence, isTrue);
   });
+
+  test('copyWith can remove an attached voice recording', () {
+    final date = DateTime(2026, 7, 22);
+    final item = MemoryItem(
+      id: 'voice-2',
+      type: MemoryType.note,
+      title: 'Voice attachment',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+      audioPath: '/local/voice.m4a',
+      audioDurationSeconds: 25,
+    );
+
+    final updated = item.copyWith(clearAudio: true);
+
+    expect(updated.audioPath, isNull);
+    expect(updated.audioDurationSeconds, isNull);
+  });
 }

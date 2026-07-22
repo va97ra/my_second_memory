@@ -53,6 +53,20 @@ class _BiometricFailsSecurityService extends SecurityService {
   Future<AppCipher?> unlockWithBiometrics() async => null;
 }
 
+class _PinRejectingSecurityService extends SecurityService {
+  @override
+  Future<bool> setupCompleted() async => true;
+
+  @override
+  Future<bool> hasPin() async => true;
+
+  @override
+  Future<bool> biometricsEnabled() async => false;
+
+  @override
+  Future<AppCipher?> unlockWithPin(String pin) async => null;
+}
+
 class _HangingSecurityService extends SecurityService {
   @override
   Future<bool> hasPin() => Completer<bool>().future;
@@ -354,6 +368,29 @@ void main() {
     expect(find.widgetWithText(TextField, 'PIN'), findsOneWidget);
   });
 
+  testWidgets('pin field is cleared after a failed unlock attempt',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(
+            _PinRejectingSecurityService(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final pinField = find.widgetWithText(TextField, 'PIN');
+    tester.widget<TextField>(pinField).controller?.text = '1234';
+    await tester.tap(find.text('Открыть'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Неверный PIN'), findsOneWidget);
+    expect(tester.widget<TextField>(pinField).controller?.text, isEmpty);
+  });
+
   testWidgets('shows the home feed when app is unlocked', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1300));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -407,9 +444,16 @@ void main() {
     expect(find.text('Проекты'), findsNothing);
     expect(find.text('План на сегодня'), findsOneWidget);
     expect(find.text('Ежедневник V2'), findsWidgets);
-    expect(find.text(DateFormat.yMMMMd('ru').format(today)), findsOneWidget);
     expect(
-      find.text(DateFormat.yMMMMd('ru').format(yesterday)),
+      find.text(
+        DateFormat('d MMMM y', 'ru').format(today),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        DateFormat('d MMMM y', 'ru').format(yesterday),
+      ),
       findsOneWidget,
     );
     expect(find.text('Вчерашняя заметка'), findsOneWidget);
@@ -420,7 +464,12 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    expect(find.text(DateFormat.yMMMMd('ru').format(oldDay)), findsOneWidget);
+    expect(
+      find.text(
+        DateFormat('d MMMM y', 'ru').format(oldDay),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Старая активная запись'), findsOneWidget);
     expect(find.text('Архивная запись'), findsNothing);
     expect(find.text(DateFormat.MMM('ru').format(today)), findsNothing);
@@ -494,7 +543,7 @@ void main() {
       tester
           .getSize(find.byKey(const ValueKey('memory_card_today-plan')))
           .height,
-      124,
+      108,
     );
     await tester.tap(
       find.byKey(const ValueKey('memory_card_done_today-plan')),
@@ -951,6 +1000,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('${now.day}').first);
     await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('memory_card_today-plan')))
+          .height,
+      108,
+    );
 
     await tester.tap(
       find.byKey(const ValueKey('memory_card_done_today-plan')),

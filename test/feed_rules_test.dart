@@ -41,6 +41,36 @@ void main() {
     expect(groups.first.date, DateTime(2026, 7, 1));
     expect(groups.last.items.length, 2);
   });
+
+  test('general feed excludes monthly and yearly recurring records', () {
+    final date = DateTime(2026, 7, 20);
+    final items = [
+      _item('regular', MemoryType.note, date, 'regular'),
+      _item(
+        'monthly',
+        MemoryType.payment,
+        date,
+        'monthly',
+        repeatRule: 'monthly',
+        seriesId: 'monthly-series',
+      ),
+      _item(
+        'yearly',
+        MemoryType.birthday,
+        date,
+        'yearly',
+        repeatRule: 'yearly',
+      ),
+      _item('one-time-payment', MemoryType.payment, date, 'one time'),
+    ];
+
+    final groups = groupItemsByDate(items);
+
+    expect(groups.single.items.map((item) => item.id), [
+      'regular',
+      'one-time-payment',
+    ]);
+  });
 }
 
 MemoryItem _item(
@@ -49,6 +79,8 @@ MemoryItem _item(
   DateTime date,
   String title, {
   MemoryStatus status = MemoryStatus.active,
+  String? repeatRule,
+  String? seriesId,
 }) {
   return MemoryItem(
     id: id,
@@ -58,5 +90,7 @@ MemoryItem _item(
     createdAt: date,
     updatedAt: date,
     status: status,
+    repeatRule: repeatRule,
+    seriesId: seriesId,
   );
 }

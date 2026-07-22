@@ -11,12 +11,14 @@ class VoiceNotePlayer extends ConsumerWidget {
     required this.path,
     this.recordedAt,
     this.durationSeconds,
+    this.compact = false,
     super.key,
   });
 
   final String path;
   final DateTime? recordedAt;
   final int? durationSeconds;
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,67 +32,81 @@ class VoiceNotePlayer extends ConsumerWidget {
       builder: (context, snapshot) {
         final isPlaying =
             playback.activePath == path && (snapshot.data?.playing ?? false);
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-            border:
-                Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 7, 10, 7),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton.filledTonal(
-                  tooltip: strings.play,
-                  onPressed: () => playback.toggle(path),
-                  icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
-                  style: IconButton.styleFrom(
-                    fixedSize: const Size.square(36),
-                    padding: EdgeInsets.zero,
-                    foregroundColor: colorScheme.primary,
-                    backgroundColor:
-                        colorScheme.primary.withValues(alpha: 0.12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+        return ConstrainedBox(
+          constraints:
+              BoxConstraints(maxWidth: compact ? 184 : double.infinity),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Padding(
+              padding: compact
+                  ? const EdgeInsets.fromLTRB(5, 3, 7, 3)
+                  : const EdgeInsets.fromLTRB(8, 7, 10, 7),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton.filledTonal(
+                    tooltip: strings.play,
+                    onPressed: () => playback.toggle(path),
+                    icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                    style: IconButton.styleFrom(
+                      fixedSize: Size.square(compact ? 30 : 36),
+                      padding: EdgeInsets.zero,
+                      iconSize: compact ? 18 : 24,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      foregroundColor: colorScheme.primary,
+                      backgroundColor:
+                          colorScheme.primary.withValues(alpha: 0.12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 9),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        strings.voiceMessage,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              fontWeight: FontWeight.w900,
-                            ),
-                      ),
-                      if (meta.isNotEmpty) ...[
-                        const SizedBox(height: 1),
+                  SizedBox(width: compact ? 6 : 9),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                         Text(
-                          meta,
+                          strings.voiceMessage,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                          style: (compact
+                                  ? Theme.of(context).textTheme.labelMedium
+                                  : Theme.of(context).textTheme.labelLarge)
+                              ?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
+                        if (meta.isNotEmpty) ...[
+                          SizedBox(height: compact ? 0 : 1),
+                          Text(
+                            meta,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

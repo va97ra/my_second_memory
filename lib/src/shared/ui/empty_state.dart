@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'notebook_action_button.dart';
+import '../../core/theme/notebook/notebook_background.dart';
+
 class AppEmptyState extends StatelessWidget {
   const AppEmptyState({
     required this.icon,
@@ -24,14 +27,21 @@ class AppEmptyState extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border:
               Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-          boxShadow: [
-            BoxShadow(
-              color:
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          boxShadow: notebookSurfaceShadow(
+            context,
+            NotebookSurfaceDepth.panel,
+          ).isNotEmpty
+              ? notebookSurfaceShadow(context, NotebookSurfaceDepth.panel)
+              : [
+                  BoxShadow(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.08),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
@@ -67,7 +77,10 @@ class AppEmptyState extends StatelessWidget {
               ),
               if (actionLabel != null && onAction != null) ...[
                 const SizedBox(height: 14),
-                FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+                NotebookActionButton(
+                  onPressed: onAction,
+                  child: Text(actionLabel!),
+                ),
               ],
             ],
           ),

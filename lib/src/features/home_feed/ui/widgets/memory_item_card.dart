@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/app_content_font.dart';
+import '../../../../core/theme/notebook/notebook_assets.dart';
+import '../../../../core/theme/notebook/notebook_background.dart';
+import '../../../../core/theme/notebook/notebook_leather_surface.dart';
+import '../../../../core/theme/notebook/notebook_visuals.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../memory_items/domain/memory_item.dart';
 import '../../../memory_items/domain/memory_type.dart';
@@ -17,6 +22,7 @@ class MemoryItemCard extends StatelessWidget {
     this.onArchive,
     this.onRestore,
     this.showDate = true,
+    this.compact = false,
     this.margin = const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
     super.key,
   });
@@ -27,6 +33,7 @@ class MemoryItemCard extends StatelessWidget {
   final VoidCallback? onArchive;
   final VoidCallback? onRestore;
   final bool showDate;
+  final bool compact;
   final EdgeInsetsGeometry margin;
 
   @override
@@ -50,19 +57,31 @@ class MemoryItemCard extends StatelessWidget {
         color: Colors.transparent,
         child: SizedBox(
           key: ValueKey('memory_card_${item.id}'),
-          height: 124,
+          height: compact ? 108 : 118,
           child: Ink(
             decoration: BoxDecoration(
               color: cardColor,
+              image: NotebookVisuals.maybeOf(context) == null
+                  ? null
+                  : const DecorationImage(
+                      image: AssetImage(NotebookAssets.paper),
+                      fit: BoxFit.cover,
+                      opacity: 0.5,
+                    ),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: borderColor),
-              boxShadow: [
-                BoxShadow(
-                  color: typeColor.withValues(alpha: 0.08),
-                  blurRadius: 14,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+              boxShadow: NotebookVisuals.maybeOf(context) == null
+                  ? [
+                      BoxShadow(
+                        color: typeColor.withValues(alpha: 0.08),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : notebookSurfaceShadow(
+                      context,
+                      NotebookSurfaceDepth.card,
+                    ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -76,6 +95,7 @@ class MemoryItemCard extends StatelessWidget {
                       item: item,
                       color: typeColor,
                       showDate: showDate,
+                      compact: compact,
                     ),
                   ),
                   Expanded(
@@ -84,12 +104,14 @@ class MemoryItemCard extends StatelessWidget {
                       child: _CardContent(
                         key: ValueKey('memory_card_content_${item.id}'),
                         item: item,
+                        compact: compact,
                       ),
                     ),
                   ),
                   _ActionRail(
                     key: ValueKey('memory_card_actions_${item.id}'),
                     item: item,
+                    compact: compact,
                     onToggleDone: onToggleDone,
                     onArchive: onArchive,
                     onRestore: onRestore,
@@ -109,38 +131,50 @@ class _TypeRail extends StatelessWidget {
     required this.item,
     required this.color,
     required this.showDate,
+    required this.compact,
     super.key,
   });
 
   final MemoryItem item;
   final Color color;
   final bool showDate;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
+    final foreground = NotebookVisuals.maybeOf(context) == null
+        ? Colors.white
+        : notebookLeatherForeground(color);
     final time = item.timeMinutes == null
         ? DateFormat.Hm(locale).format(item.createdAt)
         : formatMemoryTime(item.timeMinutes!);
 
-    return ColoredBox(
+    return NotebookLeatherSurface(
       color: color,
       child: SizedBox(
-        width: 68,
+        width: compact ? 50 : 54,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: 3,
+            vertical: compact ? 6 : 8,
+          ),
           child: Column(
             children: [
-              Icon(memoryTypeIcon(item.type), color: Colors.white, size: 20),
-              const SizedBox(height: 5),
+              Icon(
+                memoryTypeIcon(item.type),
+                color: foreground,
+                size: compact ? 17 : 19,
+              ),
+              SizedBox(height: compact ? 3 : 5),
               Text(
                 item.type.label(locale),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Colors.white,
-                      fontSize: 9.5,
+                      color: foreground,
+                      fontSize: compact ? 8.2 : 8.8,
                       fontWeight: FontWeight.w900,
                       height: 1.05,
                     ),
@@ -152,7 +186,7 @@ class _TypeRail extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.88),
+                        color: foreground.withValues(alpha: 0.88),
                         fontSize: 8.5,
                         fontWeight: FontWeight.w800,
                       ),
@@ -160,8 +194,8 @@ class _TypeRail extends StatelessWidget {
               Text(
                 time,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.white,
-                      fontSize: 11,
+                      color: foreground,
+                      fontSize: compact ? 10 : 10.5,
                       fontWeight: FontWeight.w900,
                     ),
               ),
@@ -176,10 +210,12 @@ class _TypeRail extends StatelessWidget {
 class _CardContent extends StatelessWidget {
   const _CardContent({
     required this.item,
+    required this.compact,
     super.key,
   });
 
   final MemoryItem item;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -188,9 +224,24 @@ class _CardContent extends StatelessWidget {
     final hasImage = item.imagePaths.isNotEmpty;
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final notebook = NotebookVisuals.maybeOf(context);
+    final typography = AppContentTypography.of(context);
+    final contentStyle = typography.apply(
+      Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: item.isDone
+                ? (isDark ? const Color(0xFF86EFAC) : const Color(0xFF14532D))
+                : colors.onSurface,
+            fontWeight: FontWeight.w700,
+            height: 1.25,
+          ),
+      manropeWeight: FontWeight.w700,
+    );
+    final lineHeight = typography.measuredLineHeight(contentStyle);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
+    final content = Padding(
+      padding: compact
+          ? const EdgeInsets.fromLTRB(8, 6, 6, 6)
+          : const EdgeInsets.fromLTRB(10, 9, 8, 9),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -201,17 +252,9 @@ class _CardContent extends StatelessWidget {
                 if (text.isNotEmpty)
                   Text(
                     text,
-                    maxLines: hasAudio ? 2 : 5,
+                    maxLines: hasAudio ? (compact ? 1 : 2) : (compact ? 4 : 5),
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: item.isDone
-                              ? (isDark
-                                  ? const Color(0xFF86EFAC)
-                                  : const Color(0xFF14532D))
-                              : colors.onSurface,
-                          fontWeight: FontWeight.w700,
-                          height: 1.25,
-                        ),
+                    style: contentStyle,
                   ),
                 if (item.type == MemoryType.payment &&
                     item.amountMinor != null) ...[
@@ -243,25 +286,36 @@ class _CardContent extends StatelessWidget {
                     path: item.audioPath!,
                     recordedAt: item.memoryDate,
                     durationSeconds: item.audioDurationSeconds,
+                    compact: true,
                   ),
                 ],
               ],
             ),
           ),
           if (hasImage) ...[
-            const SizedBox(width: 8),
-            _ImageThumbnail(paths: item.imagePaths),
+            SizedBox(width: compact ? 6 : 8),
+            _ImageThumbnail(paths: item.imagePaths, compact: compact),
           ],
         ],
       ),
+    );
+    if (notebook == null) return content;
+    return CustomPaint(
+      painter: NotebookPaperLinesPainter(
+        color: notebook.line,
+        top: 6 + lineHeight,
+        lineHeight: lineHeight,
+      ),
+      child: content,
     );
   }
 }
 
 class _ImageThumbnail extends StatelessWidget {
-  const _ImageThumbnail({required this.paths});
+  const _ImageThumbnail({required this.paths, required this.compact});
 
   final List<String> paths;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -274,11 +328,15 @@ class _ImageThumbnail extends StatelessWidget {
           key: ValueKey('feed_image_$path'),
           onTap: () => openMemoryImageViewer(context, path),
           child: SizedBox(
-            width: 58,
+            width: compact ? 48 : 54,
             child: Stack(
               fit: StackFit.expand,
               children: [
-                MemoryImagePreview(path: path, cacheWidth: 720),
+                MemoryImagePreview(
+                  path: path,
+                  fit: BoxFit.contain,
+                  cacheWidth: 720,
+                ),
                 if (paths.length > 1)
                   Positioned(
                     right: 4,
@@ -316,6 +374,7 @@ class _ImageThumbnail extends StatelessWidget {
 class _ActionRail extends StatelessWidget {
   const _ActionRail({
     required this.item,
+    required this.compact,
     this.onToggleDone,
     this.onArchive,
     this.onRestore,
@@ -323,6 +382,7 @@ class _ActionRail extends StatelessWidget {
   });
 
   final MemoryItem item;
+  final bool compact;
   final VoidCallback? onToggleDone;
   final VoidCallback? onArchive;
   final VoidCallback? onRestore;
@@ -341,9 +401,9 @@ class _ActionRail extends StatelessWidget {
             : null;
 
     return SizedBox(
-      width: 60,
+      width: compact ? 48 : 54,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: EdgeInsets.symmetric(vertical: compact ? 5 : 6),
         child: Column(
           children: [
             if (onToggleDone != null)
@@ -388,19 +448,21 @@ class _ActionRail extends StatelessWidget {
             if (status != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Text(
-                  status,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: item.isArchived
-                            ? const Color(0xFF92400E)
-                            : const Color(0xFF15803D),
-                        fontSize: 8.5,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                      ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    status,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: item.isArchived
+                              ? const Color(0xFF92400E)
+                              : const Color(0xFF15803D),
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                  ),
                 ),
               ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/notebook/notebook_background.dart';
 import '../../../shared/ui/app_shell.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../accounts/state/accounts_controller.dart';
@@ -37,8 +38,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     return AppShell(
       currentIndex: 3,
       child: Scaffold(
-        appBar: AppBar(
-          leading: const AppBackButton(fallbackLocation: '/settings'),
+        appBar: AppPageAppBar(
+          fallbackLocation: '/settings',
           title: Text(strings.pinSecurity),
         ),
         body: ListView(
@@ -50,13 +51,21 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                     color: Theme.of(context).colorScheme.outlineVariant),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.035),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+                boxShadow: notebookSurfaceShadow(
+                  context,
+                  NotebookSurfaceDepth.panel,
+                ).isNotEmpty
+                    ? notebookSurfaceShadow(
+                        context,
+                        NotebookSurfaceDepth.panel,
+                      )
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.035),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),

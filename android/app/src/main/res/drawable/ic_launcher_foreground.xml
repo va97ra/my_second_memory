@@ -1,38 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <group
-        android:pivotX="54"
-        android:pivotY="54"
-        android:scaleX="0.9"
-        android:scaleY="0.9">
-    <path
-        android:fillColor="#F5F1EA"
-        android:pathData="M33,24 L75,24 Q80,24 80,29 L80,79 Q80,84 75,84 L33,84 Q28,84 28,79 L28,29 Q28,24 33,24 Z" />
-    <path
-        android:fillColor="#E47A57"
-        android:pathData="M33,24 L39,24 L39,84 L33,84 Q28,84 28,79 L28,29 Q28,24 33,24 Z" />
-    <path
-        android:fillColor="@android:color/transparent"
-        android:pathData="M36,35 L43,35 M36,54 L43,54 M36,73 L43,73"
-        android:strokeColor="#232522"
-        android:strokeLineCap="round"
-        android:strokeWidth="3" />
-    <path
-        android:fillColor="@android:color/transparent"
-        android:pathData="M50,40 L70,40 M50,50 L70,50 M50,60 L66,60"
-        android:strokeColor="#343631"
-        android:strokeLineCap="round"
-        android:strokeWidth="2.5" />
-    <path
-        android:fillColor="@android:color/transparent"
-        android:pathData="M58,72 L63,77 L73,66"
-        android:strokeColor="#E47A57"
-        android:strokeLineCap="square"
-        android:strokeLineJoin="miter"
-        android:strokeWidth="4" />
-    </group>
-</vector>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <bitmap
+            android:antialias="true"
+            android:dither="true"
+            android:filter="true"
+            android:gravity="fill"
+            android:src="@drawable/app_icon_foreground_bitmap" />
+    </item>
+</layer-list>

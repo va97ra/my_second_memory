@@ -2,7 +2,7 @@ name: ezhednevnik_v2
 description: Local-first mobile memory app with dated items, voice notes, reminders, and a smart feed.
 publish_to: "none"
 
-version: 1.0.3+4
+version: 1.0.4+5
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -40,7 +40,17 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/textures/notebook_wood.webp
+    - assets/textures/notebook_paper.webp
+    - assets/textures/notebook_leather_contrast.png
   fonts:
     - family: Manrope
       fonts:
         - asset: assets/fonts/Manrope-VariableFont_wght.ttf
+    - family: Lifehack
+      fonts:
+        - asset: assets/fonts/ofont.ru_Lifehack.ttf
+    - family: PatsySans
+      fonts:
+        - asset: "assets/fonts/ofont.ru_Patsy Sans.otf"

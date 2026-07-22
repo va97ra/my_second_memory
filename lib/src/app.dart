@@ -9,8 +9,12 @@ import 'core/localization/app_locale_controller.dart';
 import 'core/localization/app_strings.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_content_font.dart';
 import 'core/theme/app_theme_controller.dart';
+import 'core/theme/app_theme_style.dart';
 import 'core/theme/app_surface_palette.dart';
+import 'core/theme/notebook/notebook_background.dart';
+import 'core/theme/notebook/notebook_theme.dart';
 import 'features/security/ui/security_gate.dart';
 import 'features/notifications/data/notification_service.dart';
 
@@ -55,14 +59,27 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(appLocaleControllerProvider);
-    final themeMode = ref.watch(appThemeControllerProvider);
+    final themeStyle = ref.watch(appThemeControllerProvider);
+    final contentFont = ref.watch(appContentFontControllerProvider);
+    final baseTheme = switch (themeStyle) {
+      AppThemeStyle.light => buildAppTheme(brightness: Brightness.light),
+      AppThemeStyle.dark => buildAppTheme(brightness: Brightness.dark),
+      AppThemeStyle.notebook => buildNotebookTheme(),
+    };
+    final selectedTheme = baseTheme.copyWith(
+      extensions: [
+        ...baseTheme.extensions.values,
+        AppContentTypography(contentFont),
+      ],
+    );
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => AppStrings.of(context).appTitle,
-      theme: buildAppTheme(brightness: Brightness.light),
-      darkTheme: buildAppTheme(brightness: Brightness.dark),
-      themeMode: themeMode,
+      theme: selectedTheme,
+      darkTheme: selectedTheme,
+      themeMode:
+          themeStyle == AppThemeStyle.dark ? ThemeMode.dark : ThemeMode.light,
       locale: locale,
       supportedLocales: AppStrings.supportedLocales,
       localizationsDelegates: const [
@@ -85,10 +102,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
 
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: overlayStyle,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: AppSurfacePalette.of(context).backgroundGradient,
-            ),
+          child: AppBackground(
             child: SecurityGate(
               child: child ?? const SizedBox.shrink(),
             ),

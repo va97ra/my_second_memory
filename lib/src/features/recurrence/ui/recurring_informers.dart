@@ -3,6 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/theme/app_surface_palette.dart';
+import '../../../core/theme/app_content_font.dart';
+import '../../../core/theme/notebook/notebook_background.dart';
+import '../../../core/theme/notebook/notebook_leather_surface.dart';
+import '../../../core/theme/notebook/notebook_visuals.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/ui/widgets/memory_item_presentation.dart';
@@ -10,25 +15,32 @@ import '../domain/recurrence_series.dart';
 import '../state/recurrence_controller.dart';
 
 class RecurringInformers extends ConsumerWidget {
-  const RecurringInformers({super.key});
+  const RecurringInformers({
+    this.height = 126,
+    super.key,
+  });
+
+  final double height;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(recurrenceLoadProvider);
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(16, 6, 16, 10),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: _RecurringInformer(
               frequency: RecurrenceFrequency.monthly,
+              height: height,
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: _RecurringInformer(
               frequency: RecurrenceFrequency.yearly,
+              height: height,
             ),
           ),
         ],
@@ -38,9 +50,13 @@ class RecurringInformers extends ConsumerWidget {
 }
 
 class _RecurringInformer extends ConsumerWidget {
-  const _RecurringInformer({required this.frequency});
+  const _RecurringInformer({
+    required this.frequency,
+    required this.height,
+  });
 
   final RecurrenceFrequency frequency;
+  final double height;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,93 +70,100 @@ class _RecurringInformer extends ConsumerWidget {
         : (locale == 'ru' ? '${now.year} год' : '${now.year}');
     final route = monthly ? '/recurring/monthly' : '/recurring/yearly';
 
-    return SizedBox(
-      height: 126,
-      child: Material(
-        color: colors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: colors.outlineVariant),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(7, 3, 7, 7),
-          child: Column(
-            children: [
-              InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () => context.push(route),
-                child: SizedBox(
-                  height: 36,
-                  child: Row(
-                    children: [
-                      Icon(
-                        monthly ? Icons.sync_outlined : Icons.event_repeat,
-                        color: colors.primary,
-                        size: 17,
-                      ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                        ),
-                      ),
-                      Text(
-                        '${upcoming.length}',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: colors.onSurfaceVariant,
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                      const Icon(Icons.chevron_right, size: 15),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                child: upcoming.isEmpty
-                    ? Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          locale == 'ru' ? 'Пока пусто' : 'No records yet',
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: colors.onSurfaceVariant,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                      )
-                    : Scrollbar(
-                        child: ListView.separated(
-                          primary: false,
-                          padding: EdgeInsets.zero,
-                          physics: const ClampingScrollPhysics(),
-                          itemCount: upcoming.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 3),
-                          itemBuilder: (context, index) {
-                            final item = upcoming[index];
-                            return _RecurringMiniCard(
-                              item: item,
-                              locale: locale,
-                              onTap: () => context.push(
-                                '/memory/view/${Uri.encodeComponent(item.id)}',
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-              ),
-            ],
-          ),
+    final notebook = NotebookVisuals.maybeOf(context);
+    final panel = Material(
+      color: notebook == null ? colors.surface : Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: notebook == null ? colors.outlineVariant : Colors.transparent,
         ),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(7, 3, 7, 7),
+        child: Column(
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => context.push(route),
+              child: SizedBox(
+                height: 36,
+                child: Row(
+                  children: [
+                    Icon(
+                      monthly ? Icons.sync_outlined : Icons.event_repeat,
+                      color: colors.primary,
+                      size: 17,
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                ),
+                      ),
+                    ),
+                    Text(
+                      '${upcoming.length}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const Icon(Icons.chevron_right, size: 15),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: upcoming.isEmpty
+                  ? Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        locale == 'ru' ? 'Пока пусто' : 'No records yet',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    )
+                  : Scrollbar(
+                      child: ListView.separated(
+                        primary: false,
+                        padding: EdgeInsets.zero,
+                        physics: const ClampingScrollPhysics(),
+                        itemCount: upcoming.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 3),
+                        itemBuilder: (context, index) {
+                          final item = upcoming[index];
+                          return _RecurringMiniCard(
+                            item: item,
+                            locale: locale,
+                            onTap: () => context.push(
+                              '/memory/view/${Uri.encodeComponent(item.id)}',
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+    return SizedBox(
+      height: height,
+      child: notebook == null
+          ? panel
+          : NotebookCardSurface(
+              depth: NotebookSurfaceDepth.card,
+              child: panel,
+            ),
     );
   }
 
@@ -165,8 +188,18 @@ class _RecurringMiniCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final typeColor = memoryTypeColor(item.type);
     final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: colors.surfaceContainerHighest,
+    final surfaces = AppSurfacePalette.of(context);
+    final notebook = NotebookVisuals.maybeOf(context);
+    final titleStyle = AppContentTypography.of(context).apply(
+      Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: colors.onSurface,
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+          ),
+      manropeWeight: FontWeight.w900,
+    );
+    final card = Material(
+      color: notebook == null ? surfaces.nestedSurface : Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: typeColor.withValues(alpha: 0.38)),
@@ -178,7 +211,14 @@ class _RecurringMiniCard extends StatelessWidget {
           height: 34,
           child: Row(
             children: [
-              SizedBox(width: 4, child: ColoredBox(color: typeColor)),
+              SizedBox(
+                width: 4,
+                child: NotebookLeatherSurface(
+                  color: typeColor,
+                  lightweight: true,
+                  child: const SizedBox.expand(),
+                ),
+              ),
               const SizedBox(width: 5),
               Icon(memoryTypeIcon(item.type), color: typeColor, size: 14),
               const SizedBox(width: 5),
@@ -191,11 +231,7 @@ class _RecurringMiniCard extends StatelessWidget {
                       item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: colors.onSurface,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
-                          ),
+                      style: titleStyle,
                     ),
                     Text(
                       _details(item, locale),
@@ -215,6 +251,15 @@ class _RecurringMiniCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+    if (notebook == null) return card;
+    return NotebookCardSurface(
+      depth: NotebookSurfaceDepth.tile,
+      showLines: true,
+      lineTop: 17,
+      lineHeight: 15,
+      borderColor: typeColor.withValues(alpha: 0.62),
+      child: card,
     );
   }
 }

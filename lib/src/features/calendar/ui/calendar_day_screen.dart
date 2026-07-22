@@ -4,8 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/notebook/notebook_background.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
+import '../domain/holiday_calendar_service.dart';
+import '../domain/holiday_occurrence.dart';
+import '../state/calendar_preferences_controller.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/state/memory_items_controller.dart';
@@ -29,14 +33,14 @@ class CalendarDayScreen extends ConsumerWidget {
         .watch(shiftSchedulesControllerProvider)
         .where((schedule) => schedule.isWorkday(date))
         .toList();
+    final holidays = ref.watch(appHolidaysProvider)
+        ? ref.watch(holidayCalendarServiceProvider).holidaysForDate(date)
+        : const <HolidayOccurrence>[];
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        leading: const AppBackButton(fallbackLocation: '/calendar'),
-        titleSpacing: 0,
+      appBar: AppPageAppBar(
+        fallbackLocation: '/calendar',
         title: Text(
           DateFormat.yMMMMEEEEd(locale).format(date),
           maxLines: 1,
@@ -79,7 +83,8 @@ class CalendarDayScreen extends ConsumerWidget {
                           return MemoryItemCard(
                             item: item,
                             showDate: false,
-                            margin: const EdgeInsets.only(bottom: 8),
+                            compact: true,
+                            margin: const EdgeInsets.only(bottom: 4),
                             onOpen: () => context.push(
                               '/memory/item/${Uri.encodeComponent(item.id)}',
                             ),
@@ -94,6 +99,12 @@ class CalendarDayScreen extends ConsumerWidget {
                         },
                       ),
               ),
+              if (holidays.isNotEmpty)
+                _HolidaySummaryCard(
+                  holidays: holidays,
+                  date: date,
+                  locale: locale,
+                ),
               _AddRecordBar(onPressed: () => _openNewRecord(context)),
             ],
           ),
@@ -145,6 +156,93 @@ class CalendarDayScreen extends ConsumerWidget {
 
   static int _visibleTimeMinutes(MemoryItem item) {
     return item.timeMinutes ?? item.createdAt.hour * 60 + item.createdAt.minute;
+  }
+}
+
+class _HolidaySummaryCard extends StatelessWidget {
+  const _HolidaySummaryCard({
+    required this.holidays,
+    required this.date,
+    required this.locale,
+  });
+
+  final List<HolidayOccurrence> holidays;
+  final DateTime date;
+  final String locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isRu = locale == 'ru';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 6),
+      child: NotebookCardSurface(
+        depth: NotebookSurfaceDepth.card,
+        child: Material(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => context.push(
+              '/calendar/holidays?date=${DateFormat('yyyy-MM-dd').format(date)}',
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD97706).withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const SizedBox(
+                      width: 38,
+                      height: 38,
+                      child: Icon(
+                        Icons.celebration_outlined,
+                        color: Color(0xFFD97706),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isRu ? 'Праздники' : 'Holidays',
+                          style:
+                              Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: colors.onSurface,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                        ),
+                        const SizedBox(height: 3),
+                        for (final holiday in holidays)
+                          Text(
+                            '${holiday.title(locale)} — ${holiday.shortDescription(locale)}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

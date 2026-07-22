@@ -8,6 +8,7 @@ class AppSurfacePalette extends ThemeExtension<AppSurfacePalette> {
     required this.navigationSurface,
     required this.panelSurface,
     required this.raisedSurface,
+    required this.nestedSurface,
     required this.calendarTile,
     required this.weekdaySurface,
     required this.borderStart,
@@ -21,6 +22,7 @@ class AppSurfacePalette extends ThemeExtension<AppSurfacePalette> {
   final Color navigationSurface;
   final Color panelSurface;
   final Color raisedSurface;
+  final Color nestedSurface;
   final Color calendarTile;
   final Color weekdaySurface;
   final Color borderStart;
@@ -50,13 +52,14 @@ class AppSurfacePalette extends ThemeExtension<AppSurfacePalette> {
         ? const AppSurfacePalette(
             backgroundStart: Color(0xFF000000),
             backgroundEnd: Color(0xFF12100F),
-            navigationSurface: Color(0xFF121311),
-            panelSurface: Color(0xFF1A1C19),
-            raisedSurface: Color(0xFF20231F),
-            calendarTile: Color(0xFF242722),
-            weekdaySurface: Color(0xFF171916),
-            borderStart: Color(0xFF5C6257),
-            borderEnd: Color(0xFF2A2D28),
+            navigationSurface: Color(0xFF252825),
+            panelSurface: Color(0xFF2B2E2A),
+            raisedSurface: Color(0xFF333632),
+            nestedSurface: Color(0xFF3A3D39),
+            calendarTile: Color(0xFF2B2E2A),
+            weekdaySurface: Color(0xFF333632),
+            borderStart: Color(0xFF626860),
+            borderEnd: Color(0xFF41443F),
             accentStart: Color(0xFFE47A57),
             accentEnd: Color(0xFFBF543B),
           )
@@ -66,6 +69,7 @@ class AppSurfacePalette extends ThemeExtension<AppSurfacePalette> {
             navigationSurface: Color(0xFFFFFDF9),
             panelSurface: Color(0xFFFFFDF9),
             raisedSurface: Color(0xFFE6E1D8),
+            nestedSurface: Color(0xFFE6E1D8),
             calendarTile: Color(0xFFDAD7CF),
             weekdaySurface: Color(0xFFCBC8C0),
             borderStart: Color(0xFFA7A197),
@@ -82,6 +86,7 @@ class AppSurfacePalette extends ThemeExtension<AppSurfacePalette> {
     Color? navigationSurface,
     Color? panelSurface,
     Color? raisedSurface,
+    Color? nestedSurface,
     Color? calendarTile,
     Color? weekdaySurface,
     Color? borderStart,
@@ -95,6 +100,7 @@ class AppSurfacePalette extends ThemeExtension<AppSurfacePalette> {
       navigationSurface: navigationSurface ?? this.navigationSurface,
       panelSurface: panelSurface ?? this.panelSurface,
       raisedSurface: raisedSurface ?? this.raisedSurface,
+      nestedSurface: nestedSurface ?? this.nestedSurface,
       calendarTile: calendarTile ?? this.calendarTile,
       weekdaySurface: weekdaySurface ?? this.weekdaySurface,
       borderStart: borderStart ?? this.borderStart,
@@ -119,6 +125,7 @@ class AppSurfacePalette extends ThemeExtension<AppSurfacePalette> {
           Color.lerp(navigationSurface, other.navigationSurface, t)!,
       panelSurface: Color.lerp(panelSurface, other.panelSurface, t)!,
       raisedSurface: Color.lerp(raisedSurface, other.raisedSurface, t)!,
+      nestedSurface: Color.lerp(nestedSurface, other.nestedSurface, t)!,
       calendarTile: Color.lerp(calendarTile, other.calendarTile, t)!,
       weekdaySurface: Color.lerp(weekdaySurface, other.weekdaySurface, t)!,
       borderStart: Color.lerp(borderStart, other.borderStart, t)!,

@@ -6,28 +6,29 @@ ThemeData buildAppTheme({required Brightness brightness}) {
   final isDark = brightness == Brightness.dark;
   final seed = isDark ? const Color(0xFFE47A57) : const Color(0xFFD87352);
   final background = isDark ? const Color(0xFF000000) : const Color(0xFFF4F1EB);
-  final surface = isDark ? const Color(0xFF1A1C19) : const Color(0xFFFFFDF9);
-  final surfaceLow = isDark ? const Color(0xFF121311) : const Color(0xFFF8F5EF);
+  final surface = isDark ? const Color(0xFF2B2E2A) : const Color(0xFFFFFDF9);
+  final surfaceLow = isDark ? const Color(0xFF242622) : const Color(0xFFF8F5EF);
   final surfaceContainer =
-      isDark ? const Color(0xFF1A1C19) : const Color(0xFFF0ECE4);
+      isDark ? const Color(0xFF2B2E2A) : const Color(0xFFF0ECE4);
   final surfaceHigh =
-      isDark ? const Color(0xFF20231F) : const Color(0xFFE6E1D8);
-  final surfaceAlt = isDark ? const Color(0xFF242722) : const Color(0xFFDAD7CF);
-  final border = isDark ? const Color(0xFF454A42) : const Color(0xFFAFAAA0);
+      isDark ? const Color(0xFF333632) : const Color(0xFFE6E1D8);
+  final surfaceAlt = isDark ? const Color(0xFF333632) : const Color(0xFFDAD7CF);
+  final border = isDark ? const Color(0xFF555B53) : const Color(0xFFAFAAA0);
   final onSurface = isDark ? const Color(0xFFF5F2EC) : const Color(0xFF282722);
-  final secondary = isDark ? const Color(0xFFC3BFB7) : const Color(0xFF69655E);
+  final secondary = isDark ? const Color(0xFFC9C5BE) : const Color(0xFF69655E);
   final onPrimary = isDark ? const Color(0xFF1B0D08) : const Color(0xFFFFFFFF);
   final palette = AppSurfacePalette(
     backgroundStart: background,
     backgroundEnd: isDark ? const Color(0xFF12100F) : const Color(0xFFE9E4DB),
     navigationSurface:
-        isDark ? const Color(0xFF121311) : const Color(0xFFFFFDF9),
+        isDark ? const Color(0xFF252825) : const Color(0xFFFFFDF9),
     panelSurface: surface,
     raisedSurface: surfaceHigh,
-    calendarTile: isDark ? const Color(0xFF242722) : const Color(0xFFDAD7CF),
-    weekdaySurface: isDark ? const Color(0xFF171916) : const Color(0xFFCBC8C0),
-    borderStart: isDark ? const Color(0xFF5C6257) : const Color(0xFFA7A197),
-    borderEnd: isDark ? const Color(0xFF2A2D28) : const Color(0xFFD3CEC5),
+    nestedSurface: isDark ? const Color(0xFF3A3D39) : const Color(0xFFE6E1D8),
+    calendarTile: isDark ? const Color(0xFF2B2E2A) : const Color(0xFFDAD7CF),
+    weekdaySurface: isDark ? const Color(0xFF333632) : const Color(0xFFCBC8C0),
+    borderStart: isDark ? const Color(0xFF626860) : const Color(0xFFA7A197),
+    borderEnd: isDark ? const Color(0xFF41443F) : const Color(0xFFD3CEC5),
     accentStart: seed,
     accentEnd: isDark ? const Color(0xFFBF543B) : const Color(0xFFB9553D),
   );
@@ -43,7 +44,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
         isDark ? const Color(0xFFFFDACE) : const Color(0xFF522014),
     surface: surface,
     surfaceContainerLowest:
-        isDark ? const Color(0xFF080908) : const Color(0xFFFFFFFF),
+        isDark ? const Color(0xFF242622) : const Color(0xFFFFFFFF),
     surfaceContainerLow: surfaceLow,
     surfaceContainer: surfaceContainer,
     surfaceContainerHigh: surfaceHigh,
@@ -59,6 +60,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     colorScheme: scheme,
     scaffoldBackgroundColor: Colors.transparent,
     canvasColor: background,
+    disabledColor: isDark ? const Color(0xFF9C9992) : const Color(0xFF8A857D),
     extensions: [palette],
     fontFamily: 'Manrope',
     dividerTheme: DividerThemeData(
@@ -104,10 +106,46 @@ ThemeData buildAppTheme({required Brightness brightness}) {
             fontWeight: FontWeight.w700,
             letterSpacing: 0,
           ),
+          titleSmall: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0,
+          ),
+          bodyLarge: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0,
+          ),
           bodyMedium: const TextStyle(
             fontFamily: 'Manrope',
             fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0,
+          ),
+          bodySmall: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 12,
             fontWeight: FontWeight.w500,
+            letterSpacing: 0,
+          ),
+          labelLarge: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0,
+          ),
+          labelMedium: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0,
+          ),
+          labelSmall: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
             letterSpacing: 0,
           ),
         ),
@@ -137,7 +175,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
       labelTextStyle: WidgetStateProperty.all(
         const TextStyle(
           fontSize: 11.5,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           fontFamily: 'Manrope',
           letterSpacing: 0,
         ),
@@ -164,6 +202,16 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: palette.panelSurface,
+      labelStyle: TextStyle(
+        color: secondary,
+        fontFamily: 'Manrope',
+        fontWeight: FontWeight.w600,
+      ),
+      hintStyle: TextStyle(
+        color: secondary,
+        fontFamily: 'Manrope',
+        fontWeight: FontWeight.w500,
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -197,16 +245,31 @@ ThemeData buildAppTheme({required Brightness brightness}) {
       style: OutlinedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide(color: border),
+        textStyle: const TextStyle(
+          fontFamily: 'Manrope',
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0,
+        ),
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: const TextStyle(
+          fontFamily: 'Manrope',
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0,
+        ),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: const TextStyle(
+          fontFamily: 'Manrope',
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0,
+        ),
       ),
     ),
     iconButtonTheme: IconButtonThemeData(
@@ -244,6 +307,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
         color: secondary,
         fontFamily: 'Manrope',
         fontSize: 13,
+        fontWeight: FontWeight.w500,
       ),
     ),
     popupMenuTheme: PopupMenuThemeData(
@@ -285,7 +349,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     ),
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF151613) : const Color(0xFF3F3A35),
+        color: isDark ? const Color(0xFF333632) : const Color(0xFF3F3A35),
         borderRadius: BorderRadius.circular(8),
       ),
     ),

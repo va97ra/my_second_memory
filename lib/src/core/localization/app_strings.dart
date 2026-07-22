@@ -187,6 +187,7 @@ class AppStrings {
   String get appearance => isRu ? 'Оформление' : 'Appearance';
   String get lightTheme => isRu ? 'Светлая тема' : 'Light theme';
   String get darkTheme => isRu ? 'Тёмная тема' : 'Dark theme';
+  String get notebookTheme => isRu ? 'Тема «Блокнот»' : 'Notebook theme';
   String get unlock => isRu ? 'Открыть' : 'Unlock';
   String get setupPinTitle =>
       isRu ? 'Создайте PIN для защиты данных' : 'Create a PIN to protect data';

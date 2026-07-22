@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/app_content_font.dart';
+import '../../../core/theme/notebook/notebook_assets.dart';
+import '../../../core/theme/notebook/notebook_visuals.dart';
+import '../../../shared/ui/screen_chrome.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
@@ -40,12 +44,8 @@ class MemoryItemViewScreen extends ConsumerWidget {
 
     if (item == null) {
       return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            onPressed: () => _goBack(context),
-            icon: const Icon(Icons.arrow_back),
-          ),
+        appBar: AppPageAppBar(
+          onBack: () => _goBack(context),
           title: Text(strings.recordNotFound),
         ),
         body: Center(child: Text(strings.recordNotFound)),
@@ -53,23 +53,29 @@ class MemoryItemViewScreen extends ConsumerWidget {
     }
 
     final locale = Localizations.localeOf(context).languageCode;
+    final notebook = NotebookVisuals.maybeOf(context);
     final typeColor = memoryTypeColor(item.type);
     final text = item.body.trim().isNotEmpty ? item.body.trim() : item.title;
     final timeText =
         item.timeMinutes == null ? null : formatMemoryTime(item.timeMinutes!);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          onPressed: () => _goBack(context),
-          icon: const Icon(Icons.arrow_back),
-        ),
+      appBar: AppPageAppBar(
+        onBack: () => _goBack(context),
         title: Text(
           item.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
+        actions: [
+          IconButton(
+            tooltip: strings.editRecord,
+            onPressed: () => context.push(
+              '/memory/item/${Uri.encodeComponent(item.id)}',
+            ),
+            icon: const Icon(Icons.edit_outlined),
+          ),
+        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -86,10 +92,18 @@ class MemoryItemViewScreen extends ConsumerWidget {
                     height: constraints.maxHeight - 18,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surface
-                            .withValues(alpha: 0.97),
+                        color: notebook?.paper ??
+                            Theme.of(context)
+                                .colorScheme
+                                .surface
+                                .withValues(alpha: 0.97),
+                        image: notebook == null
+                            ? null
+                            : const DecorationImage(
+                                image: AssetImage(NotebookAssets.paper),
+                                fit: BoxFit.cover,
+                                opacity: 0.62,
+                              ),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                             color:
@@ -186,19 +200,39 @@ class MemoryItemViewScreen extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  if (item.imagePaths.isNotEmpty) ...[
+                                    _ReadonlyImageGrid(paths: item.imagePaths),
+                                  ],
+                                  if (item.audioPath != null) ...[
+                                    if (item.imagePaths.isNotEmpty)
+                                      const SizedBox(height: 12),
+                                    VoiceNotePlayer(
+                                      path: item.audioPath!,
+                                      recordedAt: item.memoryDate,
+                                      durationSeconds:
+                                          item.audioDurationSeconds,
+                                    ),
+                                  ],
                                   if (text.isNotEmpty) ...[
+                                    if (item.imagePaths.isNotEmpty ||
+                                        item.audioPath != null)
+                                      const SizedBox(height: 12),
                                     Text(
                                       text,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface,
-                                            height: 1.36,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                      style: AppContentTypography.of(context)
+                                          .apply(
+                                        Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface,
+                                              height: 1.36,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                        manropeWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ],
                                   if (item.type == MemoryType.payment &&
@@ -232,19 +266,6 @@ class MemoryItemViewScreen extends ConsumerWidget {
                                             fontWeight: FontWeight.w800,
                                           ),
                                     ),
-                                  ],
-                                  if (item.audioPath != null) ...[
-                                    const SizedBox(height: 16),
-                                    VoiceNotePlayer(
-                                      path: item.audioPath!,
-                                      recordedAt: item.memoryDate,
-                                      durationSeconds:
-                                          item.audioDurationSeconds,
-                                    ),
-                                  ],
-                                  if (item.imagePaths.isNotEmpty) ...[
-                                    const SizedBox(height: 16),
-                                    _ReadonlyImageGrid(paths: item.imagePaths),
                                   ],
                                 ],
                               ),
@@ -281,46 +302,60 @@ class _ReadonlyImageGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final single = paths.length == 1;
-        final width =
-            single ? constraints.maxWidth : (constraints.maxWidth - 10) / 2;
-        final height =
-            single ? (width * 0.62).clamp(180.0, 360.0) : width * 0.72;
+        final maxWidth = constraints.maxWidth < memoryAttachmentPreviewMaxWidth
+            ? constraints.maxWidth
+            : memoryAttachmentPreviewMaxWidth;
 
         return Wrap(
-          spacing: 10,
-          runSpacing: 10,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             for (final path in paths)
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  key: ValueKey('readonly_image_$path'),
-                  onTap: () => openMemoryImageViewer(context, path),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Ink(
-                    width: width,
-                    height: height,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: MemoryImagePreview(
-                        path: path,
-                        fit: BoxFit.contain,
-                        cacheWidth: 1200,
-                      ),
-                    ),
-                  ),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: maxWidth,
+                  maxHeight: memoryAttachmentPreviewHeight,
                 ),
+                child: _ReadonlyImage(path: path, cacheWidth: 720),
               ),
           ],
         );
       },
+    );
+  }
+}
+
+class _ReadonlyImage extends StatelessWidget {
+  const _ReadonlyImage({required this.path, required this.cacheWidth});
+
+  final String path;
+  final int cacheWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: ValueKey('readonly_image_$path'),
+        onTap: () => openMemoryImageViewer(context, path),
+        borderRadius: BorderRadius.circular(8),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: MemoryImagePreview(
+              path: path,
+              fit: BoxFit.contain,
+              cacheWidth: cacheWidth,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -31,7 +31,9 @@ enum FeedFilter {
 List<MemoryItem> smartFeedForDay(List<MemoryItem> items, DateTime date) {
   final day = DateTime(date.year, date.month, date.day);
 
-  final visible = items.where((item) => !item.isArchived).toList();
+  final visible = items
+      .where((item) => !item.isArchived && !_isRecurringFeedItem(item))
+      .toList();
 
   final dated = visible.where((item) => isSameDay(item.memoryDate, day));
   final overdue = visible.where((item) {
@@ -70,6 +72,7 @@ List<FeedDay> groupItemsByDate(
           item.memoryDate.day,
         ).isAfter(day);
     return !item.isArchived &&
+        !_isRecurringFeedItem(item) &&
         !hiddenFutureOccurrence &&
         _matchesFilter(item, filter);
   }).toList()
@@ -104,6 +107,13 @@ List<FeedDay> groupItemsByDate(
   return grouped.entries
       .map((entry) => FeedDay(date: entry.key, items: entry.value))
       .toList();
+}
+
+bool _isRecurringFeedItem(MemoryItem item) {
+  final repeatRule = item.repeatRule?.trim().toLowerCase();
+  return item.seriesId != null ||
+      repeatRule == 'monthly' ||
+      repeatRule == 'yearly';
 }
 
 bool _matchesFilter(MemoryItem item, FeedFilter filter) {

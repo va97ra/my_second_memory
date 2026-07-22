@@ -5,6 +5,7 @@ import '../../features/accounts/ui/accounts_screen.dart';
 import '../../features/backup/ui/backup_screen.dart';
 import '../../features/calendar/ui/calendar_screen.dart';
 import '../../features/calendar/ui/calendar_day_screen.dart';
+import '../../features/calendar/ui/holiday_detail_screen.dart';
 import '../../features/home_feed/ui/home_feed_screen.dart';
 import '../../features/memory_items/ui/memory_item_detail_screen.dart';
 import '../../features/memory_items/ui/memory_library_screen.dart';
@@ -15,6 +16,7 @@ import '../../features/recurrence/ui/recurring_overview_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
 import '../../features/shift_schedules/ui/shift_schedules_screen.dart';
 import '../../shared/ui/app_shell.dart';
+import '../../shared/ui/page_turn_transition.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -29,7 +31,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/',
-                builder: (context, state) => const HomeFeedScreen(),
+                pageBuilder: (context, state) => pageTurnPage(
+                  context: context,
+                  state: state,
+                  child: const HomeFeedScreen(),
+                ),
               ),
             ],
           ),
@@ -37,7 +43,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/calendar',
-                builder: (context, state) => const CalendarScreen(),
+                pageBuilder: (context, state) => pageTurnPage(
+                  context: context,
+                  state: state,
+                  child: const CalendarScreen(),
+                ),
               ),
             ],
           ),
@@ -45,7 +55,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/accounts',
-                builder: (context, state) => const AccountsScreen(),
+                pageBuilder: (context, state) => pageTurnPage(
+                  context: context,
+                  state: state,
+                  child: const AccountsScreen(),
+                ),
               ),
             ],
           ),
@@ -53,7 +67,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/settings',
-                builder: (context, state) => const SettingsScreen(),
+                pageBuilder: (context, state) => pageTurnPage(
+                  context: context,
+                  state: state,
+                  child: const SettingsScreen(),
+                ),
               ),
             ],
           ),
@@ -61,68 +79,120 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/recurring/:frequency',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final frequency = state.pathParameters['frequency'] == 'yearly'
               ? RecurrenceFrequency.yearly
               : RecurrenceFrequency.monthly;
-          return RecurringOverviewScreen(frequency: frequency);
+          return pageTurnPage(
+            context: context,
+            state: state,
+            child: RecurringOverviewScreen(frequency: frequency),
+          );
         },
       ),
       GoRoute(
         path: '/memory',
-        builder: (context, state) => const MemoryLibraryScreen(),
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          child: const MemoryLibraryScreen(),
+        ),
       ),
       GoRoute(
         path: '/memory/item/:id',
-        builder: (context, state) {
-          return MemoryItemDetailScreen(
-            itemId: state.pathParameters['id'] ?? '',
+        pageBuilder: (context, state) {
+          return pageTurnPage(
+            context: context,
+            state: state,
+            child: MemoryItemDetailScreen(
+              itemId: state.pathParameters['id'] ?? '',
+            ),
           );
         },
       ),
       GoRoute(
         path: '/memory/new',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final rawDate = state.uri.queryParameters['date'];
           final date = rawDate == null
               ? DateTime.now()
               : DateTime.tryParse(rawDate) ?? DateTime.now();
-          return MemoryItemDetailScreen(
-            initialDate: DateTime(date.year, date.month, date.day),
+          return pageTurnPage(
+            context: context,
+            state: state,
+            child: MemoryItemDetailScreen(
+              initialDate: DateTime(date.year, date.month, date.day),
+            ),
           );
         },
       ),
       GoRoute(
         path: '/memory/view/:id',
-        builder: (context, state) {
-          return MemoryItemViewScreen(
-            itemId: state.pathParameters['id'] ?? '',
+        pageBuilder: (context, state) {
+          return pageTurnPage(
+            context: context,
+            state: state,
+            child: MemoryItemViewScreen(
+              itemId: state.pathParameters['id'] ?? '',
+            ),
           );
         },
       ),
       GoRoute(
         path: '/calendar/day',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final rawDate = state.uri.queryParameters['date'];
           final date = rawDate == null
               ? DateTime.now()
               : DateTime.tryParse(rawDate) ?? DateTime.now();
-          return CalendarDayScreen(
-            date: DateTime(date.year, date.month, date.day),
+          return pageTurnPage(
+            context: context,
+            state: state,
+            child: CalendarDayScreen(
+              date: DateTime(date.year, date.month, date.day),
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/calendar/holidays',
+        pageBuilder: (context, state) {
+          final rawDate = state.uri.queryParameters['date'];
+          final date = rawDate == null
+              ? DateTime.now()
+              : DateTime.tryParse(rawDate) ?? DateTime.now();
+          return pageTurnPage(
+            context: context,
+            state: state,
+            child: HolidayDetailScreen(
+              date: DateTime(date.year, date.month, date.day),
+            ),
           );
         },
       ),
       GoRoute(
         path: '/settings/shifts',
-        builder: (context, state) => const ShiftSchedulesScreen(),
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          child: const ShiftSchedulesScreen(),
+        ),
       ),
       GoRoute(
         path: '/settings/backup',
-        builder: (context, state) => const BackupScreen(),
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          child: const BackupScreen(),
+        ),
       ),
       GoRoute(
         path: '/security',
-        builder: (context, state) => const SecurityScreen(),
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          child: const SecurityScreen(),
+        ),
       ),
     ],
   );

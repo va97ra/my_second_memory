@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../domain/memory_type.dart';
 
+const memoryAttachmentPreviewHeight = 210.0;
+const memoryAttachmentPreviewMaxWidth = 320.0;
+
 IconData memoryTypeIcon(MemoryType type) => switch (type) {
       MemoryType.task => Icons.check_circle_outline,
       MemoryType.note => Icons.notes,

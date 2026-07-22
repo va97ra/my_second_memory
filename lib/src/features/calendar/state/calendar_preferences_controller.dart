@@ -5,6 +5,10 @@ final appHintsProvider = StateNotifierProvider<AppHintsController, bool>(
   (ref) => AppHintsController(),
 );
 
+final appHolidaysProvider = StateNotifierProvider<AppHolidaysController, bool>(
+  (ref) => AppHolidaysController(),
+);
+
 class AppHintsController extends StateNotifier<bool> {
   AppHintsController() : super(true) {
     _load();
@@ -28,3 +32,21 @@ final calendarHintsProvider = appHintsProvider;
 
 @Deprecated('Use AppHintsController')
 typedef CalendarHintsController = AppHintsController;
+
+class AppHolidaysController extends StateNotifier<bool> {
+  AppHolidaysController() : super(true) {
+    _load();
+  }
+
+  static const storageKey = 'calendar_holidays_enabled_v1';
+
+  Future<void> _load() async {
+    final preferences = await SharedPreferences.getInstance();
+    state = preferences.getBool(storageKey) ?? true;
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    state = enabled;
+    await (await SharedPreferences.getInstance()).setBool(storageKey, enabled);
+  }
+}

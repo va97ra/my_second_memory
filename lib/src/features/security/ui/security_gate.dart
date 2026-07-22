@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/app_surface_palette.dart';
+import '../../../core/theme/notebook/notebook_background.dart';
 import '../state/security_provider.dart';
 
 class SecurityGate extends ConsumerStatefulWidget {
@@ -139,6 +139,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
           error: _error,
           onRetry: _unlockWithBiometrics,
           onShowPin: () {
+            _pinController.clear();
             setState(() {
               _showPinFallback = true;
               _error = null;
@@ -155,6 +156,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
         onUnlock: _unlockWithPin,
         onBiometrics: session.biometricsEnabled
             ? () {
+                _pinController.clear();
                 setState(() {
                   _showPinFallback = false;
                   _biometricAttempted = false;
@@ -167,6 +169,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
   }
 
   Future<void> _load() async {
+    _pinController.clear();
     if (mounted) {
       setState(() {
         _isLoading = true;
@@ -213,6 +216,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
       _setupBusy = true;
       _error = null;
     });
+    _pinController.clear();
     await ref.read(securitySessionProvider.notifier).setPin(pin);
     if (!mounted) {
       return;
@@ -247,9 +251,14 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
   }
 
   Future<void> _unlockWithPin() async {
-    final ok = await ref
-        .read(securitySessionProvider.notifier)
-        .unlockWithPin(_pinController.text.trim());
+    final pin = _pinController.text.trim();
+    _pinController.clear();
+    if (pin.isEmpty) {
+      setState(() => _error = AppStrings.of(context).wrongPin);
+      return;
+    }
+    final ok =
+        await ref.read(securitySessionProvider.notifier).unlockWithPin(pin);
     if (mounted) {
       setState(() => _error = ok ? null : AppStrings.of(context).wrongPin);
     }
@@ -280,18 +289,13 @@ class _SecurityScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: AppSurfacePalette.of(context).backgroundGradient,
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 390),
-                child: child,
-              ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 390),
+              child: child,
             ),
           ),
         ),
@@ -312,13 +316,18 @@ class _SecurityCard extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-        ],
+        boxShadow: notebookSurfaceShadow(
+          context,
+          NotebookSurfaceDepth.panel,
+        ).isNotEmpty
+            ? notebookSurfaceShadow(context, NotebookSurfaceDepth.panel)
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
+                ),
+              ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -580,8 +589,19 @@ class _PinField extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.number,
+      textInputAction: TextInputAction.done,
       obscureText: true,
       maxLength: 8,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(8),
+      ],
+      autofillHints: const <String>[],
+      autocorrect: false,
+      enableSuggestions: false,
+      enableIMEPersonalizedLearning: false,
+      smartDashesType: SmartDashesType.disabled,
+      smartQuotesType: SmartQuotesType.disabled,
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.titleLarge?.copyWith(letterSpacing: 6),
       decoration: const InputDecoration(labelText: 'PIN', counterText: ''),
