@@ -1,27 +1,18 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../core/theme/notebook/notebook_visuals.dart';
 
 Page<void> pageTurnPage({
   required BuildContext context,
   required GoRouterState state,
   required Widget child,
 }) {
-  if (NotebookVisuals.maybeOf(context) == null) {
-    return MaterialPage<void>(key: state.pageKey, child: child);
-  }
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
-    transitionDuration: const Duration(milliseconds: 240),
-    reverseTransitionDuration: const Duration(milliseconds: 220),
+    transitionDuration: const Duration(milliseconds: 260),
+    reverseTransitionDuration: const Duration(milliseconds: 230),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      if (MediaQuery.disableAnimationsOf(context)) {
-        return child;
-      }
+      if (MediaQuery.disableAnimationsOf(context)) return child;
       return PageTurnTransition(
         animation: animation,
         secondaryAnimation: secondaryAnimation,
@@ -31,6 +22,9 @@ Page<void> pageTurnPage({
   );
 }
 
+/// A light fade-through transition that never paints two readable pages at
+/// once. The shared textured app background stays visible between the pages,
+/// so a route cannot briefly expose a flat scaffold color while images decode.
 class PageTurnTransition extends StatelessWidget {
   const PageTurnTransition({
     required this.animation,
@@ -45,59 +39,59 @@ class PageTurnTransition extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final incoming = CurvedAnimation(
-      parent: animation,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
-    );
     return AnimatedBuilder(
-      animation: Listenable.merge([incoming, secondaryAnimation]),
+      animation: Listenable.merge([animation, secondaryAnimation]),
       child: child,
       builder: (context, child) {
-        final enterAngle = (1 - incoming.value) * -math.pi / 2.7;
-        final exitAngle = secondaryAnimation.value * math.pi / 3.4;
-        final angle = enterAngle + exitAngle;
-        final matrix = Matrix4.identity()
-          ..setEntry(3, 2, 0.0012)
-          ..rotateY(angle);
-        return Transform(
-          alignment: angle <= 0 ? Alignment.centerLeft : Alignment.centerRight,
-          transform: matrix,
-          child: Stack(
-            fit: StackFit.passthrough,
-            children: [
-              child!,
-              if (angle.abs() > 0.01)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: angle < 0
-                              ? Alignment.centerLeft
-                              : Alignment.centerRight,
-                          end: angle < 0
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          colors: [
-                            Colors.black.withValues(
-                              alpha: 0.28 * (angle.abs() / (math.pi / 2)),
-                            ),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+        final routeOpacity = _routeOpacity(animation);
+        final uncoveredOpacity = _uncoveredRouteOpacity(secondaryAnimation);
+        final opacity = (routeOpacity * uncoveredOpacity).clamp(0.0, 1.0);
+        final scale = 0.992 + opacity * 0.008;
+
+        return IgnorePointer(
+          ignoring: opacity < 0.99,
+          child: Opacity(
+            key: const ValueKey('app_route_transition'),
+            opacity: opacity,
+            child: Transform.scale(
+              scale: scale,
+              alignment: Alignment.center,
+              child: child,
+            ),
           ),
         );
       },
     );
   }
+
+  double _routeOpacity(Animation<double> routeAnimation) {
+    final value = routeAnimation.value;
+    if (routeAnimation.status == AnimationStatus.reverse) {
+      return Curves.easeInCubic.transform(
+        ((value - 0.65) / 0.35).clamp(0.0, 1.0),
+      );
+    }
+    return Curves.easeOutCubic.transform(
+      ((value - 0.35) / 0.65).clamp(0.0, 1.0),
+    );
+  }
+
+  double _uncoveredRouteOpacity(Animation<double> coveringAnimation) {
+    final value = coveringAnimation.value;
+    if (coveringAnimation.status == AnimationStatus.reverse) {
+      return Curves.easeOutCubic.transform(
+        (1 - value / 0.65).clamp(0.0, 1.0),
+      );
+    }
+    return 1 -
+        Curves.easeInCubic.transform(
+          (value / 0.35).clamp(0.0, 1.0),
+        );
+  }
 }
 
+/// Animates only the newly selected tab. The previous tab is removed before
+/// this animation begins, which avoids the snapshot overlay used previously.
 class PageTurnTabFrame extends StatefulWidget {
   const PageTurnTabFrame({
     required this.index,
@@ -122,7 +116,7 @@ class _PageTurnTabFrameState extends State<PageTurnTabFrame>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 240),
+      duration: const Duration(milliseconds: 210),
       value: 1,
     );
   }
@@ -130,10 +124,13 @@ class _PageTurnTabFrameState extends State<PageTurnTabFrame>
   @override
   void didUpdateWidget(covariant PageTurnTabFrame oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.index != widget.index) {
-      _direction = widget.index > oldWidget.index ? 1 : -1;
-      _controller.forward(from: 0);
+    if (oldWidget.index == widget.index) return;
+    _direction = widget.index > oldWidget.index ? 1 : -1;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.value = 1;
+      return;
     }
+    _controller.forward(from: 0);
   }
 
   @override
@@ -144,23 +141,21 @@ class _PageTurnTabFrameState extends State<PageTurnTabFrame>
 
   @override
   Widget build(BuildContext context) {
-    if (MediaQuery.disableAnimationsOf(context) ||
-        NotebookVisuals.maybeOf(context) == null) {
-      return widget.child;
-    }
+    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
     return AnimatedBuilder(
       animation: _controller,
       child: widget.child,
       builder: (context, child) {
         final progress = Curves.easeOutCubic.transform(_controller.value);
-        final angle = (1 - progress) * 0.34 * _direction;
-        return Transform(
-          alignment:
-              _direction > 0 ? Alignment.centerRight : Alignment.centerLeft,
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, 0.0012)
-            ..rotateY(angle),
-          child: child,
+        return ClipRect(
+          child: Opacity(
+            key: const ValueKey('app_tab_transition'),
+            opacity: progress,
+            child: Transform.translate(
+              offset: Offset(_direction * 14 * (1 - progress), 0),
+              child: child,
+            ),
+          ),
         );
       },
     );

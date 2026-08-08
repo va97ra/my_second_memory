@@ -47,6 +47,7 @@ class _RecordEditor extends StatelessWidget {
               );
         final buttonSize = compact ? 38.0 : 42.0;
         final notebook = NotebookVisuals.maybeOf(context);
+        final textures = AppSurfaceTextures.maybeOf(context);
         final typography = AppContentTypography.of(context);
         final recordTextStyle = typography.apply(
           Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -65,19 +66,19 @@ class _RecordEditor extends StatelessWidget {
             showLines: false,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: notebook == null
+                color: notebook == null && textures == null
                     ? Theme.of(context)
                         .colorScheme
                         .surface
                         .withValues(alpha: 0.97)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
-                border: notebook == null
+                border: notebook == null && textures == null
                     ? Border.all(
                         color: Theme.of(context).colorScheme.outlineVariant,
                       )
                     : null,
-                boxShadow: notebook == null
+                boxShadow: notebook == null && textures == null
                     ? [
                         BoxShadow(
                           color:
@@ -159,10 +160,10 @@ class _RecordEditor extends StatelessWidget {
                     ],
                     Expanded(
                       child: CustomPaint(
-                        painter: notebook == null
+                        painter: notebook == null && textures == null
                             ? null
                             : NotebookPaperLinesPainter(
-                                color: notebook.line,
+                                color: notebook?.line ?? textures!.lineColor,
                                 // The first rule underlines the first content
                                 // row; the floating label sits above it.
                                 top: recordLineHeight + 10,
@@ -195,7 +196,7 @@ class _RecordEditor extends StatelessWidget {
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
                             contentPadding: EdgeInsets.zero,
-                            filled: notebook == null,
+                            filled: notebook == null && textures == null,
                           ),
                           onChanged: (_) => onChanged(),
                         ),
@@ -212,7 +213,7 @@ class _RecordEditor extends StatelessWidget {
                         const Spacer(),
                         _SquareActionButton(
                           tooltip: strings.addImage,
-                          icon: Icons.photo_camera_outlined,
+                          icon: Icons.photo_camera_rounded,
                           color: Theme.of(context).colorScheme.primary,
                           size: buttonSize,
                           onPressed: onPickImage,
@@ -222,7 +223,9 @@ class _RecordEditor extends StatelessWidget {
                           tooltip: isRecording
                               ? strings.stopRecording
                               : strings.voice,
-                          icon: isRecording ? Icons.stop : Icons.mic_none,
+                          icon: isRecording
+                              ? Icons.stop_rounded
+                              : Icons.mic_rounded,
                           color: isRecording
                               ? const Color(0xFFDC2626)
                               : const Color(0xFFDB2777),
@@ -261,7 +264,7 @@ Future<void> _showMediaDeleteMenu(
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.delete_outline,
+            Icon(Icons.delete_rounded,
                 color: Theme.of(context).colorScheme.error),
             const SizedBox(width: 10),
             Text(
@@ -295,7 +298,7 @@ class _RecordingPill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.fiber_manual_record,
+              Icons.fiber_manual_record_rounded,
               size: 12,
               color: Color(0xFFDC2626),
             ),

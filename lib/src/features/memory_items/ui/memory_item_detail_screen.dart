@@ -12,6 +12,7 @@ import 'package:record/record.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_content_font.dart';
+import '../../../core/theme/app_surface_textures.dart';
 import '../../../core/theme/notebook/notebook_background.dart';
 import '../../../core/theme/notebook/notebook_visuals.dart';
 import '../../../shared/ui/notebook_action_button.dart';
@@ -218,10 +219,10 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                 ),
                 child: Icon(
                   _saveError != null
-                      ? Icons.cloud_off_outlined
+                      ? Icons.cloud_off_rounded
                       : _isSaving
-                          ? Icons.sync
-                          : Icons.cloud_done_outlined,
+                          ? Icons.sync_rounded
+                          : Icons.cloud_done_rounded,
                   key: ValueKey(
                     _saveError != null
                         ? 'memory_autosave_error'
@@ -243,7 +244,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                   ? 'Повтор и действия'
                   : 'Repeat and actions',
               icon: Icon(
-                Icons.event_repeat,
+                Icons.event_repeat_rounded,
                 color: _recurrenceFrequency == null
                     ? Theme.of(context).colorScheme.onSurface
                     : Theme.of(context).colorScheme.primary,
@@ -270,7 +271,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                   value: 'repeat',
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.event_repeat),
+                    leading: const Icon(Icons.event_repeat_rounded),
                     title: Text(
                       Localizations.localeOf(context).languageCode == 'ru'
                           ? 'Настроить повтор'
@@ -283,7 +284,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                     value: 'duplicate',
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.content_copy_outlined),
+                      leading: const Icon(Icons.content_copy_rounded),
                       title: Text(
                         Localizations.localeOf(context).languageCode == 'ru'
                             ? 'Дублировать на даты'
@@ -296,7 +297,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                     value: 'future',
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.update_outlined),
+                      leading: const Icon(Icons.update_rounded),
                       title: Text(
                         Localizations.localeOf(context).languageCode == 'ru'
                             ? 'Применить к будущим'
@@ -310,7 +311,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(
-                        Icons.delete_outline,
+                        Icons.delete_rounded,
                         color: Theme.of(context).colorScheme.error,
                       ),
                       title: Text(strings.delete),

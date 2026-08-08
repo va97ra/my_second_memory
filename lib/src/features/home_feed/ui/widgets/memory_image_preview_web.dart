@@ -54,7 +54,7 @@ class _BrokenImagePlaceholder extends StatelessWidget {
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Center(
         child: Icon(
-          Icons.image_not_supported_outlined,
+          Icons.broken_image_rounded,
           color: Theme.of(context).colorScheme.primary,
           size: 28,
         ),

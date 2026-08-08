@@ -20,7 +20,7 @@ class AccountsScreen extends ConsumerWidget {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAccountEditor(context, ref),
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add_rounded),
         label: Text(strings.addAccount),
       ),
       body: WarmGradientBackground(
@@ -32,7 +32,7 @@ class AccountsScreen extends ConsumerWidget {
                 hasScrollBody: false,
                 child: Center(
                   child: AppEmptyState(
-                    icon: Icons.key_outlined,
+                    icon: Icons.vpn_key_rounded,
                     title: strings.noAccounts,
                     actionLabel: strings.addAccount,
                     onAction: () => _showAccountEditor(context, ref),
@@ -134,23 +134,23 @@ class _AccountCardState extends State<_AccountCard> {
                   IconButton(
                     tooltip: strings.editAccount,
                     onPressed: widget.onEdit,
-                    icon: const Icon(Icons.edit_outlined),
+                    icon: const Icon(Icons.edit_rounded),
                   ),
                   IconButton(
                     tooltip: strings.delete,
                     onPressed: widget.onDelete,
-                    icon: const Icon(Icons.delete_outline),
+                    icon: const Icon(Icons.delete_rounded),
                   ),
                 ],
               ),
               if (account.login.isNotEmpty)
                 _AccountInfoLine(
-                  icon: Icons.person_outline,
+                  icon: Icons.person_rounded,
                   text: account.login,
                 ),
               if (account.email.isNotEmpty)
                 _AccountInfoLine(
-                  icon: Icons.alternate_email,
+                  icon: Icons.alternate_email_rounded,
                   text: account.email,
                 ),
               const SizedBox(height: 8),
@@ -166,7 +166,7 @@ class _AccountCardState extends State<_AccountCard> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.lock_outline,
+                        Icons.lock_rounded,
                         size: 18,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -184,8 +184,8 @@ class _AccountCardState extends State<_AccountCard> {
                             setState(() => _showPassword = !_showPassword),
                         icon: Icon(
                           _showPassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
                         ),
                       ),
                       IconButton(
@@ -200,7 +200,7 @@ class _AccountCardState extends State<_AccountCard> {
                             );
                           }
                         },
-                        icon: const Icon(Icons.copy, size: 20),
+                        icon: const Icon(Icons.content_copy_rounded, size: 20),
                       ),
                     ],
                   ),
@@ -208,7 +208,7 @@ class _AccountCardState extends State<_AccountCard> {
               ),
               if (account.website.isNotEmpty)
                 _AccountInfoLine(
-                  icon: Icons.language_outlined,
+                  icon: Icons.language_rounded,
                   text: account.website,
                 ),
               if (account.note.isNotEmpty) ...[
@@ -374,7 +374,7 @@ class _AccountEditorState extends State<_AccountEditor> {
                     width: 42,
                     height: 42,
                     child: Icon(
-                      Icons.key_outlined,
+                      Icons.vpn_key_rounded,
                       color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
@@ -393,7 +393,7 @@ class _AccountEditorState extends State<_AccountEditor> {
                 IconButton(
                   tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                   onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close_rounded),
                 ),
               ],
             ),
@@ -407,26 +407,26 @@ class _AccountEditorState extends State<_AccountEditor> {
                     _AccountTextField(
                       controller: _service,
                       label: strings.serviceName,
-                      icon: Icons.apps_outlined,
+                      icon: Icons.apps_rounded,
                       textInputAction: TextInputAction.next,
                     ),
                     _AccountTextField(
                       controller: _login,
                       label: strings.login,
-                      icon: Icons.person_outline,
+                      icon: Icons.person_rounded,
                       textInputAction: TextInputAction.next,
                     ),
                     _AccountTextField(
                       controller: _email,
                       label: strings.email,
-                      icon: Icons.alternate_email,
+                      icon: Icons.alternate_email_rounded,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                     ),
                     _AccountTextField(
                       controller: _password,
                       label: strings.password,
-                      icon: Icons.lock_outline,
+                      icon: Icons.lock_rounded,
                       obscureText: !_showPassword,
                       textInputAction: TextInputAction.next,
                       suffixIcon: IconButton(
@@ -435,22 +435,22 @@ class _AccountEditorState extends State<_AccountEditor> {
                             setState(() => _showPassword = !_showPassword),
                         icon: Icon(
                           _showPassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
                         ),
                       ),
                     ),
                     _AccountTextField(
                       controller: _website,
                       label: strings.website,
-                      icon: Icons.language_outlined,
+                      icon: Icons.language_rounded,
                       keyboardType: TextInputType.url,
                       textInputAction: TextInputAction.next,
                     ),
                     _AccountTextField(
                       controller: _note,
                       label: strings.note,
-                      icon: Icons.notes_outlined,
+                      icon: Icons.sticky_note_2_rounded,
                       minLines: 4,
                       maxLines: 6,
                       keyboardType: TextInputType.multiline,
@@ -466,7 +466,7 @@ class _AccountEditorState extends State<_AccountEditor> {
               height: 48,
               child: FilledButton.icon(
                 onPressed: _save,
-                icon: const Icon(Icons.save_outlined),
+                icon: const Icon(Icons.save_rounded),
                 label: Text(strings.save),
               ),
             ),

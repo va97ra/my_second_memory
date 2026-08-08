@@ -56,21 +56,21 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.event_busy_outlined),
+                leading: const Icon(Icons.event_busy_rounded),
                 title: Text(locale == 'ru' ? 'Не повторять' : 'Do not repeat'),
                 trailing: _recurrenceFrequency == null
-                    ? const Icon(Icons.check)
+                    ? const Icon(Icons.check_rounded)
                     : null,
                 onTap: () => Navigator.of(context).pop('none'),
               ),
               for (final frequency in RecurrenceFrequency.values)
                 ListTile(
                   leading: Icon(frequency == RecurrenceFrequency.monthly
-                      ? Icons.sync_outlined
-                      : Icons.event_repeat),
+                      ? Icons.sync_rounded
+                      : Icons.event_repeat_rounded),
                   title: Text(frequency.label(locale)),
                   trailing: _recurrenceFrequency == frequency
-                      ? const Icon(Icons.check)
+                      ? const Icon(Icons.check_rounded)
                       : null,
                   onTap: () => Navigator.of(context).pop(frequency.name),
                 ),
@@ -107,14 +107,14 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.event_note_outlined),
+              leading: const Icon(Icons.event_note_rounded),
               title: Text(locale == 'ru'
                   ? 'Редактировать только эту запись'
                   : 'Edit only this record'),
               onTap: () => Navigator.of(context).pop(false),
             ),
             ListTile(
-              leading: const Icon(Icons.event_repeat),
+              leading: const Icon(Icons.event_repeat_rounded),
               title: Text(locale == 'ru'
                   ? 'Эту и будущие записи'
                   : 'This and future records'),
@@ -263,12 +263,12 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
+              leading: const Icon(Icons.photo_library_rounded),
               title: Text(strings.gallery),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
+              leading: const Icon(Icons.photo_camera_rounded),
               title: Text(strings.camera),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),

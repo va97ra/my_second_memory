@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_surface_palette.dart';
+import '../app_surface_textures.dart';
 import 'notebook_assets.dart';
 import 'notebook_visuals.dart';
 
@@ -15,7 +16,18 @@ class AppBackground extends StatelessWidget {
     final palette = AppSurfacePalette.of(context);
     if (notebook == null) {
       return DecoratedBox(
-        decoration: BoxDecoration(gradient: palette.backgroundGradient),
+        decoration: BoxDecoration(
+          gradient: palette.backgroundGradient,
+          image: switch (AppSurfaceTextures.maybeOf(context)) {
+            null => null,
+            final textures => DecorationImage(
+                image: AssetImage(textures.backgroundAsset),
+                fit: BoxFit.cover,
+                opacity: textures.backgroundOpacity,
+                filterQuality: FilterQuality.low,
+              ),
+          },
+        ),
         child: child,
       );
     }
@@ -65,8 +77,42 @@ class NotebookPageSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notebook = NotebookVisuals.maybeOf(context);
+    final textures = AppSurfaceTextures.maybeOf(context);
     if (notebook == null) {
-      return Padding(padding: padding ?? EdgeInsets.zero, child: child);
+      if (textures == null) {
+        return Padding(padding: padding ?? EdgeInsets.zero, child: child);
+      }
+      final palette = AppSurfacePalette.of(context);
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: palette.surfaceGradient(),
+          image: DecorationImage(
+            image: AssetImage(textures.surfaceAsset),
+            fit: BoxFit.cover,
+            opacity: textures.surfaceOpacity,
+            filterQuality: FilterQuality.low,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: palette.borderStart),
+          boxShadow: notebookSurfaceShadow(
+            context,
+            NotebookSurfaceDepth.panel,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: CustomPaint(
+            painter: showLines
+                ? NotebookPaperLinesPainter(
+                    color: textures.lineColor,
+                    top: lineTop,
+                    lineHeight: lineHeight,
+                  )
+                : null,
+            child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
+          ),
+        ),
+      );
     }
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -140,7 +186,10 @@ List<BoxShadow> notebookSurfaceShadow(
   BuildContext context,
   NotebookSurfaceDepth depth,
 ) {
-  if (NotebookVisuals.maybeOf(context) == null) return const [];
+  if (NotebookVisuals.maybeOf(context) == null &&
+      AppSurfaceTextures.maybeOf(context) == null) {
+    return const [];
+  }
   final offset = switch (depth) {
     NotebookSurfaceDepth.tile => 2.0,
     NotebookSurfaceDepth.card => 4.0,
@@ -185,8 +234,41 @@ class NotebookCardSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notebook = NotebookVisuals.maybeOf(context);
+    final textures = AppSurfaceTextures.maybeOf(context);
     if (notebook == null) {
-      return Padding(padding: padding ?? EdgeInsets.zero, child: child);
+      if (textures == null) {
+        return Padding(padding: padding ?? EdgeInsets.zero, child: child);
+      }
+      final palette = AppSurfacePalette.of(context);
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: palette.surfaceGradient(
+            base: color ?? palette.panelSurface,
+          ),
+          image: DecorationImage(
+            image: AssetImage(textures.surfaceAsset),
+            fit: BoxFit.cover,
+            opacity: textures.surfaceOpacity,
+            filterQuality: FilterQuality.low,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor ?? palette.borderStart),
+          boxShadow: notebookSurfaceShadow(context, depth),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: CustomPaint(
+            painter: showLines
+                ? NotebookPaperLinesPainter(
+                    color: textures.lineColor,
+                    top: lineTop,
+                    lineHeight: lineHeight,
+                  )
+                : null,
+            child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
+          ),
+        ),
+      );
     }
     return DecoratedBox(
       decoration: BoxDecoration(

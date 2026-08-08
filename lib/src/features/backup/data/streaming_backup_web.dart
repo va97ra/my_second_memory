@@ -1,3 +1,5 @@
+import 'package:cryptography/cryptography.dart';
+
 import '../../accounts/domain/account_item.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../recurrence/domain/recurrence_series.dart';
@@ -21,6 +23,7 @@ Future<List<MemoryItem>> restoreStreamingMedia({
   required List<MemoryItem> items,
   required List<dynamic> mediaEntries,
   required Map<String, List<int>> archiveFiles,
+  SecretKey? encryptionKey,
 }) async =>
     items;
 

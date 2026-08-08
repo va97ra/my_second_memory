@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_surface_palette.dart';
+import '../../../core/theme/app_surface_textures.dart';
 import '../../../core/theme/app_content_font.dart';
 import '../../../core/theme/notebook/notebook_background.dart';
 import '../../../core/theme/notebook/notebook_leather_surface.dart';
@@ -71,12 +72,17 @@ class _RecurringInformer extends ConsumerWidget {
     final route = monthly ? '/recurring/monthly' : '/recurring/yearly';
 
     final notebook = NotebookVisuals.maybeOf(context);
+    final textures = AppSurfaceTextures.maybeOf(context);
     final panel = Material(
-      color: notebook == null ? colors.surface : Colors.transparent,
+      color: notebook == null && textures == null
+          ? colors.surface
+          : Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
-          color: notebook == null ? colors.outlineVariant : Colors.transparent,
+          color: notebook == null && textures == null
+              ? colors.outlineVariant
+              : Colors.transparent,
         ),
       ),
       clipBehavior: Clip.antiAlias,
@@ -92,7 +98,7 @@ class _RecurringInformer extends ConsumerWidget {
                 child: Row(
                   children: [
                     Icon(
-                      monthly ? Icons.sync_outlined : Icons.event_repeat,
+                      monthly ? Icons.sync_rounded : Icons.event_repeat_rounded,
                       color: colors.primary,
                       size: 17,
                     ),
@@ -115,7 +121,7 @@ class _RecurringInformer extends ConsumerWidget {
                             fontWeight: FontWeight.w800,
                           ),
                     ),
-                    const Icon(Icons.chevron_right, size: 15),
+                    const Icon(Icons.chevron_right_rounded, size: 15),
                   ],
                 ),
               ),
@@ -158,7 +164,7 @@ class _RecurringInformer extends ConsumerWidget {
     );
     return SizedBox(
       height: height,
-      child: notebook == null
+      child: notebook == null && textures == null
           ? panel
           : NotebookCardSurface(
               depth: NotebookSurfaceDepth.card,
@@ -190,6 +196,7 @@ class _RecurringMiniCard extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final surfaces = AppSurfacePalette.of(context);
     final notebook = NotebookVisuals.maybeOf(context);
+    final textures = AppSurfaceTextures.maybeOf(context);
     final titleStyle = AppContentTypography.of(context).apply(
       Theme.of(context).textTheme.labelSmall?.copyWith(
             color: colors.onSurface,
@@ -199,7 +206,9 @@ class _RecurringMiniCard extends StatelessWidget {
       manropeWeight: FontWeight.w900,
     );
     final card = Material(
-      color: notebook == null ? surfaces.nestedSurface : Colors.transparent,
+      color: notebook == null && textures == null
+          ? surfaces.nestedSurface
+          : Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: typeColor.withValues(alpha: 0.38)),
@@ -252,7 +261,7 @@ class _RecurringMiniCard extends StatelessWidget {
         ),
       ),
     );
-    if (notebook == null) return card;
+    if (notebook == null && textures == null) return card;
     return NotebookCardSurface(
       depth: NotebookSurfaceDepth.tile,
       showLines: true,

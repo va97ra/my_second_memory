@@ -12,16 +12,7 @@ class _ShiftScheduleEditorSheet extends ConsumerStatefulWidget {
 
 class _ShiftScheduleEditorSheetState
     extends ConsumerState<_ShiftScheduleEditorSheet> {
-  static const _colors = [
-    Color(0xFF5B7FA3),
-    Color(0xFF0891B2),
-    Color(0xFF16A34A),
-    Color(0xFFF59E0B),
-    Color(0xFFEA580C),
-    Color(0xFFDB2777),
-    Color(0xFF7C3AED),
-    Color(0xFFC2BFB6),
-  ];
+  static const _defaultColor = Color(0xFF2F7DD1);
 
   static const _presets = [
     _ShiftPreset('5/2', '5/2', '5/2', 5, 2),
@@ -53,7 +44,7 @@ class _ShiftScheduleEditorSheetState
       text: '${schedule?.restDays ?? 2}',
     );
     _startDate = schedule?.startDate ?? _dateOnly(DateTime.now());
-    _selectedColor = Color(schedule?.colorValue ?? _colors.first.toARGB32());
+    _selectedColor = Color(schedule?.colorValue ?? _defaultColor.toARGB32());
     _isEnabled = schedule?.isEnabled ?? true;
     _alarms = List.of(schedule?.alarms ?? const [ShiftAlarm(), ShiftAlarm()]);
     while (_alarms.length < 2) {
@@ -124,7 +115,7 @@ class _ShiftScheduleEditorSheetState
                         tooltip: MaterialLocalizations.of(context)
                             .closeButtonTooltip,
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Icons.close_rounded),
                       ),
                     ],
                   ),
@@ -150,7 +141,7 @@ class _ShiftScheduleEditorSheetState
                     height: 52,
                     child: OutlinedButton.icon(
                       onPressed: _pickStartDate,
-                      icon: const Icon(Icons.today_outlined, size: 20),
+                      icon: const Icon(Icons.today_rounded, size: 20),
                       label: Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -186,8 +177,8 @@ class _ShiftScheduleEditorSheetState
                     }),
                     icon: Icon(
                       _showManualSchedule
-                          ? Icons.expand_less
-                          : Icons.tune_outlined,
+                          ? Icons.expand_less_rounded
+                          : Icons.tune_rounded,
                     ),
                     label: Align(
                       alignment: Alignment.centerLeft,
@@ -233,32 +224,14 @@ class _ShiftScheduleEditorSheetState
                   const SizedBox(height: 12),
                   _SectionLabel(strings.scheduleColor),
                   const SizedBox(height: 8),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      const spacing = 8.0;
-                      final width = (constraints.maxWidth - spacing * 3) / 4;
-                      return Wrap(
-                        spacing: spacing,
-                        runSpacing: spacing,
-                        children: [
-                          for (final color in _colors)
-                            SizedBox(
-                              width: width,
-                              child: _ColorSwatch(
-                                color: color,
-                                isSelected: color.toARGB32() ==
-                                    _selectedColor.toARGB32(),
-                                onTap: () =>
-                                    setState(() => _selectedColor = color),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
+                  _ShiftColorPicker(
+                    color: _selectedColor,
+                    onChanged: (color) =>
+                        setState(() => _selectedColor = color),
                   ),
                   const SizedBox(height: 8),
                   _SettingsSwitchRow(
-                    icon: Icons.work_outline,
+                    icon: Icons.work_rounded,
                     title: strings.enabled,
                     value: _isEnabled,
                     onChanged: (value) => setState(() => _isEnabled = value),
@@ -292,7 +265,7 @@ class _ShiftScheduleEditorSheetState
                     height: 48,
                     child: FilledButton.icon(
                       onPressed: _save,
-                      icon: const Icon(Icons.save_outlined),
+                      icon: const Icon(Icons.save_rounded),
                       label: Text(strings.save),
                     ),
                   ),

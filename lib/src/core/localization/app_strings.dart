@@ -28,8 +28,8 @@ class AppStrings {
       isRu ? 'Это было позавчера' : 'This was two days ago';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
   String get calendarTapHint => isRu
-      ? 'Нажмите на нужное число, чтобы открыть день и добавить запись.'
-      : 'Tap a date to open the day and add a record.';
+      ? 'Нажмите на число, чтобы открыть день. Свайп вбок — месяц, вверх или вниз — год.'
+      : 'Tap a date to open the day. Swipe sideways for months, up or down for years.';
   String get accounts => isRu ? 'Аккаунты' : 'Accounts';
   String get addAccount => isRu ? 'Добавить аккаунт' : 'Add account';
   String get editAccount => isRu ? 'Редактировать аккаунт' : 'Edit account';
@@ -65,6 +65,10 @@ class AppStrings {
       isRu ? 'Резервная копия восстановлена' : 'Backup restored';
   String get backupPassword =>
       isRu ? 'Пароль резервной копии' : 'Backup password';
+  String get repeatBackupPassword =>
+      isRu ? 'Повторите пароль' : 'Repeat password';
+  String get backupPasswordsDoNotMatch =>
+      isRu ? 'Пароли не совпадают' : 'Passwords do not match';
   String get createBackupPassword =>
       isRu ? 'Придумайте пароль для архива' : 'Create backup password';
   String get enterBackupPassword =>
@@ -79,6 +83,15 @@ class AppStrings {
       : 'Current records, shift schedules, and accounts will be replaced by the file data.';
   String get invalidBackupFile =>
       isRu ? 'Не удалось прочитать резервную копию' : 'Cannot read backup file';
+  String get invalidBackupPassword =>
+      isRu ? 'Неверный пароль резервной копии' : 'Incorrect backup password';
+  String get backupRestoreFailed => isRu
+      ? 'Не удалось восстановить данные. Текущие данные сохранены.'
+      : 'Could not restore data. Current data was preserved.';
+  String get backupCreateFailed =>
+      isRu ? 'Не удалось создать резервную копию' : 'Could not create backup';
+  String get showPassword => isRu ? 'Показать пароль' : 'Show password';
+  String get hidePassword => isRu ? 'Скрыть пароль' : 'Hide password';
   String get archive => isRu ? 'Архив' : 'Archive';
   String get archiveRecord => isRu ? 'Скрыть в архив' : 'Archive record';
   String get restoreToFeed => isRu ? 'Вернуть в ленту' : 'Restore to feed';

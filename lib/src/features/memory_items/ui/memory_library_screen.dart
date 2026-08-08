@@ -68,7 +68,7 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
                 hasScrollBody: false,
                 child: Center(
                   child: AppEmptyState(
-                    icon: Icons.inventory_2_outlined,
+                    icon: Icons.inventory_2_rounded,
                     title: strings.emptyArchive,
                     actionLabel: strings.feed,
                     onAction: () => context.go('/'),

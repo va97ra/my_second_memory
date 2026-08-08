@@ -67,6 +67,26 @@ class _PinRejectingSecurityService extends SecurityService {
   Future<AppCipher?> unlockWithPin(String pin) async => null;
 }
 
+class _CountingPinSecurityService extends SecurityService {
+  final unlockCompleter = Completer<AppCipher?>();
+  int unlockAttempts = 0;
+
+  @override
+  Future<bool> setupCompleted() async => true;
+
+  @override
+  Future<bool> hasPin() async => true;
+
+  @override
+  Future<bool> biometricsEnabled() async => false;
+
+  @override
+  Future<AppCipher?> unlockWithPin(String pin) {
+    unlockAttempts++;
+    return unlockCompleter.future;
+  }
+}
+
 class _HangingSecurityService extends SecurityService {
   @override
   Future<bool> hasPin() => Completer<bool>().future;
@@ -391,6 +411,31 @@ void main() {
     expect(tester.widget<TextField>(pinField).controller?.text, isEmpty);
   });
 
+  testWidgets('startup submits one pin check even after a repeated tap',
+      (tester) async {
+    final security = _CountingPinSecurityService();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(security),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final pinField = find.widgetWithText(TextField, 'PIN');
+    expect(pinField, findsOneWidget);
+    await tester.enterText(pinField, '1234');
+    final unlockButton = find.widgetWithText(FilledButton, 'Открыть');
+    await tester.tap(unlockButton);
+    await tester.tap(unlockButton);
+
+    expect(security.unlockAttempts, 1);
+    security.unlockCompleter.complete(null);
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('shows the home feed when app is unlocked', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1300));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -473,9 +518,9 @@ void main() {
     expect(find.text('Старая активная запись'), findsOneWidget);
     expect(find.text('Архивная запись'), findsNothing);
     expect(find.text(DateFormat.MMM('ru').format(today)), findsNothing);
-    expect(find.byIcon(Icons.delete_outline), findsNothing);
-    expect(find.byIcon(Icons.check_circle_outline), findsWidgets);
-    expect(find.byIcon(Icons.archive_outlined), findsWidgets);
+    expect(find.byIcon(Icons.delete_rounded), findsNothing);
+    expect(find.byIcon(Icons.task_alt_rounded), findsWidgets);
+    expect(find.byIcon(Icons.archive_rounded), findsWidgets);
 
     await tester.tap(find.text('Календарь'));
     await tester.pumpAndSettle();
@@ -564,7 +609,7 @@ void main() {
 
     expect(find.byKey(const ValueKey('memory_readonly_view')), findsOneWidget);
     expect(find.text('Редактировать запись'), findsNothing);
-    expect(find.byIcon(Icons.save_outlined), findsNothing);
+    expect(find.byIcon(Icons.save_rounded), findsNothing);
     expect(find.byIcon(Icons.more_vert), findsNothing);
     expect(find.widgetWithText(TextFormField, 'Запись'), findsNothing);
     expect(find.text('Тип записи'), findsNothing);
@@ -719,8 +764,8 @@ void main() {
     expect(panelSize.height, greaterThan(290));
     expect(textSize.height, greaterThan(120));
     expect(find.byKey(const ValueKey('record_editor_images')), findsOneWidget);
-    expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.mic_none), findsOneWidget);
+    expect(find.byIcon(Icons.photo_camera_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('memory_time_picker')));
     await tester.pumpAndSettle();
@@ -811,7 +856,23 @@ void main() {
     );
     expect(
       (eventBar.decoration as BoxDecoration).color,
-      const Color(0xFF7C3AED),
+      const Color(0xFF7A5AF8),
+    );
+    final eventDecoration = eventBar.decoration as BoxDecoration;
+    expect(eventDecoration.borderRadius, BorderRadius.zero);
+    expect((eventDecoration.border! as Border).top.width, 0.75);
+    final todayKey = DateFormat('yyyy-MM-dd').format(today);
+    final cellRect = tester.getRect(
+      find.byKey(ValueKey('calendar_day_$todayKey')),
+    );
+    final barRect = tester.getRect(
+      find.byKey(const ValueKey('calendar_event_bar_today-plan')),
+    );
+    expect(barRect.left - cellRect.left, closeTo(2, 0.1));
+    expect(cellRect.right - barRect.right, closeTo(2, 0.1));
+    expect(
+      tester.widget<Text>(find.text('09:30 План на сегодня')).style?.fontSize,
+      7.5,
     );
 
     final firstDay = DateTime(today.year, today.month);
@@ -835,7 +896,7 @@ void main() {
     await tester.tap(todayCell);
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
     expect(find.text('План на сегодня'), findsOneWidget);
     expect(find.text('Архивная запись'), findsOneWidget);
     expect(find.text('Архив'), findsOneWidget);
@@ -877,6 +938,129 @@ void main() {
             item.memoryDate == today,
       ),
       isTrue,
+    );
+  });
+
+  testWidgets('calendar changes month with horizontal swipes', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Календарь'));
+    await tester.pumpAndSettle();
+
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month);
+    final nextMonth = DateTime(now.year, now.month + 1);
+    String monthLabel(DateTime month) {
+      final value = DateFormat('LLLL', 'ru').format(month);
+      return '${value[0].toUpperCase()}${value.substring(1)}';
+    }
+
+    final swipeArea = find.byKey(
+      const ValueKey('calendar_month_swipe_area'),
+    );
+    expect(find.text(monthLabel(currentMonth)), findsOneWidget);
+
+    await tester.drag(swipeArea, const Offset(-160, 0));
+    await tester.pump();
+    final incomingPage = find.byKey(
+      const ValueKey('calendar_page_incoming'),
+    );
+    expect(
+      find.byKey(const ValueKey('calendar_page_outgoing')),
+      findsOneWidget,
+    );
+    expect(incomingPage, findsOneWidget);
+    final incomingStartX =
+        tester.widget<Transform>(incomingPage).transform.getTranslation().x;
+    await tester.pump(const Duration(milliseconds: 100));
+    final incomingMovedX =
+        tester.widget<Transform>(incomingPage).transform.getTranslation().x;
+    expect(incomingMovedX, lessThan(incomingStartX));
+    expect(incomingMovedX, greaterThan(0));
+    await tester.pumpAndSettle();
+    expect(find.text(monthLabel(nextMonth)), findsOneWidget);
+
+    await tester.drag(swipeArea, const Offset(160, 0));
+    await tester.pumpAndSettle();
+    expect(find.text(monthLabel(currentMonth)), findsOneWidget);
+  });
+
+  testWidgets('calendar changes year with animated vertical swipes',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Календарь'));
+    await tester.pumpAndSettle();
+
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month);
+    final nextYear = DateTime(now.year + 1, now.month);
+
+    final swipeArea = find.byKey(
+      const ValueKey('calendar_month_swipe_area'),
+    );
+    await tester.drag(swipeArea, const Offset(0, -180));
+    await tester.pump();
+    final incomingPage = find.byKey(
+      const ValueKey('calendar_page_incoming'),
+    );
+    expect(
+      find.byKey(const ValueKey('calendar_page_outgoing')),
+      findsOneWidget,
+    );
+    expect(incomingPage, findsOneWidget);
+    final incomingStartY =
+        tester.widget<Transform>(incomingPage).transform.getTranslation().y;
+    await tester.pump(const Duration(milliseconds: 100));
+    final incomingMovedY =
+        tester.widget<Transform>(incomingPage).transform.getTranslation().y;
+    expect(incomingMovedY, lessThan(incomingStartY));
+    expect(incomingMovedY, greaterThan(0));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('calendar_year_label')))
+          .data,
+      '${nextYear.year}',
+    );
+
+    await tester.drag(swipeArea, const Offset(0, 180));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('calendar_year_label')))
+          .data,
+      '${currentMonth.year}',
     );
   });
 
@@ -1068,6 +1252,9 @@ void main() {
     expect(find.text('сутки/трое'), findsOneWidget);
     expect(find.text('7/7'), findsNothing);
     expect(find.text('14/14'), findsNothing);
+    expect(find.byKey(const ValueKey('shift_color_hue')), findsOneWidget);
+    expect(find.byKey(const ValueKey('shift_color_tone')), findsOneWidget);
+    expect(find.byKey(const ValueKey('shift_color_preview')), findsOneWidget);
     expect(find.text('Будильник 1'), findsOneWidget);
     expect(find.textContaining('Будильник 2'), findsNothing);
     await tester.tap(find.text('сутки/трое'));
@@ -1080,6 +1267,19 @@ void main() {
     );
     await tester.tap(find.text('2/2'));
     await tester.pumpAndSettle();
+    final hueTrack = find.byKey(const ValueKey('shift_color_hue'));
+    final toneTrack = find.byKey(const ValueKey('shift_color_tone'));
+    final hueRect = tester.getRect(hueTrack);
+    final toneRect = tester.getRect(toneTrack);
+    await tester.tapAt(Offset(
+      hueRect.left + hueRect.width * 0.72,
+      hueRect.center.dy,
+    ));
+    await tester.tapAt(Offset(
+      toneRect.left + toneRect.width * 0.38,
+      toneRect.center.dy,
+    ));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Сохранить'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Сохранить'));
@@ -1089,6 +1289,10 @@ void main() {
     expect(shiftRepository.savedSchedules.single.organizationName, 'Завод');
     expect(shiftRepository.savedSchedules.single.workDays, 2);
     expect(shiftRepository.savedSchedules.single.restDays, 2);
+    expect(
+      shiftRepository.savedSchedules.single.colorValue,
+      isNot(const Color(0xFF2F7DD1).toARGB32()),
+    );
   });
 
   testWidgets('settings opens memory archive and restores item to feed',
@@ -1164,6 +1368,22 @@ void main() {
     expect(find.text('Сохранить резервную копию'), findsOneWidget);
     expect(find.text('Архив будет сохранён в папку Загрузки.'), findsOneWidget);
     expect(find.text('Восстановить из копии'), findsOneWidget);
+
+    await tester.tap(find.text('Сохранить резервную копию'));
+    await tester.pumpAndSettle();
+    final password = find.byKey(const ValueKey('backup_password'));
+    final confirmation =
+        find.byKey(const ValueKey('backup_password_confirmation'));
+    expect(password, findsOneWidget);
+    expect(confirmation, findsOneWidget);
+    await tester.enterText(password, 'correct-password');
+    await tester.enterText(confirmation, 'mistyped-password');
+    await tester.tap(find.byKey(const ValueKey('backup_password_submit')));
+    await tester.pumpAndSettle();
+    expect(find.text('Пароли не совпадают'), findsOneWidget);
+    expect(confirmation, findsOneWidget);
+    await tester.tap(find.text('Отмена').last);
+    await tester.pumpAndSettle();
   });
 
   testWidgets('calendar shows shift colors and opens selected day',
@@ -1238,7 +1458,7 @@ void main() {
     await tester.tap(cell);
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
     expect(find.textContaining('Завод'), findsOneWidget);
     expect(find.textContaining('Вахта'), findsOneWidget);
   });

@@ -69,7 +69,7 @@ class CalendarDayScreen extends ConsumerWidget {
                 child: dayItems.isEmpty
                     ? Center(
                         child: AppEmptyState(
-                          icon: Icons.view_agenda_outlined,
+                          icon: Icons.view_agenda_rounded,
                           title: strings.noMessagesForDay,
                           actionLabel: strings.addRecord,
                           onAction: () => _openNewRecord(context),
@@ -200,7 +200,7 @@ class _HolidaySummaryCard extends StatelessWidget {
                       width: 38,
                       height: 38,
                       child: Icon(
-                        Icons.celebration_outlined,
+                        Icons.celebration_rounded,
                         color: Color(0xFFD97706),
                       ),
                     ),
@@ -235,7 +235,7 @@ class _HolidaySummaryCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right),
+                  const Icon(Icons.chevron_right_rounded),
                 ],
               ),
             ),
@@ -342,7 +342,7 @@ class _AddRecordBar extends StatelessWidget {
             child: FilledButton.icon(
               key: const ValueKey('calendar_day_add_record'),
               onPressed: onPressed,
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.add_rounded),
               label: Text(strings.addRecord),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 13),

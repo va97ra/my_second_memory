@@ -53,7 +53,11 @@ class VoiceNotePlayer extends ConsumerWidget {
                   IconButton.filledTonal(
                     tooltip: strings.play,
                     onPressed: () => playback.toggle(path),
-                    icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                    icon: Icon(
+                      isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                    ),
                     style: IconButton.styleFrom(
                       fixedSize: Size.square(compact ? 30 : 36),
                       padding: EdgeInsets.zero,

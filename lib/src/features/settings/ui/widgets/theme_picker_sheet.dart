@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_surface_textures.dart';
 import '../../../../core/theme/app_theme_style.dart';
 import '../../../../core/theme/notebook/notebook_assets.dart';
 import '../../../../shared/ui/notebook_pressable.dart';
@@ -72,13 +73,23 @@ class _ThemePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = switch (style) {
-      AppThemeStyle.light => const [Color(0xFFF4F1EB), Color(0xFFFFFDF9)],
-      AppThemeStyle.dark => const [Color(0xFF080706), Color(0xFF333632)],
-      AppThemeStyle.notebook => const [Color(0xFFC98D57), Color(0xFFFFF1D2)],
+      AppThemeStyle.light => const [Color(0xFFF4F7F8), Color(0xFFDDE6EA)],
+      AppThemeStyle.dark => const [Color(0xFF07090D), Color(0xFF27333F)],
+      AppThemeStyle.notebook => const [Color(0xFFC98D57), Color(0xFFFFF0CD)],
     };
     final ink = style == AppThemeStyle.dark
-        ? const Color(0xFFF5F2EC)
-        : const Color(0xFF281A13);
+        ? const Color(0xFFF7F9FC)
+        : const Color(0xFF17222B);
+    final backgroundTexture = switch (style) {
+      AppThemeStyle.light => LightThemeAssets.wood,
+      AppThemeStyle.dark => DarkThemeAssets.wood,
+      AppThemeStyle.notebook => NotebookAssets.wood,
+    };
+    final panelTexture = switch (style) {
+      AppThemeStyle.light => LightThemeAssets.paper,
+      AppThemeStyle.dark => DarkThemeAssets.paper,
+      AppThemeStyle.notebook => NotebookAssets.paper,
+    };
     return NotebookPressable(
       onTap: onTap,
       child: AnimatedContainer(
@@ -106,13 +117,15 @@ class _ThemePreview extends StatelessWidget {
                       end: Alignment.bottomRight,
                       colors: colors,
                     ),
-                    image: style == AppThemeStyle.notebook
-                        ? const DecorationImage(
-                            image: AssetImage(NotebookAssets.wood),
-                            fit: BoxFit.cover,
-                            opacity: 0.75,
-                          )
-                        : null,
+                    image: DecorationImage(
+                      image: AssetImage(backgroundTexture),
+                      fit: BoxFit.cover,
+                      opacity: switch (style) {
+                        AppThemeStyle.light => 0.62,
+                        AppThemeStyle.dark => 0.9,
+                        AppThemeStyle.notebook => 0.75,
+                      },
+                    ),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(7),
@@ -122,6 +135,11 @@ class _ThemePreview extends StatelessWidget {
                           height: 15,
                           decoration: BoxDecoration(
                             color: colors.last,
+                            image: DecorationImage(
+                              image: AssetImage(panelTexture),
+                              fit: BoxFit.cover,
+                              opacity: 0.42,
+                            ),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -130,6 +148,11 @@ class _ThemePreview extends StatelessWidget {
                           child: Container(
                             decoration: BoxDecoration(
                               color: colors.last,
+                              image: DecorationImage(
+                                image: AssetImage(panelTexture),
+                                fit: BoxFit.cover,
+                                opacity: 0.42,
+                              ),
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
                                   color: ink.withValues(alpha: 0.25)),
@@ -140,18 +163,37 @@ class _ThemePreview extends StatelessWidget {
                         Container(
                           height: 16,
                           decoration: BoxDecoration(
-                            color: style == AppThemeStyle.notebook
-                                ? const Color(0xFFF0643F)
-                                : ink.withValues(alpha: 0.16),
+                            gradient: style == AppThemeStyle.light
+                                ? const LinearGradient(
+                                    colors: [
+                                      Color(0xFFFF7D52),
+                                      Color(0xFFF05A30),
+                                      Color(0xFFB72F1B),
+                                    ],
+                                  )
+                                : style == AppThemeStyle.dark
+                                    ? const LinearGradient(
+                                        colors: [
+                                          Color(0xFFFF8B65),
+                                          Color(0xFFFF6A3D),
+                                          Color(0xFFC9361E),
+                                        ],
+                                      )
+                                    : const LinearGradient(
+                                        colors: [
+                                          Color(0xFFFF7F57),
+                                          Color(0xFFF4512A),
+                                          Color(0xFFB92B16),
+                                        ],
+                                      ),
                             borderRadius: BorderRadius.circular(4),
-                            boxShadow: style == AppThemeStyle.notebook
-                                ? const [
-                                    BoxShadow(
-                                      color: Color(0xFF7E2416),
-                                      offset: Offset(0, 3),
-                                    ),
-                                  ]
-                                : null,
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x66000000),
+                                blurRadius: 2,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -166,7 +208,7 @@ class _ThemePreview extends StatelessWidget {
               children: [
                 if (selected) ...[
                   Icon(
-                    Icons.check_circle,
+                    Icons.check_circle_rounded,
                     size: 16,
                     color: Theme.of(context).colorScheme.primary,
                   ),

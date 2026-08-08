@@ -51,7 +51,8 @@ class _TypePickerRow extends StatelessWidget {
                     ),
               ),
             ),
-            if (selected) Icon(Icons.check_circle, color: color, size: 20),
+            if (selected)
+              Icon(Icons.check_circle_rounded, color: color, size: 20),
             const SizedBox(width: 12),
           ],
         ),
@@ -112,7 +113,7 @@ class _MultiDatePickerSheetState extends State<_MultiDatePickerSheet> {
                   ),
                   IconButton(
                     onPressed: () => _moveMonth(-1),
-                    icon: const Icon(Icons.chevron_left),
+                    icon: const Icon(Icons.chevron_left_rounded),
                   ),
                   Text(
                     DateFormat.yMMMM(locale).format(_month),
@@ -122,7 +123,7 @@ class _MultiDatePickerSheetState extends State<_MultiDatePickerSheet> {
                   ),
                   IconButton(
                     onPressed: () => _moveMonth(1),
-                    icon: const Icon(Icons.chevron_right),
+                    icon: const Icon(Icons.chevron_right_rounded),
                   ),
                 ],
               ),
@@ -205,7 +206,7 @@ class _MultiDatePickerSheetState extends State<_MultiDatePickerSheet> {
                             ..sort();
                           Navigator.of(context).pop(dates);
                         },
-                  icon: const Icon(Icons.copy_all_outlined),
+                  icon: const Icon(Icons.copy_all_rounded),
                   label: Text(
                     locale == 'ru'
                         ? 'Создать копии (${_selected.length})'

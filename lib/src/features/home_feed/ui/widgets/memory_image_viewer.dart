@@ -36,7 +36,7 @@ class _MemoryImageViewer extends StatelessWidget {
           key: const ValueKey('memory_image_viewer_close'),
           tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
           onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.close),
+          icon: const Icon(Icons.close_rounded),
         ),
       ),
       body: SafeArea(

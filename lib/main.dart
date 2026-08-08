@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'src/app.dart';
 import 'src/core/theme/app_content_font.dart';
+import 'src/core/theme/app_surface_textures.dart';
 import 'src/core/theme/app_theme_controller.dart';
 import 'src/core/theme/app_theme_style.dart';
 import 'src/core/theme/notebook/notebook_assets.dart';
@@ -14,11 +15,23 @@ Future<void> main() async {
   final initialStyle = AppThemeController.readInitialStyle(preferences);
   final initialContentFont =
       AppContentFontController.readInitialStyle(preferences);
-  if (initialStyle == AppThemeStyle.notebook) {
+  if (initialStyle == AppThemeStyle.light) {
+    try {
+      await LightThemeAssets.preload();
+    } catch (_) {
+      // The light theme has a gradient fallback when assets cannot load.
+    }
+  } else if (initialStyle == AppThemeStyle.notebook) {
     try {
       await NotebookAssets.preload();
     } catch (_) {
       // The notebook theme has a gradient fallback when assets cannot load.
+    }
+  } else if (initialStyle == AppThemeStyle.dark) {
+    try {
+      await DarkThemeAssets.preload();
+    } catch (_) {
+      // The dark theme has a gradient fallback when assets cannot load.
     }
   }
   runApp(

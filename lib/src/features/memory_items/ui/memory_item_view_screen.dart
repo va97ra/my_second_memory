@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_content_font.dart';
+import '../../../core/theme/app_surface_palette.dart';
+import '../../../core/theme/app_surface_textures.dart';
 import '../../../core/theme/notebook/notebook_assets.dart';
 import '../../../core/theme/notebook/notebook_visuals.dart';
 import '../../../shared/ui/screen_chrome.dart';
@@ -54,6 +56,8 @@ class MemoryItemViewScreen extends ConsumerWidget {
 
     final locale = Localizations.localeOf(context).languageCode;
     final notebook = NotebookVisuals.maybeOf(context);
+    final textures = AppSurfaceTextures.maybeOf(context);
+    final palette = AppSurfacePalette.of(context);
     final typeColor = memoryTypeColor(item.type);
     final text = item.body.trim().isNotEmpty ? item.body.trim() : item.title;
     final timeText =
@@ -73,7 +77,7 @@ class MemoryItemViewScreen extends ConsumerWidget {
             onPressed: () => context.push(
               '/memory/item/${Uri.encodeComponent(item.id)}',
             ),
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(Icons.edit_rounded),
           ),
         ],
       ),
@@ -92,18 +96,29 @@ class MemoryItemViewScreen extends ConsumerWidget {
                     height: constraints.maxHeight - 18,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: notebook?.paper ??
-                            Theme.of(context)
-                                .colorScheme
-                                .surface
-                                .withValues(alpha: 0.97),
-                        image: notebook == null
-                            ? null
-                            : const DecorationImage(
+                        color: textures == null
+                            ? notebook?.paper ??
+                                Theme.of(context)
+                                    .colorScheme
+                                    .surface
+                                    .withValues(alpha: 0.97)
+                            : null,
+                        gradient:
+                            textures == null ? null : palette.surfaceGradient(),
+                        image: notebook != null
+                            ? const DecorationImage(
                                 image: AssetImage(NotebookAssets.paper),
                                 fit: BoxFit.cover,
                                 opacity: 0.62,
-                              ),
+                              )
+                            : textures == null
+                                ? null
+                                : DecorationImage(
+                                    image: AssetImage(textures.surfaceAsset),
+                                    fit: BoxFit.cover,
+                                    opacity: textures.surfaceOpacity,
+                                    filterQuality: FilterQuality.low,
+                                  ),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                             color:

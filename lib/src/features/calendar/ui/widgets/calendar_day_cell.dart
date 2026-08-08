@@ -54,10 +54,18 @@ class _CalendarDayCell extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           decoration: BoxDecoration(
-            color: isSelected
-                ? null
-                : _cellColor(colors, palette, hasItems, hasShift),
-            gradient: isSelected ? palette.accentGradient : null,
+            gradient: isSelected
+                ? palette.accentGradient
+                : isInVisibleMonth
+                    ? palette.surfaceGradient(
+                        base: _cellColor(
+                          colors,
+                          palette,
+                          hasItems,
+                          hasShift,
+                        ),
+                      )
+                    : null,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
@@ -93,17 +101,16 @@ class _CalendarDayCell extends StatelessWidget {
           ),
           child: LayoutBuilder(
             builder: (context, cellConstraints) {
-              final maxEvents = cellConstraints.maxHeight >= 130
-                  ? 5
-                  : cellConstraints.maxHeight >= 112
-                      ? 4
-                      : cellConstraints.maxHeight >= 94
-                          ? 3
-                          : cellConstraints.maxHeight >= 76
-                              ? 2
-                              : cellConstraints.maxHeight >= 58
-                                  ? 1
-                                  : 0;
+              const headerExtent = 30.0;
+              const eventSlotExtent = 12.0;
+              final calculatedEvents =
+                  ((cellConstraints.maxHeight - headerExtent) / eventSlotExtent)
+                      .floor();
+              final maxEvents = calculatedEvents < 0
+                  ? 0
+                  : calculatedEvents > 9
+                      ? 9
+                      : calculatedEvents;
               final holidaySlots = holidays.isEmpty || maxEvents == 0 ? 0 : 1;
               final itemSlots = maxEvents - holidaySlots;
               final needsOverflow = items.length > itemSlots;
@@ -128,46 +135,50 @@ class _CalendarDayCell extends StatelessWidget {
                       ),
                     ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(4, 3, 4, 3),
+                    padding: const EdgeInsets.symmetric(vertical: 3),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          children: [
-                            _DayNumber(
-                              day: date.day,
-                              isToday: isToday,
-                              isSelected: isSelected,
-                              color: foreground,
-                            ),
-                            if (hasAlarm) ...[
-                              const SizedBox(width: 2),
-                              Icon(
-                                Icons.alarm_outlined,
-                                size: 12.5,
-                                color: isSelected || isToday
-                                    ? colors.onPrimary
-                                    : foreground,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(
+                            children: [
+                              _DayNumber(
+                                day: date.day,
+                                isToday: isToday,
+                                isSelected: isSelected,
+                                color: foreground,
                               ),
-                            ],
-                            const Spacer(),
-                            if (items.any((item) => item.isArchived))
-                              SizedBox(
-                                width: 9,
-                                height: 9,
-                                child: FittedBox(
-                                  child: Icon(
-                                    Icons.archive_outlined,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant
-                                        .withValues(
-                                          alpha: isInVisibleMonth ? 0.8 : 0.35,
-                                        ),
+                              if (hasAlarm) ...[
+                                const SizedBox(width: 2),
+                                Icon(
+                                  Icons.alarm_rounded,
+                                  size: 12.5,
+                                  color: isSelected || isToday
+                                      ? colors.onPrimary
+                                      : foreground,
+                                ),
+                              ],
+                              const Spacer(),
+                              if (items.any((item) => item.isArchived))
+                                SizedBox(
+                                  width: 9,
+                                  height: 9,
+                                  child: FittedBox(
+                                    child: Icon(
+                                      Icons.archive_rounded,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant
+                                          .withValues(
+                                            alpha:
+                                                isInVisibleMonth ? 0.8 : 0.35,
+                                          ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                         if (maxEvents > 0) ...[
                           const SizedBox(height: 3),
@@ -177,25 +188,29 @@ class _CalendarDayCell extends StatelessWidget {
                               locale: locale,
                               isMuted: !isInVisibleMonth,
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 1),
                           ],
                           if (overflowCount > 0 &&
-                              cellConstraints.maxHeight >= 70)
-                            Text(
-                              locale == 'ru'
-                                  ? '+ ещё $overflowCount'
-                                  : '+ $overflowCount more',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                    color: colors.onSurfaceVariant,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1,
-                                  ),
+                              cellConstraints.maxHeight >= 48)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 2),
+                              child: Text(
+                                locale == 'ru'
+                                    ? '+ ещё $overflowCount'
+                                    : '+ $overflowCount more',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: colors.onSurfaceVariant,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1,
+                                    ),
+                              ),
                             ),
                           if (holidays.isNotEmpty && maxEvents > 0) ...[
                             const Spacer(),
@@ -402,6 +417,7 @@ class _CalendarEventBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = memoryTypeColor(item.type);
+    final colors = Theme.of(context).colorScheme;
     final barColor = isMuted ? color.withValues(alpha: 0.48) : color;
     final title = _recordTitle(item, locale);
     final time = _formatTime(item.timeMinutes);
@@ -411,10 +427,14 @@ class _CalendarEventBar extends StatelessWidget {
       key: ValueKey('calendar_event_bar_${item.id}'),
       decoration: BoxDecoration(
         color: barColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.zero,
+        border: Border.all(
+          color: colors.onSurface.withValues(alpha: isMuted ? 0.3 : 0.62),
+          width: 0.75,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
         child: _OutlinedCalendarText(text: text),
       ),
     );
@@ -449,7 +469,7 @@ class _OutlinedCalendarText extends StatelessWidget {
   Widget build(BuildContext context) {
     const baseStyle = TextStyle(
       fontFamily: 'Manrope',
-      fontSize: 8.5,
+      fontSize: 7.5,
       fontWeight: FontWeight.w900,
       height: 1,
     );

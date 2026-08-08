@@ -32,7 +32,7 @@ class BackupService {
   static const legacyVersion = 1;
   static const encryptedZipFormat = 'ezhednevnik_v2_encrypted_zip';
   static const streamingZipFormat = 'ezhednevnik_v2_streaming_zip';
-  static const streamingZipVersion = 4;
+  static const streamingZipVersion = 5;
 
   final MemoryRepository memoryRepository;
   final ShiftScheduleRepository shiftScheduleRepository;
@@ -123,7 +123,7 @@ class BackupService {
   }) async {
     if (_looksLikeZip(bytes)) {
       if (password == null || password.isEmpty) {
-        throw const FormatException('Backup password is required');
+        throw const BackupPasswordException('Backup password is required');
       }
       final streaming = await _tryParseStreamingZip(bytes, password);
       if (streaming != null) return streaming;
@@ -132,31 +132,182 @@ class BackupService {
     return parseBackupJson(utf8.decode(bytes));
   }
 
+  Future<void> restore(BackupRestoreData data) async {
+    final previous = await _readCurrentData();
+    try {
+      await _writeData(data);
+      final restored = await _readCurrentData();
+      if (!_sameData(restored, data)) {
+        throw StateError('Backup verification failed');
+      }
+    } on Object catch (error, stackTrace) {
+      try {
+        await _writeData(previous);
+      } on Object {
+        // Preserve the original failure. The UI never reports success unless
+        // every repository was written and then read back successfully.
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
+  Future<BackupRestoreData> _readCurrentData() async {
+    return BackupRestoreData(
+      memoryItems: await memoryRepository.loadAll(),
+      shiftSchedules: await shiftScheduleRepository.loadSchedules(),
+      accounts: await accountRepository.loadAccounts(),
+      recurrenceSeries: await recurrenceRepository?.loadAll() ?? const [],
+      recurrenceExceptions:
+          await recurrenceExceptionRepository?.loadAll() ?? const [],
+    );
+  }
+
+  Future<void> _writeData(BackupRestoreData data) async {
+    if (recurrenceRepository == null && data.recurrenceSeries.isNotEmpty) {
+      throw StateError('Recurrence repository is unavailable');
+    }
+    if (recurrenceExceptionRepository == null &&
+        data.recurrenceExceptions.isNotEmpty) {
+      throw StateError('Recurrence exception repository is unavailable');
+    }
+
+    await memoryRepository.replaceAll(data.memoryItems);
+    await shiftScheduleRepository.saveSchedules(data.shiftSchedules);
+    await accountRepository.saveAccounts(data.accounts);
+    await recurrenceExceptionRepository?.replaceAll(
+      data.recurrenceExceptions,
+    );
+    await recurrenceRepository?.replaceAll(data.recurrenceSeries);
+  }
+
+  bool _sameData(BackupRestoreData first, BackupRestoreData second) {
+    return _sameJsonList(
+          first.memoryItems.map((item) => item.toJson()),
+          second.memoryItems.map((item) => item.toJson()),
+        ) &&
+        _sameJsonList(
+          first.shiftSchedules.map((item) => item.toJson()),
+          second.shiftSchedules.map((item) => item.toJson()),
+        ) &&
+        _sameJsonList(
+          first.accounts.map((item) => item.toJson()),
+          second.accounts.map((item) => item.toJson()),
+        ) &&
+        _sameJsonList(
+          first.recurrenceSeries.map((item) => item.toJson()),
+          second.recurrenceSeries.map((item) => item.toJson()),
+        ) &&
+        _sameJsonList(
+          first.recurrenceExceptions.map((item) => item.toJson()),
+          second.recurrenceExceptions.map((item) => item.toJson()),
+        );
+  }
+
+  bool _sameJsonList(
+    Iterable<Map<String, Object?>> first,
+    Iterable<Map<String, Object?>> second,
+  ) {
+    final firstJson = first.map(jsonEncode).toList()..sort();
+    final secondJson = second.map(jsonEncode).toList()..sort();
+    if (firstJson.length != secondJson.length) return false;
+    for (var index = 0; index < firstJson.length; index++) {
+      if (firstJson[index] != secondJson[index]) return false;
+    }
+    return true;
+  }
+
   Future<BackupRestoreData?> _tryParseStreamingZip(
     List<int> bytes,
     String password,
   ) async {
-    Archive archive;
+    final unencryptedArchive = ZipDecoder().decodeBytes(bytes);
+    final unencryptedManifest = _readManifest(unencryptedArchive);
+    if (unencryptedManifest != null &&
+        unencryptedManifest['format'] == streamingZipFormat &&
+        unencryptedManifest['version'] == streamingZipVersion) {
+      return _parseGcmStreamingZip(
+        unencryptedArchive,
+        unencryptedManifest,
+        password,
+      );
+    }
+
+    late final Archive archive;
     try {
       archive = ZipDecoder().decodeBytes(bytes, password: password);
-    } catch (_) {
+    } on Object {
       return null;
     }
-    final manifestFile = archive.findFile('manifest.json');
-    if (manifestFile == null) return null;
-    Map<String, Object?> manifest;
-    try {
-      manifest = Map<String, Object?>.from(
-        jsonDecode(utf8.decode(manifestFile.content as List<int>)) as Map,
-      );
-    } catch (_) {
-      return null;
-    }
+    final manifest = _readManifest(archive);
+    if (manifest == null) return null;
     final manifestVersion = manifest['version'];
     if (manifest['format'] != streamingZipFormat ||
-        (manifestVersion != streamingZipVersion && manifestVersion != 3)) {
+        (manifestVersion != 4 && manifestVersion != 3)) {
       return null;
     }
+    return _parseStreamingData(archive, manifest);
+  }
+
+  Map<String, Object?>? _readManifest(Archive archive) {
+    final manifestFile = archive.findFile('manifest.json');
+    if (manifestFile == null) return null;
+    try {
+      return Map<String, Object?>.from(
+        jsonDecode(utf8.decode(manifestFile.content as List<int>)) as Map,
+      );
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<BackupRestoreData> _parseGcmStreamingZip(
+    Archive archive,
+    Map<String, Object?> manifest,
+    String password,
+  ) async {
+    if (manifest['kdf'] != 'pbkdf2-hmac-sha256' ||
+        manifest['cipher'] != 'aes-256-gcm' ||
+        manifest['iterations'] != 120000) {
+      throw const FormatException('Unsupported backup encryption');
+    }
+    final payloadFile = archive.findFile('payload.bin');
+    if (payloadFile == null) {
+      throw const FormatException('Invalid backup archive');
+    }
+    final secretKey = await _keyFromPassword(
+      password,
+      base64Decode(manifest['salt'] as String),
+    );
+    late final Map<String, Object?> payload;
+    try {
+      final clearBytes = await AesGcm.with256bits().decrypt(
+        SecretBox(
+          payloadFile.content as List<int>,
+          nonce: base64Decode(manifest['payloadNonce'] as String),
+          mac: Mac(base64Decode(manifest['payloadMac'] as String)),
+        ),
+        secretKey: secretKey,
+      );
+      payload = Map<String, Object?>.from(
+        jsonDecode(utf8.decode(clearBytes)) as Map,
+      );
+      return await _parseStreamingData(
+        archive,
+        payload,
+        encryptionKey: secretKey,
+      );
+    } on BackupPasswordException {
+      rethrow;
+    } on Object {
+      throw const BackupPasswordException('Invalid backup password');
+    }
+  }
+
+  Future<BackupRestoreData> _parseStreamingData(
+    Archive archive,
+    Map<String, Object?> manifest, {
+    SecretKey? encryptionKey,
+  }) async {
     final items = (manifest['memoryItems'] as List<dynamic>? ?? const [])
         .map((entry) => MemoryItem.fromJson(
               Map<String, Object?>.from(entry as Map),
@@ -170,6 +321,7 @@ class BackupService {
       items: items,
       mediaEntries: manifest['mediaEntries'] as List<dynamic>? ?? const [],
       archiveFiles: files,
+      encryptionKey: encryptionKey,
     );
     final shifts =
         (manifest['shiftSchedules'] as List<dynamic>? ?? const []).map((entry) {
@@ -253,12 +405,15 @@ class BackupService {
     try {
       archive = ZipDecoder().decodeBytes(bytes);
     } catch (_) {
-      throw const FormatException('Invalid backup password');
+      throw const FormatException('Invalid backup archive');
     }
     final manifestFile = archive.findFile('manifest.json');
     final payloadFile = archive.findFile('payload.bin');
-    if (manifestFile == null || payloadFile == null) {
+    if (manifestFile == null) {
       throw const FormatException('Invalid backup archive');
+    }
+    if (payloadFile == null) {
+      throw const BackupPasswordException('Invalid backup password');
     }
 
     final manifest = jsonDecode(utf8.decode(manifestFile.content as List<int>))
@@ -279,7 +434,7 @@ class BackupService {
       );
       return utf8.decode(clearBytes);
     } catch (_) {
-      throw const FormatException('Invalid backup password');
+      throw const BackupPasswordException('Invalid backup password');
     }
   }
 
@@ -303,6 +458,10 @@ class BackupService {
         bytes[2] == 0x03 &&
         bytes[3] == 0x04;
   }
+}
+
+class BackupPasswordException extends FormatException {
+  const BackupPasswordException([super.message]);
 }
 
 class BackupRestoreData {

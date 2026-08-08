@@ -27,16 +27,16 @@ Future<ReminderSoundSource?> showReminderSoundSourcePicker(
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.alarm_outlined),
+              leading: const Icon(Icons.alarm_rounded),
               title: Text(strings.systemMelody),
-              trailing: const Icon(Icons.chevron_right),
+              trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () => Navigator.pop(context, ReminderSoundSource.system),
             ),
             ListTile(
-              leading: const Icon(Icons.audio_file_outlined),
+              leading: const Icon(Icons.audio_file_rounded),
               title: Text(strings.chooseAudioFile),
               subtitle: Text(strings.chooseAudioFileSubtitle),
-              trailing: const Icon(Icons.chevron_right),
+              trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () =>
                   Navigator.pop(context, ReminderSoundSource.audioFile),
             ),
@@ -95,9 +95,9 @@ Future<ReminderSoundSelection?> pickReminderSound(
                   final sound = sounds[index];
                   final selected = sound.uri == currentUri;
                   return ListTile(
-                    leading: const Icon(Icons.music_note_outlined),
+                    leading: const Icon(Icons.music_note_rounded),
                     title: Text(sound.name),
-                    trailing: selected ? const Icon(Icons.check) : null,
+                    trailing: selected ? const Icon(Icons.check_rounded) : null,
                     onTap: () => Navigator.pop(context, sound),
                   );
                 },
