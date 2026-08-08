@@ -35,17 +35,17 @@ class AppShell extends StatelessWidget {
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
-          color: palette.navigationSurface,
+          gradient: palette.navigationGradient,
           border: Border(
             top: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant,
+              color: palette.borderStart.withValues(alpha: 0.78),
             ),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 18,
-              offset: const Offset(0, -6),
+              color: Colors.black.withValues(alpha: 0.24),
+              blurRadius: 22,
+              offset: const Offset(0, -8),
             ),
           ],
         ),
@@ -73,23 +73,23 @@ class AppShell extends StatelessWidget {
               },
               destinations: [
                 NavigationDestination(
-                  icon: const Icon(Icons.view_day_outlined),
-                  selectedIcon: const Icon(Icons.view_day),
+                  icon: const Icon(Icons.view_agenda_rounded),
+                  selectedIcon: const Icon(Icons.view_agenda_rounded),
                   label: strings.feed,
                 ),
                 NavigationDestination(
-                  icon: const Icon(Icons.calendar_month_outlined),
-                  selectedIcon: const Icon(Icons.calendar_month),
+                  icon: const Icon(Icons.calendar_month_rounded),
+                  selectedIcon: const Icon(Icons.calendar_month_rounded),
                   label: strings.calendar,
                 ),
                 NavigationDestination(
-                  icon: const Icon(Icons.key_outlined),
-                  selectedIcon: const Icon(Icons.key),
+                  icon: const Icon(Icons.vpn_key_rounded),
+                  selectedIcon: const Icon(Icons.vpn_key_rounded),
                   label: strings.accounts,
                 ),
                 NavigationDestination(
-                  icon: const Icon(Icons.tune_outlined),
-                  selectedIcon: const Icon(Icons.tune),
+                  icon: const Icon(Icons.tune_rounded),
+                  selectedIcon: const Icon(Icons.tune_rounded),
                   label: strings.settings,
                 ),
               ],

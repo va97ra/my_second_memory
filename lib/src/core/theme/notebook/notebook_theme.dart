@@ -5,24 +5,24 @@ import '../app_theme.dart';
 import 'notebook_visuals.dart';
 
 ThemeData buildNotebookTheme() {
-  const primary = Color(0xFFF0643F);
-  const primaryDark = Color(0xFFC83E28);
-  const ink = Color(0xFF281A13);
-  const mutedInk = Color(0xFF6E5548);
-  const paper = Color(0xFFFFF1D2);
-  const raisedPaper = Color(0xFFFFE5B5);
-  const border = Color(0xFF9B6037);
+  const primary = Color(0xFFF4512A);
+  const primaryDark = Color(0xFFB92B16);
+  const ink = Color(0xFF201712);
+  const mutedInk = Color(0xFF604B3F);
+  const paper = Color(0xFFFFF0CD);
+  const raisedPaper = Color(0xFFFFDFA3);
+  const border = Color(0xFF824A28);
   const palette = AppSurfacePalette(
     backgroundStart: Color(0xFFC98D57),
     backgroundEnd: Color(0xFF96572F),
-    navigationSurface: Color(0xFFFFE8BD),
+    navigationSurface: Color(0xFFFFE3AE),
     panelSurface: paper,
     raisedSurface: raisedPaper,
-    nestedSurface: Color(0xFFF7D39D),
-    calendarTile: Color(0xFFFFE4AE),
-    weekdaySurface: Color(0xFFF3C77F),
-    borderStart: Color(0xFFC98A53),
-    borderEnd: Color(0xFF8C512E),
+    nestedSurface: Color(0xFFF5CA83),
+    calendarTile: Color(0xFFFFDFA0),
+    weekdaySurface: Color(0xFFF0BE68),
+    borderStart: Color(0xFFD09055),
+    borderEnd: Color(0xFF75401F),
     accentStart: primary,
     accentEnd: primaryDark,
   );
@@ -30,36 +30,36 @@ ThemeData buildNotebookTheme() {
     paper: paper,
     ink: ink,
     mutedInk: mutedInk,
-    line: Color(0x3A6B91B2),
-    primaryTop: Color(0xFFFF8A61),
+    line: Color(0x4A4C789E),
+    primaryTop: Color(0xFFFF7F57),
     primaryBottom: primaryDark,
-    primaryShadow: Color(0xFF7E2416),
-    blue: Color(0xFF218CFF),
-    green: Color(0xFF20B66F),
-    teal: Color(0xFF13B7A4),
-    yellow: Color(0xFFF5B82E),
+    primaryShadow: Color(0xFF6F1B0D),
+    blue: Color(0xFF1479D4),
+    green: Color(0xFF0B9A5A),
+    teal: Color(0xFF008E83),
+    yellow: Color(0xFFE5A20A),
   );
 
   final base = buildAppTheme(brightness: Brightness.light);
   final scheme = base.colorScheme.copyWith(
     primary: primary,
     onPrimary: Colors.white,
-    primaryContainer: const Color(0xFFFFC7A9),
+    primaryContainer: const Color(0xFFFFC3A6),
     onPrimaryContainer: const Color(0xFF4B160C),
-    secondary: const Color(0xFF218CFF),
+    secondary: const Color(0xFF1479D4),
     onSecondary: Colors.white,
-    secondaryContainer: const Color(0xFFBBD9FF),
+    secondaryContainer: const Color(0xFFC5E2FF),
     onSecondaryContainer: const Color(0xFF062B55),
-    tertiary: const Color(0xFF13B7A4),
+    tertiary: const Color(0xFF008E83),
     onTertiary: Colors.white,
     surface: paper,
     surfaceContainerLowest: const Color(0xFFFFF7E5),
-    surfaceContainerLow: const Color(0xFFFFEDCB),
+    surfaceContainerLow: const Color(0xFFFFE9BF),
     surfaceContainer: raisedPaper,
-    surfaceContainerHigh: const Color(0xFFF7D39D),
-    surfaceContainerHighest: const Color(0xFFEFC27C),
+    surfaceContainerHigh: const Color(0xFFF5CA83),
+    surfaceContainerHighest: const Color(0xFFEAB75E),
     outline: border,
-    outlineVariant: const Color(0xFFC58A59),
+    outlineVariant: const Color(0xFFB97843),
     onSurface: ink,
     onSurfaceVariant: mutedInk,
   );
@@ -67,7 +67,7 @@ ThemeData buildNotebookTheme() {
   final strongButton = ButtonStyle(
     backgroundColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.disabled)) {
-        return const Color(0xFFC7A98E);
+        return const Color(0xFFB79B83);
       }
       if (states.contains(WidgetState.pressed)) {
         return primaryDark;
@@ -86,7 +86,7 @@ ThemeData buildNotebookTheme() {
       return BorderSide(
         color: states.contains(WidgetState.pressed)
             ? visuals.primaryShadow
-            : const Color(0xFFFFB194),
+            : const Color(0xFFFFA17F),
         width: 1.2,
       );
     }),
@@ -104,12 +104,12 @@ ThemeData buildNotebookTheme() {
 
   return base.copyWith(
     colorScheme: scheme,
-    canvasColor: const Color(0xFFB97845),
+    canvasColor: const Color(0xFFA96535),
     disabledColor: const Color(0xFF9D816F),
     extensions: const [palette, visuals],
     appBarTheme: base.appBarTheme.copyWith(foregroundColor: ink),
     dividerTheme: const DividerThemeData(
-      color: Color(0xFFC58A59),
+      color: Color(0xFFB97843),
       thickness: 1,
       space: 1,
     ),
@@ -128,7 +128,7 @@ ThemeData buildNotebookTheme() {
       style: base.outlinedButtonTheme.style?.copyWith(
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.pressed)
-              ? const Color(0xFFEFC27C)
+              ? const Color(0xFFEAB75E)
               : raisedPaper;
         }),
         foregroundColor: WidgetStateProperty.all(ink),
@@ -143,7 +143,7 @@ ThemeData buildNotebookTheme() {
       style: base.iconButtonTheme.style?.copyWith(
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.pressed)
-              ? const Color(0xFFE9B86E)
+              ? const Color(0xFFE4AD53)
               : raisedPaper;
         }),
         foregroundColor: WidgetStateProperty.all(ink),
@@ -155,7 +155,7 @@ ThemeData buildNotebookTheme() {
       ),
     ),
     inputDecorationTheme: base.inputDecorationTheme.copyWith(
-      fillColor: const Color(0xEFFFF1D2),
+      fillColor: const Color(0xEFFFF0CD),
       labelStyle: const TextStyle(
         color: mutedInk,
         fontFamily: 'Manrope',
@@ -199,7 +199,7 @@ ThemeData buildNotebookTheme() {
       trackColor: WidgetStateProperty.resolveWith((states) {
         return states.contains(WidgetState.selected)
             ? primary
-            : const Color(0xFFD5B58F);
+            : const Color(0xFFC9A474);
       }),
       thumbColor: WidgetStateProperty.all(const Color(0xFFFFF7E5)),
       trackOutlineColor: WidgetStateProperty.all(border),

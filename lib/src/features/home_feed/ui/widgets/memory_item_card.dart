@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_content_font.dart';
+import '../../../../core/theme/app_surface_palette.dart';
+import '../../../../core/theme/app_surface_textures.dart';
 import '../../../../core/theme/notebook/notebook_assets.dart';
 import '../../../../core/theme/notebook/notebook_background.dart';
 import '../../../../core/theme/notebook/notebook_leather_surface.dart';
@@ -40,6 +42,9 @@ class MemoryItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final typeColor = memoryTypeColor(item.type);
     final colors = Theme.of(context).colorScheme;
+    final textures = AppSurfaceTextures.maybeOf(context);
+    final notebook = NotebookVisuals.maybeOf(context);
+    final palette = AppSurfacePalette.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = item.isDone
         ? Color.alphaBlend(
@@ -50,71 +55,91 @@ class MemoryItemCard extends StatelessWidget {
     final borderColor = item.isDone
         ? const Color(0xFF86EFAC)
         : typeColor.withValues(alpha: 0.34);
+    final cardShadowColor = notebook != null
+        ? const Color(0xFF3B1D0E).withValues(alpha: 0.5)
+        : isDark
+            ? Colors.black.withValues(alpha: 0.68)
+            : const Color(0xFF536575).withValues(alpha: 0.34);
 
     return Padding(
       padding: margin,
       child: Material(
-        color: Colors.transparent,
+        color: cardColor,
+        elevation: 6,
+        shadowColor: cardShadowColor,
+        surfaceTintColor: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
         child: SizedBox(
           key: ValueKey('memory_card_${item.id}'),
           height: compact ? 108 : 118,
           child: Ink(
             decoration: BoxDecoration(
-              color: cardColor,
-              image: NotebookVisuals.maybeOf(context) == null
-                  ? null
-                  : const DecorationImage(
+              color: notebook == null ? null : cardColor,
+              gradient: notebook == null
+                  ? palette.surfaceGradient(base: cardColor)
+                  : null,
+              image: notebook != null
+                  ? const DecorationImage(
                       image: AssetImage(NotebookAssets.paper),
                       fit: BoxFit.cover,
                       opacity: 0.5,
-                    ),
+                    )
+                  : textures == null
+                      ? null
+                      : DecorationImage(
+                          image: AssetImage(textures.surfaceAsset),
+                          fit: BoxFit.cover,
+                          opacity: textures.surfaceOpacity,
+                          filterQuality: FilterQuality.low,
+                        ),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: borderColor),
-              boxShadow: NotebookVisuals.maybeOf(context) == null
-                  ? [
-                      BoxShadow(
-                        color: typeColor.withValues(alpha: 0.08),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
-                      ),
-                    ]
-                  : notebookSurfaceShadow(
-                      context,
-                      NotebookSurfaceDepth.card,
-                    ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  InkWell(
-                    onTap: onOpen,
-                    child: _TypeRail(
-                      key: ValueKey('memory_card_type_${item.id}'),
-                      item: item,
-                      color: typeColor,
-                      showDate: showDate,
-                      compact: compact,
-                    ),
-                  ),
-                  Expanded(
-                    child: InkWell(
-                      onTap: onOpen,
-                      child: _CardContent(
-                        key: ValueKey('memory_card_content_${item.id}'),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      InkWell(
+                        onTap: onOpen,
+                        child: _TypeRail(
+                          key: ValueKey('memory_card_type_${item.id}'),
+                          item: item,
+                          color: typeColor,
+                          showDate: showDate,
+                          compact: compact,
+                        ),
+                      ),
+                      Expanded(
+                        child: InkWell(
+                          onTap: onOpen,
+                          child: _CardContent(
+                            key: ValueKey('memory_card_content_${item.id}'),
+                            item: item,
+                            compact: compact,
+                          ),
+                        ),
+                      ),
+                      _ActionRail(
+                        key: ValueKey('memory_card_actions_${item.id}'),
                         item: item,
                         compact: compact,
+                        onToggleDone: onToggleDone,
+                        onArchive: onArchive,
+                        onRestore: onRestore,
+                      ),
+                    ],
+                  ),
+                  IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: borderColor),
                       ),
                     ),
-                  ),
-                  _ActionRail(
-                    key: ValueKey('memory_card_actions_${item.id}'),
-                    item: item,
-                    compact: compact,
-                    onToggleDone: onToggleDone,
-                    onArchive: onArchive,
-                    onRestore: onRestore,
                   ),
                 ],
               ),
@@ -164,7 +189,7 @@ class _TypeRail extends StatelessWidget {
               Icon(
                 memoryTypeIcon(item.type),
                 color: foreground,
-                size: compact ? 17 : 19,
+                size: compact ? 19 : 21,
               ),
               SizedBox(height: compact ? 3 : 5),
               Text(
@@ -225,6 +250,7 @@ class _CardContent extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final notebook = NotebookVisuals.maybeOf(context);
+    final textures = AppSurfaceTextures.maybeOf(context);
     final typography = AppContentTypography.of(context);
     final contentStyle = typography.apply(
       Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -299,10 +325,11 @@ class _CardContent extends StatelessWidget {
         ],
       ),
     );
-    if (notebook == null) return content;
+    final lineColor = notebook?.line ?? textures?.lineColor;
+    if (lineColor == null) return content;
     return CustomPaint(
       painter: NotebookPaperLinesPainter(
-        color: notebook.line,
+        color: lineColor,
         top: 6 + lineHeight,
         lineHeight: lineHeight,
       ),
@@ -412,7 +439,9 @@ class _ActionRail extends StatelessWidget {
                 tooltip: item.isDone ? strings.markActive : strings.markDone,
                 onPressed: onToggleDone,
                 icon: Icon(
-                  item.isDone ? Icons.check_circle : Icons.check_circle_outline,
+                  item.isDone
+                      ? Icons.check_circle_rounded
+                      : Icons.task_alt_rounded,
                   size: 24,
                 ),
                 style: IconButton.styleFrom(
@@ -433,8 +462,8 @@ class _ActionRail extends StatelessWidget {
                 onPressed: onRestore ?? onArchive,
                 icon: Icon(
                   onRestore != null
-                      ? Icons.unarchive_outlined
-                      : Icons.archive_outlined,
+                      ? Icons.unarchive_rounded
+                      : Icons.archive_rounded,
                   size: 22,
                 ),
                 style: IconButton.styleFrom(

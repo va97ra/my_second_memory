@@ -98,7 +98,7 @@ class _RecurrenceHint extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           child: Row(
             children: [
-              Icon(Icons.event_repeat, size: 17, color: colors.primary),
+              Icon(Icons.event_repeat_rounded, size: 17, color: colors.primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -179,7 +179,7 @@ class _EditorMetadataBar extends StatelessWidget {
               flex: 10,
               child: _MetadataAction(
                 key: const ValueKey('memory_date_picker'),
-                icon: Icons.event_outlined,
+                icon: Icons.event_rounded,
                 label: strings.date,
                 value: dateText,
                 color: const Color(0xFFC98A70),
@@ -191,14 +191,15 @@ class _EditorMetadataBar extends StatelessWidget {
               flex: 9,
               child: _MetadataAction(
                 key: const ValueKey('memory_time_picker'),
-                icon: Icons.schedule_outlined,
+                icon: Icons.schedule_rounded,
                 label: strings.time,
                 value: timeText ?? strings.timeNotSet,
                 isPlaceholder: timeText == null,
                 color: const Color(0xFFC98A70),
                 onTap: onTimeTap,
                 onClear: onClearTime,
-                badgeIcon: reminderEnabled ? Icons.notifications_active : null,
+                badgeIcon:
+                    reminderEnabled ? Icons.notifications_active_rounded : null,
               ),
             ),
           ],
@@ -277,7 +278,7 @@ class _RecurrenceBadge extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.event_repeat,
+                Icons.event_repeat_rounded,
                 size: 17,
                 color: colors.onPrimaryContainer,
               ),
@@ -398,7 +399,7 @@ class _BirthdayFields extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             children: [
-              const Icon(Icons.cake_outlined, size: 18),
+              const Icon(Icons.cake_rounded, size: 18),
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
@@ -412,7 +413,7 @@ class _BirthdayFields extends StatelessWidget {
                 IconButton(
                   tooltip: AppStrings.of(context).delete,
                   onPressed: onClear,
-                  icon: const Icon(Icons.close, size: 16),
+                  icon: const Icon(Icons.close_rounded, size: 16),
                 ),
             ],
           ),
@@ -522,7 +523,7 @@ class _MetadataAction extends StatelessWidget {
                     radius: 14,
                     child: const Padding(
                       padding: EdgeInsets.all(2),
-                      child: Icon(Icons.close, size: 13),
+                      child: Icon(Icons.close_rounded, size: 13),
                     ),
                   ),
                 ),

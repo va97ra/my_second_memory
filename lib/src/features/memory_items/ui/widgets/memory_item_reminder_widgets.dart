@@ -72,7 +72,7 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
             ),
             const SizedBox(height: 14),
             _ReminderSheetTile(
-              icon: Icons.schedule_outlined,
+              icon: Icons.schedule_rounded,
               accentColor: const Color(0xFF218CFF),
               title: strings.time,
               value: _formattedTime(strings),
@@ -86,7 +86,7 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
                         _reminderEnabled = false;
                         _error = null;
                       }),
-                      icon: const Icon(Icons.close, size: 18),
+                      icon: const Icon(Icons.close_rounded, size: 18),
                     ),
             ),
             const SizedBox(height: 5),
@@ -104,7 +104,7 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
             if (_reminderEnabled) ...[
               const SizedBox(height: 5),
               _ReminderSheetTile(
-                icon: Icons.music_note_outlined,
+                icon: Icons.music_note_rounded,
                 accentColor: const Color(0xFF7C3AED),
                 title: strings.chooseSound,
                 value: _soundName ?? strings.systemAlarmSound,
@@ -142,7 +142,7 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
                       dimension: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.check),
+                  : const Icon(Icons.check_rounded),
               child: Text(strings.ready),
             ),
           ],
@@ -322,7 +322,7 @@ class _ReminderSheetTile extends StatelessWidget {
                 ],
               ),
             ),
-            trailing ?? const Icon(Icons.chevron_right),
+            trailing ?? const Icon(Icons.chevron_right_rounded),
             const SizedBox(width: 8),
           ],
         ),
@@ -366,7 +366,7 @@ class _ReminderToggleTile extends StatelessWidget {
               child: ColoredBox(color: accentColor),
             ),
             const SizedBox(width: 10),
-            Icon(Icons.notifications_active_outlined,
+            Icon(Icons.notifications_active_rounded,
                 color: accentColor, size: 20),
             const SizedBox(width: 10),
             Expanded(

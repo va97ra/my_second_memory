@@ -69,7 +69,7 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
               hasScrollBody: false,
               child: Center(
                 child: AppEmptyState(
-                  icon: Icons.dynamic_feed_outlined,
+                  icon: Icons.view_agenda_rounded,
                   title: strings.emptyFeed,
                   actionLabel: strings.addRecord,
                   onAction: () => context.go('/calendar'),
@@ -167,19 +167,19 @@ class _FeedUsageHint extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               _HintLine(
-                icon: Icons.calendar_month_outlined,
+                icon: Icons.calendar_month_rounded,
                 text: ru
                     ? 'Календарь → дата → «Добавить запись»'
                     : 'Calendar → date → Add record',
               ),
               _HintLine(
-                icon: Icons.event_repeat,
+                icon: Icons.event_repeat_rounded,
                 text: ru
                     ? '↻ включает повтор, галочка завершает запись'
                     : '↻ repeats; the check mark completes a record',
               ),
               _HintLine(
-                icon: Icons.archive_outlined,
+                icon: Icons.archive_rounded,
                 text: ru
                     ? 'Архив переносит запись в Базу памяти'
                     : 'Archive moves a record to Memory library',
@@ -189,7 +189,7 @@ class _FeedUsageHint extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () => _showFullGuide(context, ru),
-                  icon: const Icon(Icons.menu_book_outlined, size: 17),
+                  icon: const Icon(Icons.menu_book_rounded, size: 17),
                   label: Text(
                     ru ? 'Все возможности' : 'All features',
                   ),
@@ -234,25 +234,25 @@ class _FullGuideSheet extends StatelessWidget {
         title: ru ? 'Записи' : 'Records',
         items: [
           _GuideItem(
-            Icons.add_box_outlined,
+            Icons.add_box_rounded,
             ru
                 ? 'Откройте Календарь, нажмите дату и «Добавить запись».'
                 : 'Open Calendar, tap a date, then Add record.',
           ),
           _GuideItem(
-            Icons.category_outlined,
+            Icons.category_rounded,
             ru
                 ? 'Выберите тип: задача, заметка, событие, цель, проект, покупка, документ, место, день рождения или платёж.'
                 : 'Choose a record type: task, note, event, goal, project, purchase, document, place, birthday, or payment.',
           ),
           _GuideItem(
-            Icons.perm_media_outlined,
+            Icons.perm_media_rounded,
             ru
                 ? 'Добавляйте текст, фотографии и голос. Изменения сохраняются автоматически.'
                 : 'Add text, photos, and voice. Changes are saved automatically.',
           ),
           _GuideItem(
-            Icons.touch_app_outlined,
+            Icons.touch_app_rounded,
             ru
                 ? 'Нажмите фото для полного просмотра. Удерживайте фото или голос, чтобы удалить вложение.'
                 : 'Tap a photo for full view. Hold a photo or voice note to remove it.',
@@ -263,25 +263,25 @@ class _FullGuideSheet extends StatelessWidget {
         title: ru ? 'Планирование' : 'Planning',
         items: [
           _GuideItem(
-            Icons.schedule_outlined,
+            Icons.schedule_rounded,
             ru
                 ? 'Укажите дату и время события, при необходимости включите звуковое напоминание и выберите мелодию.'
                 : 'Set a date and time, optionally enable a sound reminder and choose a melody.',
           ),
           _GuideItem(
-            Icons.repeat,
+            Icons.repeat_rounded,
             ru
                 ? 'Кнопка ↻ создаёт ежемесячный или ежегодный повтор.'
                 : 'The ↻ button creates a monthly or yearly recurrence.',
           ),
           _GuideItem(
-            Icons.content_copy_outlined,
+            Icons.content_copy_rounded,
             ru
                 ? 'В меню записи можно дублировать её сразу на несколько дат.'
                 : 'The record menu can duplicate it to several dates at once.',
           ),
           _GuideItem(
-            Icons.cake_outlined,
+            Icons.cake_rounded,
             ru
                 ? 'Дни рождения повторяются ежегодно, платежи — ежемесячно; календарь показывает праздники.'
                 : 'Birthdays repeat yearly, payments monthly, and holidays appear in the calendar.',
@@ -292,31 +292,31 @@ class _FullGuideSheet extends StatelessWidget {
         title: ru ? 'Лента и календарь' : 'Feed and calendar',
         items: [
           _GuideItem(
-            Icons.filter_list,
+            Icons.filter_list_rounded,
             ru
                 ? 'Фильтр ленты помогает показать только нужные типы и состояния записей.'
                 : 'Feed filters show only the record types and states you need.',
           ),
           _GuideItem(
-            Icons.view_timeline_outlined,
+            Icons.view_timeline_rounded,
             ru
                 ? 'Информеры месяца и года показывают повторяющиеся записи текущего периода.'
                 : 'Month and year panels show recurring records for the current period.',
           ),
           _GuideItem(
-            Icons.check_circle_outline,
+            Icons.task_alt_rounded,
             ru
                 ? 'Галочка завершает запись. Архив скрывает её из ленты, но оставляет в календаре.'
                 : 'The check mark completes a record. Archive hides it from the feed but keeps it in the calendar.',
           ),
           _GuideItem(
-            Icons.inventory_2_outlined,
+            Icons.inventory_2_rounded,
             ru
                 ? 'Архивные записи находятся в Настройки → База памяти, откуда их можно вернуть.'
                 : 'Archived records are in Settings → Memory library and can be restored.',
           ),
           _GuideItem(
-            Icons.edit_note_outlined,
+            Icons.edit_note_rounded,
             ru
                 ? 'Из ленты запись открывается для безопасного просмотра, из календарного дня — для редактирования.'
                 : 'The feed opens a safe read-only view; the calendar day opens the editor.',
@@ -327,31 +327,31 @@ class _FullGuideSheet extends StatelessWidget {
         title: ru ? 'Дополнительные возможности' : 'More features',
         items: [
           _GuideItem(
-            Icons.key_outlined,
+            Icons.vpn_key_rounded,
             ru
                 ? 'Во вкладке Аккаунты можно хранить сервисы, логины, email, пароли, сайты и заметки.'
                 : 'Accounts stores services, logins, email addresses, passwords, websites, and notes.',
           ),
           _GuideItem(
-            Icons.work_history_outlined,
+            Icons.work_history_rounded,
             ru
                 ? 'Графики смен поддерживают 5/2, 2/2 и сутки/трое, цвета календаря и два будильника.'
                 : 'Shift schedules support 5/2, 2/2, and 1/3 patterns, calendar colors, and two alarms.',
           ),
           _GuideItem(
-            Icons.backup_outlined,
+            Icons.cloud_upload_rounded,
             ru
                 ? 'Резервная копия сохраняет зашифрованный архив в папку Загрузки и позволяет восстановить данные.'
                 : 'Backup saves an encrypted archive to Downloads and restores your data.',
           ),
           _GuideItem(
-            Icons.lock_outline,
+            Icons.lock_rounded,
             ru
                 ? 'PIN шифрует данные приложения, а биометрия позволяет входить без показа PIN-экрана.'
                 : 'PIN encrypts app data, while biometrics unlocks without showing the PIN screen.',
           ),
           _GuideItem(
-            Icons.palette_outlined,
+            Icons.palette_rounded,
             ru
                 ? 'В настройках доступны язык, темы, шрифт записей, праздники и подсказки.'
                 : 'Settings includes language, themes, record fonts, holidays, and hints.',
@@ -379,7 +379,7 @@ class _FullGuideSheet extends StatelessWidget {
                 IconButton(
                   tooltip: ru ? 'Закрыть' : 'Close',
                   onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close_rounded),
                 ),
               ],
             ),
@@ -543,7 +543,7 @@ class _FeedFilterButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.tune,
+                    Icons.tune_rounded,
                     size: 18,
                     color: Theme.of(context).colorScheme.primary,
                   ),
@@ -556,7 +556,7 @@ class _FeedFilterButton extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(width: 6),
-                  const Icon(Icons.expand_more, size: 18),
+                  const Icon(Icons.expand_more_rounded, size: 18),
                 ],
               ),
             ),
@@ -589,19 +589,19 @@ class _FeedFilterButton extends StatelessWidget {
 
   IconData _iconFor(FeedFilter filter) {
     return switch (filter) {
-      FeedFilter.all => Icons.dynamic_feed_outlined,
-      FeedFilter.active => Icons.radio_button_unchecked,
-      FeedFilter.done => Icons.check_circle_outline,
-      FeedFilter.task => Icons.check_circle_outline,
-      FeedFilter.note => Icons.notes,
-      FeedFilter.event => Icons.event,
-      FeedFilter.goal => Icons.flag_outlined,
-      FeedFilter.project => Icons.folder_outlined,
-      FeedFilter.purchase => Icons.shopping_bag_outlined,
-      FeedFilter.document => Icons.description_outlined,
-      FeedFilter.place => Icons.place_outlined,
-      FeedFilter.birthday => Icons.cake_outlined,
-      FeedFilter.payment => Icons.payments_outlined,
+      FeedFilter.all => Icons.view_agenda_rounded,
+      FeedFilter.active => Icons.radio_button_unchecked_rounded,
+      FeedFilter.done => Icons.task_alt_rounded,
+      FeedFilter.task => Icons.task_alt_rounded,
+      FeedFilter.note => Icons.sticky_note_2_rounded,
+      FeedFilter.event => Icons.event_rounded,
+      FeedFilter.goal => Icons.flag_rounded,
+      FeedFilter.project => Icons.folder_rounded,
+      FeedFilter.purchase => Icons.shopping_bag_rounded,
+      FeedFilter.document => Icons.description_rounded,
+      FeedFilter.place => Icons.location_on_rounded,
+      FeedFilter.birthday => Icons.cake_rounded,
+      FeedFilter.payment => Icons.payments_rounded,
     };
   }
 }

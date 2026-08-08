@@ -15,21 +15,21 @@ extension _MemoryItemDeletionNavigation on _MemoryItemDetailScreenState {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.event_note_outlined),
+                      leading: const Icon(Icons.event_note_rounded),
                       title: Text(ru
                           ? 'Удалить только эту запись'
                           : 'Delete only this record'),
                       onTap: () => Navigator.of(context).pop('one'),
                     ),
                     ListTile(
-                      leading: const Icon(Icons.event_busy_outlined),
+                      leading: const Icon(Icons.event_busy_rounded),
                       title: Text(ru
                           ? 'Удалить эту и будущие'
                           : 'Delete this and future records'),
                       onTap: () => Navigator.of(context).pop('future'),
                     ),
                     ListTile(
-                      leading: const Icon(Icons.delete_sweep_outlined),
+                      leading: const Icon(Icons.delete_sweep_rounded),
                       title: Text(ru
                           ? 'Удалить всю серию'
                           : 'Delete the entire series'),

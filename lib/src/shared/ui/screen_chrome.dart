@@ -44,7 +44,7 @@ class AppBackButton extends StatelessWidget {
         }
         context.go(fallbackLocation!);
       },
-      icon: const Icon(Icons.arrow_back, size: 22),
+      icon: const Icon(Icons.arrow_back_rounded, size: 22),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints.tightFor(width: 40, height: 40),
       style: IconButton.styleFrom(

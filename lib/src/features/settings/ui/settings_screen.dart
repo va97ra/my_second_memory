@@ -6,6 +6,7 @@ import '../../../core/localization/app_locale_controller.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme_controller.dart';
 import '../../../core/theme/app_content_font.dart';
+import '../../../core/theme/app_surface_textures.dart';
 import '../../../core/theme/app_theme_style.dart';
 import '../../../core/theme/notebook/notebook_assets.dart';
 import '../../../core/theme/notebook/notebook_background.dart';
@@ -41,8 +42,8 @@ class SettingsScreen extends ConsumerWidget {
                     title: isRu ? 'Приложение' : 'Application',
                     children: [
                       _SettingsTile(
-                        icon: Icons.language,
-                        iconColor: const Color(0xFF0891B2),
+                        icon: Icons.language_rounded,
+                        iconColor: const Color(0xFF0FA3B1),
                         title: strings.language,
                         subtitle: isRu ? 'Русский' : 'English',
                         trailing: SegmentedButton<String>(
@@ -63,9 +64,9 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SettingsTile(
                         icon: switch (themeStyle) {
-                          AppThemeStyle.light => Icons.light_mode_outlined,
-                          AppThemeStyle.dark => Icons.dark_mode_outlined,
-                          AppThemeStyle.notebook => Icons.menu_book_outlined,
+                          AppThemeStyle.light => Icons.light_mode_rounded,
+                          AppThemeStyle.dark => Icons.dark_mode_rounded,
+                          AppThemeStyle.notebook => Icons.menu_book_rounded,
                         },
                         iconColor: Theme.of(context).colorScheme.primary,
                         title: strings.appearance,
@@ -74,7 +75,7 @@ class SettingsScreen extends ConsumerWidget {
                           AppThemeStyle.dark => strings.darkTheme,
                           AppThemeStyle.notebook => strings.notebookTheme,
                         },
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () async {
                           final selected = await showThemePickerSheet(
                             context: context,
@@ -82,11 +83,23 @@ class SettingsScreen extends ConsumerWidget {
                             isRu: isRu,
                           );
                           if (selected != null && context.mounted) {
-                            if (selected == AppThemeStyle.notebook) {
+                            if (selected == AppThemeStyle.light) {
+                              try {
+                                await LightThemeAssets.preload();
+                              } catch (_) {
+                                // The light theme has a gradient fallback.
+                              }
+                            } else if (selected == AppThemeStyle.notebook) {
                               try {
                                 await NotebookAssets.preload();
                               } catch (_) {
                                 // The notebook theme has a gradient fallback.
+                              }
+                            } else if (selected == AppThemeStyle.dark) {
+                              try {
+                                await DarkThemeAssets.preload();
+                              } catch (_) {
+                                // The dark theme has a gradient fallback.
                               }
                             }
                             await ref
@@ -96,11 +109,11 @@ class SettingsScreen extends ConsumerWidget {
                         },
                       ),
                       _SettingsTile(
-                        icon: Icons.font_download_outlined,
-                        iconColor: const Color(0xFF7C3AED),
+                        icon: Icons.font_download_rounded,
+                        iconColor: const Color(0xFF7A5AF8),
                         title: isRu ? 'Шрифт записей' : 'Record font',
                         subtitle: contentFont.label,
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () async {
                           final selected = await showContentFontPickerSheet(
                             context: context,
@@ -115,8 +128,8 @@ class SettingsScreen extends ConsumerWidget {
                         },
                       ),
                       _SettingsTile(
-                        icon: Icons.tips_and_updates_outlined,
-                        iconColor: const Color(0xFF0F766E),
+                        icon: Icons.tips_and_updates_rounded,
+                        iconColor: const Color(0xFF008C85),
                         title: isRu ? 'Показывать подсказки' : 'Show hints',
                         subtitle: isRu
                             ? 'Подсказки для новых пользователей'
@@ -128,8 +141,8 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                       ),
                       _SettingsTile(
-                        icon: Icons.celebration_outlined,
-                        iconColor: const Color(0xFFD97706),
+                        icon: Icons.celebration_rounded,
+                        iconColor: const Color(0xFFD69A00),
                         title: isRu ? 'Показывать праздники' : 'Show holidays',
                         subtitle: isRu
                             ? 'Праздники в календаре и экране дня'
@@ -146,10 +159,10 @@ class SettingsScreen extends ConsumerWidget {
                     title: isRu ? 'Безопасность' : 'Security',
                     children: [
                       _SettingsTile(
-                        icon: Icons.lock_outline,
-                        iconColor: const Color(0xFF7C3AED),
+                        icon: Icons.lock_rounded,
+                        iconColor: const Color(0xFF7A5AF8),
                         title: strings.pinSecurity,
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => context.go('/security'),
                       ),
                     ],
@@ -158,25 +171,25 @@ class SettingsScreen extends ConsumerWidget {
                     title: isRu ? 'Данные и планирование' : 'Data and planning',
                     children: [
                       _SettingsTile(
-                        icon: Icons.work_history_outlined,
-                        iconColor: const Color(0xFF16A34A),
+                        icon: Icons.work_history_rounded,
+                        iconColor: const Color(0xFF20B26B),
                         title: strings.shiftSchedules,
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => context.go('/settings/shifts'),
                       ),
                       _SettingsTile(
-                        icon: Icons.inventory_2_outlined,
-                        iconColor: const Color(0xFFEA580C),
+                        icon: Icons.inventory_2_rounded,
+                        iconColor: const Color(0xFFF26B38),
                         title: strings.memoryBase,
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => context.go('/memory'),
                       ),
                       _SettingsTile(
-                        icon: Icons.backup_outlined,
+                        icon: Icons.cloud_upload_rounded,
                         iconColor: Theme.of(context).colorScheme.primary,
                         title: strings.backup,
                         subtitle: strings.backupSubtitle,
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => context.go('/settings/backup'),
                       ),
                     ],
@@ -228,7 +241,7 @@ class _FeedbackRequestCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 child: Icon(
-                  Icons.rate_review_outlined,
+                  Icons.rate_review_rounded,
                   color: colors.primary,
                   size: 20,
                 ),
@@ -339,13 +352,28 @@ class _SettingsTile extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       leading: DecoratedBox(
         decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              iconColor.withValues(alpha: 0.3),
+              iconColor.withValues(alpha: 0.1),
+            ],
+          ),
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: iconColor.withValues(alpha: 0.34)),
+          boxShadow: [
+            BoxShadow(
+              color: iconColor.withValues(alpha: 0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: SizedBox(
-          width: 38,
-          height: 38,
-          child: Icon(icon, color: iconColor, size: 20),
+          width: 40,
+          height: 40,
+          child: Icon(icon, color: iconColor, size: 22),
         ),
       ),
       title: Text(

@@ -75,7 +75,7 @@ class _RecurringOverviewScreenState
                   children: [
                     IconButton(
                       onPressed: () => _move(-1),
-                      icon: const Icon(Icons.chevron_left),
+                      icon: const Icon(Icons.chevron_left_rounded),
                     ),
                     Expanded(
                       child: Text(
@@ -86,7 +86,7 @@ class _RecurringOverviewScreenState
                     ),
                     IconButton(
                       onPressed: () => _move(1),
-                      icon: const Icon(Icons.chevron_right),
+                      icon: const Icon(Icons.chevron_right_rounded),
                     ),
                   ],
                 ),
@@ -96,7 +96,7 @@ class _RecurringOverviewScreenState
                 child: occurrences.isEmpty
                     ? Center(
                         child: AppEmptyState(
-                          icon: Icons.event_repeat,
+                          icon: Icons.event_repeat_rounded,
                           title: locale == 'ru'
                               ? 'Повторяющихся записей нет'
                               : 'No recurring records',

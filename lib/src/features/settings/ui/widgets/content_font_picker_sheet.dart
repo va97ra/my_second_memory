@@ -96,7 +96,8 @@ class _FontPreviewRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (selected) Icon(Icons.check_circle, color: colors.primary),
+              if (selected)
+                Icon(Icons.check_circle_rounded, color: colors.primary),
             ],
           ),
         ),

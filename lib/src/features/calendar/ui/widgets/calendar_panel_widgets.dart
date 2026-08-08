@@ -47,7 +47,9 @@ class _CalendarPanel extends StatelessWidget {
                 DecoratedBox(
                   key: const ValueKey('calendar_weekdays'),
                   decoration: BoxDecoration(
-                    color: AppSurfacePalette.of(context).weekdaySurface,
+                    gradient: AppSurfacePalette.of(context).surfaceGradient(
+                      base: AppSurfacePalette.of(context).weekdaySurface,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: Theme.of(context).colorScheme.outlineVariant,
@@ -220,7 +222,7 @@ class _CalendarPanel extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(
-                          Icons.touch_app_outlined,
+                          Icons.swipe_rounded,
                           size: 18,
                           color: Theme.of(context).colorScheme.primary,
                         ),
@@ -268,12 +270,12 @@ class _CalendarMonthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final month = DateFormat.yMMMM(locale).format(visibleMonth);
+    final month = DateFormat('LLLL', locale).format(visibleMonth);
     final strings = AppStrings.of(context);
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppSurfacePalette.of(context).panelSurface,
+        gradient: AppSurfacePalette.of(context).surfaceGradient(),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: [
@@ -291,27 +293,52 @@ class _CalendarMonthHeader extends StatelessWidget {
           children: [
             _MonthIconButton(
               tooltip: strings.previousMonth,
-              icon: Icons.chevron_left,
+              icon: Icons.chevron_left_rounded,
               onPressed: onPreviousMonth,
             ),
             const SizedBox(width: 7),
             Expanded(
-              child: Text(
-                _capitalize(month),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
+              child: Semantics(
+                label: '${_capitalize(month)} ${visibleMonth.year}',
+                container: true,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _capitalize(month),
+                      key: const ValueKey('calendar_month_label'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
                     ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${visibleMonth.year}',
+                      key: const ValueKey('calendar_year_label'),
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                            letterSpacing: 0.8,
+                          ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: 7),
             IconButton.filledTonal(
               tooltip: strings.today,
               onPressed: onToday,
-              icon: const Icon(Icons.today),
+              icon: const Icon(Icons.today_rounded),
               style: IconButton.styleFrom(
                 fixedSize: const Size(40, 40),
                 backgroundColor:
@@ -325,7 +352,7 @@ class _CalendarMonthHeader extends StatelessWidget {
             const SizedBox(width: 6),
             _MonthIconButton(
               tooltip: strings.nextMonth,
-              icon: Icons.chevron_right,
+              icon: Icons.chevron_right_rounded,
               onPressed: onNextMonth,
             ),
           ],

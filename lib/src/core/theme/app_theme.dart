@@ -1,36 +1,42 @@
 import 'package:flutter/material.dart';
 
 import 'app_surface_palette.dart';
+import 'app_surface_textures.dart';
 
 ThemeData buildAppTheme({required Brightness brightness}) {
   final isDark = brightness == Brightness.dark;
-  final seed = isDark ? const Color(0xFFE47A57) : const Color(0xFFD87352);
-  final background = isDark ? const Color(0xFF000000) : const Color(0xFFF4F1EB);
-  final surface = isDark ? const Color(0xFF2B2E2A) : const Color(0xFFFFFDF9);
-  final surfaceLow = isDark ? const Color(0xFF242622) : const Color(0xFFF8F5EF);
+  final seed = isDark ? const Color(0xFFFF6A3D) : const Color(0xFFF05A30);
+  final accentEnd = isDark ? const Color(0xFFC9361E) : const Color(0xFFB72F1B);
+  final secondaryAccent =
+      isDark ? const Color(0xFF39C3D5) : const Color(0xFF087C8C);
+  final tertiaryAccent =
+      isDark ? const Color(0xFF2AC495) : const Color(0xFF087A62);
+  final background = isDark ? const Color(0xFF07090D) : const Color(0xFFF4F7F8);
+  final surface = isDark ? const Color(0xFF1D252E) : const Color(0xFFFFFFFF);
+  final surfaceLow = isDark ? const Color(0xFF161C23) : const Color(0xFFF7FAFB);
   final surfaceContainer =
-      isDark ? const Color(0xFF2B2E2A) : const Color(0xFFF0ECE4);
+      isDark ? const Color(0xFF202A34) : const Color(0xFFF0F5F7);
   final surfaceHigh =
-      isDark ? const Color(0xFF333632) : const Color(0xFFE6E1D8);
-  final surfaceAlt = isDark ? const Color(0xFF333632) : const Color(0xFFDAD7CF);
-  final border = isDark ? const Color(0xFF555B53) : const Color(0xFFAFAAA0);
-  final onSurface = isDark ? const Color(0xFFF5F2EC) : const Color(0xFF282722);
-  final secondary = isDark ? const Color(0xFFC9C5BE) : const Color(0xFF69655E);
-  final onPrimary = isDark ? const Color(0xFF1B0D08) : const Color(0xFFFFFFFF);
+      isDark ? const Color(0xFF27333F) : const Color(0xFFE9F0F3);
+  final surfaceAlt = isDark ? const Color(0xFF303E4B) : const Color(0xFFD8E3E8);
+  final border = isDark ? const Color(0xFF526272) : const Color(0xFF8799A3);
+  final onSurface = isDark ? const Color(0xFFF7F9FC) : const Color(0xFF17222B);
+  final secondary = isDark ? const Color(0xFFBCC7D2) : const Color(0xFF566976);
+  final onPrimary = isDark ? const Color(0xFF260B04) : const Color(0xFFFFFFFF);
   final palette = AppSurfacePalette(
     backgroundStart: background,
-    backgroundEnd: isDark ? const Color(0xFF12100F) : const Color(0xFFE9E4DB),
+    backgroundEnd: isDark ? const Color(0xFF151018) : const Color(0xFFDDE6EA),
     navigationSurface:
-        isDark ? const Color(0xFF252825) : const Color(0xFFFFFDF9),
+        isDark ? const Color(0xFF161C23) : const Color(0xFFFCFEFF),
     panelSurface: surface,
     raisedSurface: surfaceHigh,
-    nestedSurface: isDark ? const Color(0xFF3A3D39) : const Color(0xFFE6E1D8),
-    calendarTile: isDark ? const Color(0xFF2B2E2A) : const Color(0xFFDAD7CF),
-    weekdaySurface: isDark ? const Color(0xFF333632) : const Color(0xFFCBC8C0),
-    borderStart: isDark ? const Color(0xFF626860) : const Color(0xFFA7A197),
-    borderEnd: isDark ? const Color(0xFF41443F) : const Color(0xFFD3CEC5),
+    nestedSurface: isDark ? const Color(0xFF303E4B) : const Color(0xFFD8E3E8),
+    calendarTile: isDark ? const Color(0xFF202A34) : const Color(0xFFEDF2F4),
+    weekdaySurface: isDark ? const Color(0xFF2A3642) : const Color(0xFFDCE7EB),
+    borderStart: isDark ? const Color(0xFF718397) : const Color(0xFF6F8490),
+    borderEnd: isDark ? const Color(0xFF344351) : const Color(0xFFBCCAD0),
     accentStart: seed,
-    accentEnd: isDark ? const Color(0xFFBF543B) : const Color(0xFFB9553D),
+    accentEnd: accentEnd,
   );
   final scheme = ColorScheme.fromSeed(
     seedColor: seed,
@@ -39,12 +45,20 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     primary: seed,
     onPrimary: onPrimary,
     primaryContainer:
-        isDark ? const Color(0xFF4B2A21) : const Color(0xFFF2D9CF),
+        isDark ? const Color(0xFF572315) : const Color(0xFFFFD7CA),
     onPrimaryContainer:
-        isDark ? const Color(0xFFFFDACE) : const Color(0xFF522014),
+        isDark ? const Color(0xFFFFDACC) : const Color(0xFF4B1408),
+    secondary: secondaryAccent,
+    onSecondary: isDark ? const Color(0xFF001F25) : Colors.white,
+    secondaryContainer:
+        isDark ? const Color(0xFF123D46) : const Color(0xFFC9F2F6),
+    onSecondaryContainer:
+        isDark ? const Color(0xFFBFF6FF) : const Color(0xFF07353C),
+    tertiary: tertiaryAccent,
+    onTertiary: isDark ? const Color(0xFF00251A) : Colors.white,
     surface: surface,
     surfaceContainerLowest:
-        isDark ? const Color(0xFF242622) : const Color(0xFFFFFFFF),
+        isDark ? const Color(0xFF11171D) : const Color(0xFFFFFFFF),
     surfaceContainerLow: surfaceLow,
     surfaceContainer: surfaceContainer,
     surfaceContainerHigh: surfaceHigh,
@@ -60,8 +74,11 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     colorScheme: scheme,
     scaffoldBackgroundColor: Colors.transparent,
     canvasColor: background,
-    disabledColor: isDark ? const Color(0xFF9C9992) : const Color(0xFF8A857D),
-    extensions: [palette],
+    disabledColor: isDark ? const Color(0xFF84909B) : const Color(0xFF71808A),
+    extensions: [
+      palette,
+      isDark ? AppSurfaceTextures.dark : AppSurfaceTextures.light,
+    ],
     fontFamily: 'Manrope',
     dividerTheme: DividerThemeData(
       color: border,
@@ -167,7 +184,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
       height: 64,
       backgroundColor: palette.navigationSurface,
       indicatorColor:
-          isDark ? const Color(0xFF4B2A21) : const Color(0xFFF0D8CF),
+          isDark ? const Color(0xFF572315) : const Color(0xFFFFD7CA),
       indicatorShape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
       ),
@@ -184,7 +201,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
         final selected = states.contains(WidgetState.selected);
         return IconThemeData(
           color: selected ? seed : secondary,
-          size: 22,
+          size: selected ? 24 : 22,
         );
       }),
     ),
@@ -197,7 +214,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
         side: BorderSide(color: border),
       ),
       surfaceTintColor: Colors.transparent,
-      shadowColor: Colors.black.withValues(alpha: 0.08),
+      shadowColor: Colors.black.withValues(alpha: isDark ? 0.36 : 0.16),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -228,16 +245,43 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     ),
     textSelectionTheme: TextSelectionThemeData(
       cursorColor: seed,
-      selectionColor: const Color(0x667D4A39),
+      selectionColor: seed.withValues(alpha: 0.34),
       selectionHandleColor: seed,
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: const TextStyle(
-          fontFamily: 'Manrope',
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) return surfaceAlt;
+          if (states.contains(WidgetState.pressed)) return accentEnd;
+          return seed;
+        }),
+        foregroundColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.disabled) ? secondary : onPrimary;
+        }),
+        elevation: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) return 0;
+          return states.contains(WidgetState.pressed) ? 1 : 5;
+        }),
+        shadowColor: WidgetStatePropertyAll(
+          accentEnd.withValues(alpha: isDark ? 0.68 : 0.42),
+        ),
+        side: WidgetStateProperty.resolveWith((states) {
+          return BorderSide(
+            color: states.contains(WidgetState.disabled)
+                ? border
+                : Color.lerp(seed, Colors.white, 0.34)!,
+            width: 1,
+          );
+        }),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        textStyle: const WidgetStatePropertyAll(
+          TextStyle(
+            fontFamily: 'Manrope',
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0,
+          ),
         ),
       ),
     ),
@@ -286,11 +330,14 @@ ThemeData buildAppTheme({required Brightness brightness}) {
       }),
       trackOutlineColor: WidgetStateProperty.all(border),
     ),
-    floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      elevation: 3,
-      focusElevation: 3,
-      hoverElevation: 4,
-      shape: RoundedRectangleBorder(
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: seed,
+      foregroundColor: onPrimary,
+      elevation: 6,
+      focusElevation: 6,
+      hoverElevation: 8,
+      splashColor: secondaryAccent.withValues(alpha: 0.22),
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(8)),
       ),
     ),
@@ -330,6 +377,8 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
+      backgroundColor: surfaceHigh,
+      contentTextStyle: TextStyle(color: onSurface, fontFamily: 'Manrope'),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     datePickerTheme: DatePickerThemeData(
@@ -349,7 +398,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     ),
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF333632) : const Color(0xFF3F3A35),
+        color: isDark ? const Color(0xFF27333F) : const Color(0xFF24313A),
         borderRadius: BorderRadius.circular(8),
       ),
     ),

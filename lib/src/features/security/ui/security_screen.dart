@@ -82,7 +82,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       child: SizedBox(
                         height: 74,
                         child: Icon(
-                          Icons.verified_user_outlined,
+                          Icons.verified_user_rounded,
                           color: Theme.of(context).colorScheme.primary,
                           size: 34,
                         ),
@@ -90,7 +90,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                     ),
                     const SizedBox(height: 16),
                     _StatusRow(
-                      icon: Icons.lock_outline,
+                      icon: Icons.lock_rounded,
                       title: strings.pinStatus,
                       value:
                           session.hasPin ? strings.enabled : strings.disabled,
@@ -98,7 +98,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                     ),
                     const SizedBox(height: 8),
                     _StatusRow(
-                      icon: Icons.fingerprint,
+                      icon: Icons.fingerprint_rounded,
                       title: strings.biometrics,
                       value: session.biometricsEnabled
                           ? strings.enabled
@@ -115,7 +115,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                     ),
                     FilledButton.icon(
                       onPressed: _savePin,
-                      icon: const Icon(Icons.lock),
+                      icon: const Icon(Icons.lock_rounded),
                       label: Text(
                         session.hasPin ? strings.changePin : strings.enablePin,
                       ),
@@ -124,7 +124,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       const SizedBox(height: 10),
                       OutlinedButton.icon(
                         onPressed: _disablePin,
-                        icon: const Icon(Icons.lock_open_outlined),
+                        icon: const Icon(Icons.lock_open_rounded),
                         label: Text(strings.disablePin),
                       ),
                     ],
@@ -133,7 +133,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       value: session.biometricsEnabled,
                       onChanged: session.hasPin ? _setBiometricsEnabled : null,
                       contentPadding: EdgeInsets.zero,
-                      secondary: const Icon(Icons.fingerprint),
+                      secondary: const Icon(Icons.fingerprint_rounded),
                       title: Text(strings.biometrics),
                       subtitle: Text(
                         session.hasPin

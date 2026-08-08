@@ -55,7 +55,7 @@ class ShiftSchedulesScreen extends ConsumerWidget {
                   children: [
                     if (schedules.isEmpty)
                       AppEmptyState(
-                        icon: Icons.work_history_outlined,
+                        icon: Icons.work_history_rounded,
                         title: strings.noShiftSchedules,
                         actionLabel: strings.addShiftSchedule,
                         onAction: () => _openEditor(context, ref),
@@ -83,7 +83,7 @@ class ShiftSchedulesScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(context, ref),
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add_rounded),
         label: Text(strings.addShiftSchedule),
       ),
     );

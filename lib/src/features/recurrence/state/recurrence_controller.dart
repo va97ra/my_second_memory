@@ -92,14 +92,6 @@ final recurrenceProjectionServiceProvider =
   return const RecurrenceProjectionService();
 });
 
-final recurrenceSeriesByIdProvider =
-    Provider.family<RecurrenceSeries?, String>((ref, id) {
-  for (final series in ref.watch(recurrenceSeriesControllerProvider)) {
-    if (series.id == id) return series;
-  }
-  return null;
-});
-
 class RecurrenceRange {
   const RecurrenceRange(this.start, this.end);
 

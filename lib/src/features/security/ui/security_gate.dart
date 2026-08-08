@@ -26,6 +26,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
   bool _showPinFallback = false;
   bool _biometricAttempted = false;
   bool _biometricBusy = false;
+  bool _pinUnlockBusy = false;
   bool _setupBusy = false;
   bool _offerBiometrics = false;
   String? _error;
@@ -56,7 +57,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
         child: _SecurityCard(
           children: [
             Icon(
-              Icons.shield_outlined,
+              Icons.shield_rounded,
               size: 52,
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -77,7 +78,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: _load,
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh_rounded),
                 label: Text(AppStrings.of(context).retry),
               ),
             ),
@@ -152,6 +153,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
     return _SecurityScaffold(
       child: _PinUnlockCard(
         controller: _pinController,
+        busy: _pinUnlockBusy,
         error: _error,
         onUnlock: _unlockWithPin,
         onBiometrics: session.biometricsEnabled
@@ -251,16 +253,29 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
   }
 
   Future<void> _unlockWithPin() async {
+    if (_pinUnlockBusy) {
+      return;
+    }
     final pin = _pinController.text.trim();
     _pinController.clear();
     if (pin.isEmpty) {
       setState(() => _error = AppStrings.of(context).wrongPin);
       return;
     }
-    final ok =
-        await ref.read(securitySessionProvider.notifier).unlockWithPin(pin);
-    if (mounted) {
-      setState(() => _error = ok ? null : AppStrings.of(context).wrongPin);
+    setState(() {
+      _pinUnlockBusy = true;
+      _error = null;
+    });
+    try {
+      final ok =
+          await ref.read(securitySessionProvider.notifier).unlockWithPin(pin);
+      if (mounted) {
+        setState(() => _error = ok ? null : AppStrings.of(context).wrongPin);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _pinUnlockBusy = false);
+      }
     }
   }
 
@@ -281,13 +296,33 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
   }
 }
 
-class _SecurityScaffold extends StatelessWidget {
+class _SecurityScaffold extends StatefulWidget {
   const _SecurityScaffold({required this.child});
 
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  State<_SecurityScaffold> createState() => _SecurityScaffoldState();
+}
+
+class _SecurityScaffoldState extends State<_SecurityScaffold> {
+  late final OverlayEntry _entry = OverlayEntry(builder: _buildScaffold);
+
+  @override
+  void didUpdateWidget(covariant _SecurityScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _entry.markNeedsBuild();
+  }
+
+  @override
+  void dispose() {
+    if (_entry.mounted) {
+      _entry.remove();
+    }
+    super.dispose();
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -295,11 +330,20 @@ class _SecurityScaffold extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 390),
-              child: child,
+              child: widget.child,
             ),
           ),
         ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Overlay(
+      initialEntries: [
+        _entry,
+      ],
     );
   }
 }
@@ -356,7 +400,7 @@ class _SetupPinCard extends StatelessWidget {
     return _SecurityCard(
       children: [
         Icon(
-          Icons.shield_outlined,
+          Icons.shield_rounded,
           size: 42,
           color: Theme.of(context).colorScheme.primary,
         ),
@@ -390,7 +434,7 @@ class _SetupPinCard extends StatelessWidget {
                     dimension: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.lock_outline),
+                : const Icon(Icons.lock_rounded),
             label: Text(strings.createPin),
           ),
         ),
@@ -419,7 +463,7 @@ class _BiometricUnlockCard extends StatelessWidget {
     return _SecurityCard(
       children: [
         Icon(
-          Icons.fingerprint,
+          Icons.fingerprint_rounded,
           size: 52,
           color: Theme.of(context).colorScheme.primary,
         ),
@@ -442,7 +486,7 @@ class _BiometricUnlockCard extends StatelessWidget {
                     dimension: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.fingerprint),
+                : const Icon(Icons.fingerprint_rounded),
             label: Text(strings.tryBiometricsAgain),
           ),
         ),
@@ -451,7 +495,7 @@ class _BiometricUnlockCard extends StatelessWidget {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: onShowPin,
-            icon: const Icon(Icons.password_outlined),
+            icon: const Icon(Icons.password_rounded),
             label: Text(strings.unlockWithPin),
           ),
         ),
@@ -478,7 +522,7 @@ class _EnableBiometricsCard extends StatelessWidget {
     return _SecurityCard(
       children: [
         Icon(
-          Icons.fingerprint,
+          Icons.fingerprint_rounded,
           size: 52,
           color: Theme.of(context).colorScheme.primary,
         ),
@@ -501,7 +545,7 @@ class _EnableBiometricsCard extends StatelessWidget {
                     dimension: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.fingerprint),
+                : const Icon(Icons.fingerprint_rounded),
             label: Text(strings.biometrics),
           ),
         ),
@@ -521,12 +565,14 @@ class _EnableBiometricsCard extends StatelessWidget {
 class _PinUnlockCard extends StatelessWidget {
   const _PinUnlockCard({
     required this.controller,
+    required this.busy,
     required this.error,
     required this.onUnlock,
     this.onBiometrics,
   });
 
   final TextEditingController controller;
+  final bool busy;
   final String? error;
   final VoidCallback onUnlock;
   final VoidCallback? onBiometrics;
@@ -537,7 +583,7 @@ class _PinUnlockCard extends StatelessWidget {
     return _SecurityCard(
       children: [
         Icon(
-          Icons.lock_outline,
+          Icons.lock_rounded,
           size: 42,
           color: Theme.of(context).colorScheme.primary,
         ),
@@ -551,13 +597,22 @@ class _PinUnlockCard extends StatelessWidget {
               ?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 18),
-        _PinField(controller: controller, onSubmitted: onUnlock),
+        _PinField(
+          controller: controller,
+          enabled: !busy,
+          onSubmitted: onUnlock,
+        ),
         const SizedBox(height: 14),
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
-            onPressed: onUnlock,
-            icon: const Icon(Icons.lock_open),
+            onPressed: busy ? null : onUnlock,
+            icon: busy
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.lock_open_rounded),
             label: Text(strings.unlock),
           ),
         ),
@@ -567,7 +622,7 @@ class _PinUnlockCard extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: onBiometrics,
-              icon: const Icon(Icons.fingerprint),
+              icon: const Icon(Icons.fingerprint_rounded),
               label: Text(strings.biometrics),
             ),
           ),
@@ -579,15 +634,21 @@ class _PinUnlockCard extends StatelessWidget {
 }
 
 class _PinField extends StatelessWidget {
-  const _PinField({required this.controller, required this.onSubmitted});
+  const _PinField({
+    required this.controller,
+    required this.onSubmitted,
+    this.enabled = true,
+  });
 
   final TextEditingController controller;
   final VoidCallback onSubmitted;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      enabled: enabled,
       keyboardType: TextInputType.number,
       textInputAction: TextInputAction.done,
       obscureText: true,

@@ -59,7 +59,7 @@ class HolidayDetailScreen extends ConsumerWidget {
                       Row(
                         children: [
                           const Icon(
-                            Icons.celebration_outlined,
+                            Icons.celebration_rounded,
                             color: Color(0xFFD97706),
                           ),
                           const SizedBox(width: 9),

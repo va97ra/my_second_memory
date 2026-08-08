@@ -33,13 +33,57 @@ class AppSurfacePalette extends ThemeExtension<AppSurfacePalette> {
   LinearGradient get backgroundGradient => LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [backgroundStart, backgroundEnd],
+        colors: [
+          backgroundStart,
+          Color.lerp(backgroundStart, accentStart, 0.07)!,
+          backgroundEnd,
+        ],
+        stops: const [0, 0.46, 1],
       );
 
   LinearGradient get accentGradient => LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [accentStart, accentEnd],
+        colors: [
+          Color.lerp(accentStart, Colors.white, 0.24)!,
+          accentStart,
+          accentEnd,
+        ],
+        stops: const [0, 0.34, 1],
+      );
+
+  LinearGradient surfaceGradient({Color? base}) {
+    final surface = base ?? panelSurface;
+    final isDark = surface.computeLuminance() < 0.28;
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color.lerp(
+          surface,
+          isDark ? Colors.white : accentStart,
+          isDark ? 0.1 : 0.035,
+        )!,
+        surface,
+        Color.lerp(
+          surface,
+          isDark ? Colors.black : borderEnd,
+          isDark ? 0.16 : 0.09,
+        )!,
+      ],
+      stops: const [0, 0.38, 1],
+    );
+  }
+
+  LinearGradient get navigationGradient => LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color.lerp(navigationSurface, Colors.white, 0.08)!,
+          navigationSurface,
+          Color.lerp(navigationSurface, Colors.black, 0.1)!,
+        ],
+        stops: const [0, 0.22, 1],
       );
 
   static AppSurfacePalette of(BuildContext context) {
@@ -50,32 +94,32 @@ class AppSurfacePalette extends ThemeExtension<AppSurfacePalette> {
     }
     return theme.brightness == Brightness.dark
         ? const AppSurfacePalette(
-            backgroundStart: Color(0xFF000000),
-            backgroundEnd: Color(0xFF12100F),
-            navigationSurface: Color(0xFF252825),
-            panelSurface: Color(0xFF2B2E2A),
-            raisedSurface: Color(0xFF333632),
-            nestedSurface: Color(0xFF3A3D39),
-            calendarTile: Color(0xFF2B2E2A),
-            weekdaySurface: Color(0xFF333632),
-            borderStart: Color(0xFF626860),
-            borderEnd: Color(0xFF41443F),
-            accentStart: Color(0xFFE47A57),
-            accentEnd: Color(0xFFBF543B),
+            backgroundStart: Color(0xFF07090D),
+            backgroundEnd: Color(0xFF151018),
+            navigationSurface: Color(0xFF161C23),
+            panelSurface: Color(0xFF1D252E),
+            raisedSurface: Color(0xFF27333F),
+            nestedSurface: Color(0xFF303E4B),
+            calendarTile: Color(0xFF202A34),
+            weekdaySurface: Color(0xFF2A3642),
+            borderStart: Color(0xFF718397),
+            borderEnd: Color(0xFF344351),
+            accentStart: Color(0xFFFF6A3D),
+            accentEnd: Color(0xFFC9361E),
           )
         : const AppSurfacePalette(
-            backgroundStart: Color(0xFFF4F1EB),
-            backgroundEnd: Color(0xFFE9E4DB),
-            navigationSurface: Color(0xFFFFFDF9),
-            panelSurface: Color(0xFFFFFDF9),
-            raisedSurface: Color(0xFFE6E1D8),
-            nestedSurface: Color(0xFFE6E1D8),
-            calendarTile: Color(0xFFDAD7CF),
-            weekdaySurface: Color(0xFFCBC8C0),
-            borderStart: Color(0xFFA7A197),
-            borderEnd: Color(0xFFD3CEC5),
-            accentStart: Color(0xFFD87352),
-            accentEnd: Color(0xFFB9553D),
+            backgroundStart: Color(0xFFF4F7F8),
+            backgroundEnd: Color(0xFFDDE6EA),
+            navigationSurface: Color(0xFFFCFEFF),
+            panelSurface: Color(0xFFFFFFFF),
+            raisedSurface: Color(0xFFE9F0F3),
+            nestedSurface: Color(0xFFD8E3E8),
+            calendarTile: Color(0xFFEDF2F4),
+            weekdaySurface: Color(0xFFDCE7EB),
+            borderStart: Color(0xFF6F8490),
+            borderEnd: Color(0xFFBCCAD0),
+            accentStart: Color(0xFFF05A30),
+            accentEnd: Color(0xFFB72F1B),
           );
   }
 

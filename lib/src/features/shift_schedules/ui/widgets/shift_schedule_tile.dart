@@ -107,7 +107,7 @@ class _ShiftScheduleTile extends StatelessWidget {
                           Row(
                             children: [
                               Icon(
-                                Icons.alarm_outlined,
+                                Icons.alarm_rounded,
                                 size: 15,
                                 color: Theme.of(context).colorScheme.primary,
                               ),

@@ -27,12 +27,6 @@ class AppHintsController extends StateNotifier<bool> {
   }
 }
 
-@Deprecated('Use appHintsProvider')
-final calendarHintsProvider = appHintsProvider;
-
-@Deprecated('Use AppHintsController')
-typedef CalendarHintsController = AppHintsController;
-
 class AppHolidaysController extends StateNotifier<bool> {
   AppHolidaysController() : super(true) {
     _load();
