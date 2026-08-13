@@ -62,4 +62,21 @@ void main() {
     expect(updated.audioPath, isNull);
     expect(updated.audioDurationSeconds, isNull);
   });
+
+  test('undated note survives json and old json defaults to dated', () {
+    final date = DateTime(2026, 8, 13);
+    final note = MemoryItem(
+      id: 'undated-note',
+      type: MemoryType.note,
+      title: 'Карта дочери',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+      isUndated: true,
+    );
+
+    expect(MemoryItem.fromJson(note.toJson()).isUndated, isTrue);
+    final oldJson = note.toJson()..remove('isUndated');
+    expect(MemoryItem.fromJson(oldJson).isUndated, isFalse);
+  });
 }

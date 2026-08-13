@@ -30,6 +30,7 @@ class MemoryItem {
     this.paymentCategory,
     this.birthYear,
     this.isGeneratedOccurrence = false,
+    this.isUndated = false,
   });
 
   final String id;
@@ -59,6 +60,7 @@ class MemoryItem {
   final String? paymentCategory;
   final int? birthYear;
   final bool isGeneratedOccurrence;
+  final bool isUndated;
 
   bool get isArchived => status == MemoryStatus.archived;
 
@@ -103,6 +105,7 @@ class MemoryItem {
     int? birthYear,
     bool clearBirthYear = false,
     bool? isGeneratedOccurrence,
+    bool? isUndated,
   }) {
     return MemoryItem(
       id: id ?? this.id,
@@ -138,6 +141,7 @@ class MemoryItem {
       birthYear: clearBirthYear ? null : birthYear ?? this.birthYear,
       isGeneratedOccurrence:
           isGeneratedOccurrence ?? this.isGeneratedOccurrence,
+      isUndated: isUndated ?? this.isUndated,
     );
   }
 
@@ -170,6 +174,7 @@ class MemoryItem {
       'paymentCategory': paymentCategory,
       'birthYear': birthYear,
       'isGeneratedOccurrence': isGeneratedOccurrence,
+      'isUndated': isUndated,
     };
   }
 
@@ -207,6 +212,7 @@ class MemoryItem {
       paymentCategory: json['paymentCategory'] as String?,
       birthYear: json['birthYear'] as int?,
       isGeneratedOccurrence: json['isGeneratedOccurrence'] as bool? ?? false,
+      isUndated: json['isUndated'] as bool? ?? false,
     );
   }
 }

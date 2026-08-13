@@ -19,7 +19,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -70,6 +70,9 @@ class AppDatabase extends _$AppDatabase {
               recurrenceSeriesRows.historyThrough,
             );
             await migrator.createTable(recurrenceOccurrenceExceptionRows);
+          }
+          if (from < 8) {
+            await migrator.addColumn(memoryItems, memoryItems.isUndated);
           }
         },
       );

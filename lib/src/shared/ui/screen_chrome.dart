@@ -103,11 +103,13 @@ class AppLabeledDivider extends StatelessWidget {
   const AppLabeledDivider({
     required this.label,
     this.padding = const EdgeInsets.fromLTRB(16, 3, 16, 3),
+    this.trailingIcon,
     super.key,
   });
 
   final String label;
   final EdgeInsetsGeometry padding;
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -119,30 +121,57 @@ class AppLabeledDivider extends StatelessWidget {
       padding: padding,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 22),
-        child: Row(
-          children: [
-            Expanded(
-                child: ColoredBox(
-                    color: color, child: const SizedBox(height: 1.5))),
-            Flexible(
-              flex: 4,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelMedium?.copyWith(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final centerWidth =
+                (constraints.maxWidth * 0.68).clamp(160.0, 360.0);
+            return Row(
+              children: [
+                Expanded(
+                  child: ColoredBox(
+                    key: const ValueKey('labeled_divider_left_line'),
                     color: color,
-                    fontWeight: FontWeight.w800,
+                    child: const SizedBox(height: 1.5),
                   ),
                 ),
-              ),
-            ),
-            Expanded(
-                child: ColoredBox(
-                    color: color, child: const SizedBox(height: 1.5))),
-          ],
+                SizedBox(
+                  width: centerWidth,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (trailingIcon != null) const SizedBox(width: 20),
+                        Flexible(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: color,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        if (trailingIcon != null) ...[
+                          const SizedBox(width: 4),
+                          Icon(trailingIcon, size: 16, color: color),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ColoredBox(
+                    key: const ValueKey('labeled_divider_right_line'),
+                    color: color,
+                    child: const SizedBox(height: 1.5),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

@@ -57,6 +57,10 @@ class AppStrings {
   String get add => isRu ? 'Добавить' : 'Add';
   String get addRecord => isRu ? 'Добавить запись' : 'Add record';
   String get newRecord => isRu ? 'Новая запись' : 'New record';
+  String get notes => isRu ? 'Записки' : 'Notes';
+  String get noteCard => isRu ? 'Записка' : 'Note';
+  String get newNote => isRu ? 'Новая записка' : 'New note';
+  String get editNote => isRu ? 'Редактировать записку' : 'Edit note';
   String get people => isRu ? 'Люди' : 'People';
   String get projects => isRu ? 'Проекты' : 'Projects';
   String get memoryArchive => isRu ? 'Архив памяти' : 'Memory archive';

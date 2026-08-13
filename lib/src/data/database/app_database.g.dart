@@ -182,6 +182,16 @@ class $MemoryItemsTable extends MemoryItems
           defaultConstraints: GeneratedColumn.constraintIsAlways(
               'CHECK ("is_generated_occurrence" IN (0, 1))'),
           defaultValue: const Constant(false));
+  static const VerificationMeta _isUndatedMeta =
+      const VerificationMeta('isUndated');
+  @override
+  late final GeneratedColumn<bool> isUndated = GeneratedColumn<bool>(
+      'is_undated', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_undated" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -210,7 +220,8 @@ class $MemoryItemsTable extends MemoryItems
         amountMinor,
         paymentCategory,
         birthYear,
-        isGeneratedOccurrence
+        isGeneratedOccurrence,
+        isUndated
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -365,6 +376,10 @@ class $MemoryItemsTable extends MemoryItems
           isGeneratedOccurrence.isAcceptableOrUnknown(
               data['is_generated_occurrence']!, _isGeneratedOccurrenceMeta));
     }
+    if (data.containsKey('is_undated')) {
+      context.handle(_isUndatedMeta,
+          isUndated.isAcceptableOrUnknown(data['is_undated']!, _isUndatedMeta));
+    }
     return context;
   }
 
@@ -429,6 +444,8 @@ class $MemoryItemsTable extends MemoryItems
       isGeneratedOccurrence: attachedDatabase.typeMapping.read(
           DriftSqlType.bool,
           data['${effectivePrefix}is_generated_occurrence'])!,
+      isUndated: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_undated'])!,
     );
   }
 
@@ -466,6 +483,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
   final String? paymentCategory;
   final int? birthYear;
   final bool isGeneratedOccurrence;
+  final bool isUndated;
   const MemoryItemRow(
       {required this.id,
       required this.type,
@@ -493,7 +511,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       this.amountMinor,
       this.paymentCategory,
       this.birthYear,
-      required this.isGeneratedOccurrence});
+      required this.isGeneratedOccurrence,
+      required this.isUndated});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -552,6 +571,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       map['birth_year'] = Variable<int>(birthYear);
     }
     map['is_generated_occurrence'] = Variable<bool>(isGeneratedOccurrence);
+    map['is_undated'] = Variable<bool>(isUndated);
     return map;
   }
 
@@ -612,6 +632,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           ? const Value.absent()
           : Value(birthYear),
       isGeneratedOccurrence: Value(isGeneratedOccurrence),
+      isUndated: Value(isUndated),
     );
   }
 
@@ -649,6 +670,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       birthYear: serializer.fromJson<int?>(json['birthYear']),
       isGeneratedOccurrence:
           serializer.fromJson<bool>(json['isGeneratedOccurrence']),
+      isUndated: serializer.fromJson<bool>(json['isUndated']),
     );
   }
   @override
@@ -682,6 +704,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       'paymentCategory': serializer.toJson<String?>(paymentCategory),
       'birthYear': serializer.toJson<int?>(birthYear),
       'isGeneratedOccurrence': serializer.toJson<bool>(isGeneratedOccurrence),
+      'isUndated': serializer.toJson<bool>(isUndated),
     };
   }
 
@@ -712,7 +735,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           Value<int?> amountMinor = const Value.absent(),
           Value<String?> paymentCategory = const Value.absent(),
           Value<int?> birthYear = const Value.absent(),
-          bool? isGeneratedOccurrence}) =>
+          bool? isGeneratedOccurrence,
+          bool? isUndated}) =>
       MemoryItemRow(
         id: id ?? this.id,
         type: type ?? this.type,
@@ -750,6 +774,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
         birthYear: birthYear.present ? birthYear.value : this.birthYear,
         isGeneratedOccurrence:
             isGeneratedOccurrence ?? this.isGeneratedOccurrence,
+        isUndated: isUndated ?? this.isUndated,
       );
   MemoryItemRow copyWithCompanion(MemoryItemsCompanion data) {
     return MemoryItemRow(
@@ -799,6 +824,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       isGeneratedOccurrence: data.isGeneratedOccurrence.present
           ? data.isGeneratedOccurrence.value
           : this.isGeneratedOccurrence,
+      isUndated: data.isUndated.present ? data.isUndated.value : this.isUndated,
     );
   }
 
@@ -831,7 +857,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           ..write('amountMinor: $amountMinor, ')
           ..write('paymentCategory: $paymentCategory, ')
           ..write('birthYear: $birthYear, ')
-          ..write('isGeneratedOccurrence: $isGeneratedOccurrence')
+          ..write('isGeneratedOccurrence: $isGeneratedOccurrence, ')
+          ..write('isUndated: $isUndated')
           ..write(')'))
         .toString();
   }
@@ -864,7 +891,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
         amountMinor,
         paymentCategory,
         birthYear,
-        isGeneratedOccurrence
+        isGeneratedOccurrence,
+        isUndated
       ]);
   @override
   bool operator ==(Object other) =>
@@ -896,7 +924,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           other.amountMinor == this.amountMinor &&
           other.paymentCategory == this.paymentCategory &&
           other.birthYear == this.birthYear &&
-          other.isGeneratedOccurrence == this.isGeneratedOccurrence);
+          other.isGeneratedOccurrence == this.isGeneratedOccurrence &&
+          other.isUndated == this.isUndated);
 }
 
 class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
@@ -927,6 +956,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
   final Value<String?> paymentCategory;
   final Value<int?> birthYear;
   final Value<bool> isGeneratedOccurrence;
+  final Value<bool> isUndated;
   final Value<int> rowid;
   const MemoryItemsCompanion({
     this.id = const Value.absent(),
@@ -956,6 +986,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     this.paymentCategory = const Value.absent(),
     this.birthYear = const Value.absent(),
     this.isGeneratedOccurrence = const Value.absent(),
+    this.isUndated = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MemoryItemsCompanion.insert({
@@ -986,6 +1017,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     this.paymentCategory = const Value.absent(),
     this.birthYear = const Value.absent(),
     this.isGeneratedOccurrence = const Value.absent(),
+    this.isUndated = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         type = Value(type),
@@ -1021,6 +1053,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     Expression<String>? paymentCategory,
     Expression<int>? birthYear,
     Expression<bool>? isGeneratedOccurrence,
+    Expression<bool>? isUndated,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1053,6 +1086,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       if (birthYear != null) 'birth_year': birthYear,
       if (isGeneratedOccurrence != null)
         'is_generated_occurrence': isGeneratedOccurrence,
+      if (isUndated != null) 'is_undated': isUndated,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1085,6 +1119,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       Value<String?>? paymentCategory,
       Value<int?>? birthYear,
       Value<bool>? isGeneratedOccurrence,
+      Value<bool>? isUndated,
       Value<int>? rowid}) {
     return MemoryItemsCompanion(
       id: id ?? this.id,
@@ -1115,6 +1150,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       birthYear: birthYear ?? this.birthYear,
       isGeneratedOccurrence:
           isGeneratedOccurrence ?? this.isGeneratedOccurrence,
+      isUndated: isUndated ?? this.isUndated,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1204,6 +1240,9 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       map['is_generated_occurrence'] =
           Variable<bool>(isGeneratedOccurrence.value);
     }
+    if (isUndated.present) {
+      map['is_undated'] = Variable<bool>(isUndated.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1240,6 +1279,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
           ..write('paymentCategory: $paymentCategory, ')
           ..write('birthYear: $birthYear, ')
           ..write('isGeneratedOccurrence: $isGeneratedOccurrence, ')
+          ..write('isUndated: $isUndated, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2553,6 +2593,7 @@ typedef $$MemoryItemsTableCreateCompanionBuilder = MemoryItemsCompanion
   Value<String?> paymentCategory,
   Value<int?> birthYear,
   Value<bool> isGeneratedOccurrence,
+  Value<bool> isUndated,
   Value<int> rowid,
 });
 typedef $$MemoryItemsTableUpdateCompanionBuilder = MemoryItemsCompanion
@@ -2584,6 +2625,7 @@ typedef $$MemoryItemsTableUpdateCompanionBuilder = MemoryItemsCompanion
   Value<String?> paymentCategory,
   Value<int?> birthYear,
   Value<bool> isGeneratedOccurrence,
+  Value<bool> isUndated,
   Value<int> rowid,
 });
 
@@ -2682,6 +2724,9 @@ class $$MemoryItemsTableFilterComposer
   ColumnFilters<bool> get isGeneratedOccurrence => $composableBuilder(
       column: $table.isGeneratedOccurrence,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isUndated => $composableBuilder(
+      column: $table.isUndated, builder: (column) => ColumnFilters(column));
 }
 
 class $$MemoryItemsTableOrderingComposer
@@ -2780,6 +2825,9 @@ class $$MemoryItemsTableOrderingComposer
   ColumnOrderings<bool> get isGeneratedOccurrence => $composableBuilder(
       column: $table.isGeneratedOccurrence,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isUndated => $composableBuilder(
+      column: $table.isUndated, builder: (column) => ColumnOrderings(column));
 }
 
 class $$MemoryItemsTableAnnotationComposer
@@ -2871,6 +2919,9 @@ class $$MemoryItemsTableAnnotationComposer
 
   GeneratedColumn<bool> get isGeneratedOccurrence => $composableBuilder(
       column: $table.isGeneratedOccurrence, builder: (column) => column);
+
+  GeneratedColumn<bool> get isUndated =>
+      $composableBuilder(column: $table.isUndated, builder: (column) => column);
 }
 
 class $$MemoryItemsTableTableManager extends RootTableManager<
@@ -2926,6 +2977,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             Value<String?> paymentCategory = const Value.absent(),
             Value<int?> birthYear = const Value.absent(),
             Value<bool> isGeneratedOccurrence = const Value.absent(),
+            Value<bool> isUndated = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               MemoryItemsCompanion(
@@ -2956,6 +3008,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             paymentCategory: paymentCategory,
             birthYear: birthYear,
             isGeneratedOccurrence: isGeneratedOccurrence,
+            isUndated: isUndated,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -2986,6 +3039,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             Value<String?> paymentCategory = const Value.absent(),
             Value<int?> birthYear = const Value.absent(),
             Value<bool> isGeneratedOccurrence = const Value.absent(),
+            Value<bool> isUndated = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               MemoryItemsCompanion.insert(
@@ -3016,6 +3070,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             paymentCategory: paymentCategory,
             birthYear: birthYear,
             isGeneratedOccurrence: isGeneratedOccurrence,
+            isUndated: isUndated,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

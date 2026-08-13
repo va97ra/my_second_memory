@@ -32,7 +32,8 @@ List<MemoryItem> smartFeedForDay(List<MemoryItem> items, DateTime date) {
   final day = DateTime(date.year, date.month, date.day);
 
   final visible = items
-      .where((item) => !item.isArchived && !_isRecurringFeedItem(item))
+      .where((item) =>
+          !item.isArchived && !item.isUndated && !_isRecurringFeedItem(item))
       .toList();
 
   final dated = visible.where((item) => isSameDay(item.memoryDate, day));
@@ -72,6 +73,7 @@ List<FeedDay> groupItemsByDate(
           item.memoryDate.day,
         ).isAfter(day);
     return !item.isArchived &&
+        !item.isUndated &&
         !_isRecurringFeedItem(item) &&
         !hiddenFutureOccurrence &&
         _matchesFilter(item, filter);

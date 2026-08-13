@@ -2,6 +2,7 @@ part of '../memory_item_detail_screen.dart';
 
 class _EditorBody extends StatelessWidget {
   const _EditorBody({
+    required this.isUndated,
     required this.selectedType,
     required this.dateText,
     required this.timeText,
@@ -16,6 +17,7 @@ class _EditorBody extends StatelessWidget {
     required this.recordEditor,
   });
 
+  final bool isUndated;
   final MemoryType selectedType;
   final String dateText;
   final String? timeText;
@@ -46,16 +48,17 @@ class _EditorBody extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPadding),
               child: Column(
                 children: [
-                  _EditorMetadataBar(
-                    selectedType: selectedType,
-                    dateText: dateText,
-                    timeText: timeText,
-                    reminderEnabled: reminderEnabled,
-                    onDateTap: onDateTap,
-                    onTimeTap: onTimeTap,
-                    onClearTime: onClearTime,
-                    onTypeChanged: onTypeChanged,
-                  ),
+                  if (!isUndated)
+                    _EditorMetadataBar(
+                      selectedType: selectedType,
+                      dateText: dateText,
+                      timeText: timeText,
+                      reminderEnabled: reminderEnabled,
+                      onDateTap: onDateTap,
+                      onTimeTap: onTimeTap,
+                      onClearTime: onClearTime,
+                      onTypeChanged: onTypeChanged,
+                    ),
                   if (specialFields != null) ...[
                     SizedBox(height: compact ? 6 : 8),
                     specialFields!,
@@ -64,7 +67,8 @@ class _EditorBody extends StatelessWidget {
                     SizedBox(height: compact ? 6 : 8),
                     _RecurrenceHint(onTap: onRecurrenceHintTap),
                   ],
-                  SizedBox(height: compact ? 8 : 10),
+                  if (!isUndated || specialFields != null || showRecurrenceHint)
+                    SizedBox(height: compact ? 8 : 10),
                   Expanded(child: recordEditor),
                 ],
               ),

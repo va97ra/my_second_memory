@@ -37,6 +37,7 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
       paymentCategory:
           _type == MemoryType.payment ? _paymentCategory.name : null,
       birthYear: _type == MemoryType.birthday ? _birthYear : null,
+      isUndated: _isUndated,
     );
     final revision = _saveCoordinator.beginSave();
     if (mounted) {
@@ -94,6 +95,7 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
         amountMinor: snapshot.amountMinor,
         paymentCategory: snapshot.paymentCategory,
         birthYear: snapshot.birthYear,
+        isUndated: snapshot.isUndated,
       );
       await ref.read(memoryItemsControllerProvider.notifier).add(created);
       if (_recurrenceFrequency != null) {
@@ -133,6 +135,7 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
       clearPaymentCategory: snapshot.paymentCategory == null,
       birthYear: snapshot.birthYear,
       clearBirthYear: snapshot.birthYear == null,
+      isUndated: snapshot.isUndated,
       updatedAt: snapshot.savedAt,
     );
     final persisted = ref

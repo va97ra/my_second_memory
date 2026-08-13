@@ -127,6 +127,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/memory/note/new',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          child: const MemoryItemDetailScreen(createUndated: true),
+        ),
+      ),
+      GoRoute(
         path: '/memory/view/:id',
         pageBuilder: (context, state) {
           return pageTurnPage(

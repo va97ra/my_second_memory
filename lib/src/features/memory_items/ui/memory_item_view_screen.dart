@@ -73,7 +73,7 @@ class MemoryItemViewScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            tooltip: strings.editRecord,
+            tooltip: item.isUndated ? strings.editNote : strings.editRecord,
             onPressed: () => context.push(
               '/memory/item/${Uri.encodeComponent(item.id)}',
             ),
@@ -155,7 +155,9 @@ class MemoryItemViewScreen extends ConsumerWidget {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    item.type.label(locale),
+                                    item.isUndated
+                                        ? strings.noteCard
+                                        : item.type.label(locale),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: Theme.of(context)
@@ -167,18 +169,19 @@ class MemoryItemViewScreen extends ConsumerWidget {
                                         ),
                                   ),
                                 ),
-                                Text(
-                                  DateFormat('d MMM y', locale)
-                                      .format(item.memoryDate),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelMedium
-                                      ?.copyWith(
-                                        color: const Color(0xFF6B5B47),
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                ),
-                                if (timeText != null) ...[
+                                if (!item.isUndated)
+                                  Text(
+                                    DateFormat('d MMM y', locale)
+                                        .format(item.memoryDate),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelMedium
+                                        ?.copyWith(
+                                          color: const Color(0xFF6B5B47),
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                if (!item.isUndated && timeText != null) ...[
                                   const SizedBox(width: 8),
                                   DecoratedBox(
                                     decoration: BoxDecoration(

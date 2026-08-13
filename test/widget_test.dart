@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +15,7 @@ import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_cont
 import 'package:ezhednevnik_v2/src/features/home_feed/ui/widgets/memory_item_card.dart';
 import 'package:ezhednevnik_v2/src/core/theme/app_theme_controller.dart';
 import 'package:ezhednevnik_v2/src/core/theme/app_theme_style.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/ui/holiday_detail_screen.dart';
 import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';
 import 'package:ezhednevnik_v2/src/features/security/data/security_service.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
@@ -149,6 +151,16 @@ class _FeedMemoryRepository extends _TestMemoryRepository {
         updatedAt: now,
       ),
       MemoryItem(
+        id: 'undated-daughter-card',
+        type: MemoryType.note,
+        title: 'Карта дочери',
+        body: 'Данные, которые нужны под рукой',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+        isUndated: true,
+      ),
+      MemoryItem(
         id: 'today-project',
         type: MemoryType.project,
         title: 'Ежедневник V2',
@@ -224,6 +236,53 @@ class _TodayOnlyMemoryRepository extends _TestMemoryRepository {
   Future<void> replaceAll(List<MemoryItem> items) async {
     savedItems = items;
   }
+}
+
+class _FutureFeedMemoryRepository extends _TestMemoryRepository {
+  @override
+  Future<List<MemoryItem>> loadAll() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return [
+      MemoryItem(
+        id: 'future-feed-undated',
+        type: MemoryType.note,
+        title: 'Постоянная записка',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+        isUndated: true,
+      ),
+      for (var offset = 1; offset <= 10; offset++)
+        MemoryItem(
+          id: 'future-$offset',
+          type: MemoryType.note,
+          title: 'Будущая запись $offset',
+          memoryDate: today.add(Duration(days: offset)),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      MemoryItem(
+        id: 'today-focus',
+        type: MemoryType.note,
+        title: 'Фокус сегодня',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      MemoryItem(
+        id: 'past-after-focus',
+        type: MemoryType.note,
+        title: 'Прошлая запись',
+        memoryDate: today.subtract(const Duration(days: 1)),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+  }
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {}
 }
 
 class _RichEditorMemoryRepository extends _TestMemoryRepository {
@@ -510,34 +569,44 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text(
-        'Вчера · ${DateFormat('d MMMM', 'ru').format(yesterday)}',
+      find.textContaining(
+        'Вчера · ${DateFormat('d MMMM', 'ru').format(yesterday)} · 1 запись',
       ),
       findsOneWidget,
     );
-    expect(
-      find.descendant(
-        of: find.byKey(ValueKey(
-          'feed_day_count_${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}',
-        )),
-        matching: find.text('2 записи'),
-      ),
-      findsOneWidget,
+    expect(find.text('Вчерашняя заметка'), findsNothing);
+    expect(find.text('Позавчерашняя заметка'), findsNothing);
+    await tester.tap(
+      find.byKey(ValueKey(
+        'feed_day_divider_${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}',
+      )),
     );
+    await tester.pumpAndSettle();
     expect(find.text('Вчерашняя заметка'), findsOneWidget);
-    expect(find.text('Позавчерашняя заметка'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Старая активная запись'),
+      find.byKey(ValueKey(
+        'feed_day_divider_${oldDay.year}-${oldDay.month.toString().padLeft(2, '0')}-${oldDay.day.toString().padLeft(2, '0')}',
+      )),
       220,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('feed_dated_scroll')),
+        matching: find.byType(Scrollable),
+      ),
     );
     await tester.pumpAndSettle();
     expect(
-      find.text(
-        DateFormat('d MMMM y', 'ru').format(oldDay),
+      find.textContaining(
+        '${DateFormat('d MMMM y', 'ru').format(oldDay)} · 1 запись',
       ),
       findsOneWidget,
     );
+    expect(find.text('Старая активная запись'), findsNothing);
+    await tester.tap(
+      find.byKey(ValueKey(
+        'feed_day_divider_${oldDay.year}-${oldDay.month.toString().padLeft(2, '0')}-${oldDay.day.toString().padLeft(2, '0')}',
+      )),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Старая активная запись'), findsOneWidget);
     expect(find.text('Архивная запись'), findsNothing);
     expect(find.text(DateFormat.MMM('ru').format(today)), findsNothing);
@@ -549,9 +618,9 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('feed day header stays pinned and shows localized counts',
+  testWidgets('past feed day collapses into the old divider and expands',
       (tester) async {
-    await tester.binding.setSurfaceSize(const Size(800, 500));
+    await tester.binding.setSurfaceSize(const Size(800, 700));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final now = DateTime.now();
@@ -575,40 +644,240 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final todayHeader =
-        find.byKey(ValueKey('feed_day_header_${dateKey(today)}'));
-    final yesterdayCount =
-        find.byKey(ValueKey('feed_day_count_${dateKey(yesterday)}'));
-    expect(todayHeader, findsOneWidget);
-    final scrollView = find.byType(CustomScrollView).first;
-    final outerScrollable = find
-        .descendant(of: scrollView, matching: find.byType(Scrollable))
-        .first;
-    final position = tester.state<ScrollableState>(outerScrollable).position;
-    final initialHeaderTop = tester.getTopLeft(todayHeader).dy;
-    final pinnedOffset = (initialHeaderTop + 8).clamp(
-      0.0,
-      position.maxScrollExtent - 24,
-    );
-    position.jumpTo(pinnedOffset);
-    await tester.pumpAndSettle();
-    final pinnedTop = tester.getTopLeft(todayHeader).dy;
-    position.jumpTo(pinnedOffset + 16);
-    await tester.pumpAndSettle();
-    expect(tester.getTopLeft(todayHeader).dy, closeTo(pinnedTop, 0.5));
+    final yesterdayDivider =
+        find.byKey(ValueKey('feed_day_divider_${dateKey(yesterday)}'));
     await tester.scrollUntilVisible(
-      yesterdayCount,
+      yesterdayDivider,
       100,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('feed_dated_scroll')),
+        matching: find.byType(Scrollable),
+      ),
     );
+    await tester.pumpAndSettle();
+    expect(yesterdayDivider, findsOneWidget);
+    expect(find.textContaining('1 запись'), findsWidgets);
+    expect(find.text('Вчерашняя заметка'), findsNothing);
+    await tester.tap(yesterdayDivider);
+    await tester.pumpAndSettle();
+    expect(find.text('Вчерашняя заметка'), findsOneWidget);
+    await tester.tap(yesterdayDivider);
+    await tester.pumpAndSettle();
+    expect(find.text('Вчерашняя заметка'), findsNothing);
+  });
+
+  testWidgets('feed keeps panels and notes static while future days reveal',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(
+            _FutureFeedMemoryRepository(),
+          ),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    String dayKey(DateTime value) =>
+        '${value.year}-${value.month.toString().padLeft(2, '0')}-'
+        '${value.day.toString().padLeft(2, '0')}';
+    final notesDivider = find.byKey(const ValueKey('feed_notes_divider'));
+    final todayDivider =
+        find.byKey(ValueKey('feed_day_divider_${dayKey(today)}'));
+    final closestFutureDivider = find.byKey(
+      ValueKey(
+        'feed_day_divider_${dayKey(today.add(const Duration(days: 1)))}',
+      ),
+    );
+    expect(notesDivider, findsOneWidget);
+    expect(todayDivider, findsOneWidget);
+    expect(
+      tester.getTopLeft(todayDivider).dy,
+      closeTo(tester.getBottomLeft(notesDivider).dy, 1),
+    );
+    expect(find.text('Фокус сегодня'), findsOneWidget);
+
+    final datedScroll = find.byKey(const ValueKey('feed_dated_scroll'));
+    final informers = find.byKey(const ValueKey('feed_recurring_informers'));
+    final scrollView = tester.widget<CustomScrollView>(datedScroll);
+    final controller = scrollView.controller!;
+    final initialOffset = controller.offset;
+    expect(initialOffset, greaterThan(0));
+    final notesTop = tester.getTopLeft(notesDivider).dy;
+    final informersTop = tester.getTopLeft(informers).dy;
+
+    await tester.drag(
+      datedScroll,
+      const Offset(0, 220),
+    );
+    await tester.pumpAndSettle();
+    expect(controller.offset, lessThan(initialOffset));
+    expect(tester.getTopLeft(notesDivider).dy, closeTo(notesTop, 1));
+    expect(tester.getTopLeft(informers).dy, closeTo(informersTop, 1));
+    expect(
+      tester.getTopLeft(closestFutureDivider).dy,
+      greaterThanOrEqualTo(tester.getBottomLeft(notesDivider).dy - 1),
+    );
+
+    final manualOffset = controller.offset;
+    await tester.pump(const Duration(seconds: 1));
+    expect(controller.offset, closeTo(manualOffset, 0.1));
+
+    controller.jumpTo(initialOffset);
     await tester.pumpAndSettle();
     expect(
-      find.descendant(
-        of: yesterdayCount,
-        matching: find.text('1 запись'),
-      ),
-      findsOneWidget,
+      tester.getTopLeft(todayDivider).dy,
+      closeTo(tester.getBottomLeft(notesDivider).dy, 1),
     );
+
+    await tester.drag(datedScroll, const Offset(0, 220));
+    await tester.pumpAndSettle();
+    expect(controller.offset, lessThan(initialOffset));
+    await tester.tap(find.text('Аккаунты').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Лента').last);
+    await tester.pumpAndSettle();
+    expect(controller.offset, closeTo(initialOffset, 0.1));
+    expect(
+      tester.getTopLeft(todayDivider).dy,
+      closeTo(tester.getBottomLeft(notesDivider).dy, 1),
+    );
+
+    await tester.tap(notesDivider);
+    await tester.pumpAndSettle();
+    expect(find.text('Постоянная записка'), findsOneWidget);
+    await tester.tap(notesDivider);
+    await tester.pumpAndSettle();
+    expect(find.text('Постоянная записка'), findsNothing);
+    expect(
+      tester.getTopLeft(todayDivider).dy,
+      closeTo(tester.getBottomLeft(notesDivider).dy, 1),
+    );
+  });
+
+  testWidgets(
+      'undated notes have their own collapsible feed section and editor',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _FeedMemoryRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final divider = find.byKey(const ValueKey('feed_notes_divider'));
+    expect(find.text('Записки · 1'), findsOneWidget);
+    expect(find.text('Карта дочери'), findsNothing);
+    expect(
+      tester.getCenter(find.text('Записки · 1')).dx,
+      closeTo(tester.getCenter(divider).dx, 0.1),
+    );
+    final leftLine = find.descendant(
+      of: divider,
+      matching: find.byKey(const ValueKey('labeled_divider_left_line')),
+    );
+    final rightLine = find.descendant(
+      of: divider,
+      matching: find.byKey(const ValueKey('labeled_divider_right_line')),
+    );
+    expect(tester.getSize(leftLine).width, tester.getSize(rightLine).width);
+
+    await tester.tap(divider);
+    await tester.pumpAndSettle();
+    expect(find.text('Карта дочери'), findsOneWidget);
+    await tester.tap(divider);
+    await tester.pumpAndSettle();
+    expect(find.text('Карта дочери'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
+    await tester.pumpAndSettle();
+    expect(find.text('Новая записка'), findsOneWidget);
+    expect(find.byKey(const ValueKey('memory_type_picker')), findsNothing);
+    expect(find.byKey(const ValueKey('memory_date_picker')), findsNothing);
+    expect(find.byKey(const ValueKey('memory_time_picker')), findsNothing);
+    expect(find.byKey(const ValueKey('record_editor_panel')), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('record_editor_text')),
+      'Важные данные',
+    );
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+    expect(repository.savedItems.any((item) => item.isUndated), isTrue);
+  });
+
+  testWidgets('undated note archives and restores through memory archive',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _FeedMemoryRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final notesDivider = find.byKey(const ValueKey('feed_notes_divider'));
+    await tester.tap(notesDivider);
+    await tester.pumpAndSettle();
+    final noteArchive = find.byKey(
+      const ValueKey('memory_card_archive_undated-daughter-card'),
+    );
+    await tester.tap(noteArchive);
+    await tester.pumpAndSettle();
+    expect(find.text('Записки · 0'), findsOneWidget);
+
+    await tester.tap(find.text('Настройки'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Архив памяти'));
+    await tester.pumpAndSettle();
+    expect(find.text('Карта дочери'), findsOneWidget);
+    await tester.tap(
+      find.byKey(
+        const ValueKey('memory_card_archive_undated-daughter-card'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Карта дочери'), findsNothing);
+
+    await tester.tap(find.text('Лента').last);
+    await tester.pumpAndSettle();
+    final restoredDivider = find.byKey(const ValueKey('feed_notes_divider'));
+    expect(find.text('Записки · 1'), findsOneWidget);
+    expect(find.text('Карта дочери'), findsNothing);
+    await tester.tap(restoredDivider);
+    await tester.pumpAndSettle();
+    expect(find.text('Карта дочери'), findsOneWidget);
   });
 
   testWidgets('hides empty previous day sections', (tester) async {
@@ -634,6 +903,34 @@ void main() {
 
     expect(find.text('Только сегодня'), findsOneWidget);
     expect(find.text('Записей нет'), findsNothing);
+  });
+
+  testWidgets('holiday detail shows category and historical description',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 760));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          locale: const Locale('ru'),
+          supportedLocales: const [Locale('ru')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: HolidayDetailScreen(date: DateTime(2026, 8, 2)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('День ВДВ'), findsOneWidget);
+    expect(find.text('Воинский праздник'), findsOneWidget);
+    expect(find.textContaining('2 августа 1930 года'), findsOneWidget);
+    expect(find.text('День железнодорожника'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('feed card can be completed and opened read-only',
@@ -673,7 +970,7 @@ void main() {
       tester
           .getSize(find.byKey(const ValueKey('memory_card_today-plan')))
           .height,
-      96,
+      76,
     );
     expect(
       find.byKey(const ValueKey('memory_card_title_today-plan')),
@@ -684,14 +981,30 @@ void main() {
       findsOneWidget,
     );
     expect(
+      tester
+          .widget<Text>(
+            find.byKey(const ValueKey('memory_card_title_today-plan')),
+          )
+          .maxLines,
+      1,
+    );
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(const ValueKey('memory_card_body_today-plan')),
+          )
+          .maxLines,
+      2,
+    );
+    expect(
       tester.getSize(find.byKey(const ValueKey('memory_card_done_today-plan'))),
-      const Size.square(48),
+      const Size.square(36),
     );
     expect(
       tester.getSize(
         find.byKey(const ValueKey('memory_card_archive_today-plan')),
       ),
-      const Size.square(48),
+      const Size.square(36),
     );
     await tester.tap(
       find.byKey(const ValueKey('memory_card_done_today-plan')),
@@ -747,7 +1060,7 @@ void main() {
     expect(repository.savedItems.single.status, MemoryStatus.archived);
   });
 
-  testWidgets('dense feed card keeps image and voice at large text',
+  testWidgets('dense feed card shows image and voice as compact icons',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(320, 520));
     tester.platformDispatcher.textScaleFactorTestValue = 2;
@@ -772,6 +1085,7 @@ void main() {
                 audioPath: 'voice-test.m4a',
                 audioDurationSeconds: 15,
               ),
+              showDate: false,
               compact: true,
               denseFeedLayout: true,
               onOpen: () {},
@@ -788,11 +1102,15 @@ void main() {
       tester
           .getSize(find.byKey(const ValueKey('memory_card_dense-media')))
           .height,
-      176,
+      152,
     );
-    expect(find.byKey(const ValueKey('feed_image_$_pixelImageDataUrl')),
-        findsOneWidget);
-    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('feed_image_$_pixelImageDataUrl')),
+      findsNothing,
+    );
+    expect(find.byIcon(Icons.play_arrow_rounded), findsNothing);
+    expect(find.byIcon(Icons.image_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -1726,17 +2044,26 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      final card = find.byKey(const ValueKey('memory_card_today-plan'));
+      await tester.scrollUntilVisible(
+        card,
+        120,
+        scrollable: find.descendant(
+          of: find.byKey(const ValueKey('feed_dated_scroll')),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.pumpAndSettle();
+
       expect(
-        tester
-            .getSize(find.byKey(const ValueKey('memory_card_today-plan')))
-            .height,
-        closeTo(103.2, 0.1),
+        tester.getSize(card).height,
+        closeTo(88, 0.1),
       );
       expect(
         tester.getSize(
           find.byKey(const ValueKey('memory_card_done_today-plan')),
         ),
-        const Size.square(48),
+        const Size.square(36),
       );
       expect(tester.takeException(), isNull);
     });
@@ -1769,13 +2096,16 @@ void main() {
         await tester.scrollUntilVisible(
           card,
           180,
-          scrollable: find.byType(Scrollable).first,
+          scrollable: find.descendant(
+            of: find.byKey(const ValueKey('feed_dated_scroll')),
+            matching: find.byType(Scrollable),
+          ),
         );
         await tester.pumpAndSettle();
       }
       final expectedHeight = scale <= 1.3
-          ? 96 + ((scale - 1).clamp(0.0, 0.3) * 24)
-          : 103.2 + (((scale - 1.3) / 0.7).clamp(0.0, 1.0) * 72.8);
+          ? 76 + ((scale - 1).clamp(0.0, 0.3) * 40)
+          : 88 + (((scale - 1.3) / 0.7).clamp(0.0, 1.0) * 64);
       expect(
         tester.getSize(card).height,
         closeTo(expectedHeight, 0.1),

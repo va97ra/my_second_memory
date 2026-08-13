@@ -33,6 +33,7 @@ void main() {
         updatedAt: date,
         status: MemoryStatus.done,
         imagePaths: const ['/missing/photo.jpg'],
+        isUndated: true,
       ),
     ]);
     final shiftRepository = _ShiftRepository([
@@ -101,6 +102,7 @@ void main() {
     expect(restored.memoryItems.single.reminderSoundName, 'Сигнал');
     expect(restored.memoryItems.single.status, MemoryStatus.done);
     expect(restored.memoryItems.single.imagePaths, ['/missing/photo.jpg']);
+    expect(restored.memoryItems.single.isUndated, isTrue);
     expect(restored.shiftSchedules, hasLength(1));
     expect(restored.shiftSchedules.single.organizationName, 'Завод');
     expect(restored.shiftSchedules.single.vacations, hasLength(1));
@@ -125,6 +127,7 @@ void main() {
           memoryDate: date,
           createdAt: date,
           updatedAt: date,
+          isUndated: true,
         ),
       ]),
       shiftScheduleRepository: _ShiftRepository(const []),
@@ -148,6 +151,7 @@ void main() {
 
     expect(restored.memoryItems.single.id, 'note');
     expect(restored.memoryItems.single.timeMinutes, 8 * 60);
+    expect(restored.memoryItems.single.isUndated, isTrue);
     expect(restored.accounts.single.password, 'secret');
     expect(
       () => service.parseBackupBytes(zip, password: 'bad-password'),

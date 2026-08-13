@@ -287,6 +287,7 @@ class SqliteMemoryRepository implements MemoryRepository, SecureEntityBackend {
       paymentCategory: Value(item.paymentCategory),
       birthYear: Value(item.birthYear),
       isGeneratedOccurrence: Value(item.isGeneratedOccurrence),
+      isUndated: Value(item.isUndated),
     );
   }
 
@@ -319,6 +320,7 @@ class SqliteMemoryRepository implements MemoryRepository, SecureEntityBackend {
       paymentCategory: row.paymentCategory,
       birthYear: row.birthYear,
       isGeneratedOccurrence: row.isGeneratedOccurrence,
+      isUndated: row.isUndated,
     );
   }
 

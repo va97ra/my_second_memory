@@ -30,6 +30,7 @@ class MemoryItems extends Table {
   IntColumn get birthYear => integer().nullable()();
   BoolColumn get isGeneratedOccurrence =>
       boolean().withDefault(const Constant(false))();
+  BoolColumn get isUndated => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

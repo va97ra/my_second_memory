@@ -24,6 +24,12 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final palette = AppSurfacePalette.of(context);
+    final branchIndex = navigationShell?.currentIndex ?? currentIndex!;
+    final visibleIndex = switch (branchIndex) {
+      0 || 1 => branchIndex,
+      2 => 3,
+      _ => 4,
+    };
 
     return Scaffold(
       body: navigationShell == null
@@ -54,17 +60,22 @@ class AppShell extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(8, 2, 8, 4),
             child: NavigationBar(
-              selectedIndex: navigationShell?.currentIndex ?? currentIndex!,
+              selectedIndex: visibleIndex,
               onDestinationSelected: (index) {
+                if (index == 2) {
+                  context.push('/memory/note/new');
+                  return;
+                }
+                final targetBranch = index < 2 ? index : index - 1;
                 final shell = navigationShell;
                 if (shell != null) {
                   shell.goBranch(
-                    index,
-                    initialLocation: index == shell.currentIndex,
+                    targetBranch,
+                    initialLocation: targetBranch == shell.currentIndex,
                   );
                   return;
                 }
-                context.go(switch (index) {
+                context.go(switch (targetBranch) {
                   0 => '/',
                   1 => '/calendar',
                   2 => '/accounts',
@@ -81,6 +92,12 @@ class AppShell extends StatelessWidget {
                   icon: const Icon(Icons.calendar_month_rounded),
                   selectedIcon: const Icon(Icons.calendar_month_rounded),
                   label: strings.calendar,
+                ),
+                NavigationDestination(
+                  key: const ValueKey('bottom_add_note'),
+                  icon: const Icon(Icons.edit_note_rounded),
+                  selectedIcon: const Icon(Icons.edit_note_rounded),
+                  label: strings.noteCard,
                 ),
                 NavigationDestination(
                   icon: const Icon(Icons.vpn_key_rounded),

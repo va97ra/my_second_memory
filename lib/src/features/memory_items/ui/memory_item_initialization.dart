@@ -14,6 +14,7 @@ extension _MemoryItemInitialization on _MemoryItemDetailScreenState {
     _reminderSoundUri = item.reminderSoundUri;
     _reminderSoundName = item.reminderSoundName;
     _status = item.status;
+    _isUndated = item.isUndated;
     _type =
         editableMemoryTypes.contains(item.type) ? item.type : MemoryType.note;
     _audioPath = item.audioPath;
@@ -57,6 +58,7 @@ extension _MemoryItemInitialization on _MemoryItemDetailScreenState {
     _reminderSoundUri = null;
     _reminderSoundName = null;
     _status = MemoryStatus.active;
+    _isUndated = widget.createUndated;
     _type = MemoryType.note;
     _audioPath = null;
     _audioDurationSeconds = null;

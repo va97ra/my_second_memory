@@ -20,6 +20,7 @@ final memoryItemsForDayProvider =
     Provider.family<List<MemoryItem>, DateTime>((ref, date) {
   final day = DateTime(date.year, date.month, date.day);
   final persisted = ref.watch(memoryItemsControllerProvider).where((item) {
+    if (item.isUndated) return false;
     final itemDate = item.memoryDate;
     return itemDate.year == day.year &&
         itemDate.month == day.month &&
@@ -38,6 +39,19 @@ final archivedMemoryItemsProvider = Provider<List<MemoryItem>>((ref) {
       .toList(growable: false);
 });
 
+final undatedNotesProvider = Provider<List<MemoryItem>>((ref) {
+  final notes = ref
+      .watch(memoryItemsControllerProvider)
+      .where((item) => item.isUndated && !item.isArchived)
+      .toList(growable: false);
+  return [...notes]..sort((left, right) {
+      final byUpdated = right.updatedAt.compareTo(left.updatedAt);
+      return byUpdated != 0
+          ? byUpdated
+          : right.createdAt.compareTo(left.createdAt);
+    });
+});
+
 final visibleCalendarItemsProvider =
     Provider.family<List<MemoryItem>, DateTime>((ref, month) {
   final firstOfMonth = DateTime(month.year, month.month);
@@ -46,6 +60,7 @@ final visibleCalendarItemsProvider =
   );
   final gridEnd = gridStart.add(const Duration(days: 42));
   final persisted = ref.watch(memoryItemsControllerProvider).where((item) {
+    if (item.isUndated) return false;
     final date = item.memoryDate;
     return !date.isBefore(gridStart) && date.isBefore(gridEnd);
   }).toList(growable: false);

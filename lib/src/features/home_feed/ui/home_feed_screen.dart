@@ -4,10 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/app_surface_palette.dart';
-import '../../../core/theme/app_surface_textures.dart';
-import '../../../core/theme/notebook/notebook_assets.dart';
-import '../../../core/theme/notebook/notebook_visuals.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
@@ -27,16 +23,51 @@ class HomeFeedScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
+  static const _dividerHeight = 48.0;
+
+  final Set<String> _expandedPastDays = <String>{};
+  final ScrollController _scrollController = ScrollController();
+  bool _notesExpanded = false;
+  bool _initialTodayFocusScheduled = false;
+  bool _branchWasActive = false;
+  int _futureDayCount = 0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final branchIsActive = TickerMode.valuesOf(context).enabled;
+    if (branchIsActive && !_branchWasActive && _initialTodayFocusScheduled) {
+      _scheduleTodayFocus(force: true);
+    }
+    _branchWasActive = branchIsActive;
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final loadState = ref.watch(memoryItemsLoadProvider);
     final filter = ref.watch(feedFilterProvider);
     final layout = ref.watch(feedLayoutProvider);
-    final isEmpty = layout.days.isEmpty;
+    final notes = ref.watch(undatedNotesProvider);
+    final isEmpty = layout.days.isEmpty && notes.isEmpty;
     final showHints = ref.watch(appHintsProvider);
-    final locale = Localizations.localeOf(context).languageCode;
-    final headerExtent = _feedDayHeaderExtent(context);
+    final mediaQuery = MediaQuery.of(context);
+    final showFeedHint = showHints &&
+        mediaQuery.size.height >= 720 &&
+        mediaQuery.textScaler.scale(1) <= 1.3;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final futureDayCount = layout.days.where((group) {
+      final date = DateTime(group.date.year, group.date.month, group.date.day);
+      return date.isAfter(today);
+    }).length;
+    _futureDayCount = futureDayCount;
 
     if (loadState.isLoading || loadState.hasError) {
       return WarmGradientBackground(
@@ -56,169 +87,176 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
       );
     }
 
+    _scheduleTodayFocus();
+
     return WarmGradientBackground(
-      child: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: _FeedHeader(
-                title: strings.dayFeed,
-                filter: filter,
-                onFilterSelected: (filter) {
-                  ref.read(feedFilterProvider.notifier).state = filter;
-                },
-              ),
-            ),
-            if (showHints) const SliverToBoxAdapter(child: _FeedUsageHint()),
-            const SliverToBoxAdapter(child: RecurringInformers(height: 164)),
-            if (isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: AppEmptyState(
-                    icon: Icons.view_agenda_rounded,
-                    title: strings.emptyFeed,
-                    actionLabel: strings.addRecord,
-                    onAction: () => context.go('/calendar'),
+      child: Column(
+        children: [
+          _FeedHeader(
+            title: strings.dayFeed,
+            filter: filter,
+            onFilterSelected: (filter) {
+              ref.read(feedFilterProvider.notifier).state = filter;
+            },
+          ),
+          if (showFeedHint) const _FeedUsageHint(),
+          const KeyedSubtree(
+            key: ValueKey('feed_recurring_informers'),
+            child: RecurringInformers(height: 164),
+          ),
+          _FeedDayDivider(
+            key: const ValueKey('feed_notes_divider'),
+            label: '${strings.notes} · ${notes.length}',
+            expanded: _notesExpanded,
+            collapsible: true,
+            onTap: _toggleNotes,
+          ),
+          if (_notesExpanded)
+            _UndatedNotesList(itemIds: [
+              for (final note in notes) note.id,
+            ]),
+          Expanded(
+            child: CustomScrollView(
+              key: const ValueKey('feed_dated_scroll'),
+              controller: _scrollController,
+              slivers: [
+                if (isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: AppEmptyState(
+                        icon: Icons.view_agenda_rounded,
+                        title: strings.emptyFeed,
+                        actionLabel: strings.addRecord,
+                        onAction: () => context.go('/calendar'),
+                      ),
+                    ),
+                  )
+                else
+                  for (final group in layout.days)
+                    ..._buildDaySlivers(
+                      context,
+                      date: group.date,
+                      itemIds: group.itemIds,
+                    ),
+                SliverPadding(
+                  padding: EdgeInsets.only(
+                    bottom: futureDayCount > 0
+                        ? MediaQuery.sizeOf(context).height
+                        : 20,
                   ),
                 ),
-              )
-            else
-              for (final group in layout.days) ...[
-                PinnedHeaderSliver(
-                  child: _FeedDayHeader(
-                    date: group.date,
-                    itemCount: group.itemIds.length,
-                    locale: locale,
-                    extent: headerExtent,
-                  ),
-                ),
-                _MemorySliverList(itemIds: group.itemIds),
               ],
-            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  void _scheduleTodayFocus({bool force = false}) {
+    if (_initialTodayFocusScheduled && !force) return;
+    _initialTodayFocusScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final target = _futureDayCount * _dividerHeight;
+      final position = _scrollController.position;
+      _scrollController.jumpTo(
+        target.clamp(position.minScrollExtent, position.maxScrollExtent),
+      );
+    });
+  }
+
+  void _toggleNotes() {
+    setState(() => _notesExpanded = !_notesExpanded);
+  }
+
+  List<Widget> _buildDaySlivers(
+    BuildContext context, {
+    required DateTime date,
+    required List<String> itemIds,
+  }) {
+    final key = _feedDateKey(date);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final checked = DateTime(date.year, date.month, date.day);
+    final isToday = checked == today;
+    final isExpanded = isToday || _expandedPastDays.contains(key);
+    final strings = AppStrings.of(context);
+    final dateLabel = _feedDividerLabel(context, date);
+    final label = isToday
+        ? dateLabel
+        : '$dateLabel · ${strings.recordsCount(itemIds.length)}';
+
+    return [
+      SliverToBoxAdapter(
+        child: _FeedDayDivider(
+          key: ValueKey('feed_day_divider_$key'),
+          label: label,
+          expanded: isExpanded,
+          collapsible: !isToday,
+          onTap: isToday
+              ? null
+              : () {
+                  setState(() {
+                    if (isExpanded) {
+                      _expandedPastDays.remove(key);
+                    } else {
+                      _expandedPastDays.add(key);
+                    }
+                  });
+                },
+        ),
+      ),
+      if (isExpanded) _MemorySliverList(itemIds: itemIds),
+    ];
+  }
 }
 
-double _feedDayHeaderExtent(BuildContext context) {
-  final scale = MediaQuery.textScalerOf(context).scale(1);
-  return 36 + ((scale - 1).clamp(0.0, 1.0) * 12);
-}
-
-class _FeedDayHeader extends StatelessWidget {
-  const _FeedDayHeader({
-    required this.date,
-    required this.itemCount,
-    required this.locale,
-    required this.extent,
+class _FeedDayDivider extends StatelessWidget {
+  const _FeedDayDivider({
+    required this.label,
+    required this.expanded,
+    required this.collapsible,
+    required this.onTap,
+    super.key,
   });
 
-  final DateTime date;
-  final int itemCount;
-  final String locale;
-  final double extent;
+  final String label;
+  final bool expanded;
+  final bool collapsible;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final strings = AppStrings.of(context);
-    final colors = Theme.of(context).colorScheme;
-    final palette = AppSurfacePalette.of(context);
-    final textures = AppSurfaceTextures.maybeOf(context);
-    final notebook = NotebookVisuals.maybeOf(context);
-    final dateLabel = _feedDateLabel(strings, locale, date);
-    final countLabel = strings.recordsCount(itemCount);
-    final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-'
-        '${date.day.toString().padLeft(2, '0')}';
-
-    return SizedBox(
-      height: extent,
-      child: Semantics(
-        header: true,
-        label: '$dateLabel, $countLabel',
-        child: DecoratedBox(
-          key: ValueKey('feed_day_header_$dateKey'),
-          decoration: BoxDecoration(
-            color: notebook?.paper ?? palette.panelSurface,
-            image: notebook != null
-                ? const DecorationImage(
-                    image: AssetImage(NotebookAssets.paper),
-                    fit: BoxFit.cover,
-                    opacity: 0.72,
-                  )
-                : textures == null
-                    ? null
-                    : DecorationImage(
-                        image: AssetImage(textures.surfaceAsset),
-                        fit: BoxFit.cover,
-                        opacity: textures.surfaceOpacity,
-                        filterQuality: FilterQuality.low,
-                      ),
-            border: Border.symmetric(
-              horizontal: BorderSide(
-                color: notebook?.line ?? palette.borderStart,
-                width: 0.8,
-              ),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    dateLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: notebook?.ink ?? colors.onSurface,
-                          fontWeight: FontWeight.w900,
-                        ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                DecoratedBox(
-                  key: ValueKey('feed_day_count_$dateKey'),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: colors.primary.withValues(alpha: 0.38),
-                    ),
-                  ),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    child: Text(
-                      countLabel,
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: notebook?.ink ?? colors.onSurface,
-                            fontWeight: FontWeight.w900,
-                          ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    final divider = AppLabeledDivider(
+      label: label,
+      trailingIcon: collapsible
+          ? expanded
+              ? Icons.expand_less_rounded
+              : Icons.expand_more_rounded
+          : null,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+    );
+    if (!collapsible) return divider;
+    return Semantics(
+      button: true,
+      expanded: expanded,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(height: 48, child: Center(child: divider)),
         ),
       ),
     );
   }
 }
 
-String _feedDateLabel(AppStrings strings, String locale, DateTime date) {
+String _feedDividerLabel(BuildContext context, DateTime date) {
+  final strings = AppStrings.of(context);
+  final locale = Localizations.localeOf(context).languageCode;
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final checked = DateTime(date.year, date.month, date.day);
@@ -235,6 +273,10 @@ String _feedDateLabel(AppStrings strings, String locale, DateTime date) {
     locale,
   ).format(checked);
 }
+
+String _feedDateKey(DateTime date) =>
+    '${date.year}-${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';
 
 class _FeedHeader extends StatelessWidget {
   const _FeedHeader({
@@ -432,6 +474,12 @@ class _FullGuideSheet extends StatelessWidget {
       _GuideSection(
         title: ru ? 'Лента и календарь' : 'Feed and calendar',
         items: [
+          _GuideItem(
+            Icons.edit_note_rounded,
+            ru
+                ? 'Центральная кнопка «Записка» создаёт запись без даты, которая всегда находится в разделе «Записки» над лентой.'
+                : 'The center Note button creates an undated note that stays in the Notes section above the feed.',
+          ),
           _GuideItem(
             Icons.filter_list_rounded,
             ru
@@ -776,6 +824,59 @@ class _MemorySliverList extends StatelessWidget {
         return _FeedMemoryCard(
           itemId: itemIds[index],
         );
+      },
+    );
+  }
+}
+
+class _UndatedNotesList extends StatelessWidget {
+  const _UndatedNotesList({required this.itemIds});
+
+  final List<String> itemIds;
+
+  @override
+  Widget build(BuildContext context) {
+    if (itemIds.isEmpty) return const SizedBox.shrink();
+
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final estimatedCardHeight = textScale <= 1.3
+        ? 76 + ((textScale - 1).clamp(0.0, 0.3) * 40)
+        : 88 + (((textScale - 1.3) / 0.7).clamp(0.0, 1.0) * 64);
+    final contentHeight = itemIds.length * (estimatedCardHeight + 8);
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.32;
+
+    return SizedBox(
+      height: contentHeight.clamp(0.0, maxHeight),
+      child: ListView.builder(
+        padding: EdgeInsets.zero,
+        itemCount: itemIds.length,
+        itemBuilder: (context, index) => _UndatedNoteCard(
+          itemId: itemIds[index],
+        ),
+      ),
+    );
+  }
+}
+
+class _UndatedNoteCard extends ConsumerWidget {
+  const _UndatedNoteCard({required this.itemId});
+
+  final String itemId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final item = ref.watch(memoryItemByIdProvider(itemId));
+    if (item == null) return const SizedBox.shrink();
+    return MemoryItemCard(
+      item: item,
+      showDate: false,
+      compact: true,
+      denseFeedLayout: true,
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      onOpen: () =>
+          context.push('/memory/view/${Uri.encodeComponent(item.id)}'),
+      onArchive: () {
+        ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
       },
     );
   }

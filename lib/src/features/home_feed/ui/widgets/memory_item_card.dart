@@ -117,6 +117,7 @@ class MemoryItemCard extends StatelessWidget {
                           color: typeColor,
                           showDate: showDate,
                           compact: compact,
+                          denseFeedLayout: denseFeedLayout,
                         ),
                       ),
                       Expanded(
@@ -162,10 +163,10 @@ class MemoryItemCard extends StatelessWidget {
 double _denseFeedCardHeight(BuildContext context) {
   final scale = MediaQuery.textScalerOf(context).scale(1);
   if (scale <= 1.3) {
-    return 96 + ((scale - 1).clamp(0.0, 0.3) * 24);
+    return 76 + ((scale - 1).clamp(0.0, 0.3) * 40);
   }
   final largeTextProgress = ((scale - 1.3) / 0.7).clamp(0.0, 1.0);
-  return 103.2 + largeTextProgress * 72.8;
+  return 88 + largeTextProgress * 64;
 }
 
 class _TypeRail extends StatelessWidget {
@@ -174,6 +175,7 @@ class _TypeRail extends StatelessWidget {
     required this.color,
     required this.showDate,
     required this.compact,
+    required this.denseFeedLayout,
     super.key,
   });
 
@@ -181,6 +183,7 @@ class _TypeRail extends StatelessWidget {
   final Color color;
   final bool showDate;
   final bool compact;
+  final bool denseFeedLayout;
 
   @override
   Widget build(BuildContext context) {
@@ -199,30 +202,45 @@ class _TypeRail extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: 3,
-            vertical: compact ? 6 : 8,
+            vertical: denseFeedLayout
+                ? 4
+                : compact
+                    ? 6
+                    : 8,
           ),
           child: Column(
             children: [
+              if (item.isUndated) const Spacer(),
               Icon(
                 memoryTypeIcon(item.type),
                 color: foreground,
-                size: compact ? 19 : 21,
+                size: denseFeedLayout
+                    ? 17
+                    : compact
+                        ? 19
+                        : 21,
               ),
-              SizedBox(height: compact ? 3 : 5),
+              SizedBox(height: denseFeedLayout ? 2 : (compact ? 3 : 5)),
               Text(
-                item.type.label(locale),
+                item.isUndated
+                    ? AppStrings.of(context).noteCard
+                    : item.type.label(locale),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: foreground,
-                      fontSize: compact ? 8.2 : 8.8,
+                      fontSize: denseFeedLayout
+                          ? 7.8
+                          : compact
+                              ? 8.2
+                              : 8.8,
                       fontWeight: FontWeight.w900,
                       height: 1.05,
                     ),
               ),
               const Spacer(),
-              if (showDate)
+              if (!item.isUndated && showDate)
                 Text(
                   DateFormat.MMMd(locale).format(item.memoryDate),
                   maxLines: 1,
@@ -233,14 +251,15 @@ class _TypeRail extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                 ),
-              Text(
-                time,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: foreground,
-                      fontSize: compact ? 10 : 10.5,
-                      fontWeight: FontWeight.w900,
-                    ),
-              ),
+              if (!item.isUndated)
+                Text(
+                  time,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: foreground,
+                        fontSize: compact ? 10 : 10.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
             ],
           ),
         ),
@@ -377,6 +396,7 @@ class _DenseFeedCardContent extends StatelessWidget {
         _normalizedCardText(body) != _normalizedCardText(title);
     final hasAudio = item.audioPath != null;
     final hasImage = item.imagePaths.isNotEmpty;
+    final hasAttachments = hasAudio || hasImage;
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final notebook = NotebookVisuals.maybeOf(context);
@@ -400,11 +420,7 @@ class _DenseFeedCardContent extends StatelessWidget {
           ),
       manropeWeight: FontWeight.w600,
     );
-    final bodyMaxLines = hasAudio
-        ? 1
-        : title.isEmpty
-            ? 3
-            : 2;
+    final bodyMaxLines = title.isEmpty ? 3 : 2;
     final status = item.isDone
         ? item.type == MemoryType.payment
             ? (Localizations.localeOf(context).languageCode == 'ru'
@@ -437,6 +453,13 @@ class _DenseFeedCardContent extends StatelessWidget {
                         )
                       else
                         const Spacer(),
+                      if (hasAttachments) ...[
+                        const SizedBox(width: 4),
+                        _DenseAttachmentIndicators(
+                          imageCount: item.imagePaths.length,
+                          hasAudio: hasAudio,
+                        ),
+                      ],
                       if (status != null) ...[
                         const SizedBox(width: 4),
                         DecoratedBox(
@@ -485,12 +508,26 @@ class _DenseFeedCardContent extends StatelessWidget {
                     style: bodyStyle,
                   ),
                 ] else if (title.isEmpty && body.isNotEmpty)
-                  Text(
-                    body,
-                    key: ValueKey('memory_card_body_${item.id}'),
-                    maxLines: bodyMaxLines,
-                    overflow: TextOverflow.ellipsis,
-                    style: titleStyle,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          body,
+                          key: ValueKey('memory_card_body_${item.id}'),
+                          maxLines: bodyMaxLines,
+                          overflow: TextOverflow.ellipsis,
+                          style: titleStyle,
+                        ),
+                      ),
+                      if (hasAttachments) ...[
+                        const SizedBox(width: 4),
+                        _DenseAttachmentIndicators(
+                          imageCount: item.imagePaths.length,
+                          hasAudio: hasAudio,
+                        ),
+                      ],
+                    ],
                   ),
                 if (item.type == MemoryType.payment &&
                     item.amountMinor != null) ...[
@@ -518,26 +555,9 @@ class _DenseFeedCardContent extends StatelessWidget {
                         ),
                   ),
                 ],
-                if (hasAudio) ...[
-                  const Spacer(),
-                  VoiceNotePlayer(
-                    path: item.audioPath!,
-                    recordedAt: item.memoryDate,
-                    durationSeconds: item.audioDurationSeconds,
-                    compact: true,
-                  ),
-                ],
               ],
             ),
           ),
-          if (hasImage) ...[
-            const SizedBox(width: 8),
-            _ImageThumbnail(
-              paths: item.imagePaths,
-              compact: true,
-              denseFeedLayout: true,
-            ),
-          ],
         ],
       ),
     );
@@ -557,6 +577,40 @@ class _DenseFeedCardContent extends StatelessWidget {
 
 String _normalizedCardText(String value) =>
     value.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
+
+class _DenseAttachmentIndicators extends StatelessWidget {
+  const _DenseAttachmentIndicators({
+    required this.imageCount,
+    required this.hasAudio,
+  });
+
+  final int imageCount;
+  final bool hasAudio;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (imageCount > 0) ...[
+          Icon(Icons.image_rounded, size: 16, color: color),
+          if (imageCount > 1)
+            Text(
+              '$imageCount',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: color,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w900,
+                  ),
+            ),
+        ],
+        if (imageCount > 0 && hasAudio) const SizedBox(width: 3),
+        if (hasAudio) Icon(Icons.mic_rounded, size: 16, color: color),
+      ],
+    );
+  }
+}
 
 class _ImageThumbnail extends StatelessWidget {
   const _ImageThumbnail({
@@ -756,7 +810,7 @@ class _DenseFeedActionRail extends StatelessWidget {
     final strings = AppStrings.of(context);
     final colors = Theme.of(context).colorScheme;
     return SizedBox(
-      width: 52,
+      width: 40,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: colors.surface.withValues(alpha: 0.28),
@@ -778,7 +832,7 @@ class _DenseFeedActionRail extends StatelessWidget {
                   item.isDone
                       ? Icons.check_circle_rounded
                       : Icons.task_alt_rounded,
-                  size: 24,
+                  size: 20,
                 ),
                 style: IconButton.styleFrom(
                   foregroundColor: item.isDone
@@ -787,13 +841,16 @@ class _DenseFeedActionRail extends StatelessWidget {
                   backgroundColor: item.isDone
                       ? const Color(0xFF16A34A).withValues(alpha: 0.15)
                       : Colors.transparent,
-                  fixedSize: const Size.square(48),
-                  minimumSize: const Size.square(48),
-                  maximumSize: const Size.square(48),
+                  fixedSize: const Size.square(36),
+                  minimumSize: const Size.square(36),
+                  maximumSize: const Size.square(36),
                   padding: EdgeInsets.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
+            if (onToggleDone != null &&
+                (onArchive != null || onRestore != null))
+              const SizedBox(height: 4),
             if (onArchive != null || onRestore != null)
               IconButton(
                 key: ValueKey('memory_card_archive_${item.id}'),
@@ -805,15 +862,15 @@ class _DenseFeedActionRail extends StatelessWidget {
                   onRestore != null
                       ? Icons.unarchive_rounded
                       : Icons.archive_rounded,
-                  size: 22,
+                  size: 19,
                 ),
                 style: IconButton.styleFrom(
                   foregroundColor: const Color(0xFFB45309),
                   backgroundColor:
                       const Color(0xFFB45309).withValues(alpha: 0.1),
-                  fixedSize: const Size.square(48),
-                  minimumSize: const Size.square(48),
-                  maximumSize: const Size.square(48),
+                  fixedSize: const Size.square(36),
+                  minimumSize: const Size.square(36),
+                  maximumSize: const Size.square(36),
                   padding: EdgeInsets.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),

@@ -20,6 +20,7 @@ class MemoryEditorDraft {
     required this.amountMinor,
     required this.paymentCategory,
     required this.birthYear,
+    required this.isUndated,
   });
 
   final MemoryType type;
@@ -39,4 +40,5 @@ class MemoryEditorDraft {
   final int? amountMinor;
   final String? paymentCategory;
   final int? birthYear;
+  final bool isUndated;
 }

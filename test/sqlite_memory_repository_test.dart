@@ -51,6 +51,7 @@ void main() {
       audioDurationSeconds: 42,
       imagePaths: const ['/local/photo.jpg'],
       transcript: 'текст голоса',
+      isUndated: true,
     );
 
     final firstDatabase = AppDatabase(NativeDatabase(file));
@@ -75,6 +76,7 @@ void main() {
     expect(restored.single.remindAt, DateTime(2026, 7, 4, 9));
     expect(restored.single.reminderSoundUri, 'content://media/alarm/9');
     expect(restored.single.reminderSoundName, 'Будильник');
+    expect(restored.single.isUndated, isTrue);
   });
 
   test('replaceAll removes records missing from the provided list', () async {

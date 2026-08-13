@@ -71,6 +71,23 @@ void main() {
       'one-time-payment',
     ]);
   });
+
+  test('calendar feed groups exclude undated notes', () {
+    final date = DateTime(2026, 8, 13);
+    final dated = _item('dated', MemoryType.note, date, 'dated');
+    final undated = MemoryItem(
+      id: 'undated',
+      type: MemoryType.note,
+      title: 'Карта дочери',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+      isUndated: true,
+    );
+
+    expect(groupItemsByDate([dated, undated]).single.items, [dated]);
+    expect(smartFeedForDay([dated, undated], date), [dated]);
+  });
 }
 
 MemoryItem _item(

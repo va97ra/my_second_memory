@@ -332,4 +332,27 @@ void main() {
     await controller.delete('reminder');
     expect(reminders.cancelled.where((id) => id == 'reminder').length, 3);
   });
+
+  test('undated note never creates a reminder', () async {
+    final now = DateTime.now();
+    final note = MemoryItem(
+      id: 'undated-note',
+      type: MemoryType.note,
+      title: 'Карта дочери',
+      memoryDate: DateTime(now.year, now.month, now.day),
+      createdAt: now,
+      updatedAt: now,
+      isUndated: true,
+    );
+    final repository = _MemoryRepository(const []);
+    final reminders = _ReminderScheduler();
+    final controller = MemoryItemsController(repository, reminders);
+
+    await controller.load();
+    await controller.add(note);
+    await controller.update(note.copyWith(body: 'Новые данные'));
+
+    expect(reminders.scheduled, isEmpty);
+    expect(repository.items.single.isUndated, isTrue);
+  });
 }

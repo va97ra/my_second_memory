@@ -49,11 +49,13 @@ class MemoryItemDetailScreen extends ConsumerStatefulWidget {
   const MemoryItemDetailScreen({
     this.itemId,
     this.initialDate,
+    this.createUndated = false,
     super.key,
   });
 
   final String? itemId;
   final DateTime? initialDate;
+  final bool createUndated;
 
   @override
   ConsumerState<MemoryItemDetailScreen> createState() =>
@@ -89,6 +91,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   DateTime? _recordingStartedAt;
   bool _isRecording = false;
   bool _isSaving = false;
+  bool _isUndated = false;
   String? _saveError;
   bool _allowPop = false;
   bool _isLeaving = false;
@@ -170,7 +173,13 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item == null ? strings.newRecord : strings.editRecord,
+                _isUndated
+                    ? item == null
+                        ? strings.newNote
+                        : strings.editNote
+                    : item == null
+                        ? strings.newRecord
+                        : strings.editRecord,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -239,92 +248,99 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                 ),
               ),
             ),
-            PopupMenuButton<String>(
-              tooltip: Localizations.localeOf(context).languageCode == 'ru'
-                  ? 'Повтор и действия'
-                  : 'Repeat and actions',
-              icon: Icon(
-                Icons.event_repeat_rounded,
-                color: _recurrenceFrequency == null
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Theme.of(context).colorScheme.primary,
-              ),
-              onSelected: (value) {
-                if (value == 'repeat') {
-                  _openRepeatPicker();
-                }
-                if (value == 'duplicate' && item != null) {
-                  _duplicateToDates(item);
-                }
-                if (value == 'future' && item != null) {
-                  setState(() => _editFutureOccurrences = true);
-                  ref
-                      .read(recurrenceSeriesControllerProvider.notifier)
-                      .applyToFuture(item);
-                }
-                if (value == 'delete') {
-                  _confirmDelete(item!);
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'repeat',
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.event_repeat_rounded),
-                    title: Text(
-                      Localizations.localeOf(context).languageCode == 'ru'
-                          ? 'Настроить повтор'
-                          : 'Set recurrence',
-                    ),
-                  ),
+            if (!_isUndated || item != null)
+              PopupMenuButton<String>(
+                tooltip: _isUndated
+                    ? strings.delete
+                    : Localizations.localeOf(context).languageCode == 'ru'
+                        ? 'Повтор и действия'
+                        : 'Repeat and actions',
+                icon: Icon(
+                  _isUndated
+                      ? Icons.more_vert_rounded
+                      : Icons.event_repeat_rounded,
+                  color: _recurrenceFrequency == null
+                      ? Theme.of(context).colorScheme.onSurface
+                      : Theme.of(context).colorScheme.primary,
                 ),
-                if (item != null)
-                  PopupMenuItem(
-                    value: 'duplicate',
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.content_copy_rounded),
-                      title: Text(
-                        Localizations.localeOf(context).languageCode == 'ru'
-                            ? 'Дублировать на даты'
-                            : 'Duplicate to dates',
+                onSelected: (value) {
+                  if (value == 'repeat') {
+                    _openRepeatPicker();
+                  }
+                  if (value == 'duplicate' && item != null) {
+                    _duplicateToDates(item);
+                  }
+                  if (value == 'future' && item != null) {
+                    setState(() => _editFutureOccurrences = true);
+                    ref
+                        .read(recurrenceSeriesControllerProvider.notifier)
+                        .applyToFuture(item);
+                  }
+                  if (value == 'delete') {
+                    _confirmDelete(item!);
+                  }
+                },
+                itemBuilder: (context) => [
+                  if (!_isUndated)
+                    PopupMenuItem(
+                      value: 'repeat',
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.event_repeat_rounded),
+                        title: Text(
+                          Localizations.localeOf(context).languageCode == 'ru'
+                              ? 'Настроить повтор'
+                              : 'Set recurrence',
+                        ),
                       ),
                     ),
-                  ),
-                if (item?.seriesId != null)
-                  PopupMenuItem(
-                    value: 'future',
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.update_rounded),
-                      title: Text(
-                        Localizations.localeOf(context).languageCode == 'ru'
-                            ? 'Применить к будущим'
-                            : 'Apply to future',
+                  if (!_isUndated && item != null)
+                    PopupMenuItem(
+                      value: 'duplicate',
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.content_copy_rounded),
+                        title: Text(
+                          Localizations.localeOf(context).languageCode == 'ru'
+                              ? 'Дублировать на даты'
+                              : 'Duplicate to dates',
+                        ),
                       ),
                     ),
-                  ),
-                if (item != null)
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        Icons.delete_rounded,
-                        color: Theme.of(context).colorScheme.error,
+                  if (!_isUndated && item?.seriesId != null)
+                    PopupMenuItem(
+                      value: 'future',
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.update_rounded),
+                        title: Text(
+                          Localizations.localeOf(context).languageCode == 'ru'
+                              ? 'Применить к будущим'
+                              : 'Apply to future',
+                        ),
                       ),
-                      title: Text(strings.delete),
                     ),
-                  ),
-              ],
-            ),
+                  if (item != null)
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          Icons.delete_rounded,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        title: Text(strings.delete),
+                      ),
+                    ),
+                ],
+              ),
           ],
         ),
         body: SafeArea(
           child: Form(
             key: _formKey,
             child: _EditorBody(
+              isUndated: _isUndated,
               selectedType: _type,
               dateText: _formattedDate(context),
               timeText: _formattedTime(),
@@ -344,8 +360,9 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                 _changeType(type);
                 _scheduleAutosave();
               },
-              specialFields: _buildSpecialFields(),
-              showRecurrenceHint: showHints && _recurrenceFrequency == null,
+              specialFields: _isUndated ? null : _buildSpecialFields(),
+              showRecurrenceHint:
+                  !_isUndated && showHints && _recurrenceFrequency == null,
               onRecurrenceHintTap: _openRepeatPicker,
               recordEditor: _RecordEditor(
                 controller: _bodyController,
