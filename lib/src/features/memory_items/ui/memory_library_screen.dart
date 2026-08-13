@@ -36,7 +36,7 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
         child: CustomScrollView(
           slivers: [
             MainSliverAppBar(
-              title: strings.memoryBase,
+              title: strings.memoryArchive,
               backLocation: '/settings',
             ),
             SliverToBoxAdapter(

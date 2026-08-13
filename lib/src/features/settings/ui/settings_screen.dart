@@ -180,7 +180,7 @@ class SettingsScreen extends ConsumerWidget {
                       _SettingsTile(
                         icon: Icons.inventory_2_rounded,
                         iconColor: const Color(0xFFF26B38),
-                        title: strings.memoryBase,
+                        title: strings.memoryArchive,
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => context.go('/memory'),
                       ),
