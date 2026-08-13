@@ -73,12 +73,14 @@ class NotebookActionButton extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              DefaultTextStyle.merge(
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
+              Flexible(
+                child: DefaultTextStyle.merge(
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  child: child,
                 ),
-                child: child,
               ),
             ],
           ),

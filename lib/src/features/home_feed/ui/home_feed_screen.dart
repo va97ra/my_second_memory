@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/app_surface_palette.dart';
+import '../../../core/theme/app_surface_textures.dart';
+import '../../../core/theme/notebook/notebook_assets.dart';
+import '../../../core/theme/notebook/notebook_visuals.dart';
 import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
@@ -31,6 +35,8 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     final layout = ref.watch(feedLayoutProvider);
     final isEmpty = layout.days.isEmpty;
     final showHints = ref.watch(appHintsProvider);
+    final locale = Localizations.localeOf(context).languageCode;
+    final headerExtent = _feedDayHeaderExtent(context);
 
     if (loadState.isLoading || loadState.hasError) {
       return WarmGradientBackground(
@@ -51,48 +57,183 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     }
 
     return WarmGradientBackground(
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: _FeedHeader(
-              title: strings.dayFeed,
-              filter: filter,
-              onFilterSelected: (filter) {
-                ref.read(feedFilterProvider.notifier).state = filter;
-              },
+      child: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: _FeedHeader(
+                title: strings.dayFeed,
+                filter: filter,
+                onFilterSelected: (filter) {
+                  ref.read(feedFilterProvider.notifier).state = filter;
+                },
+              ),
             ),
-          ),
-          if (showHints) const SliverToBoxAdapter(child: _FeedUsageHint()),
-          const SliverToBoxAdapter(child: RecurringInformers(height: 164)),
-          if (isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: AppEmptyState(
-                  icon: Icons.view_agenda_rounded,
-                  title: strings.emptyFeed,
-                  actionLabel: strings.addRecord,
-                  onAction: () => context.go('/calendar'),
+            if (showHints) const SliverToBoxAdapter(child: _FeedUsageHint()),
+            const SliverToBoxAdapter(child: RecurringInformers(height: 164)),
+            if (isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: AppEmptyState(
+                    icon: Icons.view_agenda_rounded,
+                    title: strings.emptyFeed,
+                    actionLabel: strings.addRecord,
+                    onAction: () => context.go('/calendar'),
+                  ),
                 ),
-              ),
-            )
-          else
-            for (final group in layout.days) ...[
-              SliverToBoxAdapter(
-                child: AppLabeledDivider(
-                  label: DateFormat(
-                    'd MMMM y',
-                    Localizations.localeOf(context).languageCode,
-                  ).format(group.date),
+              )
+            else
+              for (final group in layout.days) ...[
+                PinnedHeaderSliver(
+                  child: _FeedDayHeader(
+                    date: group.date,
+                    itemCount: group.itemIds.length,
+                    locale: locale,
+                    extent: headerExtent,
+                  ),
                 ),
-              ),
-              _MemorySliverList(itemIds: group.itemIds),
-            ],
-          const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
-        ],
+                _MemorySliverList(itemIds: group.itemIds),
+              ],
+            const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+          ],
+        ),
       ),
     );
   }
+}
+
+double _feedDayHeaderExtent(BuildContext context) {
+  final scale = MediaQuery.textScalerOf(context).scale(1);
+  return 36 + ((scale - 1).clamp(0.0, 1.0) * 12);
+}
+
+class _FeedDayHeader extends StatelessWidget {
+  const _FeedDayHeader({
+    required this.date,
+    required this.itemCount,
+    required this.locale,
+    required this.extent,
+  });
+
+  final DateTime date;
+  final int itemCount;
+  final String locale;
+  final double extent;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
+    final colors = Theme.of(context).colorScheme;
+    final palette = AppSurfacePalette.of(context);
+    final textures = AppSurfaceTextures.maybeOf(context);
+    final notebook = NotebookVisuals.maybeOf(context);
+    final dateLabel = _feedDateLabel(strings, locale, date);
+    final countLabel = strings.recordsCount(itemCount);
+    final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+
+    return SizedBox(
+      height: extent,
+      child: Semantics(
+        header: true,
+        label: '$dateLabel, $countLabel',
+        child: DecoratedBox(
+          key: ValueKey('feed_day_header_$dateKey'),
+          decoration: BoxDecoration(
+            color: notebook?.paper ?? palette.panelSurface,
+            image: notebook != null
+                ? const DecorationImage(
+                    image: AssetImage(NotebookAssets.paper),
+                    fit: BoxFit.cover,
+                    opacity: 0.72,
+                  )
+                : textures == null
+                    ? null
+                    : DecorationImage(
+                        image: AssetImage(textures.surfaceAsset),
+                        fit: BoxFit.cover,
+                        opacity: textures.surfaceOpacity,
+                        filterQuality: FilterQuality.low,
+                      ),
+            border: Border.symmetric(
+              horizontal: BorderSide(
+                color: notebook?.line ?? palette.borderStart,
+                width: 0.8,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    dateLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: notebook?.ink ?? colors.onSurface,
+                          fontWeight: FontWeight.w900,
+                        ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                DecoratedBox(
+                  key: ValueKey('feed_day_count_$dateKey'),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.38),
+                    ),
+                  ),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    child: Text(
+                      countLabel,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: notebook?.ink ?? colors.onSurface,
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _feedDateLabel(AppStrings strings, String locale, DateTime date) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final checked = DateTime(date.year, date.month, date.day);
+  final shortDate = DateFormat(
+    locale == 'ru' ? 'd MMMM' : 'MMMM d',
+    locale,
+  ).format(checked);
+  if (checked == today) return '${strings.today} · $shortDate';
+  if (checked == today.subtract(const Duration(days: 1))) {
+    return '${strings.yesterday} · $shortDate';
+  }
+  return DateFormat(
+    locale == 'ru' ? 'd MMMM y' : 'MMMM d, y',
+    locale,
+  ).format(checked);
 }
 
 class _FeedHeader extends StatelessWidget {
@@ -181,8 +322,8 @@ class _FeedUsageHint extends StatelessWidget {
               _HintLine(
                 icon: Icons.archive_rounded,
                 text: ru
-                    ? 'Архив переносит запись в Базу памяти'
-                    : 'Archive moves a record to Memory library',
+                    ? 'Архив переносит запись в Архив памяти'
+                    : 'Archive moves a record to Memory archive',
               ),
               const SizedBox(height: 6),
               SizedBox(
@@ -312,8 +453,8 @@ class _FullGuideSheet extends StatelessWidget {
           _GuideItem(
             Icons.inventory_2_rounded,
             ru
-                ? 'Архивные записи находятся в Настройки → База памяти, откуда их можно вернуть.'
-                : 'Archived records are in Settings → Memory library and can be restored.',
+                ? 'Архивные записи находятся в Настройки → Архив памяти, откуда их можно вернуть.'
+                : 'Archived records are in Settings → Memory archive and can be restored.',
           ),
           _GuideItem(
             Icons.edit_note_rounded,
@@ -500,6 +641,8 @@ class _FeedFilterButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final label = _labelFor(context, selected);
+    final maxButtonWidth =
+        (MediaQuery.sizeOf(context).width * 0.62).clamp(156.0, 240.0);
 
     return Padding(
       padding: padding,
@@ -530,34 +673,42 @@ class _FeedFilterButton extends StatelessWidget {
                 ),
             ];
           },
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.tune_rounded,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Icon(Icons.expand_more_rounded, size: 18),
-                ],
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxButtonWidth),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant),
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.tune_rounded,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.expand_more_rounded, size: 18),
+                  ],
+                ),
               ),
             ),
           ),
@@ -641,23 +792,21 @@ class _FeedMemoryCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final item = ref.watch(memoryItemByIdProvider(itemId));
     if (item == null) return const SizedBox.shrink();
-    return SizedBox(
-      height: 114,
-      child: MemoryItemCard(
-        item: item,
-        showDate: false,
-        compact: true,
-        margin: const EdgeInsets.fromLTRB(16, 3, 16, 3),
-        onOpen: () {
-          context.push('/memory/view/${Uri.encodeComponent(item.id)}');
-        },
-        onToggleDone: () {
-          ref.read(memoryItemsControllerProvider.notifier).toggleDone(item.id);
-        },
-        onArchive: () {
-          ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
-        },
-      ),
+    return MemoryItemCard(
+      item: item,
+      showDate: false,
+      compact: true,
+      denseFeedLayout: true,
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      onOpen: () {
+        context.push('/memory/view/${Uri.encodeComponent(item.id)}');
+      },
+      onToggleDone: () {
+        ref.read(memoryItemsControllerProvider.notifier).toggleDone(item.id);
+      },
+      onArchive: () {
+        ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
+      },
     );
   }
 }

@@ -1,3 +1,50 @@
+class ShiftVacation {
+  const ShiftVacation({
+    required this.id,
+    required this.startDate,
+    required this.durationDays,
+  }) : assert(durationDays > 0);
+
+  final String id;
+  final DateTime startDate;
+  final int durationDays;
+
+  DateTime get endDate =>
+      _dateOnly(startDate).add(Duration(days: durationDays - 1));
+
+  bool contains(DateTime date) {
+    final checkedDate = _dateOnly(date);
+    return !checkedDate.isBefore(_dateOnly(startDate)) &&
+        !checkedDate.isAfter(endDate);
+  }
+
+  bool overlaps(ShiftVacation other) {
+    return !_dateOnly(startDate).isAfter(other.endDate) &&
+        !endDate.isBefore(_dateOnly(other.startDate));
+  }
+
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'startDate': _dateOnly(startDate).toIso8601String(),
+        'durationDays': durationDays,
+      };
+
+  factory ShiftVacation.fromJson(Map<String, Object?> json) {
+    final startDate = DateTime.parse(json['startDate'] as String);
+    final storedDuration = json['durationDays'] as int? ?? 1;
+    final durationDays = storedDuration > 0 ? storedDuration : 1;
+    return ShiftVacation(
+      id: json['id'] as String? ??
+          '${_dateOnly(startDate).toIso8601String()}-$durationDays',
+      startDate: startDate,
+      durationDays: durationDays,
+    );
+  }
+
+  static DateTime _dateOnly(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
+}
+
 class ShiftAlarm {
   const ShiftAlarm({
     this.isEnabled = false,
@@ -53,6 +100,7 @@ class ShiftSchedule {
     required this.restDays,
     this.isEnabled = true,
     this.alarms = const [ShiftAlarm(), ShiftAlarm()],
+    this.vacations = const [],
   });
 
   final String id;
@@ -63,6 +111,7 @@ class ShiftSchedule {
   final int restDays;
   final bool isEnabled;
   final List<ShiftAlarm> alarms;
+  final List<ShiftVacation> vacations;
 
   bool get supportsNextDayAlarm => workDays == 1 && restDays == 3;
 
@@ -79,6 +128,11 @@ class ShiftSchedule {
     return checkedDate.difference(firstDate).inDays % cycleLength < workDays;
   }
 
+  bool isVacationWorkday(DateTime date) {
+    return isWorkday(date) &&
+        vacations.any((vacation) => vacation.contains(date));
+  }
+
   ShiftSchedule copyWith({
     String? id,
     String? organizationName,
@@ -88,6 +142,7 @@ class ShiftSchedule {
     int? restDays,
     bool? isEnabled,
     List<ShiftAlarm>? alarms,
+    List<ShiftVacation>? vacations,
   }) {
     return ShiftSchedule(
       id: id ?? this.id,
@@ -98,6 +153,7 @@ class ShiftSchedule {
       restDays: restDays ?? this.restDays,
       isEnabled: isEnabled ?? this.isEnabled,
       alarms: alarms ?? this.alarms,
+      vacations: vacations ?? this.vacations,
     );
   }
 
@@ -110,6 +166,7 @@ class ShiftSchedule {
         'restDays': restDays,
         'isEnabled': isEnabled,
         'alarms': alarms.map((alarm) => alarm.toJson()).toList(),
+        'vacations': vacations.map((vacation) => vacation.toJson()).toList(),
       };
 
   factory ShiftSchedule.fromJson(Map<String, Object?> json) {
@@ -134,6 +191,13 @@ class ShiftSchedule {
     while (storedAlarms.length < 2) {
       storedAlarms.add(const ShiftAlarm());
     }
+    final storedVacations = (json['vacations'] as List<Object?>?)
+            ?.whereType<Map>()
+            .map((entry) =>
+                ShiftVacation.fromJson(entry.cast<String, Object?>()))
+            .toList() ??
+        <ShiftVacation>[];
+    storedVacations.sort((a, b) => a.startDate.compareTo(b.startDate));
 
     return ShiftSchedule(
       id: json['id'] as String,
@@ -144,6 +208,7 @@ class ShiftSchedule {
       restDays: json['restDays'] as int,
       isEnabled: json['isEnabled'] as bool? ?? true,
       alarms: List.unmodifiable(storedAlarms),
+      vacations: List.unmodifiable(storedVacations),
     );
   }
 

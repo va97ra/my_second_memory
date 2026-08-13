@@ -21,6 +21,18 @@ class AppStrings {
   String get activeRecords => isRu ? 'Активные' : 'Active';
   String get completedRecords => isRu ? 'Выполненные' : 'Done';
   String get today => isRu ? 'Сегодня' : 'Today';
+  String get yesterday => isRu ? 'Вчера' : 'Yesterday';
+  String recordsCount(int count) {
+    if (!isRu) return count == 1 ? '1 record' : '$count records';
+    final mod10 = count % 10;
+    final mod100 = count % 100;
+    if (mod10 == 1 && mod100 != 11) return '$count запись';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+      return '$count записи';
+    }
+    return '$count записей';
+  }
+
   String get previousMonth => isRu ? 'Предыдущий месяц' : 'Previous month';
   String get nextMonth => isRu ? 'Следующий месяц' : 'Next month';
   String get yesterdaySection => isRu ? 'Это было вчера' : 'This was yesterday';
@@ -47,7 +59,7 @@ class AppStrings {
   String get newRecord => isRu ? 'Новая запись' : 'New record';
   String get people => isRu ? 'Люди' : 'People';
   String get projects => isRu ? 'Проекты' : 'Projects';
-  String get memoryBase => isRu ? 'База памяти' : 'Memory base';
+  String get memoryArchive => isRu ? 'Архив памяти' : 'Memory archive';
   String get backup => isRu ? 'Резервная копия' : 'Backup';
   String get backupSubtitle =>
       isRu ? 'Сохранить или восстановить данные' : 'Save or restore data';
@@ -173,6 +185,24 @@ class AppStrings {
   String get scheduleSettings => isRu ? 'График' : 'Schedule';
   String get scheduleColor => isRu ? 'Цвет' : 'Color';
   String get reminders => isRu ? 'Напоминания' : 'Reminders';
+  String get vacations => isRu ? 'Отпуска' : 'Vacations';
+  String get vacation => isRu ? 'Отпуск' : 'Vacation';
+  String get addVacation => isRu ? 'Добавить отпуск' : 'Add vacation';
+  String get noVacations => isRu
+      ? 'Отпуска для этого графика не указаны'
+      : 'No vacations for this schedule';
+  String get vacationStartDate =>
+      isRu ? 'Первый день отпуска' : 'First vacation day';
+  String get vacationDuration =>
+      isRu ? 'Количество календарных дней' : 'Calendar days';
+  String get vacationInvalidDuration => isRu
+      ? 'Укажите количество дней больше нуля'
+      : 'Enter a number of days greater than zero';
+  String get vacationOverlap => isRu
+      ? 'Этот период пересекается с другим отпуском'
+      : 'This period overlaps another vacation';
+  String vacationDays(int count) => isRu ? '$count дн.' : '$count days';
+  String moreVacations(int count) => isRu ? 'ещё $count' : '$count more';
   String shiftAlarmNumber(int number) =>
       isRu ? 'Будильник $number' : 'Alarm $number';
   String get nextDayShiftAlarm =>

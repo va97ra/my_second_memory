@@ -31,10 +31,7 @@ class _CalendarDayCell extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final palette = AppSurfacePalette.of(context);
     final hasItems = items.isNotEmpty;
-    final shiftColors = [
-      for (final schedule in shiftSchedules) Color(schedule.colorValue),
-    ];
-    final hasShift = shiftColors.isNotEmpty && isInVisibleMonth;
+    final hasShift = shiftSchedules.isNotEmpty && isInVisibleMonth;
     final foreground = isInVisibleMonth
         ? colors.onSurface
         : colors.onSurface.withValues(alpha: 0.38);
@@ -129,8 +126,8 @@ class _CalendarDayCell extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                         child: _ShiftFill(
                           key: ValueKey('shift_fill_${_dateKey(date)}'),
-                          colors: shiftColors,
-                          isSelected: isSelected,
+                          schedules: shiftSchedules,
+                          date: date,
                         ),
                       ),
                     ),
@@ -494,33 +491,115 @@ class _OutlinedCalendarText extends StatelessWidget {
 class _ShiftFill extends StatelessWidget {
   const _ShiftFill({
     super.key,
-    required this.colors,
-    required this.isSelected,
+    required this.schedules,
+    required this.date,
   });
 
-  final List<Color> colors;
-  final bool isSelected;
+  final List<ShiftSchedule> schedules;
+  final DateTime date;
 
   @override
   Widget build(BuildContext context) {
-    final alpha = colors.length == 1
-        ? isSelected
-            ? 0.54
-            : 0.44
-        : isSelected
-            ? 0.86
-            : 0.68;
-
     return Row(
       children: [
-        for (final color in colors)
+        for (var index = 0; index < schedules.length; index++)
           Expanded(
-            child: ColoredBox(
-              color: color.withValues(alpha: alpha),
-              child: const SizedBox.expand(),
+            child: Stack(
+              key: ValueKey('shift_segment_${schedules[index].id}'),
+              fit: StackFit.expand,
+              children: [
+                ColoredBox(color: Color(schedules[index].colorValue)),
+                if (schedules[index].isVacationWorkday(date))
+                  _VacationRibbon(
+                    key: ValueKey(
+                      'vacation_ribbon_${schedules[index].id}_${_dateKey(date)}',
+                    ),
+                  ),
+              ],
             ),
           ),
       ],
+    );
+  }
+
+  String _dateKey(DateTime value) {
+    return '${value.year}-${value.month.toString().padLeft(2, '0')}-'
+        '${value.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _VacationRibbon extends StatelessWidget {
+  const _VacationRibbon({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = AppStrings.of(context).vacation.toUpperCase();
+
+    return ClipRect(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final height = constraints.maxHeight;
+          final ribbonHeight = (height * 0.19).clamp(9.0, 13.0);
+          // Extend the texture past both diagonal endpoints. The surrounding
+          // ClipRect then cuts it exactly at the segment corners, so there are
+          // no visually detached ribbon ends inside the calendar cell.
+          final diagonal =
+              math.sqrt(width * width + height * height) + ribbonHeight * 4;
+          final angle = -math.atan2(height, width);
+
+          return Center(
+            child: OverflowBox(
+              maxWidth: double.infinity,
+              maxHeight: double.infinity,
+              child: Transform.rotate(
+                angle: angle,
+                child: SizedBox(
+                  width: diagonal,
+                  height: ribbonHeight,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        'assets/textures/vacation_ribbon.webp',
+                        fit: BoxFit.fill,
+                        filterQuality: FilterQuality.medium,
+                      ),
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              label,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontFamily: 'Manrope',
+                                color: Color(0xFFFFF2C7),
+                                fontSize: 6.5,
+                                fontWeight: FontWeight.w900,
+                                height: 1,
+                                letterSpacing: 0.35,
+                                shadows: [
+                                  Shadow(
+                                    color: Color(0xCC3A0713),
+                                    blurRadius: 1,
+                                    offset: Offset(0, 0.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

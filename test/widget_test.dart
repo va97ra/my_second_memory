@@ -12,6 +12,8 @@ import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_status.da
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:ezhednevnik_v2/src/features/home_feed/ui/widgets/memory_item_card.dart';
+import 'package:ezhednevnik_v2/src/core/theme/app_theme_controller.dart';
+import 'package:ezhednevnik_v2/src/core/theme/app_theme_style.dart';
 import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';
 import 'package:ezhednevnik_v2/src/features/security/data/security_service.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
@@ -140,6 +142,7 @@ class _FeedMemoryRepository extends _TestMemoryRepository {
         id: 'today-plan',
         type: MemoryType.event,
         title: 'План на сегодня',
+        body: 'Подготовить задачи на день',
         timeMinutes: 9 * 60 + 30,
         memoryDate: today,
         createdAt: now,
@@ -149,6 +152,7 @@ class _FeedMemoryRepository extends _TestMemoryRepository {
         id: 'today-project',
         type: MemoryType.project,
         title: 'Ежедневник V2',
+        body: 'Ежедневник V2',
         memoryDate: today,
         createdAt: now,
         updatedAt: now,
@@ -207,7 +211,8 @@ class _TodayOnlyMemoryRepository extends _TestMemoryRepository {
       MemoryItem(
         id: 'today-only',
         type: MemoryType.note,
-        title: 'Только сегодня',
+        title: '',
+        body: 'Только сегодня',
         memoryDate: today,
         createdAt: now,
         updatedAt: now,
@@ -272,9 +277,13 @@ class _FakeShiftScheduleRepository implements ShiftScheduleRepository {
 }
 
 void main() {
+  setUpAll(() async {
+    await initializeDateFormatting('en');
+    await initializeDateFormatting('ru');
+  });
+
   testWidgets('three-column card fits text photo and voice on a phone',
       (tester) async {
-    await initializeDateFormatting('en');
     await tester.binding.setSurfaceSize(const Size(360, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final now = DateTime(2026, 7, 10, 12, 30);
@@ -488,16 +497,30 @@ void main() {
     expect(find.text('Люди'), findsNothing);
     expect(find.text('Проекты'), findsNothing);
     expect(find.text('План на сегодня'), findsOneWidget);
+    expect(find.text('Подготовить задачи на день'), findsOneWidget);
     expect(find.text('Ежедневник V2'), findsWidgets);
     expect(
+      find.byKey(const ValueKey('memory_card_body_today-project')),
+      findsNothing,
+    );
+    expect(
       find.text(
-        DateFormat('d MMMM y', 'ru').format(today),
+        'Сегодня · ${DateFormat('d MMMM', 'ru').format(today)}',
       ),
       findsOneWidget,
     );
     expect(
       find.text(
-        DateFormat('d MMMM y', 'ru').format(yesterday),
+        'Вчера · ${DateFormat('d MMMM', 'ru').format(yesterday)}',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(ValueKey(
+          'feed_day_count_${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}',
+        )),
+        matching: find.text('2 записи'),
       ),
       findsOneWidget,
     );
@@ -524,6 +547,68 @@ void main() {
 
     await tester.tap(find.text('Календарь'));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('feed day header stays pinned and shows localized counts',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 500));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    String dateKey(DateTime value) =>
+        '${value.year}-${value.month.toString().padLeft(2, '0')}-'
+        '${value.day.toString().padLeft(2, '0')}';
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final todayHeader =
+        find.byKey(ValueKey('feed_day_header_${dateKey(today)}'));
+    final yesterdayCount =
+        find.byKey(ValueKey('feed_day_count_${dateKey(yesterday)}'));
+    expect(todayHeader, findsOneWidget);
+    final scrollView = find.byType(CustomScrollView).first;
+    final outerScrollable = find
+        .descendant(of: scrollView, matching: find.byType(Scrollable))
+        .first;
+    final position = tester.state<ScrollableState>(outerScrollable).position;
+    final initialHeaderTop = tester.getTopLeft(todayHeader).dy;
+    final pinnedOffset = (initialHeaderTop + 8).clamp(
+      0.0,
+      position.maxScrollExtent - 24,
+    );
+    position.jumpTo(pinnedOffset);
+    await tester.pumpAndSettle();
+    final pinnedTop = tester.getTopLeft(todayHeader).dy;
+    position.jumpTo(pinnedOffset + 16);
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(todayHeader).dy, closeTo(pinnedTop, 0.5));
+    await tester.scrollUntilVisible(
+      yesterdayCount,
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: yesterdayCount,
+        matching: find.text('1 запись'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('hides empty previous day sections', (tester) async {
@@ -588,7 +673,25 @@ void main() {
       tester
           .getSize(find.byKey(const ValueKey('memory_card_today-plan')))
           .height,
-      108,
+      96,
+    );
+    expect(
+      find.byKey(const ValueKey('memory_card_title_today-plan')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('memory_card_body_today-plan')),
+      findsOneWidget,
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('memory_card_done_today-plan'))),
+      const Size.square(48),
+    );
+    expect(
+      tester.getSize(
+        find.byKey(const ValueKey('memory_card_archive_today-plan')),
+      ),
+      const Size.square(48),
     );
     await tester.tap(
       find.byKey(const ValueKey('memory_card_done_today-plan')),
@@ -642,6 +745,55 @@ void main() {
 
     expect(find.text('Только сегодня'), findsNothing);
     expect(repository.savedItems.single.status, MemoryStatus.archived);
+  });
+
+  testWidgets('dense feed card keeps image and voice at large text',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 520));
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final now = DateTime.now();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: MemoryItemCard(
+              item: MemoryItem(
+                id: 'dense-media',
+                type: MemoryType.note,
+                title: 'Поездка',
+                body: 'Фотография и голосовая заметка',
+                memoryDate: now,
+                createdAt: now,
+                updatedAt: now,
+                imagePaths: const [_pixelImageDataUrl],
+                audioPath: 'voice-test.m4a',
+                audioDurationSeconds: 15,
+              ),
+              compact: true,
+              denseFeedLayout: true,
+              onOpen: () {},
+              onToggleDone: () {},
+              onArchive: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('memory_card_dense-media')))
+          .height,
+      176,
+    );
+    expect(find.byKey(const ValueKey('feed_image_$_pixelImageDataUrl')),
+        findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('feed filter shows selected record type only', (tester) async {
@@ -1280,6 +1432,58 @@ void main() {
       toneRect.center.dy,
     ));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('add_shift_vacation')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('add_shift_vacation')));
+    await tester.pumpAndSettle();
+    expect(find.text('Количество календарных дней'), findsOneWidget);
+    expect(find.byKey(const ValueKey('vacation_end_date_preview')),
+        findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('save_shift_vacation')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('shift_vacations_empty')), findsNothing);
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('add_shift_vacation')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('add_shift_vacation')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('save_shift_vacation')));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Этот период пересекается с другим отпуском'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Отмена').last);
+    await tester.pumpAndSettle();
+
+    final removeVacation = find.byWidgetPredicate(
+      (widget) =>
+          widget.key is ValueKey<String> &&
+          (widget.key! as ValueKey<String>)
+              .value
+              .startsWith('remove_shift_vacation_'),
+    );
+    await tester.ensureVisible(removeVacation);
+    await tester.pumpAndSettle();
+    await tester.tap(removeVacation);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('shift_vacations_empty')), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('add_shift_vacation')),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('add_shift_vacation')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('add_shift_vacation')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('save_shift_vacation')));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Сохранить'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Сохранить'));
@@ -1293,6 +1497,9 @@ void main() {
       shiftRepository.savedSchedules.single.colorValue,
       isNot(const Color(0xFF2F7DD1).toARGB32()),
     );
+    expect(shiftRepository.savedSchedules.single.vacations, hasLength(1));
+    expect(shiftRepository.savedSchedules.single.vacations.single.durationDays,
+        14);
   });
 
   testWidgets('settings opens memory archive and restores item to feed',
@@ -1318,10 +1525,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Настройки'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('База памяти'));
+    await tester.tap(find.text('Архив памяти'));
     await tester.pumpAndSettle();
 
-    expect(find.text('База памяти'), findsWidgets);
+    expect(find.text('Архив памяти'), findsWidgets);
     expect(find.text('Архивная запись'), findsOneWidget);
     expect(find.text('План на сегодня'), findsNothing);
 
@@ -1408,6 +1615,13 @@ void main() {
         startDate: today,
         workDays: 5,
         restDays: 2,
+        vacations: [
+          ShiftVacation(
+            id: 'factory-vacation',
+            startDate: today,
+            durationDays: 1,
+          ),
+        ],
       ),
       ShiftSchedule(
         id: 'watch',
@@ -1443,6 +1657,33 @@ void main() {
       ),
       findsOneWidget,
     );
+    final factorySegment = find.descendant(
+      of: cell,
+      matching: find.byKey(const ValueKey('shift_segment_factory')),
+    );
+    expect(factorySegment, findsOneWidget);
+    final factoryFill = find.descendant(
+      of: factorySegment,
+      matching: find.byType(ColoredBox),
+    );
+    expect(factoryFill, findsOneWidget);
+    expect(
+      tester.widget<ColoredBox>(factoryFill).color,
+      const Color(0xFF2563EB),
+    );
+    expect(
+      find.descendant(
+        of: factorySegment,
+        matching: find.byKey(
+          ValueKey('vacation_ribbon_factory_$dayKey'),
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(ValueKey('vacation_ribbon_watch_$dayKey')),
+      findsNothing,
+    );
 
     final secondWorkCell =
         find.byKey(ValueKey('calendar_day_$secondWorkDayKey'));
@@ -1462,4 +1703,169 @@ void main() {
     expect(find.textContaining('Завод'), findsOneWidget);
     expect(find.textContaining('Вахта'), findsOneWidget);
   });
+
+  for (final width in [320.0, 360.0, 600.0, 840.0]) {
+    testWidgets('dense feed adapts at ${width.toInt()} px', (tester) async {
+      await tester.binding.setSurfaceSize(Size(width, 900));
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            securityServiceProvider
+                .overrideWithValue(_UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+            shiftScheduleRepositoryProvider.overrideWithValue(
+              _FakeShiftScheduleRepository(),
+            ),
+          ],
+          child: const EzhednevnikV2App(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .getSize(find.byKey(const ValueKey('memory_card_today-plan')))
+            .height,
+        closeTo(103.2, 0.1),
+      );
+      expect(
+        tester.getSize(
+          find.byKey(const ValueKey('memory_card_done_today-plan')),
+        ),
+        const Size.square(48),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final scale in [1.0, 1.3, 2.0]) {
+    testWidgets('dense feed supports ${scale}x text', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 900));
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            securityServiceProvider
+                .overrideWithValue(_UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+            shiftScheduleRepositoryProvider.overrideWithValue(
+              _FakeShiftScheduleRepository(),
+            ),
+          ],
+          child: const EzhednevnikV2App(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final card = find.byKey(const ValueKey('memory_card_today-plan'));
+      if (card.evaluate().isEmpty) {
+        await tester.scrollUntilVisible(
+          card,
+          180,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+      }
+      final expectedHeight = scale <= 1.3
+          ? 96 + ((scale - 1).clamp(0.0, 0.3) * 24)
+          : 103.2 + (((scale - 1.3) / 0.7).clamp(0.0, 1.0) * 72.8);
+      expect(
+        tester.getSize(card).height,
+        closeTo(expectedHeight, 0.1),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final style in AppThemeStyle.values) {
+    testWidgets('dense feed renders in ${style.name} theme', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            securityServiceProvider
+                .overrideWithValue(_UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+            shiftScheduleRepositoryProvider.overrideWithValue(
+              _FakeShiftScheduleRepository(),
+            ),
+            appThemeControllerProvider.overrideWith(
+              (ref) => AppThemeController(
+                initialStyle: style,
+                loadOnStart: false,
+              ),
+            ),
+          ],
+          child: const EzhednevnikV2App(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('memory_card_today-plan')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final width in [320.0, 360.0, 600.0, 840.0]) {
+    testWidgets('vacation editor stays reachable at ${width.toInt()} px',
+        (tester) async {
+      await tester.binding.setSurfaceSize(Size(width, 900));
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      addTearDown(
+        tester.platformDispatcher.clearTextScaleFactorTestValue,
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            securityServiceProvider
+                .overrideWithValue(_UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+            shiftScheduleRepositoryProvider.overrideWithValue(
+              _FakeShiftScheduleRepository(),
+            ),
+          ],
+          child: const EzhednevnikV2App(),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Настройки').last);
+      await tester.pumpAndSettle();
+      final shiftSchedules = find.text('Графики смен');
+      await tester.ensureVisible(shiftSchedules);
+      await tester.pumpAndSettle();
+      await tester.tap(shiftSchedules);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Добавить график').last);
+      await tester.pumpAndSettle();
+
+      final addVacation = find.byKey(const ValueKey('add_shift_vacation'));
+      await tester.ensureVisible(addVacation);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(addVacation).height, 48);
+      await tester.tap(addVacation);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('vacation_start_date')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('vacation_duration_days')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
