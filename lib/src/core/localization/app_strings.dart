@@ -173,6 +173,24 @@ class AppStrings {
   String get scheduleSettings => isRu ? 'График' : 'Schedule';
   String get scheduleColor => isRu ? 'Цвет' : 'Color';
   String get reminders => isRu ? 'Напоминания' : 'Reminders';
+  String get vacations => isRu ? 'Отпуска' : 'Vacations';
+  String get vacation => isRu ? 'Отпуск' : 'Vacation';
+  String get addVacation => isRu ? 'Добавить отпуск' : 'Add vacation';
+  String get noVacations => isRu
+      ? 'Отпуска для этого графика не указаны'
+      : 'No vacations for this schedule';
+  String get vacationStartDate =>
+      isRu ? 'Первый день отпуска' : 'First vacation day';
+  String get vacationDuration =>
+      isRu ? 'Количество календарных дней' : 'Calendar days';
+  String get vacationInvalidDuration => isRu
+      ? 'Укажите количество дней больше нуля'
+      : 'Enter a number of days greater than zero';
+  String get vacationOverlap => isRu
+      ? 'Этот период пересекается с другим отпуском'
+      : 'This period overlaps another vacation';
+  String vacationDays(int count) => isRu ? '$count дн.' : '$count days';
+  String moreVacations(int count) => isRu ? 'ещё $count' : '$count more';
   String shiftAlarmNumber(int number) =>
       isRu ? 'Будильник $number' : 'Alarm $number';
   String get nextDayShiftAlarm =>

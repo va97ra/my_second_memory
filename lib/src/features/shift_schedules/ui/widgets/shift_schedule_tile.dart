@@ -19,6 +19,7 @@ class _ShiftScheduleTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = Color(schedule.colorValue);
     final dateText = DateFormat.yMMMd(locale).format(schedule.startDate);
+    final visibleVacation = _visibleVacation(schedule.vacations);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -142,6 +143,39 @@ class _ShiftScheduleTile extends StatelessWidget {
                             ],
                           ),
                         ],
+                        if (visibleVacation != null) ...[
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.beach_access_rounded,
+                                size: 15,
+                                color: Color(0xFF9A2442),
+                              ),
+                              const SizedBox(width: 5),
+                              Expanded(
+                                child: Text(
+                                  _vacationSummary(
+                                    context,
+                                    visibleVacation,
+                                  ),
+                                  key: const ValueKey(
+                                    'shift_schedule_vacation_summary',
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium
+                                      ?.copyWith(
+                                        color: const Color(0xFF9A2442),
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -176,5 +210,30 @@ class _ShiftScheduleTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  ShiftVacation? _visibleVacation(List<ShiftVacation> vacations) {
+    if (vacations.isEmpty) return null;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    for (final vacation in vacations) {
+      if (vacation.contains(today)) return vacation;
+    }
+    for (final vacation in vacations) {
+      if (vacation.startDate.isAfter(today)) return vacation;
+    }
+    return null;
+  }
+
+  String _vacationSummary(
+    BuildContext context,
+    ShiftVacation vacation,
+  ) {
+    final strings = AppStrings.of(context);
+    final start = DateFormat.MMMd(locale).format(vacation.startDate);
+    final end = DateFormat.MMMd(locale).format(vacation.endDate);
+    final remaining = schedule.vacations.length - 1;
+    final more = remaining > 0 ? ' · ${strings.moreVacations(remaining)}' : '';
+    return '${strings.vacation}: $start — $end$more';
   }
 }

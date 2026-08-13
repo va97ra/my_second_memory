@@ -64,7 +64,10 @@ class CalendarDayScreen extends ConsumerWidget {
           child: Column(
             children: [
               if (workingSchedules.isNotEmpty)
-                _WorkingShiftChips(schedules: workingSchedules),
+                _WorkingShiftChips(
+                  schedules: workingSchedules,
+                  date: date,
+                ),
               Expanded(
                 child: dayItems.isEmpty
                     ? Center(
@@ -247,9 +250,13 @@ class _HolidaySummaryCard extends StatelessWidget {
 }
 
 class _WorkingShiftChips extends StatelessWidget {
-  const _WorkingShiftChips({required this.schedules});
+  const _WorkingShiftChips({
+    required this.schedules,
+    required this.date,
+  });
 
   final List<ShiftSchedule> schedules;
+  final DateTime date;
 
   @override
   Widget build(BuildContext context) {
@@ -287,7 +294,8 @@ class _WorkingShiftChips extends StatelessWidget {
                       ),
                       const SizedBox(width: 7),
                       Text(
-                        '${strings.workingToday}: ${schedule.organizationName}',
+                        '${schedule.isVacationWorkday(date) ? strings.vacation : strings.workingToday}: '
+                        '${schedule.organizationName}',
                         style: Theme.of(context)
                             .textTheme
                             .labelMedium

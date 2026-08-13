@@ -43,6 +43,13 @@ void main() {
         startDate: date,
         workDays: 2,
         restDays: 2,
+        vacations: [
+          ShiftVacation(
+            id: 'summer-vacation',
+            startDate: DateTime(2026, 8, 18),
+            durationDays: 14,
+          ),
+        ],
       ),
     ]);
     final recurringTemplate = MemoryItem(
@@ -96,6 +103,9 @@ void main() {
     expect(restored.memoryItems.single.imagePaths, ['/missing/photo.jpg']);
     expect(restored.shiftSchedules, hasLength(1));
     expect(restored.shiftSchedules.single.organizationName, 'Завод');
+    expect(restored.shiftSchedules.single.vacations, hasLength(1));
+    expect(restored.shiftSchedules.single.vacations.single.endDate,
+        DateTime(2026, 8, 31));
     expect(restored.accounts, hasLength(1));
     expect(restored.accounts.single.password, 'secret');
     expect(restored.recurrenceSeries.single.id, 'monthly-payment');
@@ -284,6 +294,13 @@ ShiftSchedule _shiftSchedule(String id, DateTime date) {
     startDate: date,
     workDays: 2,
     restDays: 2,
+    vacations: [
+      ShiftVacation(
+        id: '$id-vacation',
+        startDate: date.add(const Duration(days: 5)),
+        durationDays: 14,
+      ),
+    ],
   );
 }
 

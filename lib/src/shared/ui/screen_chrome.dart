@@ -117,20 +117,25 @@ class AppLabeledDivider extends StatelessWidget {
         : theme.colorScheme.onSurface.withValues(alpha: 0.58);
     return Padding(
       padding: padding,
-      child: SizedBox(
-        height: 22,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 22),
         child: Row(
           children: [
             Expanded(
                 child: ColoredBox(
                     color: color, child: const SizedBox(height: 1.5))),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Text(
-                label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w800,
+            Flexible(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),

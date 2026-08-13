@@ -27,6 +27,7 @@ class _ShiftScheduleEditorSheetState
   late Color _selectedColor;
   late bool _isEnabled;
   late List<ShiftAlarm> _alarms;
+  late List<ShiftVacation> _vacations;
   late bool _showManualSchedule;
   String? _selectedPresetKey;
 
@@ -50,6 +51,8 @@ class _ShiftScheduleEditorSheetState
     while (_alarms.length < 2) {
       _alarms.add(const ShiftAlarm());
     }
+    _vacations = List.of(schedule?.vacations ?? const <ShiftVacation>[])
+      ..sort((a, b) => a.startDate.compareTo(b.startDate));
     _selectedPresetKey = _presetKeyFor(
       int.tryParse(_workDaysController.text) ?? 5,
       int.tryParse(_restDaysController.text) ?? 2,
@@ -237,6 +240,15 @@ class _ShiftScheduleEditorSheetState
                     onChanged: (value) => setState(() => _isEnabled = value),
                   ),
                   const SizedBox(height: 12),
+                  _SectionLabel(strings.vacations),
+                  const SizedBox(height: 8),
+                  _VacationListEditor(
+                    vacations: _vacations,
+                    locale: locale,
+                    onAdd: _addVacation,
+                    onRemove: _removeVacation,
+                  ),
+                  const SizedBox(height: 12),
                   _SectionLabel(strings.reminders),
                   const SizedBox(height: 8),
                   for (var index = 0;
@@ -291,6 +303,29 @@ class _ShiftScheduleEditorSheetState
     }
 
     setState(() => _startDate = _dateOnly(picked));
+  }
+
+  Future<void> _addVacation() async {
+    final vacation = await showDialog<ShiftVacation>(
+      context: context,
+      builder: (context) => _VacationEditorDialog(
+        existingVacations: _vacations,
+      ),
+    );
+    if (vacation == null || !mounted) return;
+    setState(() {
+      _vacations = [..._vacations, vacation]
+        ..sort((a, b) => a.startDate.compareTo(b.startDate));
+    });
+  }
+
+  void _removeVacation(String id) {
+    setState(() {
+      _vacations = [
+        for (final vacation in _vacations)
+          if (vacation.id != id) vacation,
+      ];
+    });
   }
 
   void _applyPreset(_ShiftPreset preset) {
@@ -416,6 +451,7 @@ class _ShiftScheduleEditorSheetState
             ? _alarms[1]
             : _alarms[1].copyWith(isEnabled: false),
       ]),
+      vacations: List.unmodifiable(_vacations),
     );
 
     final controller = ref.read(shiftSchedulesControllerProvider.notifier);

@@ -1280,6 +1280,58 @@ void main() {
       toneRect.center.dy,
     ));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('add_shift_vacation')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('add_shift_vacation')));
+    await tester.pumpAndSettle();
+    expect(find.text('Количество календарных дней'), findsOneWidget);
+    expect(find.byKey(const ValueKey('vacation_end_date_preview')),
+        findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('save_shift_vacation')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('shift_vacations_empty')), findsNothing);
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('add_shift_vacation')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('add_shift_vacation')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('save_shift_vacation')));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Этот период пересекается с другим отпуском'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Отмена').last);
+    await tester.pumpAndSettle();
+
+    final removeVacation = find.byWidgetPredicate(
+      (widget) =>
+          widget.key is ValueKey<String> &&
+          (widget.key! as ValueKey<String>)
+              .value
+              .startsWith('remove_shift_vacation_'),
+    );
+    await tester.ensureVisible(removeVacation);
+    await tester.pumpAndSettle();
+    await tester.tap(removeVacation);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('shift_vacations_empty')), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('add_shift_vacation')),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('add_shift_vacation')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('add_shift_vacation')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('save_shift_vacation')));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Сохранить'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Сохранить'));
@@ -1293,6 +1345,9 @@ void main() {
       shiftRepository.savedSchedules.single.colorValue,
       isNot(const Color(0xFF2F7DD1).toARGB32()),
     );
+    expect(shiftRepository.savedSchedules.single.vacations, hasLength(1));
+    expect(shiftRepository.savedSchedules.single.vacations.single.durationDays,
+        14);
   });
 
   testWidgets('settings opens memory archive and restores item to feed',
@@ -1408,6 +1463,13 @@ void main() {
         startDate: today,
         workDays: 5,
         restDays: 2,
+        vacations: [
+          ShiftVacation(
+            id: 'factory-vacation',
+            startDate: today,
+            durationDays: 1,
+          ),
+        ],
       ),
       ShiftSchedule(
         id: 'watch',
@@ -1443,6 +1505,33 @@ void main() {
       ),
       findsOneWidget,
     );
+    final factorySegment = find.descendant(
+      of: cell,
+      matching: find.byKey(const ValueKey('shift_segment_factory')),
+    );
+    expect(factorySegment, findsOneWidget);
+    final factoryFill = find.descendant(
+      of: factorySegment,
+      matching: find.byType(ColoredBox),
+    );
+    expect(factoryFill, findsOneWidget);
+    expect(
+      tester.widget<ColoredBox>(factoryFill).color,
+      const Color(0xFF2563EB),
+    );
+    expect(
+      find.descendant(
+        of: factorySegment,
+        matching: find.byKey(
+          ValueKey('vacation_ribbon_factory_$dayKey'),
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(ValueKey('vacation_ribbon_watch_$dayKey')),
+      findsNothing,
+    );
 
     final secondWorkCell =
         find.byKey(ValueKey('calendar_day_$secondWorkDayKey'));
@@ -1462,4 +1551,55 @@ void main() {
     expect(find.textContaining('Завод'), findsOneWidget);
     expect(find.textContaining('Вахта'), findsOneWidget);
   });
+
+  for (final width in [320.0, 360.0, 600.0, 840.0]) {
+    testWidgets('vacation editor stays reachable at ${width.toInt()} px',
+        (tester) async {
+      await tester.binding.setSurfaceSize(Size(width, 900));
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      addTearDown(
+        tester.platformDispatcher.clearTextScaleFactorTestValue,
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            securityServiceProvider
+                .overrideWithValue(_UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+            shiftScheduleRepositoryProvider.overrideWithValue(
+              _FakeShiftScheduleRepository(),
+            ),
+          ],
+          child: const EzhednevnikV2App(),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Настройки').last);
+      await tester.pumpAndSettle();
+      final shiftSchedules = find.text('Графики смен');
+      await tester.ensureVisible(shiftSchedules);
+      await tester.pumpAndSettle();
+      await tester.tap(shiftSchedules);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Добавить график').last);
+      await tester.pumpAndSettle();
+
+      final addVacation = find.byKey(const ValueKey('add_shift_vacation'));
+      await tester.ensureVisible(addVacation);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(addVacation).height, 48);
+      await tester.tap(addVacation);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('vacation_start_date')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('vacation_duration_days')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
