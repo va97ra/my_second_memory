@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/data/database/app_database.dart';
+import 'package:ezhednevnik_v2/src/data/database/drift_secure_entity_backend.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/data/encrypted_memory_repository.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/data/memory_repository.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/data/sqlite_memory_repository.dart';
@@ -77,7 +78,11 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final database = AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);
-    final plain = SqliteMemoryRepository(database: database);
+    final plain = SqliteMemoryRepository(
+      database: database,
+      closeDatabase: false,
+    );
+    final backend = DriftSecureEntityBackend(database);
     final date = DateTime(2026, 7, 7);
     await plain.replaceAll([
       MemoryItem(
@@ -104,10 +109,11 @@ void main() {
     final repository = EncryptedMemoryRepository(
       store: EncryptedJsonStore(cipher: cipher),
       plainRepository: plain,
+      backend: backend,
     );
 
     final migrated = await repository.loadAll();
-    final rows = await plain.loadSecureEntities(
+    final rows = await backend.loadSecureEntities(
       EncryptedMemoryRepository.entityKind,
     );
 
@@ -118,7 +124,7 @@ void main() {
 
     await repository.upsert(migrated.first.copyWith(body: 'Изменена'));
     expect(
-        await plain.loadSecureEntities(
+        await backend.loadSecureEntities(
           EncryptedMemoryRepository.entityKind,
         ),
         hasLength(2));

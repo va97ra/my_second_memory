@@ -1,38 +1,48 @@
 # Ежедневник V2
 
-Перед продолжением работы сначала читать [`00_READ_THIS_FIRST.md`](00_READ_THIS_FIRST.md).
+Local-first Flutter-приложение для личных записей, календаря, задач, фото,
+голосовых заметок, аккаунтов, графиков смен, напоминаний и повторов.
 
-Flutter MVP для локальной личной памяти: задачи, заметки, голосовые заметки, события, люди, привычки, цели, проекты, покупки, документы и места.
+Перед изменениями прочитайте:
 
-## Что уже заложено
+- [`00_READ_THIS_FIRST.md`](00_READ_THIS_FIRST.md) — стабильные продуктовые
+  правила;
+- [`docs/architecture.md`](docs/architecture.md) — устройство кода и данных;
+- [`docs/sync_setup.md`](docs/sync_setup.md) — настройка зашифрованной
+  синхронизации.
 
-- Модульная структура `core`, `data`, `features`, `shared`.
-- Календарные записи имеют дату `memoryDate`; отдельные записки могут храниться без привязки к календарю.
-- Лента группирует записи по датам и поднимает важные дела.
-- Голосовые заметки записываются локально и воспроизводятся из карточки.
-- Интерфейс RU/EN без облака и аккаунтов.
-- PIN/биометрия вынесены в отдельный security-сервис.
+## Платформы
 
-## Как запустить после установки Flutter
+- Android: редакции `simple` и `sync`;
+- Windows desktop с tray-режимом и single-instance поведением;
+- Web с локальным SharedPreferences-хранилищем;
+- SQLite-репозитории также подготовлены для остальных IO-платформ Flutter.
+
+## Запуск
 
 ```powershell
 flutter pub get
 flutter run
 ```
 
-Для Android также нужен Android Studio или Android SDK с настроенным эмулятором/телефоном.
-
-## Важно
-
-В проекте используется локальный Flutter SDK в `.tools/flutter`. Если хотите использовать системный Flutter, установите его отдельно и выполните:
+В репозитории может использоваться локальный SDK `.tools/flutter`. Для
+воспроизводимой проверки в текущей Windows-среде:
 
 ```powershell
-flutter pub get
-flutter test
+$env:PUB_CACHE=(Resolve-Path '.tools\pub-cache').Path
+$env:APPDATA=(Resolve-Path '.tools\appdata').Path
+$env:LOCALAPPDATA=(Resolve-Path '.tools\localappdata').Path
+$env:FLUTTER_SUPPRESS_ANALYTICS='true'
+& '.\.tools\flutter\bin\flutter.bat' analyze
+& '.\.tools\flutter\bin\flutter.bat' test
 ```
 
-Для добавления платформенных файлов выполните:
+## Архитектурные ориентиры
 
-```powershell
-flutter create --platforms=android,ios .
-```
+- feature-first структура с `domain`, `data`, `state` и `ui`;
+- Riverpod управляет состоянием и временем жизни локального хранилища;
+- UI зависит от контрактов репозиториев, а не от конкретной SQLite/Web
+  реализации;
+- локальные изменения записываются последовательно;
+- синхронизация шифрует данные до отправки в Supabase;
+- существующие локальные данные и резервные копии считаются совместимым API.

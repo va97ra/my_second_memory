@@ -13,7 +13,9 @@ import '../state/shift_schedules_controller.dart';
 
 part 'widgets/shift_schedule_tile.dart';
 part 'widgets/shift_schedule_editor.dart';
-part 'widgets/shift_schedule_form_widgets.dart';
+part 'widgets/shift_vacation_form_widgets.dart';
+part 'widgets/shift_schedule_control_widgets.dart';
+part 'widgets/shift_color_picker.dart';
 
 class ShiftSchedulesScreen extends ConsumerWidget {
   const ShiftSchedulesScreen({super.key});

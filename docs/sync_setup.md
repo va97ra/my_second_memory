@@ -47,8 +47,9 @@ confirmation link returns to the Sync app.
 
 Android has two independently installable distributions:
 
-- `simple` — `com.va97ra.ezhednevnikv2`, without cloud synchronization;
-- `sync` — `com.va97ra.ezhednevnikv2.sync`, with encrypted synchronization.
+- `simple` — `com.va97ra.ezhednevnikv2.simple`, without cloud synchronization;
+- `sync` — `com.va97ra.ezhednevnikv2`, with encrypted synchronization and the
+  application ID used by the main RuStore edition.
 
 The normal Android default is `simple`. Release artifacts can be built with:
 

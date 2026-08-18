@@ -1,11 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/local_storage/local_storage_scope_provider.dart';
 import '../data/app_cipher.dart';
+import '../data/security_data_migration_service.dart';
 import '../data/security_service.dart';
 
 final securityServiceProvider = Provider<SecurityService>(
   (ref) => SecurityService(),
 );
+
+final securityDataMigrationServiceProvider =
+    Provider<SecurityDataMigrationService>((ref) {
+  return SecurityDataMigrationService(ref.watch(localStorageScopeProvider));
+});
 
 final securitySessionProvider =
     StateNotifierProvider<SecuritySessionController, SecuritySessionState>(

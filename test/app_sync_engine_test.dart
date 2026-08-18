@@ -14,6 +14,175 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  test('pre-existing memory records merge into one union', () async {
+    SharedPreferences.setMockInitialValues({});
+    final remote = _SyncRemote();
+    final key = List<int>.generate(32, (index) => index + 1);
+    final windowsCipher = AppCipher.fromKeyBytes(key);
+    final androidCipher = AppCipher.fromKeyBytes(key);
+    final createdAt = DateTime.utc(2026, 8, 18, 8);
+    var windowsItems = [_memoryItem('windows', 'Windows record', createdAt)];
+    var androidItems = [
+      _memoryItem(
+        'android',
+        'Android record',
+        createdAt.add(const Duration(minutes: 1)),
+      ),
+    ];
+    addTearDown(windowsCipher.destroy);
+    addTearDown(androidCipher.destroy);
+
+    await _sync(
+      remote: remote,
+      cipher: windowsCipher,
+      memoryItems: windowsItems,
+      replaceMemoryItems: (items) async => windowsItems = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+    await _sync(
+      remote: remote,
+      cipher: androidCipher,
+      memoryItems: androidItems,
+      replaceMemoryItems: (items) async => androidItems = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+    await _sync(
+      remote: remote,
+      cipher: windowsCipher,
+      memoryItems: windowsItems,
+      replaceMemoryItems: (items) async => windowsItems = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+
+    expect(
+      windowsItems.map((item) => item.id),
+      unorderedEquals(['windows', 'android']),
+    );
+    expect(
+      androidItems.map((item) => item.id),
+      unorderedEquals(['windows', 'android']),
+    );
+    expect(
+      remote._entities.values
+          .where((entity) => entity.kind == SyncEntityKind.memoryItem)
+          .map((entity) => entity.entityId),
+      unorderedEquals(['windows', 'android']),
+    );
+  });
+
+  test('memory edits and deletion tombstones synchronize across devices',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final remote = _SyncRemote();
+    final key = List<int>.generate(32, (index) => index + 1);
+    final cipherA = AppCipher.fromKeyBytes(key);
+    final cipherB = AppCipher.fromKeyBytes(key);
+    final tombstonesA = _MemoryTombstoneStore();
+    final tombstonesB = _MemoryTombstoneStore();
+    final createdAt = DateTime.utc(2026, 8, 18, 8);
+    var itemsA = [_memoryItem('shared', 'Windows note', createdAt)];
+    var itemsB = <MemoryItem>[];
+    addTearDown(cipherA.destroy);
+    addTearDown(cipherB.destroy);
+
+    await _sync(
+      remote: remote,
+      cipher: cipherA,
+      tombstones: tombstonesA,
+      memoryItems: itemsA,
+      replaceMemoryItems: (items) async => itemsA = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+    final encryptedMemory = remote._entities.values.singleWhere(
+      (entity) => entity.kind == SyncEntityKind.memoryItem,
+    );
+    expect(encryptedMemory.encryptedPayload, isNot(contains('Windows note')));
+
+    final download = await _sync(
+      remote: remote,
+      cipher: cipherB,
+      tombstones: tombstonesB,
+      memoryItems: itemsB,
+      replaceMemoryItems: (items) async => itemsB = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+    expect(download.downloaded, 1);
+    expect(itemsB.single.title, 'Windows note');
+
+    itemsB = [
+      itemsB.single.copyWith(
+        title: 'Android edit',
+        updatedAt: createdAt.add(const Duration(minutes: 1)),
+      ),
+    ];
+    await _sync(
+      remote: remote,
+      cipher: cipherB,
+      tombstones: tombstonesB,
+      memoryItems: itemsB,
+      replaceMemoryItems: (items) async => itemsB = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+    await _sync(
+      remote: remote,
+      cipher: cipherA,
+      tombstones: tombstonesA,
+      memoryItems: itemsA,
+      replaceMemoryItems: (items) async => itemsA = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+    expect(itemsA.single.title, 'Android edit');
+
+    final deletedAt = createdAt.add(const Duration(minutes: 2));
+    itemsA = [];
+    await tombstonesA.markDeleted('user', 'shared', deletedAt);
+    await _sync(
+      remote: remote,
+      cipher: cipherA,
+      tombstones: tombstonesA,
+      memoryItems: itemsA,
+      replaceMemoryItems: (items) async => itemsA = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+    final deletion = await _sync(
+      remote: remote,
+      cipher: cipherB,
+      tombstones: tombstonesB,
+      memoryItems: itemsB,
+      replaceMemoryItems: (items) async => itemsB = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+    expect(deletion.deleted, 1);
+    expect(itemsB, isEmpty);
+  });
+
   test('shift colors and accounts merge across two devices', () async {
     SharedPreferences.setMockInitialValues({});
     final remote = _SyncRemote();
@@ -340,6 +509,9 @@ void main() {
 Future<SyncRunResult> _sync({
   required _SyncRemote remote,
   required AppCipher cipher,
+  SyncTombstoneStore tombstones = const SyncTombstoneStore(),
+  List<MemoryItem> memoryItems = const [],
+  Future<void> Function(List<MemoryItem>)? replaceMemoryItems,
   required List<ShiftSchedule> shifts,
   required Future<void> Function(List<ShiftSchedule>) replaceShifts,
   required List<AccountItem> accounts,
@@ -353,10 +525,10 @@ Future<SyncRunResult> _sync({
   return AppSyncEngine(
     remote: remote,
     cipher: cipher,
-    tombstones: const SyncTombstoneStore(),
+    tombstones: tombstones,
   ).synchronize(
-    memoryItems: const <MemoryItem>[],
-    replaceMemoryItems: (_) async {},
+    memoryItems: memoryItems,
+    replaceMemoryItems: replaceMemoryItems ?? (_) async {},
     shiftSchedules: shifts,
     replaceShiftSchedules: replaceShifts,
     accounts: accounts,
@@ -366,6 +538,45 @@ Future<SyncRunResult> _sync({
     recurrenceExceptions: recurrenceExceptions,
     replaceRecurrenceExceptions: replaceRecurrenceExceptions ?? (_) async {},
   );
+}
+
+MemoryItem _memoryItem(String id, String title, DateTime date) => MemoryItem(
+      id: id,
+      type: MemoryType.note,
+      title: title,
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+    );
+
+class _MemoryTombstoneStore extends SyncTombstoneStore {
+  final _values = <SyncEntityKind, Map<String, DateTime>>{};
+
+  @override
+  Future<Map<String, DateTime>> read(
+    String userId, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async =>
+      {...?_values[kind]};
+
+  @override
+  Future<void> write(
+    String userId,
+    Map<String, DateTime> next, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async {
+    _values[kind] = {...next};
+  }
+
+  @override
+  Future<void> markDeleted(
+    String userId,
+    String id,
+    DateTime deletedAt, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async {
+    (_values[kind] ??= {})[id] = deletedAt;
+  }
 }
 
 class _SyncRemote implements SyncRemoteStore {

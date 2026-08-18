@@ -9,7 +9,6 @@ import '../../accounts/state/accounts_controller.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
-import '../data/security_data_migration_service.dart';
 import '../state/security_provider.dart';
 
 class SecurityScreen extends ConsumerStatefulWidget {
@@ -21,7 +20,6 @@ class SecurityScreen extends ConsumerStatefulWidget {
 
 class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   final _pinController = TextEditingController();
-  final _migrationService = const SecurityDataMigrationService();
   String? _message;
 
   @override
@@ -162,7 +160,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     }
 
     final currentSession = ref.read(securitySessionProvider);
-    final snapshot = await _migrationService.snapshotEncryptedData(
+    final migrationService = ref.read(securityDataMigrationServiceProvider);
+    final snapshot = await migrationService.snapshotEncryptedData(
       currentSession.cipher,
     );
 
@@ -170,7 +169,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
 
     final newCipher = ref.read(securitySessionProvider).cipher;
     if (newCipher != null) {
-      await _migrationService.encryptPlainData(
+      await migrationService.encryptPlainData(
         cipher: newCipher,
         snapshot: snapshot,
       );
@@ -217,7 +216,9 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     }
 
     try {
-      await _migrationService.decryptToPlainData(cipher);
+      await ref
+          .read(securityDataMigrationServiceProvider)
+          .decryptToPlainData(cipher);
     } finally {
       cipher.destroy();
     }

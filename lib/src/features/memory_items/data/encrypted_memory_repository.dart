@@ -8,6 +8,7 @@ class EncryptedMemoryRepository implements MemoryRepository {
   const EncryptedMemoryRepository({
     required this.store,
     required this.plainRepository,
+    this.backend,
   });
 
   static const storageKey = 'encrypted_memory_items_v1';
@@ -15,16 +16,13 @@ class EncryptedMemoryRepository implements MemoryRepository {
 
   final EncryptedJsonStore store;
   final MemoryRepository plainRepository;
-
-  SecureEntityBackend? get _backend => plainRepository is SecureEntityBackend
-      ? plainRepository as SecureEntityBackend
-      : null;
+  final SecureEntityBackend? backend;
 
   SecureEntityCodec get _codec => SecureEntityCodec(store.cipher);
 
   @override
   Future<List<MemoryItem>> loadAll() async {
-    final backend = _backend;
+    final backend = this.backend;
     if (backend != null) {
       var rows = await backend.loadSecureEntities(entityKind);
       if (rows.isEmpty) {
@@ -57,7 +55,7 @@ class EncryptedMemoryRepository implements MemoryRepository {
 
   @override
   Future<void> upsert(MemoryItem item) async {
-    final backend = _backend;
+    final backend = this.backend;
     if (backend != null) {
       final record = await _codec.encode(item.id, item.toJson());
       await backend.upsertSecureEntity(
@@ -79,7 +77,7 @@ class EncryptedMemoryRepository implements MemoryRepository {
   @override
   Future<void> upsertAll(List<MemoryItem> items) async {
     if (items.isEmpty) return;
-    final backend = _backend;
+    final backend = this.backend;
     if (backend != null) {
       final records = <SecureEntityRecord>[];
       for (var offset = 0; offset < items.length; offset += 32) {
@@ -102,7 +100,7 @@ class EncryptedMemoryRepository implements MemoryRepository {
 
   @override
   Future<void> delete(String id) async {
-    final backend = _backend;
+    final backend = this.backend;
     if (backend != null) {
       await backend.deleteSecureEntity(entityKind, await _codec.lookupKey(id));
       return;
@@ -115,7 +113,7 @@ class EncryptedMemoryRepository implements MemoryRepository {
 
   @override
   Future<void> replaceAll(List<MemoryItem> items) async {
-    if (_backend != null) {
+    if (backend != null) {
       await _replaceSecureRows(items);
       return;
     }
@@ -149,7 +147,7 @@ class EncryptedMemoryRepository implements MemoryRepository {
   }
 
   Future<void> _replaceSecureRows(List<MemoryItem> items) async {
-    final backend = _backend!;
+    final backend = this.backend!;
     final records = <SecureEntityRecord>[];
     for (final item in items) {
       records.add(await _codec.encode(item.id, item.toJson()));

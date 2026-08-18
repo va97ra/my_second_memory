@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/local_storage/local_storage_scope_provider.dart';
 import '../../security/data/encrypted_json_store.dart';
 import '../../security/state/security_provider.dart';
-import '../../security/data/secure_entity_backend.dart';
-import '../../memory_items/state/memory_items_controller.dart';
 import '../../sync/domain/sync_mutation_observer.dart';
 import '../data/account_repository.dart';
 import '../data/encrypted_account_repository.dart';
@@ -15,13 +14,10 @@ final accountRepositoryProvider = Provider<AccountRepository>((ref) {
   final cipher = session.cipher;
   const plainRepository = LocalAccountRepository();
   if (session.hasPin && cipher != null) {
-    final memoryRepository = ref.watch(plainMemoryRepositoryProvider);
     return EncryptedAccountRepository(
       store: EncryptedJsonStore(cipher: cipher),
       plainRepository: plainRepository,
-      backend: memoryRepository is SecureEntityBackend
-          ? memoryRepository as SecureEntityBackend
-          : null,
+      backend: ref.watch(localStorageScopeProvider).secureEntityBackend,
     );
   }
   if (!session.hasPin) {

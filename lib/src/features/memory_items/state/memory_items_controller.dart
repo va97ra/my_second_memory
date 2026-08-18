@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/async/sequential_task_queue.dart';
+import '../../../data/local_storage/local_storage_scope_provider.dart';
 import '../../security/data/encrypted_json_store.dart';
 import '../../security/state/security_provider.dart';
 import '../../sync/domain/sync_mutation_observer.dart';
@@ -10,24 +11,23 @@ import '../../notifications/data/notification_service.dart';
 import '../../media/data/media_storage.dart';
 import '../data/encrypted_memory_repository.dart';
 import '../data/memory_repository.dart';
-import '../data/memory_repository_factory.dart';
 import '../domain/memory_item.dart';
 import '../domain/memory_status.dart';
 
 final plainMemoryRepositoryProvider = Provider<MemoryRepository>((ref) {
-  final repository = createMemoryRepository();
-  ref.onDispose(() => unawaited(repository.close()));
-  return repository;
+  return ref.watch(localStorageScopeProvider).memoryRepository;
 });
 
 final memoryRepositoryProvider = Provider<MemoryRepository>((ref) {
   final session = ref.watch(securitySessionProvider);
   final plainRepository = ref.watch(plainMemoryRepositoryProvider);
+  final backend = ref.watch(localStorageScopeProvider).secureEntityBackend;
   final cipher = session.cipher;
   if (session.hasPin && cipher != null) {
     return EncryptedMemoryRepository(
       store: EncryptedJsonStore(cipher: cipher),
       plainRepository: plainRepository,
+      backend: backend,
     );
   }
   return plainRepository;
