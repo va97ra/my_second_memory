@@ -17,6 +17,20 @@ void main() {
     expect(await cipher.decryptBytes(encrypted), clear);
   });
 
+  test('destroyed app cipher rejects further key use', () async {
+    final cipher = await AppCipher.fromPin(
+      pin: '1234',
+      salt: List<int>.filled(16, 4),
+    );
+    final encrypted = await cipher.encryptString('secret');
+
+    cipher.destroy();
+
+    expect(cipher.isDestroyed, isTrue);
+    expect(cipher.exportKeyBytes, throwsStateError);
+    await expectLater(cipher.decryptString(encrypted), throwsStateError);
+  });
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {

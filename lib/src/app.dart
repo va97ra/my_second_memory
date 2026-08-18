@@ -16,7 +16,10 @@ import 'core/theme/app_surface_palette.dart';
 import 'core/theme/notebook/notebook_background.dart';
 import 'core/theme/notebook/notebook_theme.dart';
 import 'features/security/ui/security_gate.dart';
+import 'features/security/state/security_provider.dart';
 import 'features/notifications/data/notification_service.dart';
+import 'platform/windows/windows_desktop.dart';
+import 'platform/windows/windows_tray_frame.dart';
 
 class EzhednevnikV2App extends ConsumerStatefulWidget {
   const EzhednevnikV2App({super.key});
@@ -27,11 +30,49 @@ class EzhednevnikV2App extends ConsumerStatefulWidget {
 
 class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
   StreamSubscription<String>? _notificationSubscription;
+  Locale? _desktopLocale;
 
   @override
   void initState() {
     super.initState();
     Future<void>.microtask(_initializeNotifications);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_attachWindowsDesktop());
+    });
+  }
+
+  Future<void> _attachWindowsDesktop() async {
+    if (!windowsDesktopPlatform.isSupported) return;
+    final locale = ref.read(appLocaleControllerProvider);
+    _desktopLocale = locale;
+    try {
+      await windowsDesktopPlatform.attach(
+        labels: _desktopLabels(locale),
+        onLock: () async {
+          ref.read(securitySessionProvider.notifier).lock();
+        },
+      );
+    } catch (_) {
+      // The notebook remains usable as a regular window when tray setup fails.
+    }
+  }
+
+  WindowsDesktopLabels _desktopLabels(Locale locale) {
+    final strings = AppStrings(locale);
+    return WindowsDesktopLabels(
+      appTitle: strings.appTitle,
+      open: strings.trayOpen,
+      lock: strings.trayLock,
+      exit: strings.trayExit,
+    );
+  }
+
+  Future<void> _updateWindowsDesktopLabels(Locale locale) async {
+    try {
+      await windowsDesktopPlatform.updateLabels(_desktopLabels(locale));
+    } catch (_) {
+      // A tray refresh failure must not affect the Flutter interface.
+    }
   }
 
   Future<void> _initializeNotifications() async {
@@ -53,12 +94,17 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
   @override
   void dispose() {
     _notificationSubscription?.cancel();
+    unawaited(windowsDesktopPlatform.detach());
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(appLocaleControllerProvider);
+    if (windowsDesktopPlatform.isSupported && _desktopLocale != locale) {
+      _desktopLocale = locale;
+      unawaited(_updateWindowsDesktopLabels(locale));
+    }
     final themeStyle = ref.watch(appThemeControllerProvider);
     final contentFont = ref.watch(appContentFontControllerProvider);
     final baseTheme = switch (themeStyle) {
@@ -103,8 +149,10 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: overlayStyle,
           child: AppBackground(
-            child: SecurityGate(
-              child: child ?? const SizedBox.shrink(),
+            child: WindowsTrayFrame(
+              child: SecurityGate(
+                child: child ?? const SizedBox.shrink(),
+              ),
             ),
           ),
         );

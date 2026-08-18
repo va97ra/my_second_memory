@@ -66,13 +66,13 @@ class SecuritySessionController extends StateNotifier<SecuritySessionState> {
     if (cipher == null) {
       return false;
     }
-    state = SecuritySessionState(
+    _replaceState(SecuritySessionState(
       setupCompleted: true,
       hasPin: true,
       isUnlocked: true,
       biometricsEnabled: await _service.biometricsEnabled(),
       cipher: cipher,
-    );
+    ));
     return true;
   }
 
@@ -95,8 +95,18 @@ class SecuritySessionController extends StateNotifier<SecuritySessionState> {
 
   Future<void> clearPinSession() async {
     await _service.clearPin();
-    state = const SecuritySessionState();
+    _replaceState(const SecuritySessionState());
     await load();
+  }
+
+  void lock() {
+    if (!state.isUnlocked && state.cipher == null) return;
+    _replaceState(
+      state.copyWith(
+        isUnlocked: false,
+        clearCipher: true,
+      ),
+    );
   }
 
   Future<bool> unlockWithBiometrics() async {
@@ -104,13 +114,27 @@ class SecuritySessionController extends StateNotifier<SecuritySessionState> {
     if (cipher == null) {
       return false;
     }
-    state = SecuritySessionState(
+    _replaceState(SecuritySessionState(
       setupCompleted: true,
       hasPin: true,
       isUnlocked: true,
       biometricsEnabled: true,
       cipher: cipher,
-    );
+    ));
     return true;
+  }
+
+  void _replaceState(SecuritySessionState next) {
+    final previousCipher = state.cipher;
+    state = next;
+    if (!identical(previousCipher, next.cipher)) {
+      previousCipher?.destroy();
+    }
+  }
+
+  @override
+  void dispose() {
+    state.cipher?.destroy();
+    super.dispose();
   }
 }

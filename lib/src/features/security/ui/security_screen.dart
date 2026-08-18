@@ -216,7 +216,11 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
       return;
     }
 
-    await _migrationService.decryptToPlainData(cipher);
+    try {
+      await _migrationService.decryptToPlainData(cipher);
+    } finally {
+      cipher.destroy();
+    }
     await ref.read(securitySessionProvider.notifier).clearPinSession();
     _invalidateProtectedProviders();
     if (!mounted) return;

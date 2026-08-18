@@ -275,6 +275,17 @@ class AppStrings {
       : 'Your data remains protected. Try starting the app again.';
   String get retry => isRu ? 'Повторить' : 'Retry';
   String get closeApp => isRu ? 'Закрыть приложение' : 'Close app';
+  String get trayOpen => isRu ? 'Открыть' : 'Open';
+  String get trayLock => isRu ? 'Заблокировать' : 'Lock';
+  String get trayExit => isRu ? 'Выйти' : 'Exit';
+  String get launchWithWindows =>
+      isRu ? 'Запускать вместе с Windows' : 'Launch with Windows';
+  String get launchWithWindowsSubtitle => isRu
+      ? 'Показывать окно входа после входа в систему'
+      : 'Show the unlock window after signing in';
+  String get launchWithWindowsFailed => isRu
+      ? 'Не удалось изменить автозапуск Windows'
+      : 'Could not update Windows startup';
   String get pinSaved => isRu ? 'PIN сохранен' : 'PIN saved';
   String get recordAudioBeforeSaving => isRu
       ? 'Сначала запишите голосовую заметку'

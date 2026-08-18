@@ -30,6 +30,11 @@ dependencies:
   cryptography: ^2.7.0
   image_picker: ^1.2.3
   archive: ^4.0.9
+  launch_at_startup: ^0.5.1
+  screen_retriever: ^0.2.2
+  tray_manager: ^0.5.3
+  window_manager: ^0.5.2
+  windows_single_instance: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -51,6 +56,7 @@ flutter:
     - assets/textures/light_paper.webp
     - assets/textures/light_leather.webp
     - assets/textures/vacation_ribbon.webp
+    - windows/runner/resources/app_icon.ico
   fonts:
     - family: Manrope
       fonts:

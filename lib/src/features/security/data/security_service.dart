@@ -42,18 +42,24 @@ class SecurityService {
   Future<void> setPin(String pin) async {
     final salt = AppCipher.randomSalt();
     final cipher = await AppCipher.fromPin(pin: pin, salt: salt);
-    final verifier = await cipher.encryptString('pin-ok');
-    await _storage.write(key: _pinSaltKey, value: base64Encode(salt));
-    await _storage.write(key: _pinHashKey, value: verifier);
-    await _storage.write(key: _setupCompletedKey, value: 'true');
-    await _storage.delete(key: _pinKey);
-    if (await biometricsEnabled()) {
-      await setBiometricsEnabled(true, cipher: cipher, authenticate: false);
+    try {
+      final verifier = await cipher.encryptString('pin-ok');
+      await _storage.write(key: _pinSaltKey, value: base64Encode(salt));
+      await _storage.write(key: _pinHashKey, value: verifier);
+      await _storage.write(key: _setupCompletedKey, value: 'true');
+      await _storage.delete(key: _pinKey);
+      if (await biometricsEnabled()) {
+        await setBiometricsEnabled(true, cipher: cipher, authenticate: false);
+      }
+    } finally {
+      cipher.destroy();
     }
   }
 
   Future<bool> verifyPin(String pin) async {
-    return (await unlockWithPin(pin)) != null;
+    final cipher = await unlockWithPin(pin);
+    cipher?.destroy();
+    return cipher != null;
   }
 
   Future<AppCipher?> unlockWithPin(String pin) async {

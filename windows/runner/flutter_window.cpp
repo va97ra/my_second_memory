@@ -14,6 +14,18 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
 
+  // This application behaves as a tray-owned flyout rather than as a regular
+  // desktop window. A tool window does not create a taskbar or Alt+Tab entry;
+  // the Dart desktop controller owns showing, hiding, and positioning it.
+  const HWND window = GetHandle();
+  LONG_PTR extended_style = GetWindowLongPtr(window, GWL_EXSTYLE);
+  extended_style &= ~WS_EX_APPWINDOW;
+  extended_style |= WS_EX_TOOLWINDOW;
+  SetWindowLongPtr(window, GWL_EXSTYLE, extended_style);
+  SetWindowPos(window, nullptr, 0, 0, 0, 0,
+               SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                   SWP_NOACTIVATE);
+
   RECT frame = GetClientArea();
 
   // The size here must match the window dimensions to avoid unnecessary surface

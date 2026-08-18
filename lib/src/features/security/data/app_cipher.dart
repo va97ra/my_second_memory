@@ -5,9 +5,10 @@ import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 
 class AppCipher {
-  const AppCipher._(this._keyBytes);
+  AppCipher._(List<int> keyBytes) : _keyBytes = Uint8List.fromList(keyBytes);
 
-  final List<int> _keyBytes;
+  final Uint8List _keyBytes;
+  bool _isDestroyed = false;
 
   static final _algorithm = AesGcm.with256bits();
 
@@ -28,16 +29,31 @@ class AppCipher {
   }
 
   factory AppCipher.fromKeyBytes(List<int> keyBytes) {
-    return AppCipher._(List<int>.unmodifiable(keyBytes));
+    return AppCipher._(keyBytes);
   }
 
-  List<int> exportKeyBytes() => List<int>.unmodifiable(_keyBytes);
+  bool get isDestroyed => _isDestroyed;
+
+  List<int> exportKeyBytes() => List<int>.unmodifiable(_activeKeyBytes);
+
+  void destroy() {
+    if (_isDestroyed) return;
+    _keyBytes.fillRange(0, _keyBytes.length, 0);
+    _isDestroyed = true;
+  }
+
+  List<int> get _activeKeyBytes {
+    if (_isDestroyed) {
+      throw StateError('Cipher key has been destroyed');
+    }
+    return _keyBytes;
+  }
 
   Future<String> encryptString(String value) async {
     final nonce = _randomBytes(12);
     final box = await _algorithm.encrypt(
       utf8.encode(value),
-      secretKey: SecretKey(_keyBytes),
+      secretKey: SecretKey(_activeKeyBytes),
       nonce: nonce,
     );
     return jsonEncode({
@@ -56,7 +72,7 @@ class AppCipher {
     );
     final clear = await _algorithm.decrypt(
       box,
-      secretKey: SecretKey(_keyBytes),
+      secretKey: SecretKey(_activeKeyBytes),
     );
     return utf8.decode(clear);
   }
@@ -65,7 +81,7 @@ class AppCipher {
     final nonce = _randomBytes(12);
     final box = await _algorithm.encrypt(
       value,
-      secretKey: SecretKey(_keyBytes),
+      secretKey: SecretKey(_activeKeyBytes),
       nonce: nonce,
     );
     return Uint8List.fromList([
@@ -86,7 +102,7 @@ class AppCipher {
         nonce: value.sublist(1, 13),
         mac: Mac(value.sublist(13, 29)),
       ),
-      secretKey: SecretKey(_keyBytes),
+      secretKey: SecretKey(_activeKeyBytes),
     );
     return Uint8List.fromList(clear);
   }

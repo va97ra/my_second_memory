@@ -10,6 +10,7 @@ import '../../../core/theme/app_surface_textures.dart';
 import '../../../core/theme/app_theme_style.dart';
 import '../../../core/theme/notebook/notebook_assets.dart';
 import '../../../core/theme/notebook/notebook_background.dart';
+import '../../../platform/windows/windows_startup_controller.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../../shared/ui/notebook_pressable.dart';
@@ -28,6 +29,10 @@ class SettingsScreen extends ConsumerWidget {
     final contentFont = ref.watch(appContentFontControllerProvider);
     final showHints = ref.watch(appHintsProvider);
     final showHolidays = ref.watch(appHolidaysProvider);
+    final windowsPlatform = ref.watch(windowsDesktopPlatformProvider);
+    final windowsStartup = windowsPlatform.isSupported
+        ? ref.watch(windowsStartupControllerProvider)
+        : null;
 
     return WarmGradientBackground(
       child: CustomScrollView(
@@ -153,6 +158,52 @@ class SettingsScreen extends ConsumerWidget {
                               ref.read(appHolidaysProvider.notifier).setEnabled,
                         ),
                       ),
+                      if (windowsStartup != null)
+                        _SettingsTile(
+                          icon: Icons.desktop_windows_rounded,
+                          iconColor: const Color(0xFF2563EB),
+                          title: strings.launchWithWindows,
+                          subtitle: strings.launchWithWindowsSubtitle,
+                          trailing: windowsStartup.when(
+                            data: (enabled) => Switch(
+                              value: enabled,
+                              onChanged: (value) async {
+                                final saved = await ref
+                                    .read(windowsStartupControllerProvider
+                                        .notifier)
+                                    .setEnabled(value);
+                                if (!saved && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        strings.launchWithWindowsFailed,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                            loading: () => const SizedBox.square(
+                              dimension: 48,
+                              child: Center(
+                                child: SizedBox.square(
+                                  dimension: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            error: (_, __) => IconButton(
+                              tooltip: strings.retry,
+                              onPressed: ref
+                                  .read(
+                                      windowsStartupControllerProvider.notifier)
+                                  .load,
+                              icon: const Icon(Icons.refresh_rounded),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                   _SettingsSection(

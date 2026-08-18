@@ -8,9 +8,11 @@ import 'src/core/theme/app_surface_textures.dart';
 import 'src/core/theme/app_theme_controller.dart';
 import 'src/core/theme/app_theme_style.dart';
 import 'src/core/theme/notebook/notebook_assets.dart';
+import 'src/platform/windows/windows_desktop.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await windowsDesktopPlatform.initialize(arguments);
   final preferences = await SharedPreferences.getInstance();
   final initialStyle = AppThemeController.readInitialStyle(preferences);
   final initialContentFont =
