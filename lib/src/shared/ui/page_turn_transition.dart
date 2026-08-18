@@ -7,20 +7,19 @@ Page<void> pageTurnPage({
   required GoRouterState state,
   required Widget child,
 }) {
-  final isWindows =
-      !kIsWeb && Theme.of(context).platform == TargetPlatform.windows;
+  final useFastTransition = _useFastTransition(context);
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
-    transitionDuration: isWindows
+    transitionDuration: useFastTransition
         ? const Duration(milliseconds: 120)
         : const Duration(milliseconds: 260),
-    reverseTransitionDuration: isWindows
+    reverseTransitionDuration: useFastTransition
         ? const Duration(milliseconds: 100)
         : const Duration(milliseconds: 230),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       if (MediaQuery.disableAnimationsOf(context)) return child;
-      if (isWindows) {
+      if (useFastTransition) {
         return FadeTransition(
           opacity: CurvedAnimation(
             parent: animation,
@@ -37,6 +36,13 @@ Page<void> pageTurnPage({
       );
     },
   );
+}
+
+bool _useFastTransition(BuildContext context) {
+  if (kIsWeb) return false;
+  final platform = Theme.of(context).platform;
+  return platform == TargetPlatform.android ||
+      platform == TargetPlatform.windows;
 }
 
 /// A light fade-through transition that never paints two readable pages at
@@ -139,6 +145,14 @@ class _PageTurnTabFrameState extends State<PageTurnTabFrame>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _controller.duration = _useFastTransition(context)
+        ? const Duration(milliseconds: 120)
+        : const Duration(milliseconds: 210);
+  }
+
+  @override
   void didUpdateWidget(covariant PageTurnTabFrame oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.index == widget.index) return;
@@ -159,6 +173,16 @@ class _PageTurnTabFrameState extends State<PageTurnTabFrame>
   @override
   Widget build(BuildContext context) {
     if (MediaQuery.disableAnimationsOf(context)) return widget.child;
+    if (_useFastTransition(context)) {
+      return FadeTransition(
+        key: const ValueKey('app_tab_transition'),
+        opacity: CurvedAnimation(
+          parent: _controller,
+          curve: Curves.easeOutCubic,
+        ),
+        child: widget.child,
+      );
+    }
     return AnimatedBuilder(
       animation: _controller,
       child: widget.child,

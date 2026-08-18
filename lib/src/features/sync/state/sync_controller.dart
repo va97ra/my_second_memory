@@ -3,14 +3,19 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../accounts/domain/account_item.dart';
+import '../../accounts/state/accounts_controller.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../security/data/app_cipher.dart';
+import '../../security/state/security_provider.dart';
+import '../../shift_schedules/domain/shift_schedule.dart';
+import '../../shift_schedules/state/shift_schedules_controller.dart';
 import '../data/supabase_sync_remote_store.dart';
 import '../data/sync_local_store.dart';
 import '../data/sync_remote_store.dart';
 import '../data/sync_vault_crypto.dart';
-import '../domain/memory_sync_engine.dart';
+import '../domain/app_sync_engine.dart';
 import '../domain/sync_backend_config.dart';
 import '../domain/sync_models.dart';
 
@@ -19,6 +24,7 @@ enum SyncStatus {
   loading,
   signedOut,
   awaitingEmailConfirmation,
+  resendingEmailConfirmation,
   needsVault,
   ready,
   syncing,
@@ -33,6 +39,7 @@ class SyncState {
     this.lastSyncedAt,
     this.lastResult,
     this.error,
+    this.confirmationResent = false,
     this.recoveryCode,
     this.cipher,
   });
@@ -45,6 +52,7 @@ class SyncState {
   final DateTime? lastSyncedAt;
   final SyncRunResult? lastResult;
   final String? error;
+  final bool confirmationResent;
   final String? recoveryCode;
   final AppCipher? cipher;
 
@@ -58,6 +66,7 @@ class SyncState {
     SyncRunResult? lastResult,
     String? error,
     bool clearError = false,
+    bool? confirmationResent,
     String? recoveryCode,
     bool clearRecoveryCode = false,
     AppCipher? cipher,
@@ -70,6 +79,7 @@ class SyncState {
       lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
       lastResult: lastResult ?? this.lastResult,
       error: clearError ? null : error ?? this.error,
+      confirmationResent: confirmationResent ?? this.confirmationResent,
       recoveryCode:
           clearRecoveryCode ? null : recoveryCode ?? this.recoveryCode,
       cipher: clearCipher ? null : cipher ?? this.cipher,
@@ -96,12 +106,26 @@ final syncControllerProvider =
     remote: ref.watch(syncRemoteStoreProvider),
     keyStore: ref.watch(syncKeyStoreProvider),
     tombstones: ref.watch(syncTombstoneStoreProvider),
+    canAccessLocalData: () => ref.read(securitySessionProvider).isUnlocked,
     readMemoryItems: () async {
       await ref.read(memoryItemsControllerProvider.notifier).load();
       return ref.read(memoryItemsControllerProvider);
     },
     replaceMemoryItems: (items) =>
         ref.read(memoryItemsControllerProvider.notifier).replaceAll(items),
+    readShiftSchedules: () async {
+      await ref.read(shiftSchedulesControllerProvider.notifier).load();
+      return ref.read(shiftSchedulesControllerProvider);
+    },
+    replaceShiftSchedules: (schedules) => ref
+        .read(shiftSchedulesControllerProvider.notifier)
+        .replaceAll(schedules),
+    readAccounts: () async {
+      await ref.read(accountsControllerProvider.notifier).load();
+      return ref.read(accountsControllerProvider);
+    },
+    replaceAccounts: (accounts) =>
+        ref.read(accountsControllerProvider.notifier).replaceAll(accounts),
   );
 });
 
@@ -110,13 +134,24 @@ class SyncController extends StateNotifier<SyncState> {
     required SyncRemoteStore? remote,
     required SyncKeyStore keyStore,
     required SyncTombstoneStore tombstones,
+    bool Function()? canAccessLocalData,
     required Future<List<MemoryItem>> Function() readMemoryItems,
     required Future<void> Function(List<MemoryItem>) replaceMemoryItems,
+    Future<List<ShiftSchedule>> Function()? readShiftSchedules,
+    Future<void> Function(List<ShiftSchedule>)? replaceShiftSchedules,
+    Future<List<AccountItem>> Function()? readAccounts,
+    Future<void> Function(List<AccountItem>)? replaceAccounts,
   })  : _remote = remote,
         _keyStore = keyStore,
         _tombstones = tombstones,
+        _canAccessLocalData = canAccessLocalData ?? _alwaysAccessible,
         _readMemoryItems = readMemoryItems,
         _replaceMemoryItems = replaceMemoryItems,
+        _readShiftSchedules = readShiftSchedules ?? _readNoShiftSchedules,
+        _replaceShiftSchedules =
+            replaceShiftSchedules ?? _replaceNoShiftSchedules,
+        _readAccounts = readAccounts ?? _readNoAccounts,
+        _replaceAccounts = replaceAccounts ?? _replaceNoAccounts,
         super(remote == null
             ? const SyncState.unconfigured()
             : const SyncState(status: SyncStatus.loading));
@@ -124,8 +159,13 @@ class SyncController extends StateNotifier<SyncState> {
   final SyncRemoteStore? _remote;
   final SyncKeyStore _keyStore;
   final SyncTombstoneStore _tombstones;
+  final bool Function() _canAccessLocalData;
   final Future<List<MemoryItem>> Function() _readMemoryItems;
   final Future<void> Function(List<MemoryItem>) _replaceMemoryItems;
+  final Future<List<ShiftSchedule>> Function() _readShiftSchedules;
+  final Future<void> Function(List<ShiftSchedule>) _replaceShiftSchedules;
+  final Future<List<AccountItem>> Function() _readAccounts;
+  final Future<void> Function(List<AccountItem>) _replaceAccounts;
   final SyncVaultCrypto _vaultCrypto = const SyncVaultCrypto();
   StreamSubscription<void>? _remoteSubscription;
   StreamSubscription<void>? _authSubscription;
@@ -180,6 +220,33 @@ class SyncController extends StateNotifier<SyncState> {
       return true;
     } catch (error) {
       _setError(error);
+      return false;
+    }
+  }
+
+  Future<bool> resendSignupConfirmation() async {
+    final remote = _requireRemote();
+    final email = state.email;
+    if (email == null || email.isEmpty) return false;
+    state = state.copyWith(
+      status: SyncStatus.resendingEmailConfirmation,
+      confirmationResent: false,
+      clearError: true,
+    );
+    try {
+      await remote.resendSignupConfirmation(email);
+      state = state.copyWith(
+        status: SyncStatus.awaitingEmailConfirmation,
+        confirmationResent: true,
+        clearError: true,
+      );
+      return true;
+    } catch (error) {
+      state = state.copyWith(
+        status: SyncStatus.awaitingEmailConfirmation,
+        confirmationResent: false,
+        error: error.toString(),
+      );
       return false;
     }
   }
@@ -279,7 +346,9 @@ class SyncController extends StateNotifier<SyncState> {
   Future<void> syncNow() {
     final active = _activeSync;
     if (active != null) return active;
-    if (state.cipher == null || _remote?.currentUserId == null) {
+    if (!_canAccessLocalData() ||
+        state.cipher == null ||
+        _remote?.currentUserId == null) {
       return Future.value();
     }
     final future = _runSync();
@@ -291,14 +360,20 @@ class SyncController extends StateNotifier<SyncState> {
     final cipher = state.cipher!;
     state = state.copyWith(status: SyncStatus.syncing, clearError: true);
     try {
-      final local = await _readMemoryItems();
-      final result = await MemorySyncEngine(
+      final memoryItems = await _readMemoryItems();
+      final shiftSchedules = await _readShiftSchedules();
+      final accounts = await _readAccounts();
+      final result = await AppSyncEngine(
         remote: _remote!,
         cipher: cipher,
         tombstones: _tombstones,
       ).synchronize(
-        localItems: local,
-        replaceLocal: _replaceMemoryItems,
+        memoryItems: memoryItems,
+        replaceMemoryItems: _replaceMemoryItems,
+        shiftSchedules: shiftSchedules,
+        replaceShiftSchedules: _replaceShiftSchedules,
+        accounts: accounts,
+        replaceAccounts: _replaceAccounts,
       );
       state = state.copyWith(
         status: SyncStatus.ready,
@@ -312,15 +387,27 @@ class SyncController extends StateNotifier<SyncState> {
   }
 
   void schedule([Duration delay = const Duration(milliseconds: 900)]) {
-    if (!state.isConnected) return;
+    if (!state.isConnected || !_canAccessLocalData()) return;
     _debounce?.cancel();
     _debounce = Timer(delay, syncNow);
   }
 
-  Future<void> recordDeletion(String id, DateTime deletedAt) async {
+  void localDataAvailabilityChanged(bool isAvailable) {
+    if (!isAvailable) {
+      _debounce?.cancel();
+      return;
+    }
+    schedule(Duration.zero);
+  }
+
+  Future<void> recordDeletion(
+    SyncEntityKind kind,
+    String id,
+    DateTime deletedAt,
+  ) async {
     final userId = _remote?.currentUserId;
     if (userId == null || !state.isConnected) return;
-    await _tombstones.markDeleted(userId, id, deletedAt);
+    await _tombstones.markDeleted(userId, id, deletedAt, kind: kind);
     schedule();
   }
 
@@ -440,3 +527,13 @@ class SyncController extends StateNotifier<SyncState> {
     super.dispose();
   }
 }
+
+bool _alwaysAccessible() => true;
+
+Future<List<ShiftSchedule>> _readNoShiftSchedules() async => const [];
+
+Future<void> _replaceNoShiftSchedules(List<ShiftSchedule> _) async {}
+
+Future<List<AccountItem>> _readNoAccounts() async => const [];
+
+Future<void> _replaceNoAccounts(List<AccountItem> _) async {}

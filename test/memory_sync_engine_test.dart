@@ -222,6 +222,9 @@ class _FakeRemoteStore implements SyncRemoteStore {
   }
 
   @override
+  Future<void> resendSignupConfirmation(String email) async {}
+
+  @override
   Stream<void> watchAuthenticatedSession() => const Stream.empty();
 
   @override
@@ -232,17 +235,30 @@ class _MemoryTombstoneStore extends SyncTombstoneStore {
   final values = <String, DateTime>{};
 
   @override
-  Future<Map<String, DateTime>> read(String userId) async => {...values};
+  Future<Map<String, DateTime>> read(
+    String userId, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async =>
+      {...values};
 
   @override
-  Future<void> write(String userId, Map<String, DateTime> next) async {
+  Future<void> write(
+    String userId,
+    Map<String, DateTime> next, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async {
     values
       ..clear()
       ..addAll(next);
   }
 
   @override
-  Future<void> markDeleted(String userId, String id, DateTime deletedAt) async {
+  Future<void> markDeleted(
+    String userId,
+    String id,
+    DateTime deletedAt, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async {
     values[id] = deletedAt;
   }
 }

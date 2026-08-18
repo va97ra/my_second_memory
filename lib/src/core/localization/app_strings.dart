@@ -104,6 +104,14 @@ class AppStrings {
   String get syncCheckEmail => isRu
       ? 'Подтвердите адрес по ссылке в письме, затем войдите.'
       : 'Confirm the address using the email link, then sign in.';
+  String get syncCheckEmailHint => isRu
+      ? 'Проверьте также папку «Спам». После подтверждения ссылка вернёт вас в приложение.'
+      : 'Also check Spam. After confirmation, the link will return you to the app.';
+  String get syncResendEmail =>
+      isRu ? 'Отправить письмо ещё раз' : 'Send the email again';
+  String get syncEmailResent => isRu
+      ? 'Письмо отправлено повторно.'
+      : 'The confirmation email was sent again.';
   String get syncNewVault => isRu
       ? 'Создайте пароль синхронизации. Он может отличаться от PIN.'
       : 'Create a synchronization password. It may differ from your PIN.';
@@ -118,6 +126,57 @@ class AppStrings {
   String get syncRecoveryWarning => isRu
       ? 'Сохраните этот код вне приложения. Он показывается только при создании хранилища.'
       : 'Save this code outside the app. It is shown only when the vault is created.';
+
+  String syncErrorMessage(String rawError) {
+    final error = rawError.toLowerCase();
+    if (error.contains('invalid login credentials') ||
+        error.contains('invalid_credentials')) {
+      return isRu
+          ? 'Неверный email или пароль.'
+          : 'Incorrect email or password.';
+    }
+    if (error.contains('email not confirmed') ||
+        error.contains('email_not_confirmed')) {
+      return isRu
+          ? 'Сначала подтвердите адрес по ссылке в письме.'
+          : 'Confirm the address using the link in the email first.';
+    }
+    if (error.contains('incorrect synchronization password')) {
+      return isRu
+          ? 'Неверный пароль синхронизации. Нужен пароль, созданный на первом устройстве, а не PIN.'
+          : 'Incorrect synchronization password. Use the password created on the first device, not the PIN.';
+    }
+    if (error.contains('user already registered') ||
+        error.contains('user_already_exists')) {
+      return isRu
+          ? 'Аккаунт уже существует. Переключитесь на вход.'
+          : 'The account already exists. Switch to sign in.';
+    }
+    if (error.contains('email address not authorized') ||
+        error.contains('email_address_not_authorized')) {
+      return isRu
+          ? 'Отправка писем для этого адреса пока не настроена. Используйте Google-вход.'
+          : 'Email delivery is not configured for this address yet. Use Google sign-in.';
+    }
+    if (error.contains('rate limit') ||
+        error.contains('over_email_send_rate_limit') ||
+        error.contains('after 60 seconds')) {
+      return isRu
+          ? 'Слишком много запросов. Подождите минуту и попробуйте снова.'
+          : 'Too many requests. Wait a minute and try again.';
+    }
+    if (error.contains('socketexception') ||
+        error.contains('failed host lookup') ||
+        error.contains('network')) {
+      return isRu
+          ? 'Нет соединения с сервером. Проверьте интернет.'
+          : 'Could not reach the server. Check your connection.';
+    }
+    return isRu
+        ? 'Не удалось выполнить операцию. Попробуйте ещё раз.'
+        : 'The operation could not be completed. Try again.';
+  }
+
   String get exportBackup =>
       isRu ? 'Сохранить резервную копию' : 'Export backup';
   String get importBackup => isRu ? 'Восстановить из копии' : 'Import backup';

@@ -21,11 +21,23 @@ class SupabaseSyncRemoteStore implements SyncRemoteStore {
 
   @override
   Future<SyncAuthResult> signUp(String email, String password) async {
-    final response =
-        await _client.auth.signUp(email: email, password: password);
+    final response = await _client.auth.signUp(
+      email: email,
+      password: password,
+      emailRedirectTo: kIsWeb ? null : oauthRedirectUrl,
+    );
     return SyncAuthResult(
       hasSession: response.session != null,
       emailConfirmation: response.session == null,
+    );
+  }
+
+  @override
+  Future<void> resendSignupConfirmation(String email) async {
+    await _client.auth.resend(
+      type: OtpType.signup,
+      email: email,
+      emailRedirectTo: kIsWeb ? null : oauthRedirectUrl,
     );
   }
 

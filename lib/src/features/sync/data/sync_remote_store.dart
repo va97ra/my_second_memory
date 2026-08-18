@@ -5,6 +5,7 @@ abstract interface class SyncRemoteStore {
   String? get currentUserEmail;
 
   Future<SyncAuthResult> signUp(String email, String password);
+  Future<void> resendSignupConfirmation(String email);
   Future<void> signIn(String email, String password);
   Future<bool> signInWithGoogle();
   Future<void> signOut();

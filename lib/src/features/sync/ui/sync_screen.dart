@@ -79,20 +79,59 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
       );
     }
 
-    if (state.status == SyncStatus.awaitingEmailConfirmation) {
+    if (state.status == SyncStatus.awaitingEmailConfirmation ||
+        state.status == SyncStatus.resendingEmailConfirmation) {
+      final resending = state.status == SyncStatus.resendingEmailConfirmation;
       return _SyncCard(
         icon: Icons.mark_email_unread_rounded,
         title: strings.syncCheckEmail,
         children: [
           if (state.email != null) SelectableText(state.email!),
+          const SizedBox(height: 12),
+          Text(strings.syncCheckEmailHint),
+          if (state.confirmationResent) ...[
+            const SizedBox(height: 12),
+            Text(
+              strings.syncEmailResent,
+              style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+            ),
+          ],
+          if (state.error != null) ...[
+            const SizedBox(height: 12),
+            _ErrorText(strings.syncErrorMessage(state.error!)),
+          ],
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
-                ref.read(syncControllerProvider.notifier).returnToSignIn();
-                setState(() => _registerMode = false);
-              },
+            height: 48,
+            child: FilledButton.icon(
+              onPressed: resending
+                  ? null
+                  : ref
+                      .read(syncControllerProvider.notifier)
+                      .resendSignupConfirmation,
+              icon: resending
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.forward_to_inbox_rounded),
+              label: Text(strings.syncResendEmail),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: TextButton(
+              onPressed: resending
+                  ? null
+                  : () {
+                      ref
+                          .read(syncControllerProvider.notifier)
+                          .returnToSignIn();
+                      setState(() => _registerMode = false);
+                    },
               child: Text(strings.syncSignIn),
             ),
           ),
@@ -178,7 +217,9 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
         ),
         if (_formError != null || state.error != null) ...[
           const SizedBox(height: 12),
-          _ErrorText(_formError ?? state.error!),
+          _ErrorText(
+            _formError ?? strings.syncErrorMessage(state.error!),
+          ),
         ],
         const SizedBox(height: 20),
         SizedBox(
@@ -270,7 +311,9 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
         ],
         if (_formError != null || state.error != null) ...[
           const SizedBox(height: 12),
-          _ErrorText(_formError ?? state.error!),
+          _ErrorText(
+            _formError ?? strings.syncErrorMessage(state.error!),
+          ),
         ],
         const SizedBox(height: 20),
         SizedBox(
@@ -319,7 +362,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
             Text(_lastSyncLabel(strings, state)),
             if (state.error != null) ...[
               const SizedBox(height: 12),
-              _ErrorText(state.error!),
+              _ErrorText(strings.syncErrorMessage(state.error!)),
             ],
             const SizedBox(height: 20),
             SizedBox(
@@ -338,9 +381,11 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
             SizedBox(
               width: double.infinity,
               height: 48,
-              child: OutlinedButton(
+              child: OutlinedButton.icon(
+                key: const ValueKey('sync_sign_out'),
                 onPressed: ref.read(syncControllerProvider.notifier).signOut,
-                child: Text(strings.syncSignOut),
+                icon: const Icon(Icons.logout_rounded),
+                label: Text(strings.syncSignOut),
               ),
             ),
           ],

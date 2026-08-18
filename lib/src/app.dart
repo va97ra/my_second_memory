@@ -33,10 +33,20 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
   StreamSubscription<String>? _notificationSubscription;
   Locale? _desktopLocale;
   late final AppLifecycleListener _lifecycleObserver;
+  late final ProviderSubscription<bool> _securityUnlockSubscription;
 
   @override
   void initState() {
     super.initState();
+    _securityUnlockSubscription = ref.listenManual(
+      securitySessionProvider.select((session) => session.isUnlocked),
+      (_, isUnlocked) {
+        ref
+            .read(syncControllerProvider.notifier)
+            .localDataAvailabilityChanged(isUnlocked);
+      },
+      fireImmediately: true,
+    );
     _lifecycleObserver = AppLifecycleListener(
       onResume: () {
         ref.read(syncControllerProvider.notifier).schedule(Duration.zero);
@@ -107,6 +117,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
 
   @override
   void dispose() {
+    _securityUnlockSubscription.close();
     _lifecycleObserver.dispose();
     _notificationSubscription?.cancel();
     unawaited(windowsDesktopPlatform.detach());

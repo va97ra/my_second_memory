@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../security/data/app_cipher.dart';
+import '../domain/sync_models.dart';
 
 class SyncKeyStore {
   SyncKeyStore({FlutterSecureStorage? storage})
@@ -31,9 +32,12 @@ class SyncKeyStore {
 class SyncTombstoneStore {
   const SyncTombstoneStore();
 
-  Future<Map<String, DateTime>> read(String userId) async {
+  Future<Map<String, DateTime>> read(
+    String userId, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async {
     final preferences = await SharedPreferences.getInstance();
-    final raw = preferences.getString(_key(userId));
+    final raw = preferences.getString(_key(userId, kind));
     if (raw == null) return {};
     final json = Map<String, Object?>.from(jsonDecode(raw) as Map);
     return {
@@ -42,10 +46,14 @@ class SyncTombstoneStore {
     };
   }
 
-  Future<void> write(String userId, Map<String, DateTime> values) async {
+  Future<void> write(
+    String userId,
+    Map<String, DateTime> values, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString(
-      _key(userId),
+      _key(userId, kind),
       jsonEncode({
         for (final entry in values.entries)
           entry.key: entry.value.toUtc().toIso8601String(),
@@ -53,14 +61,24 @@ class SyncTombstoneStore {
     );
   }
 
-  Future<void> markDeleted(String userId, String id, DateTime deletedAt) async {
-    final values = await read(userId);
+  Future<void> markDeleted(
+    String userId,
+    String id,
+    DateTime deletedAt, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async {
+    final values = await read(userId, kind: kind);
     final previous = values[id];
     if (previous == null || deletedAt.isAfter(previous)) {
       values[id] = deletedAt;
-      await write(userId, values);
+      await write(userId, values, kind: kind);
     }
   }
 
-  String _key(String userId) => 'sync_memory_tombstones_$userId';
+  String _key(String userId, SyncEntityKind kind) {
+    if (kind == SyncEntityKind.memoryItem) {
+      return 'sync_memory_tombstones_$userId';
+    }
+    return 'sync_${kind.storageName}_tombstones_$userId';
+  }
 }

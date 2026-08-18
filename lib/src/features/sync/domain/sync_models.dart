@@ -1,5 +1,7 @@
 enum SyncEntityKind {
-  memoryItem('memory_item');
+  memoryItem('memory_item'),
+  shiftSchedule('shift_schedule'),
+  account('account');
 
   const SyncEntityKind(this.storageName);
 

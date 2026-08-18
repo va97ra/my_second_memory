@@ -30,7 +30,9 @@ create table if not exists public.sync_entities (
   deleted_at timestamptz,
   revision bigint not null default nextval('public.sync_revision_seq'),
   primary key (user_id, entity_kind, entity_id),
-  constraint sync_entity_kind_supported check (entity_kind in ('memory_item')),
+  constraint sync_entity_kind_supported check (
+    entity_kind in ('memory_item', 'shift_schedule', 'account')
+  ),
   constraint sync_entity_id_length check (length(entity_id) between 1 and 200),
   constraint sync_payload_or_deletion check (
     encrypted_payload is not null or deleted_at is not null

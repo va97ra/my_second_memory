@@ -101,6 +101,7 @@ class ShiftSchedule {
     this.isEnabled = true,
     this.alarms = const [ShiftAlarm(), ShiftAlarm()],
     this.vacations = const [],
+    this.updatedAt,
   });
 
   final String id;
@@ -112,6 +113,10 @@ class ShiftSchedule {
   final bool isEnabled;
   final List<ShiftAlarm> alarms;
   final List<ShiftVacation> vacations;
+  final DateTime? updatedAt;
+
+  DateTime get syncUpdatedAt =>
+      updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
 
   bool get supportsNextDayAlarm => workDays == 1 && restDays == 3;
 
@@ -143,6 +148,7 @@ class ShiftSchedule {
     bool? isEnabled,
     List<ShiftAlarm>? alarms,
     List<ShiftVacation>? vacations,
+    DateTime? updatedAt,
   }) {
     return ShiftSchedule(
       id: id ?? this.id,
@@ -154,6 +160,7 @@ class ShiftSchedule {
       isEnabled: isEnabled ?? this.isEnabled,
       alarms: alarms ?? this.alarms,
       vacations: vacations ?? this.vacations,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -167,6 +174,7 @@ class ShiftSchedule {
         'isEnabled': isEnabled,
         'alarms': alarms.map((alarm) => alarm.toJson()).toList(),
         'vacations': vacations.map((vacation) => vacation.toJson()).toList(),
+        'updatedAt': updatedAt?.toUtc().toIso8601String(),
       };
 
   factory ShiftSchedule.fromJson(Map<String, Object?> json) {
@@ -209,6 +217,9 @@ class ShiftSchedule {
       isEnabled: json['isEnabled'] as bool? ?? true,
       alarms: List.unmodifiable(storedAlarms),
       vacations: List.unmodifiable(storedVacations),
+      updatedAt: json['updatedAt'] == null
+          ? null
+          : DateTime.parse(json['updatedAt'] as String).toLocal(),
     );
   }
 

@@ -7,6 +7,8 @@ payloads, timestamps, deletion markers, and opaque entity identifiers.
 
 1. Create a Supabase project.
 2. Run `supabase/migrations/202608180001_encrypted_sync.sql` in the SQL editor.
+   Existing projects created with the first migration must also run
+   `supabase/migrations/202608180002_sync_accounts_and_shifts.sql`.
 3. In Authentication, enable email/password sign-in. Decide whether email
    confirmation is required before distributing the app.
 4. Enable the Google provider with a Google OAuth Web client. Its authorized
@@ -34,6 +36,12 @@ application.
 Android registers the callback only for the `sync` flavor. The Windows runner
 forwards callback launches to the existing tray process, and the Inno Setup
 installer registers the custom URI scheme for the current user.
+
+For public email/password registration, configure a custom SMTP provider in
+Authentication > Emails > SMTP Settings. Supabase's built-in mailer is only
+suited to testing, accepts a restricted set of recipient addresses, and has a
+very low send limit. Signup and resend requests use the app callback URL so a
+confirmation link returns to the Sync app.
 
 ## Android distributions
 
@@ -63,6 +71,8 @@ for the two distributions and allows them to be installed side by side.
 - Deletions are synchronized as tombstones so an offline device cannot restore
   deleted records accidentally.
 
-The first implementation synchronizes memory records and calendar data backed
-by those records. Media files, shift schedules, recurrence metadata, and saved
-accounts are separate follow-up migrations.
+The app synchronizes memory records, shift schedules (including colors,
+vacations, and alarm settings), and saved accounts. Account fields remain
+encrypted with the vault key. Media files themselves remain device-local;
+record metadata and local media paths can synchronize, but another device
+cannot download a file that was never uploaded.

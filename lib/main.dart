@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -19,16 +20,24 @@ import 'src/platform/windows/windows_desktop.dart';
 Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowsDesktopPlatform.initialize(arguments);
-  var syncConfig = appFlavor == 'simple'
+  final isSimpleAndroidBuild =
+      defaultTargetPlatform == TargetPlatform.android && appFlavor == 'simple';
+  var syncConfig = isSimpleAndroidBuild
       ? const SyncBackendConfig(url: '', publishableKey: '')
       : SyncBackendConfig.fromEnvironment(useBundledDefaults: true);
+  debugPrint(
+    'Synchronization startup: platform=$defaultTargetPlatform, '
+    'flavor=$appFlavor, configured=${syncConfig.isConfigured}',
+  );
   if (syncConfig.isConfigured) {
     try {
       await Supabase.initialize(
         url: syncConfig.url,
         publishableKey: syncConfig.publishableKey,
       );
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint('Synchronization initialization failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
       syncConfig = const SyncBackendConfig(url: '', publishableKey: '');
     }
   }
