@@ -52,4 +52,32 @@ class _RiverpodSyncMutationObserver implements SyncMutationObserver {
           deletedAt,
         );
   }
+
+  @override
+  void recurrenceSeriesChanged() {
+    ref.read(syncControllerProvider.notifier).schedule();
+  }
+
+  @override
+  Future<void> recurrenceSeriesDeleted(String id, DateTime deletedAt) {
+    return ref.read(syncControllerProvider.notifier).recordDeletion(
+          SyncEntityKind.recurrenceSeries,
+          id,
+          deletedAt,
+        );
+  }
+
+  @override
+  void recurrenceExceptionsChanged() {
+    ref.read(syncControllerProvider.notifier).schedule();
+  }
+
+  @override
+  Future<void> recurrenceExceptionDeleted(String id, DateTime deletedAt) {
+    return ref.read(syncControllerProvider.notifier).recordDeletion(
+          SyncEntityKind.recurrenceException,
+          id,
+          deletedAt,
+        );
+  }
 }

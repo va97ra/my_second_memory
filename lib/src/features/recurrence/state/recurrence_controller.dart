@@ -9,6 +9,7 @@ import '../../notifications/data/notification_service.dart';
 import '../../security/data/encrypted_json_store.dart';
 import '../../security/data/secure_entity_backend.dart';
 import '../../security/state/security_provider.dart';
+import '../../sync/domain/sync_mutation_observer.dart';
 import '../data/encrypted_recurrence_exception_repository.dart';
 import '../data/encrypted_recurrence_repository.dart';
 import '../data/recurrence_exception_repository.dart';
@@ -70,6 +71,7 @@ final recurrenceExceptionControllerProvider = StateNotifierProvider<
     RecurrenceExceptionController, List<RecurrenceOccurrenceException>>((ref) {
   return RecurrenceExceptionController(
     ref.watch(recurrenceExceptionRepositoryProvider),
+    ref.watch(syncMutationObserverProvider),
   );
 });
 
@@ -80,6 +82,7 @@ final recurrenceSeriesControllerProvider =
     ref.watch(recurrenceExceptionControllerProvider.notifier),
     ref.watch(memoryItemsControllerProvider.notifier),
     ref.watch(notificationServiceProvider),
+    ref.watch(syncMutationObserverProvider),
   ),
 );
 
@@ -164,11 +167,13 @@ final recurringCurrentPeriodItemsProvider =
 
 class RecurrenceExceptionController
     extends StateNotifier<List<RecurrenceOccurrenceException>> {
-  RecurrenceExceptionController(this._repository) : super(const []) {
+  RecurrenceExceptionController(this._repository, [this._sync])
+      : super(const []) {
     _loadFuture = _load();
   }
 
   final RecurrenceExceptionRepository _repository;
+  final SyncMutationObserver? _sync;
   late final Future<void> _loadFuture;
 
   Future<void> load() => _loadFuture;
@@ -179,6 +184,7 @@ class RecurrenceExceptionController
     await _loadFuture;
     await _repository.upsert(exception);
     state = _replace(exception);
+    _sync?.recurrenceExceptionsChanged();
   }
 
   Future<void> upsertAll(
@@ -192,12 +198,14 @@ class RecurrenceExceptionController
       for (final item in state) replacements.remove(item.id) ?? item,
       ...replacements.values,
     ];
+    _sync?.recurrenceExceptionsChanged();
   }
 
   Future<void> skip(String seriesId, DateTime occurrenceDate) async {
     await _loadFuture;
     final exception = await _repository.skip(seriesId, occurrenceDate);
     state = _replace(exception);
+    _sync?.recurrenceExceptionsChanged();
   }
 
   Future<void> delete(String seriesId, DateTime occurrenceDate) async {
@@ -208,15 +216,24 @@ class RecurrenceExceptionController
       for (final item in state)
         if (item.id != id) item
     ];
+    await _sync?.recurrenceExceptionDeleted(id, DateTime.now());
   }
 
   Future<void> deleteSeries(String seriesId) async {
     await _loadFuture;
+    final deletedIds = [
+      for (final item in state)
+        if (item.seriesId == seriesId) item.id,
+    ];
     await _repository.deleteSeries(seriesId);
     state = [
       for (final item in state)
         if (item.seriesId != seriesId) item,
     ];
+    final deletedAt = DateTime.now();
+    for (final id in deletedIds) {
+      await _sync?.recurrenceExceptionDeleted(id, deletedAt);
+    }
   }
 
   Future<void> replaceAll(
@@ -239,11 +256,9 @@ class RecurrenceExceptionController
 
 class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
   RecurrenceSeriesController(
-    this._repository,
-    this._exceptions,
-    this._memoryItems,
-    this._reminders,
-  ) : super(const []) {
+      this._repository, this._exceptions, this._memoryItems, this._reminders,
+      [this._sync])
+      : super(const []) {
     _loadFuture = _load();
   }
 
@@ -251,6 +266,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
   final RecurrenceExceptionController _exceptions;
   final MemoryItemsController _memoryItems;
   final ReminderScheduler _reminders;
+  final SyncMutationObserver? _sync;
   late final Future<void> _loadFuture;
 
   Future<void> load() => _loadFuture;
@@ -296,6 +312,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     );
     await _repository.upsert(series);
     state = _replace(series);
+    _sync?.recurrenceSeriesChanged();
     unawaited(_reconcileRecurringReminders());
     return series;
   }
@@ -322,6 +339,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
       for (final series in state)
         if (series.id != seriesId) series
     ];
+    await _sync?.recurrenceSeriesDeleted(seriesId, now);
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -335,6 +353,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     );
     await _repository.upsert(updated);
     state = _replace(updated);
+    _sync?.recurrenceSeriesChanged();
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -374,6 +393,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     );
     await _repository.upsertAll([ended, replacement]);
     state = [..._replace(ended), replacement];
+    _sync?.recurrenceSeriesChanged();
     if (_memoryItems.state.any((item) => item.id == linked.id)) {
       await _memoryItems.update(linked);
     } else {
@@ -462,6 +482,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
       for (final series in state)
         if (series.id != id) series
     ];
+    await _sync?.recurrenceSeriesDeleted(id, DateTime.now());
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -476,6 +497,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     );
     await _repository.upsert(updated);
     state = _replace(updated);
+    _sync?.recurrenceSeriesChanged();
     for (final item in [..._memoryItems.state]) {
       if (item.seriesId == id && !item.memoryDate.isBefore(cutoff)) {
         await _memoryItems.delete(item.id);
@@ -594,6 +616,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
       await _repository.upsertAll(updatedSeries);
       final replacements = {for (final item in updatedSeries) item.id: item};
       state = [for (final item in state) replacements[item.id] ?? item];
+      _sync?.recurrenceSeriesChanged();
     }
   }
 

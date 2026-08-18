@@ -7,6 +7,9 @@ import '../../accounts/domain/account_item.dart';
 import '../../accounts/state/accounts_controller.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/state/memory_items_controller.dart';
+import '../../recurrence/domain/recurrence_occurrence_exception.dart';
+import '../../recurrence/domain/recurrence_series.dart';
+import '../../recurrence/state/recurrence_controller.dart';
 import '../../security/data/app_cipher.dart';
 import '../../security/state/security_provider.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
@@ -126,6 +129,20 @@ final syncControllerProvider =
     },
     replaceAccounts: (accounts) =>
         ref.read(accountsControllerProvider.notifier).replaceAll(accounts),
+    readRecurrenceSeries: () async {
+      await ref.read(recurrenceSeriesControllerProvider.notifier).load();
+      return ref.read(recurrenceSeriesControllerProvider);
+    },
+    replaceRecurrenceSeries: (series) => ref
+        .read(recurrenceSeriesControllerProvider.notifier)
+        .replaceAll(series),
+    readRecurrenceExceptions: () async {
+      await ref.read(recurrenceExceptionControllerProvider.notifier).load();
+      return ref.read(recurrenceExceptionControllerProvider);
+    },
+    replaceRecurrenceExceptions: (exceptions) => ref
+        .read(recurrenceExceptionControllerProvider.notifier)
+        .replaceAll(exceptions),
   );
 });
 
@@ -141,6 +158,12 @@ class SyncController extends StateNotifier<SyncState> {
     Future<void> Function(List<ShiftSchedule>)? replaceShiftSchedules,
     Future<List<AccountItem>> Function()? readAccounts,
     Future<void> Function(List<AccountItem>)? replaceAccounts,
+    Future<List<RecurrenceSeries>> Function()? readRecurrenceSeries,
+    Future<void> Function(List<RecurrenceSeries>)? replaceRecurrenceSeries,
+    Future<List<RecurrenceOccurrenceException>> Function()?
+        readRecurrenceExceptions,
+    Future<void> Function(List<RecurrenceOccurrenceException>)?
+        replaceRecurrenceExceptions,
   })  : _remote = remote,
         _keyStore = keyStore,
         _tombstones = tombstones,
@@ -152,6 +175,13 @@ class SyncController extends StateNotifier<SyncState> {
             replaceShiftSchedules ?? _replaceNoShiftSchedules,
         _readAccounts = readAccounts ?? _readNoAccounts,
         _replaceAccounts = replaceAccounts ?? _replaceNoAccounts,
+        _readRecurrenceSeries = readRecurrenceSeries ?? _readNoRecurrenceSeries,
+        _replaceRecurrenceSeries =
+            replaceRecurrenceSeries ?? _replaceNoRecurrenceSeries,
+        _readRecurrenceExceptions =
+            readRecurrenceExceptions ?? _readNoRecurrenceExceptions,
+        _replaceRecurrenceExceptions =
+            replaceRecurrenceExceptions ?? _replaceNoRecurrenceExceptions,
         super(remote == null
             ? const SyncState.unconfigured()
             : const SyncState(status: SyncStatus.loading));
@@ -166,6 +196,12 @@ class SyncController extends StateNotifier<SyncState> {
   final Future<void> Function(List<ShiftSchedule>) _replaceShiftSchedules;
   final Future<List<AccountItem>> Function() _readAccounts;
   final Future<void> Function(List<AccountItem>) _replaceAccounts;
+  final Future<List<RecurrenceSeries>> Function() _readRecurrenceSeries;
+  final Future<void> Function(List<RecurrenceSeries>) _replaceRecurrenceSeries;
+  final Future<List<RecurrenceOccurrenceException>> Function()
+      _readRecurrenceExceptions;
+  final Future<void> Function(List<RecurrenceOccurrenceException>)
+      _replaceRecurrenceExceptions;
   final SyncVaultCrypto _vaultCrypto = const SyncVaultCrypto();
   StreamSubscription<void>? _remoteSubscription;
   StreamSubscription<void>? _authSubscription;
@@ -363,6 +399,8 @@ class SyncController extends StateNotifier<SyncState> {
       final memoryItems = await _readMemoryItems();
       final shiftSchedules = await _readShiftSchedules();
       final accounts = await _readAccounts();
+      final recurrenceExceptions = await _readRecurrenceExceptions();
+      final recurrenceSeries = await _readRecurrenceSeries();
       final result = await AppSyncEngine(
         remote: _remote!,
         cipher: cipher,
@@ -374,6 +412,10 @@ class SyncController extends StateNotifier<SyncState> {
         replaceShiftSchedules: _replaceShiftSchedules,
         accounts: accounts,
         replaceAccounts: _replaceAccounts,
+        recurrenceSeries: recurrenceSeries,
+        replaceRecurrenceSeries: _replaceRecurrenceSeries,
+        recurrenceExceptions: recurrenceExceptions,
+        replaceRecurrenceExceptions: _replaceRecurrenceExceptions,
       );
       state = state.copyWith(
         status: SyncStatus.ready,
@@ -537,3 +579,14 @@ Future<void> _replaceNoShiftSchedules(List<ShiftSchedule> _) async {}
 Future<List<AccountItem>> _readNoAccounts() async => const [];
 
 Future<void> _replaceNoAccounts(List<AccountItem> _) async {}
+
+Future<List<RecurrenceSeries>> _readNoRecurrenceSeries() async => const [];
+
+Future<void> _replaceNoRecurrenceSeries(List<RecurrenceSeries> _) async {}
+
+Future<List<RecurrenceOccurrenceException>>
+    _readNoRecurrenceExceptions() async => const [];
+
+Future<void> _replaceNoRecurrenceExceptions(
+  List<RecurrenceOccurrenceException> _,
+) async {}

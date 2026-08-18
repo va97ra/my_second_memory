@@ -1,7 +1,9 @@
 enum SyncEntityKind {
   memoryItem('memory_item'),
   shiftSchedule('shift_schedule'),
-  account('account');
+  account('account'),
+  recurrenceSeries('recurrence_series'),
+  recurrenceException('recurrence_exception');
 
   const SyncEntityKind(this.storageName);
 

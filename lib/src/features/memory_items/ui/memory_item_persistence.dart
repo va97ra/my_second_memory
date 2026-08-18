@@ -104,9 +104,13 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
             .setFrequency(created, _recurrenceFrequency!);
       }
       _loadedItemId = created.id;
+      _refreshNewSeriesTemplate = true;
+      _scopeRequested = true;
 
       if (mounted && widget.itemId == null) {
-        context.replace('/memory/item/${Uri.encodeComponent(created.id)}');
+        context.replace(
+          '/memory/item/${Uri.encodeComponent(created.id)}?new=1',
+        );
       }
       return;
     }
@@ -142,7 +146,16 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
         .read(memoryItemsControllerProvider)
         .any((entry) => entry.id == item.id);
     if (_recurrenceFrequency != null) {
-      if (item.repeatRule != _recurrenceFrequency!.name ||
+      if (_refreshNewSeriesTemplate && item.seriesId != null) {
+        if (persisted) {
+          await ref
+              .read(memoryItemsControllerProvider.notifier)
+              .update(updated);
+        }
+        await ref
+            .read(recurrenceSeriesControllerProvider.notifier)
+            .setFrequency(updated, _recurrenceFrequency!);
+      } else if (item.repeatRule != _recurrenceFrequency!.name ||
           item.seriesId == null) {
         if (persisted) {
           await ref

@@ -27,3 +27,4 @@ ios/.symlinks/
 .idea/
 .vscode/
 .tools/
+supabase/.temp/

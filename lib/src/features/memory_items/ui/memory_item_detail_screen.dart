@@ -50,12 +50,14 @@ class MemoryItemDetailScreen extends ConsumerStatefulWidget {
     this.itemId,
     this.initialDate,
     this.createUndated = false,
+    this.newlyCreated = false,
     super.key,
   });
 
   final String? itemId;
   final DateTime? initialDate;
   final bool createUndated;
+  final bool newlyCreated;
 
   @override
   ConsumerState<MemoryItemDetailScreen> createState() =>
@@ -88,6 +90,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   int? _birthYear;
   bool _editFutureOccurrences = false;
   bool _scopeRequested = false;
+  bool _refreshNewSeriesTemplate = false;
   DateTime? _recordingStartedAt;
   bool _isRecording = false;
   bool _isSaving = false;
@@ -100,6 +103,8 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   @override
   void initState() {
     super.initState();
+    _refreshNewSeriesTemplate = widget.newlyCreated;
+    _scopeRequested = widget.newlyCreated;
     WidgetsBinding.instance.addObserver(this);
   }
 

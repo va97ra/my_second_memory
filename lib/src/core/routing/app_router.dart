@@ -107,6 +107,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             state: state,
             child: MemoryItemDetailScreen(
               itemId: state.pathParameters['id'] ?? '',
+              newlyCreated: state.uri.queryParameters['new'] == '1',
             ),
           );
         },

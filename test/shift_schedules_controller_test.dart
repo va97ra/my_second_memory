@@ -52,9 +52,20 @@ void main() {
           id: 'android-copy',
           organizationName: '  св   консалтинг ',
           colorValue: 0xFF1976D2,
-          startDate: DateTime(2026, 8, 2),
+          startDate: DateTime(2026, 8, 6),
           workDays: 1,
           restDays: 3,
+          alarms: const [
+            ShiftAlarm(isEnabled: true, timeMinutes: 8 * 60),
+            ShiftAlarm(),
+          ],
+          vacations: [
+            ShiftVacation(
+              id: 'newer-vacation',
+              startDate: DateTime(2026, 8, 18),
+              durationDays: 14,
+            ),
+          ],
           updatedAt: newer,
         ),
       ];
@@ -65,6 +76,7 @@ void main() {
     expect(controller.state, hasLength(1));
     expect(controller.state.single.id, 'android-copy');
     expect(controller.state.single.colorValue, 0xFF1976D2);
+    expect(controller.state.single.vacations.single.durationDays, 14);
     expect(repository.schedules, hasLength(1));
   });
 
@@ -96,6 +108,35 @@ void main() {
 
     expect(controller.state, hasLength(2));
     expect(repository.schedules, hasLength(2));
+  });
+
+  test('unrelated names keep otherwise matching calendars separate', () async {
+    final repository = _ScheduleRepository()
+      ..schedules = [
+        ShiftSchedule(
+          id: 'main-work',
+          organizationName: 'Основная работа',
+          colorValue: 0xFF1976D2,
+          startDate: DateTime(2026, 8, 2),
+          workDays: 1,
+          restDays: 3,
+          updatedAt: DateTime(2026, 8, 18, 10),
+        ),
+        ShiftSchedule(
+          id: 'side-work',
+          organizationName: 'Подработка',
+          colorValue: 0xFF1976D2,
+          startDate: DateTime(2026, 8, 6),
+          workDays: 1,
+          restDays: 3,
+          updatedAt: DateTime(2026, 8, 18, 11),
+        ),
+      ];
+
+    final controller = ShiftSchedulesController(repository);
+    await controller.load();
+
+    expect(controller.state, hasLength(2));
   });
 }
 

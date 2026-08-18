@@ -65,28 +65,27 @@ class _CalendarDayCell extends StatelessWidget {
                     : null,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected
-                  ? Theme.of(context).colorScheme.onSurface
-                  : isToday
-                      ? colors.primary
+              color: isToday
+                  ? colors.primary
+                  : isSelected
+                      ? Theme.of(context).colorScheme.onSurface
                       : hasItems && isInVisibleMonth
                           ? colors.outline
                           : Colors.transparent,
-              width: isSelected
-                  ? 2
-                  : isToday
-                      ? 1.5
+              width: isToday
+                  ? 2.5
+                  : isSelected
+                      ? 2
                       : 1,
             ),
-            boxShadow: isSelected
+            boxShadow: isSelected || isToday
                 ? [
                     BoxShadow(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.16),
-                      blurRadius: 14,
-                      offset: const Offset(0, 7),
+                      color: (isToday ? colors.primary : colors.onSurface)
+                          .withValues(alpha: isToday ? 0.34 : 0.16),
+                      blurRadius: isToday ? 10 : 14,
+                      spreadRadius: isToday ? 1 : 0,
+                      offset: Offset(0, isToday ? 2 : 7),
                     ),
                   ]
                 : NotebookVisuals.maybeOf(context) == null
@@ -140,11 +139,17 @@ class _CalendarDayCell extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Row(
                             children: [
-                              _DayNumber(
-                                day: date.day,
-                                isToday: isToday,
-                                isSelected: isSelected,
-                                color: foreground,
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: _DayNumber(
+                                    day: date.day,
+                                    isToday: isToday,
+                                    isSelected: isSelected,
+                                    color: foreground,
+                                  ),
+                                ),
                               ),
                               if (hasAlarm) ...[
                                 const SizedBox(width: 2),
@@ -239,7 +244,10 @@ class _CalendarDayCell extends StatelessWidget {
       return colors.surface;
     }
     if (isToday) {
-      return palette.calendarTile;
+      return Color.alphaBlend(
+        colors.primary.withValues(alpha: 0.16),
+        palette.calendarTile,
+      );
     }
     if (hasItems && isInVisibleMonth) {
       return palette.calendarTile;

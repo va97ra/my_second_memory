@@ -1,5 +1,7 @@
 import '../../accounts/domain/account_item.dart';
 import '../../memory_items/domain/memory_item.dart';
+import '../../recurrence/domain/recurrence_occurrence_exception.dart';
+import '../../recurrence/domain/recurrence_series.dart';
 import '../../security/data/app_cipher.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 import '../../shift_schedules/domain/shift_schedule_deduplication.dart';
@@ -26,6 +28,12 @@ class AppSyncEngine {
     required Future<void> Function(List<ShiftSchedule>) replaceShiftSchedules,
     required List<AccountItem> accounts,
     required Future<void> Function(List<AccountItem>) replaceAccounts,
+    required List<RecurrenceSeries> recurrenceSeries,
+    required Future<void> Function(List<RecurrenceSeries>)
+        replaceRecurrenceSeries,
+    required List<RecurrenceOccurrenceException> recurrenceExceptions,
+    required Future<void> Function(List<RecurrenceOccurrenceException>)
+        replaceRecurrenceExceptions,
   }) async {
     final remoteEntities = await remote.fetchEntities();
     final memoryOutcome = await EncryptedEntitySyncEngine<MemoryItem>(
@@ -116,16 +124,50 @@ class AppSyncEngine {
       remoteEntities: remoteEntities,
       replaceLocal: replaceAccounts,
     );
+    final recurrenceExceptionsOutcome =
+        await EncryptedEntitySyncEngine<RecurrenceOccurrenceException>(
+      remote: remote,
+      cipher: cipher,
+      tombstones: tombstones,
+      kind: SyncEntityKind.recurrenceException,
+      idOf: (exception) => exception.id,
+      updatedAtOf: (exception) => exception.updatedAt,
+      toJson: (exception) => exception.toJson(),
+      fromJson: RecurrenceOccurrenceException.fromJson,
+    ).merge(
+      localItems: recurrenceExceptions,
+      remoteEntities: remoteEntities,
+      replaceLocal: replaceRecurrenceExceptions,
+    );
+    final recurrenceSeriesOutcome =
+        await EncryptedEntitySyncEngine<RecurrenceSeries>(
+      remote: remote,
+      cipher: cipher,
+      tombstones: tombstones,
+      kind: SyncEntityKind.recurrenceSeries,
+      idOf: (series) => series.id,
+      updatedAtOf: (series) => series.updatedAt,
+      toJson: (series) => series.toJson(),
+      fromJson: RecurrenceSeries.fromJson,
+    ).merge(
+      localItems: recurrenceSeries,
+      remoteEntities: remoteEntities,
+      replaceLocal: replaceRecurrenceSeries,
+    );
 
     await remote.applyEntities([
       ...memoryOutcome.changesToUpload,
       ...shiftsOutcome.changesToUpload,
       ...accountsOutcome.changesToUpload,
+      ...recurrenceExceptionsOutcome.changesToUpload,
+      ...recurrenceSeriesOutcome.changesToUpload,
     ]);
     return _combine([
       memoryOutcome.result,
       shiftsOutcome.result,
       accountsOutcome.result,
+      recurrenceExceptionsOutcome.result,
+      recurrenceSeriesOutcome.result,
     ]);
   }
 

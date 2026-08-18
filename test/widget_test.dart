@@ -1338,8 +1338,8 @@ void main() {
     final barRect = tester.getRect(
       find.byKey(const ValueKey('calendar_event_bar_today-plan')),
     );
-    expect(barRect.left - cellRect.left, closeTo(2, 0.1));
-    expect(cellRect.right - barRect.right, closeTo(2, 0.1));
+    expect(barRect.left - cellRect.left, closeTo(2.5, 0.1));
+    expect(cellRect.right - barRect.right, closeTo(2.5, 0.1));
     expect(
       tester.widget<Text>(find.text('09:30 План на сегодня')).style?.fontSize,
       7.5,
@@ -1968,6 +1968,12 @@ void main() {
 
     final cell = find.byKey(ValueKey('calendar_day_$dayKey'));
     expect(cell, findsOneWidget);
+    final todayContainer = tester.widget<AnimatedContainer>(
+      find.descendant(of: cell, matching: find.byType(AnimatedContainer)).first,
+    );
+    final todayDecoration = todayContainer.decoration! as BoxDecoration;
+    expect(todayDecoration.border!.top.width, 2.5);
+    expect(todayDecoration.boxShadow, isNotEmpty);
     expect(
       find.descendant(
         of: cell,

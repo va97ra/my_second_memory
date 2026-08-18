@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'shift_schedule.dart';
 
 class ShiftScheduleDeduplication {
@@ -17,14 +15,25 @@ class ShiftScheduleDeduplication {
 ShiftScheduleDeduplication deduplicateShiftSchedules(
   Iterable<ShiftSchedule> schedules,
 ) {
-  final groups = <String, List<ShiftSchedule>>{};
+  final groups = <List<ShiftSchedule>>[];
   for (final schedule in schedules) {
-    groups.putIfAbsent(_identityOf(schedule), () => []).add(schedule);
+    List<ShiftSchedule>? matchingGroup;
+    for (final group in groups) {
+      if (group.any((existing) => _isSameCalendar(existing, schedule))) {
+        matchingGroup = group;
+        break;
+      }
+    }
+    if (matchingGroup == null) {
+      groups.add([schedule]);
+    } else {
+      matchingGroup.add(schedule);
+    }
   }
 
   final deduplicated = <ShiftSchedule>[];
   final duplicateIds = <String>{};
-  for (final group in groups.values) {
+  for (final group in groups) {
     if (group.length == 1) {
       deduplicated.add(group.single);
       continue;
@@ -56,40 +65,28 @@ ShiftScheduleDeduplication deduplicateShiftSchedules(
   );
 }
 
-String _identityOf(ShiftSchedule schedule) {
-  final start = schedule.startDate;
-  final vacations = [...schedule.vacations]..sort((left, right) {
-      final byStart = left.startDate.compareTo(right.startDate);
-      return byStart != 0
-          ? byStart
-          : left.durationDays.compareTo(right.durationDays);
-    });
-  return jsonEncode({
-    'organization': schedule.organizationName
-        .trim()
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .toLowerCase(),
-    'colorValue': schedule.colorValue,
-    'startDate': '${start.year}-${start.month}-${start.day}',
-    'workDays': schedule.workDays,
-    'restDays': schedule.restDays,
-    'isEnabled': schedule.isEnabled,
-    'alarms': [
-      for (final alarm in schedule.alarms)
-        {
-          'isEnabled': alarm.isEnabled,
-          'timeMinutes': alarm.timeMinutes,
-          'soundUri': alarm.soundUri,
-          'soundName': alarm.soundName,
-        },
-    ],
-    'vacations': [
-      for (final vacation in vacations)
-        {
-          'startDate': '${vacation.startDate.year}-'
-              '${vacation.startDate.month}-${vacation.startDate.day}',
-          'durationDays': vacation.durationDays,
-        },
-    ],
-  });
+bool _isSameCalendar(ShiftSchedule left, ShiftSchedule right) {
+  return left.colorValue == right.colorValue &&
+      left.workDays == right.workDays &&
+      left.restDays == right.restDays &&
+      left.isEnabled == right.isEnabled &&
+      _cyclePhase(left) == _cyclePhase(right) &&
+      _namesLikelyMatch(left.organizationName, right.organizationName);
 }
+
+int _cyclePhase(ShiftSchedule schedule) {
+  final cycleLength = schedule.workDays + schedule.restDays;
+  if (cycleLength <= 0) return 0;
+  final start = schedule.startDate;
+  final dayNumber = DateTime.utc(start.year, start.month, start.day)
+      .difference(DateTime.utc(1970))
+      .inDays;
+  return ((dayNumber % cycleLength) + cycleLength) % cycleLength;
+}
+
+bool _namesLikelyMatch(String left, String right) {
+  return _normalizeName(left) == _normalizeName(right);
+}
+
+String _normalizeName(String value) =>
+    value.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
