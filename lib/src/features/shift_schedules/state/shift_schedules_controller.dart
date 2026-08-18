@@ -12,6 +12,7 @@ import '../data/encrypted_shift_schedule_repository.dart';
 import '../data/local_shift_schedule_repository.dart';
 import '../data/shift_schedule_repository.dart';
 import '../domain/shift_schedule.dart';
+import '../domain/shift_schedule_deduplication.dart';
 
 final shiftScheduleRepositoryProvider =
     Provider<ShiftScheduleRepository>((ref) {
@@ -58,14 +59,16 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
     final now = DateTime.now();
     final needsTimestampMigration =
         storedSchedules.any((schedule) => schedule.updatedAt == null);
-    final schedules = [
+    final migratedSchedules = [
       for (final schedule in storedSchedules)
         if (schedule.updatedAt == null)
           schedule.copyWith(updatedAt: now)
         else
           schedule,
     ];
-    if (needsTimestampMigration) {
+    final deduplication = deduplicateShiftSchedules(migratedSchedules);
+    final schedules = deduplication.schedules;
+    if (needsTimestampMigration || deduplication.duplicateIds.isNotEmpty) {
       await _repository.saveSchedules(schedules);
     }
     state = _sort(schedules);
@@ -74,7 +77,10 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
 
   Future<void> add(ShiftSchedule schedule) async {
     await _loadFuture;
-    state = _sort([...state, schedule.copyWith(updatedAt: DateTime.now())]);
+    state = _sort(deduplicateShiftSchedules([
+      ...state,
+      schedule.copyWith(updatedAt: DateTime.now()),
+    ]).schedules);
     await _repository.saveSchedules(state);
     _sync?.shiftSchedulesChanged();
     await _safeReconcileAlarms(force: true);
@@ -83,10 +89,10 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
   Future<void> update(ShiftSchedule schedule) async {
     await _loadFuture;
     final updated = schedule.copyWith(updatedAt: DateTime.now());
-    state = _sort([
+    state = _sort(deduplicateShiftSchedules([
       for (final existing in state)
         if (existing.id == schedule.id) updated else existing,
-    ]);
+    ]).schedules);
     await _repository.saveSchedules(state);
     _sync?.shiftSchedulesChanged();
     await _safeReconcileAlarms(force: true);
@@ -95,7 +101,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
   Future<void> toggleEnabled(String id) async {
     await _loadFuture;
     final now = DateTime.now();
-    state = _sort([
+    state = _sort(deduplicateShiftSchedules([
       for (final schedule in state)
         if (schedule.id == id)
           schedule.copyWith(
@@ -104,7 +110,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
           )
         else
           schedule,
-    ]);
+    ]).schedules);
     await _repository.saveSchedules(state);
     _sync?.shiftSchedulesChanged();
     await _safeReconcileAlarms(force: true);
@@ -124,7 +130,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
 
   Future<void> replaceAll(List<ShiftSchedule> schedules) async {
     await _loadFuture;
-    state = _sort(schedules);
+    state = _sort(deduplicateShiftSchedules(schedules).schedules);
     await _repository.saveSchedules(state);
     await _safeReconcileAlarms(force: true);
   }

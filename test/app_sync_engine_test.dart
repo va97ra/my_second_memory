@@ -118,6 +118,93 @@ void main() {
       'second-secret',
     );
   });
+
+  test('same schedule created on two devices converges without duplicates',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final remote = _SyncRemote();
+    final firstCipher = AppCipher.fromKeyBytes(
+      List<int>.generate(32, (index) => index),
+    );
+    final secondCipher = AppCipher.fromKeyBytes(
+      List<int>.generate(32, (index) => index),
+    );
+    var windowsShifts = [
+      ShiftSchedule(
+        id: 'windows-copy',
+        organizationName: 'СВ Консалтинг',
+        colorValue: 0xFF1976D2,
+        startDate: DateTime(2026, 8, 2),
+        workDays: 1,
+        restDays: 3,
+        vacations: [
+          ShiftVacation(
+            id: 'vacation',
+            startDate: DateTime(2026, 8, 18),
+            durationDays: 14,
+          ),
+        ],
+        updatedAt: DateTime(2026, 8, 18, 10),
+      ),
+    ];
+    var androidShifts = [
+      ShiftSchedule(
+        id: 'android-copy',
+        organizationName: ' св  консалтинг ',
+        colorValue: 0xFF1976D2,
+        startDate: DateTime(2026, 8, 2),
+        workDays: 1,
+        restDays: 3,
+        vacations: [
+          ShiftVacation(
+            id: 'vacation',
+            startDate: DateTime(2026, 8, 18),
+            durationDays: 14,
+          ),
+        ],
+        updatedAt: DateTime(2026, 8, 18, 11),
+      ),
+    ];
+
+    await _sync(
+      remote: remote,
+      cipher: firstCipher,
+      shifts: windowsShifts,
+      replaceShifts: (value) async => windowsShifts = value,
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+    await _sync(
+      remote: remote,
+      cipher: secondCipher,
+      shifts: androidShifts,
+      replaceShifts: (value) async => androidShifts = value,
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+
+    expect(androidShifts, hasLength(1));
+    expect(androidShifts.single.id, 'android-copy');
+    expect(androidShifts.single.colorValue, 0xFF1976D2);
+    expect(androidShifts.single.vacations, hasLength(1));
+    final shiftEntities = remote._entities.values
+        .where((entity) => entity.kind == SyncEntityKind.shiftSchedule)
+        .toList();
+    expect(shiftEntities.where((entity) => !entity.isDeleted), hasLength(1));
+    expect(shiftEntities.where((entity) => entity.isDeleted), hasLength(1));
+
+    await _sync(
+      remote: remote,
+      cipher: firstCipher,
+      shifts: windowsShifts,
+      replaceShifts: (value) async => windowsShifts = value,
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+    expect(windowsShifts, hasLength(1));
+    expect(windowsShifts.single.id, 'android-copy');
+    expect(windowsShifts.single.vacations, hasLength(1));
+  });
 }
 
 Future<SyncRunResult> _sync({

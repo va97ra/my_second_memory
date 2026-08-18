@@ -2,6 +2,7 @@ import '../../accounts/domain/account_item.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../security/data/app_cipher.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
+import '../../shift_schedules/domain/shift_schedule_deduplication.dart';
 import '../data/sync_local_store.dart';
 import '../data/sync_remote_store.dart';
 import 'encrypted_entity_sync_engine.dart';
@@ -41,7 +42,7 @@ class AppSyncEngine {
       remoteEntities: remoteEntities,
       replaceLocal: replaceMemoryItems,
     );
-    final shiftsOutcome = await EncryptedEntitySyncEngine<ShiftSchedule>(
+    final shiftsEngine = EncryptedEntitySyncEngine<ShiftSchedule>(
       remote: remote,
       cipher: cipher,
       tombstones: tombstones,
@@ -50,11 +51,57 @@ class AppSyncEngine {
       updatedAtOf: (schedule) => schedule.syncUpdatedAt,
       toJson: (schedule) => schedule.toJson(),
       fromJson: ShiftSchedule.fromJson,
-    ).merge(
+    );
+    var mergedShiftSchedules = shiftSchedules;
+    Future<void> replaceMergedShiftSchedules(
+      List<ShiftSchedule> schedules,
+    ) async {
+      mergedShiftSchedules = schedules;
+      await replaceShiftSchedules(schedules);
+    }
+
+    var shiftsOutcome = await shiftsEngine.merge(
       localItems: shiftSchedules,
       remoteEntities: remoteEntities,
-      replaceLocal: replaceShiftSchedules,
+      replaceLocal: replaceMergedShiftSchedules,
     );
+    final shiftDeduplication = deduplicateShiftSchedules(mergedShiftSchedules);
+    if (shiftDeduplication.duplicateIds.isNotEmpty) {
+      final userId = remote.currentUserId!;
+      var deletedAt = DateTime.now();
+      for (final schedule in mergedShiftSchedules) {
+        if (!deletedAt.isAfter(schedule.syncUpdatedAt)) {
+          deletedAt = schedule.syncUpdatedAt.add(
+            const Duration(microseconds: 1),
+          );
+        }
+      }
+      for (final duplicateId in shiftDeduplication.duplicateIds) {
+        await tombstones.markDeleted(
+          userId,
+          duplicateId,
+          deletedAt,
+          kind: SyncEntityKind.shiftSchedule,
+        );
+      }
+
+      mergedShiftSchedules = shiftDeduplication.schedules;
+      await replaceShiftSchedules(mergedShiftSchedules);
+      final cleanupOutcome = await shiftsEngine.merge(
+        localItems: mergedShiftSchedules,
+        remoteEntities: remoteEntities,
+        replaceLocal: replaceMergedShiftSchedules,
+      );
+      shiftsOutcome = EntitySyncOutcome(
+        result: SyncRunResult(
+          downloaded: shiftsOutcome.result.downloaded,
+          uploaded: cleanupOutcome.result.uploaded,
+          deleted: shiftsOutcome.result.deleted +
+              shiftDeduplication.duplicateIds.length,
+        ),
+        changesToUpload: cleanupOutcome.changesToUpload,
+      );
+    }
     final accountsOutcome = await EncryptedEntitySyncEngine<AccountItem>(
       remote: remote,
       cipher: cipher,

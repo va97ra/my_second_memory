@@ -33,6 +33,70 @@ void main() {
     await controller.delete('work');
     expect(alarms.last, isEmpty);
   });
+
+  test('existing duplicate schedules are collapsed during load', () async {
+    final older = DateTime(2026, 8, 18, 10);
+    final newer = DateTime(2026, 8, 18, 11);
+    final repository = _ScheduleRepository()
+      ..schedules = [
+        ShiftSchedule(
+          id: 'windows-copy',
+          organizationName: 'СВ Консалтинг',
+          colorValue: 0xFF1976D2,
+          startDate: DateTime(2026, 8, 2),
+          workDays: 1,
+          restDays: 3,
+          updatedAt: older,
+        ),
+        ShiftSchedule(
+          id: 'android-copy',
+          organizationName: '  св   консалтинг ',
+          colorValue: 0xFF1976D2,
+          startDate: DateTime(2026, 8, 2),
+          workDays: 1,
+          restDays: 3,
+          updatedAt: newer,
+        ),
+      ];
+
+    final controller = ShiftSchedulesController(repository);
+    await controller.load();
+
+    expect(controller.state, hasLength(1));
+    expect(controller.state.single.id, 'android-copy');
+    expect(controller.state.single.colorValue, 0xFF1976D2);
+    expect(repository.schedules, hasLength(1));
+  });
+
+  test('similar schedules with a real difference are both preserved', () async {
+    final repository = _ScheduleRepository()
+      ..schedules = [
+        ShiftSchedule(
+          id: 'blue',
+          organizationName: 'Работа',
+          colorValue: 0xFF1976D2,
+          startDate: DateTime(2026, 8, 2),
+          workDays: 1,
+          restDays: 3,
+          updatedAt: DateTime(2026, 8, 18, 10),
+        ),
+        ShiftSchedule(
+          id: 'red',
+          organizationName: 'Работа',
+          colorValue: 0xFFE53935,
+          startDate: DateTime(2026, 8, 2),
+          workDays: 1,
+          restDays: 3,
+          updatedAt: DateTime(2026, 8, 18, 11),
+        ),
+      ];
+
+    final controller = ShiftSchedulesController(repository);
+    await controller.load();
+
+    expect(controller.state, hasLength(2));
+    expect(repository.schedules, hasLength(2));
+  });
 }
 
 class _ScheduleRepository implements ShiftScheduleRepository {
