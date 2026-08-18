@@ -58,12 +58,12 @@ android {
     productFlavors {
         create("simple") {
             dimension = "distribution"
-            resValue("string", "app_name", "Ежедневник V2")
+            applicationIdSuffix = ".simple"
+            resValue("string", "app_name", "Ежедневник без синхронизации")
         }
         create("sync") {
             dimension = "distribution"
-            applicationIdSuffix = ".sync"
-            resValue("string", "app_name", "Ежедневник Sync")
+            resValue("string", "app_name", "Ежедневник V2")
         }
     }
 }
