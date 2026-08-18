@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/async/sequential_task_queue.dart';
 import '../../security/data/encrypted_json_store.dart';
 import '../../security/state/security_provider.dart';
+import '../../sync/domain/sync_mutation_observer.dart';
 import '../../notifications/data/notification_service.dart';
 import '../../media/data/media_storage.dart';
 import '../data/encrypted_memory_repository.dart';
@@ -38,6 +39,7 @@ final memoryItemsControllerProvider =
     ref.watch(memoryRepositoryProvider),
     ref.watch(notificationServiceProvider),
     ref.watch(mediaStorageProvider),
+    ref.watch(syncMutationObserverProvider),
   );
 });
 
@@ -52,6 +54,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     this._repository, [
     this._reminders,
     this._mediaStorage,
+    this._sync,
   ]) : super(const []) {
     _loadFuture = _load();
   }
@@ -59,6 +62,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   final MemoryRepository _repository;
   final ReminderScheduler? _reminders;
   final MediaStorage? _mediaStorage;
+  final SyncMutationObserver? _sync;
   late final Future<void> _loadFuture;
   final _writes = SequentialTaskQueue();
 
@@ -74,6 +78,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     await _loadFuture;
     state = _sort([...state, item]);
     await _writes.add(() => _repository.upsert(item));
+    _sync?.memoryChanged();
     if (_hasFutureReminder(item)) unawaited(_safeSchedule(item));
   }
 
@@ -86,6 +91,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     };
     state = _sort(itemsById.values.toList());
     await _writes.add(() => _repository.upsertAll(items));
+    _sync?.memoryChanged();
     unawaited(_safeScheduleAll(items));
   }
 
@@ -97,6 +103,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
         if (existing.id == item.id) item else existing,
     ]);
     await _writes.add(() => _repository.upsert(item));
+    _sync?.memoryChanged();
     if (previous != null) {
       await _cleanupRemovedMedia(previous, item);
     }
@@ -120,6 +127,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     final archived = _findById(id);
     if (archived != null) {
       await _writes.add(() => _repository.upsert(archived));
+      _sync?.memoryChanged();
     }
     unawaited(_safeCancel(id));
   }
@@ -137,6 +145,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     final restored = _findById(id);
     if (restored != null) {
       await _writes.add(() => _repository.upsert(restored));
+      _sync?.memoryChanged();
       if (_hasFutureReminder(restored)) unawaited(_safeSchedule(restored));
     }
   }
@@ -157,6 +166,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     final updated = _findById(id);
     if (updated != null) {
       await _writes.add(() => _repository.upsert(updated));
+      _sync?.memoryChanged();
     }
     if (updated == null || updated.status != MemoryStatus.active) {
       unawaited(_safeCancel(id));
@@ -167,12 +177,14 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
 
   Future<void> delete(String id) async {
     await _loadFuture;
+    final deletedAt = DateTime.now();
     final removed = _findById(id);
     state = [
       for (final item in state)
         if (item.id != id) item,
     ];
     await _writes.add(() => _repository.delete(id));
+    await _sync?.memoryDeleted(id, deletedAt);
     if (removed != null) {
       await _deleteUnusedMedia(_mediaPaths(removed));
     }

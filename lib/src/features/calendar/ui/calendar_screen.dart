@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -339,12 +340,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
 
   Future<void> _openDayDialog(DateTime date) async {
     final selected = DateTime(date.year, date.month, date.day);
+    final location =
+        '/calendar/day?date=${DateFormat('yyyy-MM-dd').format(selected)}';
+    final isWindows =
+        !kIsWeb && Theme.of(context).platform == TargetPlatform.windows;
+    if (!isWindows) {
+      setState(() {
+        _selectedDate = selected;
+        _visibleMonth = DateTime(selected.year, selected.month);
+      });
+      context.go(location);
+      return;
+    }
+
+    await context.push(location);
+    if (!mounted) return;
+
+    final selectedMonth = DateTime(selected.year, selected.month);
+    if (_selectedDate == selected && _visibleMonth == selectedMonth) return;
     setState(() {
       _selectedDate = selected;
-      _visibleMonth = DateTime(selected.year, selected.month);
+      _visibleMonth = selectedMonth;
     });
-
-    context
-        .go('/calendar/day?date=${DateFormat('yyyy-MM-dd').format(selected)}');
   }
 }

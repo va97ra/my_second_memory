@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  app_links
   file_selector_windows
   flutter_secure_storage_windows
   local_auth_windows
@@ -10,6 +11,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   screen_retriever_windows
   sqlite3_flutter_libs
   tray_manager
+  url_launcher_windows
   window_manager
   windows_single_instance
 )

@@ -17,6 +17,10 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    buildFeatures {
+        resValues = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -47,6 +51,19 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("simple") {
+            dimension = "distribution"
+            resValue("string", "app_name", "Ежедневник V2")
+        }
+        create("sync") {
+            dimension = "distribution"
+            applicationIdSuffix = ".sync"
+            resValue("string", "app_name", "Ежедневник Sync")
         }
     }
 }

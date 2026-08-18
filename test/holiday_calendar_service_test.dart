@@ -2,7 +2,15 @@ import 'package:ezhednevnik_v2/src/features/calendar/domain/holiday_calendar_ser
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  const service = HolidayCalendarService();
+  final service = HolidayCalendarService();
+
+  test('reuses cached holiday lists for the same date', () {
+    final first = service.holidaysForDate(DateTime(2026, 5, 9));
+    final second = service.holidaysForDate(DateTime(2026, 5, 9, 18));
+
+    expect(identical(first, second), isTrue);
+    expect(() => first.clear(), throwsUnsupportedError);
+  });
 
   test('returns fixed Russian holidays offline', () {
     final holidays = service.holidaysForDate(DateTime(2026, 5, 9));

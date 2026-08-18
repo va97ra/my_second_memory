@@ -41,6 +41,23 @@ void main() {
     expect(result.single.memoryDate, DateTime(2027, 2, 28));
   });
 
+  test('returns immediately when there are no enabled series', () {
+    final disabled = series(
+      RecurrenceFrequency.monthly,
+      DateTime(2026, 1, 20),
+    ).copyWith(isEnabled: false);
+
+    final result = const RecurrenceProjectionService().itemsForRange(
+      start: DateTime(2026, 2),
+      end: DateTime(2026, 2, 28),
+      series: [disabled],
+      exceptions: const [],
+      persistedItems: const [],
+    );
+
+    expect(result, isEmpty);
+  });
+
   test('yearly projection moves February 29 to February 28', () {
     final result = const RecurrenceProjectionService().itemsForRange(
       start: DateTime(2027),

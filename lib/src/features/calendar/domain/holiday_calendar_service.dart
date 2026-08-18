@@ -3,15 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'holiday_occurrence.dart';
 
 final holidayCalendarServiceProvider = Provider<HolidayCalendarService>(
-  (ref) => const HolidayCalendarService(),
+  (ref) => HolidayCalendarService(),
 );
 
 class HolidayCalendarService {
-  const HolidayCalendarService();
+  final Map<int, List<HolidayOccurrence>> _yearCache = {};
+  final Map<int, List<HolidayOccurrence>> _dateCache = {};
 
   List<HolidayOccurrence> holidaysForDate(DateTime date) {
     final normalized = DateTime(date.year, date.month, date.day);
-    return holidaysForRange(normalized, normalized);
+    final key =
+        normalized.year * 10000 + normalized.month * 100 + normalized.day;
+    return _dateCache.putIfAbsent(
+      key,
+      () => List.unmodifiable(
+        _holidaysForYear(normalized.year).where(
+          (holiday) => holiday.date == normalized,
+        ),
+      ),
+    );
   }
 
   List<HolidayOccurrence> holidaysForRange(DateTime start, DateTime end) {
@@ -30,6 +40,13 @@ class HolidayCalendarService {
   }
 
   List<HolidayOccurrence> _holidaysForYear(int year) {
+    return _yearCache.putIfAbsent(
+      year,
+      () => List.unmodifiable(_buildHolidaysForYear(year)),
+    );
+  }
+
+  List<HolidayOccurrence> _buildHolidaysForYear(int year) {
     final easter = _orthodoxEaster(year);
     return [
       ..._fixed.map((definition) => definition.occurrence(year)),

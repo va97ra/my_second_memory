@@ -15,10 +15,19 @@ class RecurrenceProjectionService {
   }) {
     final rangeStart = dateOnly(start);
     final rangeEnd = dateOnly(end);
+    final enabledSeries = [
+      for (final entry in series)
+        if (entry.isEnabled) entry,
+    ];
+    if (enabledSeries.isEmpty) return const [];
+
     final persistedKeys = <String>{
       for (final item in persistedItems)
         if (item.seriesId != null)
           occurrenceKey(item.seriesId!, item.memoryDate),
+    };
+    final persistedIds = <String>{
+      for (final item in persistedItems) item.id,
     };
     final exceptionsByKey = {
       for (final exception in exceptions)
@@ -26,8 +35,7 @@ class RecurrenceProjectionService {
     };
     final result = <MemoryItem>[];
     final enabledSeriesIds = <String>{};
-    for (final entry in series) {
-      if (!entry.isEnabled) continue;
+    for (final entry in enabledSeries) {
       enabledSeriesIds.add(entry.id);
       for (final date in recurrenceDatesInRange(entry, rangeStart, rangeEnd)) {
         final key = occurrenceKey(entry.id, date);
@@ -46,7 +54,7 @@ class RecurrenceProjectionService {
           !enabledSeriesIds.contains(exception.seriesId) ||
           item.memoryDate.isBefore(rangeStart) ||
           item.memoryDate.isAfter(rangeEnd) ||
-          persistedItems.any((entry) => entry.id == item.id)) {
+          persistedIds.contains(item.id)) {
         continue;
       }
       result.add(item);

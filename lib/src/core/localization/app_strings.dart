@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
 
 class AppStrings {
   AppStrings(this.locale);
@@ -13,7 +14,8 @@ class AppStrings {
 
   bool get isRu => locale.languageCode == 'ru';
 
-  String get appTitle => 'Ежедневник V2';
+  String get appTitle =>
+      appFlavor == 'sync' ? 'Ежедневник Sync' : 'Ежедневник V2';
   String get feed => isRu ? 'Лента' : 'Feed';
   String get dayFeed => isRu ? 'Лента дня' : 'Day feed';
   String get feedFilter => isRu ? 'Фильтр' : 'Filter';
@@ -67,6 +69,55 @@ class AppStrings {
   String get backup => isRu ? 'Резервная копия' : 'Backup';
   String get backupSubtitle =>
       isRu ? 'Сохранить или восстановить данные' : 'Save or restore data';
+  String get synchronization => isRu ? 'Синхронизация' : 'Synchronization';
+  String get synchronizationSubtitle => isRu
+      ? 'Android и Windows · сквозное шифрование'
+      : 'Android and Windows · end-to-end encrypted';
+  String get syncNotConfigured => isRu
+      ? 'Облачная синхронизация ещё не подключена к проекту Supabase.'
+      : 'Cloud synchronization is not connected to a Supabase project yet.';
+  String get syncNotConfiguredHint => isRu
+      ? 'Добавьте публичные SUPABASE_URL и SUPABASE_PUBLISHABLE_KEY при сборке приложения.'
+      : 'Add the public SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY when building the app.';
+  String get syncSignIn => isRu ? 'Войти' : 'Sign in';
+  String get syncContinueWithGoogle =>
+      isRu ? 'Продолжить с Google' : 'Continue with Google';
+  String get syncOrWithEmail => isRu ? 'или email' : 'or email';
+  String get syncCreateAccount => isRu ? 'Создать аккаунт' : 'Create account';
+  String get syncAccountPassword =>
+      isRu ? 'Пароль аккаунта' : 'Account password';
+  String get syncVaultPassword =>
+      isRu ? 'Пароль синхронизации' : 'Synchronization password';
+  String get syncVaultPasswordHint => isRu
+      ? 'Защищает общий ключ. Supabase его не получает.'
+      : 'Protects the shared key. Supabase never receives it.';
+  String get syncRepeatVaultPassword => isRu
+      ? 'Повторите пароль синхронизации'
+      : 'Repeat synchronization password';
+  String get syncConnect => isRu ? 'Подключить' : 'Connect';
+  String get syncNow => isRu ? 'Синхронизировать сейчас' : 'Sync now';
+  String get syncSignOut => isRu ? 'Выйти из аккаунта' : 'Sign out';
+  String get syncReady =>
+      isRu ? 'Синхронизация включена' : 'Synchronization enabled';
+  String get syncInProgress => isRu ? 'Синхронизация…' : 'Synchronizing…';
+  String get syncNever => isRu ? 'Ещё не выполнялась' : 'Not synchronized yet';
+  String get syncCheckEmail => isRu
+      ? 'Подтвердите адрес по ссылке в письме, затем войдите.'
+      : 'Confirm the address using the email link, then sign in.';
+  String get syncNewVault => isRu
+      ? 'Создайте пароль синхронизации. Он может отличаться от PIN.'
+      : 'Create a synchronization password. It may differ from your PIN.';
+  String get syncExistingVault => isRu
+      ? 'Введите пароль синхронизации, созданный на другом устройстве.'
+      : 'Enter the synchronization password created on another device.';
+  String get syncRecoveryCode =>
+      isRu ? 'Аварийный код восстановления' : 'Emergency recovery code';
+  String get syncUseRecoveryCode =>
+      isRu ? 'Использовать аварийный код' : 'Use recovery code';
+  String get syncUsePassword => isRu ? 'Использовать пароль' : 'Use password';
+  String get syncRecoveryWarning => isRu
+      ? 'Сохраните этот код вне приложения. Он показывается только при создании хранилища.'
+      : 'Save this code outside the app. It is shown only when the vault is created.';
   String get exportBackup =>
       isRu ? 'Сохранить резервную копию' : 'Export backup';
   String get importBackup => isRu ? 'Восстановить из копии' : 'Import backup';

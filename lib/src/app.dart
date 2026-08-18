@@ -17,6 +17,7 @@ import 'core/theme/notebook/notebook_background.dart';
 import 'core/theme/notebook/notebook_theme.dart';
 import 'features/security/ui/security_gate.dart';
 import 'features/security/state/security_provider.dart';
+import 'features/sync/state/sync_controller.dart';
 import 'features/notifications/data/notification_service.dart';
 import 'platform/windows/windows_desktop.dart';
 import 'platform/windows/windows_tray_frame.dart';
@@ -31,11 +32,24 @@ class EzhednevnikV2App extends ConsumerStatefulWidget {
 class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
   StreamSubscription<String>? _notificationSubscription;
   Locale? _desktopLocale;
+  late final AppLifecycleListener _lifecycleObserver;
 
   @override
   void initState() {
     super.initState();
+    _lifecycleObserver = AppLifecycleListener(
+      onResume: () {
+        ref.read(syncControllerProvider.notifier).schedule(Duration.zero);
+      },
+    );
     Future<void>.microtask(_initializeNotifications);
+    Future<void>.microtask(() async {
+      try {
+        await ref.read(syncControllerProvider.notifier).load();
+      } catch (_) {
+        // Cloud synchronization is optional and must not block local startup.
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(_attachWindowsDesktop());
     });
@@ -93,6 +107,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
 
   @override
   void dispose() {
+    _lifecycleObserver.dispose();
     _notificationSubscription?.cancel();
     unawaited(windowsDesktopPlatform.detach());
     super.dispose();

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,13 +7,29 @@ Page<void> pageTurnPage({
   required GoRouterState state,
   required Widget child,
 }) {
+  final isWindows =
+      !kIsWeb && Theme.of(context).platform == TargetPlatform.windows;
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
-    transitionDuration: const Duration(milliseconds: 260),
-    reverseTransitionDuration: const Duration(milliseconds: 230),
+    transitionDuration: isWindows
+        ? const Duration(milliseconds: 120)
+        : const Duration(milliseconds: 260),
+    reverseTransitionDuration: isWindows
+        ? const Duration(milliseconds: 100)
+        : const Duration(milliseconds: 230),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       if (MediaQuery.disableAnimationsOf(context)) return child;
+      if (isWindows) {
+        return FadeTransition(
+          opacity: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          ),
+          child: child,
+        );
+      }
       return PageTurnTransition(
         animation: animation,
         secondaryAnimation: secondaryAnimation,

@@ -14,6 +14,7 @@ import '../../features/security/ui/security_screen.dart';
 import '../../features/recurrence/domain/recurrence_series.dart';
 import '../../features/recurrence/ui/recurring_overview_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
+import '../../features/sync/ui/sync_screen.dart';
 import '../../features/shift_schedules/ui/shift_schedules_screen.dart';
 import '../../shared/ui/app_shell.dart';
 import '../../shared/ui/page_turn_transition.dart';
@@ -192,6 +193,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           child: const BackupScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/sync',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          child: const SyncScreen(),
         ),
       ),
       GoRoute(

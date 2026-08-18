@@ -12,6 +12,7 @@ import '../../../core/theme/notebook/notebook_assets.dart';
 import '../../../core/theme/notebook/notebook_background.dart';
 import '../../../platform/windows/windows_startup_controller.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
+import '../../sync/state/sync_controller.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../../shared/ui/notebook_pressable.dart';
 import 'widgets/theme_picker_sheet.dart';
@@ -29,6 +30,10 @@ class SettingsScreen extends ConsumerWidget {
     final contentFont = ref.watch(appContentFontControllerProvider);
     final showHints = ref.watch(appHintsProvider);
     final showHolidays = ref.watch(appHolidaysProvider);
+    final syncEnabled = ref.watch(syncBackendConfigProvider).isConfigured;
+    final syncState = syncEnabled
+        ? ref.watch(syncControllerProvider)
+        : const SyncState.unconfigured();
     final windowsPlatform = ref.watch(windowsDesktopPlatformProvider);
     final windowsStartup = windowsPlatform.isSupported
         ? ref.watch(windowsStartupControllerProvider)
@@ -235,6 +240,24 @@ class SettingsScreen extends ConsumerWidget {
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => context.go('/memory'),
                       ),
+                      if (syncEnabled)
+                        _SettingsTile(
+                          icon: syncState.status == SyncStatus.syncing
+                              ? Icons.sync_rounded
+                              : Icons.cloud_sync_rounded,
+                          iconColor: const Color(0xFF2563EB),
+                          title: strings.synchronization,
+                          subtitle: _syncSubtitle(strings, syncState),
+                          trailing: syncState.status == SyncStatus.syncing
+                              ? const SizedBox.square(
+                                  dimension: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.chevron_right_rounded),
+                          onTap: () => context.go('/settings/sync'),
+                        ),
                       _SettingsTile(
                         icon: Icons.cloud_upload_rounded,
                         iconColor: Theme.of(context).colorScheme.primary,
@@ -256,6 +279,17 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  String _syncSubtitle(AppStrings strings, SyncState state) {
+    return switch (state.status) {
+      SyncStatus.ready => strings.syncReady,
+      SyncStatus.syncing => strings.syncInProgress,
+      SyncStatus.unconfigured => strings.syncNotConfigured,
+      SyncStatus.needsVault => strings.syncVaultPassword,
+      SyncStatus.error => state.error ?? strings.synchronizationSubtitle,
+      _ => strings.synchronizationSubtitle,
+    };
   }
 }
 

@@ -16,21 +16,35 @@ final memoryItemByIdProvider = Provider.family<MemoryItem?, String>((ref, id) {
   return persisted ?? ref.watch(recurrenceItemByIdProvider(id));
 });
 
+final memoryItemsByDateProvider = Provider<Map<int, List<MemoryItem>>>((ref) {
+  return indexMemoryItemsByDate(ref.watch(memoryItemsControllerProvider));
+});
+
 final memoryItemsForDayProvider =
     Provider.family<List<MemoryItem>, DateTime>((ref, date) {
   final day = DateTime(date.year, date.month, date.day);
-  final persisted = ref.watch(memoryItemsControllerProvider).where((item) {
-    if (item.isUndated) return false;
-    final itemDate = item.memoryDate;
-    return itemDate.year == day.year &&
-        itemDate.month == day.month &&
-        itemDate.day == day.day;
-  }).toList(growable: false);
+  final persisted =
+      ref.watch(memoryItemsByDateProvider)[memoryItemDateKey(day)] ?? const [];
   final projected = ref.watch(
     recurrenceItemsForRangeProvider(RecurrenceRange(day, day)),
   );
   return [...persisted, ...projected];
 });
+
+Map<int, List<MemoryItem>> indexMemoryItemsByDate(List<MemoryItem> items) {
+  final result = <int, List<MemoryItem>>{};
+  for (final item in items) {
+    if (item.isUndated) continue;
+    result.putIfAbsent(memoryItemDateKey(item.memoryDate), () => []).add(item);
+  }
+  return Map<int, List<MemoryItem>>.unmodifiable({
+    for (final entry in result.entries)
+      entry.key: List<MemoryItem>.unmodifiable(entry.value),
+  });
+}
+
+int memoryItemDateKey(DateTime date) =>
+    date.year * 10000 + date.month * 100 + date.day;
 
 final archivedMemoryItemsProvider = Provider<List<MemoryItem>>((ref) {
   return ref
@@ -59,11 +73,13 @@ final visibleCalendarItemsProvider =
     Duration(days: firstOfMonth.weekday - DateTime.monday),
   );
   final gridEnd = gridStart.add(const Duration(days: 42));
-  final persisted = ref.watch(memoryItemsControllerProvider).where((item) {
-    if (item.isUndated) return false;
-    final date = item.memoryDate;
-    return !date.isBefore(gridStart) && date.isBefore(gridEnd);
-  }).toList(growable: false);
+  final itemsByDate = ref.watch(memoryItemsByDateProvider);
+  final persisted = <MemoryItem>[];
+  for (var day = gridStart;
+      day.isBefore(gridEnd);
+      day = day.add(const Duration(days: 1))) {
+    persisted.addAll(itemsByDate[memoryItemDateKey(day)] ?? const []);
+  }
   final projected = ref.watch(
     recurrenceItemsForRangeProvider(
       RecurrenceRange(gridStart, gridEnd.subtract(const Duration(days: 1))),

@@ -24,9 +24,10 @@ class CalendarMonthData {
     required List<MemoryItem> items,
     List<MemoryItem> allItems = const [],
     required List<ShiftSchedule> shiftSchedules,
-    HolidayCalendarService holidayService = const HolidayCalendarService(),
+    HolidayCalendarService? holidayService,
     bool showHolidays = true,
   }) {
+    final resolvedHolidayService = holidayService ?? HolidayCalendarService();
     final days = calendarDaysForMonth(month);
     final itemsByDay = <int, List<MemoryItem>>{};
     for (final item in items) {
@@ -45,7 +46,7 @@ class CalendarMonthData {
     final holidaysByDay = <int, List<HolidayOccurrence>>{};
     if (showHolidays) {
       for (final holiday
-          in holidayService.holidaysForRange(days.first, days.last)) {
+          in resolvedHolidayService.holidaysForRange(days.first, days.last)) {
         holidaysByDay
             .putIfAbsent(calendarDateKey(holiday.date), () => [])
             .add(holiday);
