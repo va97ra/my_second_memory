@@ -16,13 +16,21 @@ abstract final class NotebookAssets {
   static const darkLeather = 'assets/textures/dark_leather.webp';
   static const darkWood = 'assets/textures/dark_wood.webp';
 
-  static Future<void> preload() async {
+  /// Decodes only the two textures required to paint the first visible frame.
+  static Future<void> preloadCurrent({required bool dark}) async {
+    await Future.wait([
+      _load(AssetImage(dark ? darkPaper : paper)),
+      _load(AssetImage(dark ? darkLeather : leather)),
+    ]).timeout(const Duration(seconds: 2));
+  }
+
+  /// Warms theme-picker and alternate-theme textures after the first frame.
+  static Future<void> preloadDeferred({required bool currentIsDark}) async {
     await Future.wait([
       _load(const AssetImage(wood)),
-      _load(const AssetImage(paper)),
-      _load(const AssetImage(leather)),
-      _load(const AssetImage(darkPaper)),
-      _load(const AssetImage(darkLeather)),
+      _load(const AssetImage(darkWood)),
+      _load(AssetImage(currentIsDark ? paper : darkPaper)),
+      _load(AssetImage(currentIsDark ? leather : darkLeather)),
     ]).timeout(const Duration(seconds: 2));
   }
 

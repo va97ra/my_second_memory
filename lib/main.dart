@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,10 +45,10 @@ Future<void> main(List<String> arguments) async {
   final initialStyle = AppThemeController.readInitialStyle(preferences);
   final initialContentFont =
       AppContentFontController.readInitialStyle(preferences);
-  // Both notebooks share the preload: switching brightness should not wait
-  // on a texture.
+  // Decode only what the first frame uses. The alternate notebook is warmed
+  // once the current one is already visible.
   try {
-    await NotebookAssets.preload();
+    await NotebookAssets.preloadCurrent(dark: initialStyle.isDark);
   } catch (_) {
     // The notebook falls back to flat colour when a texture cannot load.
   }
@@ -75,4 +77,10 @@ Future<void> main(List<String> arguments) async {
       child: const EzhednevnikV2App(),
     ),
   );
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(
+      NotebookAssets.preloadDeferred(currentIsDark: initialStyle.isDark)
+          .catchError((_) {}),
+    );
+  });
 }

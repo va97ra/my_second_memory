@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../memory_items/domain/memory_item.dart';
-import '../../memory_items/state/memory_items_controller.dart';
+import '../../memory_items/state/memory_item_selectors.dart';
 import '../../recurrence/domain/recurrence_series.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 import '../domain/feed_rules.dart';
@@ -163,21 +163,12 @@ class FeedGroupLayout {
 final feedLayoutProvider = Provider<FeedLayout>((ref) {
   final state = ref.watch(feedViewProvider);
   final query = FeedPeriodQuery.fromState(state);
-  final persisted = ref.watch(memoryItemsControllerProvider);
 
   if (state.section == FeedSection.notes) {
-    final notes = persisted
-        .where((item) =>
-            item.isUndated &&
-            !item.isArchived &&
-            matchesFeedFilter(item, state.filter))
-        .toList()
-      ..sort((left, right) {
-        final byUpdated = right.updatedAt.compareTo(left.updatedAt);
-        return byUpdated != 0
-            ? byUpdated
-            : right.createdAt.compareTo(left.createdAt);
-      });
+    final notes = ref
+        .watch(undatedNotesProvider)
+        .where((item) => matchesFeedFilter(item, state.filter))
+        .toList(growable: false);
     return FeedLayout(
       query: query,
       groups: [
@@ -194,7 +185,9 @@ final feedLayoutProvider = Provider<FeedLayout>((ref) {
   final end = query.end!;
   final source = switch (state.section) {
     FeedSection.day => [
-        for (final item in persisted)
+        for (final item
+            in ref.watch(memoryItemsByDateProvider)[memoryItemDateKey(start)] ??
+                const <MemoryItem>[])
           if (!_isRecurringItem(item)) item,
       ],
     FeedSection.month || FeedSection.year => ref.watch(

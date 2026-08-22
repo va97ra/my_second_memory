@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:path/path.dart' as p;
@@ -104,7 +105,7 @@ class MediaStorage {
     }
   }
 
-  Future<List<int>> readEncryptedBytes(String path, AppCipher cipher) async {
+  Future<Uint8List> readEncryptedBytes(String path, AppCipher cipher) async {
     return cipher.decryptBytes(await File(path).readAsBytes());
   }
 

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:file_selector/file_selector.dart';
 
 import '../../security/data/app_cipher.dart';
@@ -30,8 +32,8 @@ class MediaStorage {
 
   Future<void> rollbackMigration(Map<String, String> mapping) async {}
 
-  Future<List<int>> readEncryptedBytes(String path, AppCipher cipher) async =>
-      const [];
+  Future<Uint8List> readEncryptedBytes(String path, AppCipher cipher) async =>
+      Uint8List(0);
 
   Future<String> materializeAudio(String path, AppCipher cipher) async => path;
 

@@ -89,7 +89,9 @@ class SettingsScreen extends ConsumerWidget {
                           );
                           if (selected != null && context.mounted) {
                             try {
-                              await NotebookAssets.preload();
+                              await NotebookAssets.preloadCurrent(
+                                dark: selected.isDark,
+                              );
                             } catch (_) {
                               // Flat colour is the fallback.
                             }

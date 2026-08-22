@@ -4,7 +4,6 @@ import '../domain/holiday_calendar_service.dart';
 import '../domain/holiday_occurrence.dart';
 import 'calendar_preferences_controller.dart';
 import '../../memory_items/domain/memory_item.dart';
-import '../../memory_items/state/memory_items_controller.dart';
 import '../../memory_items/state/memory_item_selectors.dart';
 import '../../shift_schedules/domain/shift_schedule.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
@@ -23,6 +22,7 @@ class CalendarMonthData {
     required DateTime month,
     required List<MemoryItem> items,
     List<MemoryItem> allItems = const [],
+    Set<int> persistedAlarmDays = const {},
     required List<ShiftSchedule> shiftSchedules,
     HolidayCalendarService? holidayService,
     bool showHolidays = true,
@@ -52,12 +52,14 @@ class CalendarMonthData {
             .add(holiday);
       }
     }
-    final alarmDays = <int>{};
-    final reminderItems = <String, MemoryItem>{
-      for (final item in allItems) item.id: item,
-      for (final item in items) item.id: item,
-    };
-    for (final item in reminderItems.values) {
+    final alarmDays = <int>{...persistedAlarmDays};
+    final reminderItems = persistedAlarmDays.isEmpty
+        ? <String, MemoryItem>{
+            for (final item in allItems) item.id: item,
+            for (final item in items) item.id: item,
+          }.values
+        : items;
+    for (final item in reminderItems) {
       if (item.remindAt != null && !item.isDone && !item.isArchived) {
         alarmDays.add(calendarDateKey(item.remindAt!));
       }
@@ -99,10 +101,11 @@ class CalendarMonthData {
 
 final calendarMonthDataProvider =
     Provider.family<CalendarMonthData, DateTime>((ref, month) {
+  final memoryIndex = ref.watch(memoryItemsIndexProvider);
   return CalendarMonthData.build(
     month: month,
     items: ref.watch(visibleCalendarItemsProvider(month)),
-    allItems: ref.watch(memoryItemsControllerProvider),
+    persistedAlarmDays: memoryIndex.activeReminderDays,
     shiftSchedules: ref.watch(shiftSchedulesControllerProvider),
     holidayService: ref.watch(holidayCalendarServiceProvider),
     showHolidays: ref.watch(appHolidaysProvider),

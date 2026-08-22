@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +28,7 @@ class MemoryImagePreview extends ConsumerWidget {
     final child = path.endsWith('.ezm')
         ? ref.watch(encryptedMediaBytesProvider(path)).when(
               data: (bytes) => Image.memory(
-                Uint8List.fromList(bytes),
+                bytes,
                 fit: fit,
                 cacheWidth: cacheWidth,
                 cacheHeight: cacheHeight,

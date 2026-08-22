@@ -114,6 +114,35 @@ void main() {
     expect(find.text('target'), findsOneWidget);
   });
 
+  testWidgets('disposing a moving sheet completes the turn safely',
+      (tester) async {
+    final frameKey = GlobalKey<PageTurnFrameState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PageTurnFrame(
+          key: frameKey,
+          child: const ColoredBox(color: Colors.brown),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final turn = frameKey.currentState!.beginTurn(
+      direction: PageTurnDirection.forward,
+      switchContent: () {},
+    );
+    for (var frame = 0; frame < 5; frame++) {
+      await tester.pump();
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+
+    expect(
+      await turn.timeout(const Duration(seconds: 1)),
+      isFalse,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('revealed calendar layer never paints through the moving sheet',
       (tester) async {
     tester.view.physicalSize = const Size(360, 640);
@@ -420,7 +449,14 @@ void main() {
     }
 
     await verifyTheme(ThemeData(), ruled: false);
-    await verifyTheme(buildNotebookTheme(), ruled: true);
+    await verifyTheme(
+      buildNotebookTheme(brightness: Brightness.light),
+      ruled: true,
+    );
+    await verifyTheme(
+      buildNotebookTheme(brightness: Brightness.dark),
+      ruled: true,
+    );
   });
 
   testWidgets('disabled animations switch content immediately', (tester) async {

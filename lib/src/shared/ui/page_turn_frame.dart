@@ -194,7 +194,12 @@ class PageTurnFrameState extends State<PageTurnFrame>
       });
     }
 
-    await _controller.forward(from: 0);
+    try {
+      await _controller.forward(from: 0).orCancel;
+    } on TickerCanceled {
+      _releaseCoordinator();
+      return false;
+    }
     if (!mounted) {
       _releaseCoordinator();
       return false;
@@ -205,10 +210,8 @@ class PageTurnFrameState extends State<PageTurnFrame>
 
   Future<ui.Image?> _capturePage() async {
     final renderObject = _boundaryKey.currentContext?.findRenderObject();
-    if (renderObject is! RenderRepaintBoundary ||
-        renderObject.debugNeedsPaint) {
-      return null;
-    }
+    if (renderObject is! RenderRepaintBoundary) return null;
+    if (kDebugMode && renderObject.debugNeedsPaint) return null;
     try {
       final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
       return await renderObject.toImage(
@@ -309,10 +312,7 @@ class PageTurnFrameState extends State<PageTurnFrame>
             child: RepaintBoundary(
               key: const ValueKey('app_page_turn_composited_layer'),
               child: IgnorePointer(
-                child: AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, _) => _buildOverlay(),
-                ),
+                child: _buildOverlay(),
               ),
             ),
           ),
@@ -336,7 +336,8 @@ class PageTurnFrameState extends State<PageTurnFrame>
               painter: _PageTurnPainter(
                 image: target,
                 paperTexture: _paperTexture,
-                progress: 1 - _easedProgress,
+                animation: _controller,
+                reverseProgress: true,
                 paperStyle: style,
               ),
             ),
@@ -349,14 +350,11 @@ class PageTurnFrameState extends State<PageTurnFrame>
       painter: _PageTurnPainter(
         image: source,
         paperTexture: _paperTexture,
-        progress: _easedProgress,
+        animation: _controller,
         paperStyle: style,
       ),
     );
   }
-
-  double get _easedProgress =>
-      Curves.easeInOutCubic.transform(_controller.value);
 }
 
 class _OpaqueSnapshot extends StatelessWidget {
@@ -729,36 +727,106 @@ class _PageTurnPainter extends CustomPainter {
   _PageTurnPainter({
     required this.image,
     required this.paperTexture,
-    required this.progress,
+    required this.animation,
+    this.reverseProgress = false,
     required _PagePaperStyle paperStyle,
   })  : _paperColor = paperStyle.paperColor,
         _frontFallback = paperStyle.frontFallback,
         _shadowColor = paperStyle.shadowColor,
         _textureOpacity = paperStyle.textureOpacity,
-        _backLineColor = paperStyle.backLineColor;
+        _backLineColor = paperStyle.backLineColor,
+        super(repaint: animation) {
+    _snapshotPaint.filterQuality = FilterQuality.medium;
+    _frontTexturePaint
+      ..shader = _imageShader(image)
+      ..filterQuality = FilterQuality.medium;
+    final backTexture = paperTexture;
+    if (backTexture != null) {
+      _backTexturePaint
+        ..shader = _imageShader(backTexture)
+        ..filterQuality = FilterQuality.medium;
+    }
+  }
 
   final ui.Image image;
   final ui.Image? paperTexture;
-  final double progress;
+  final Animation<double> animation;
+  final bool reverseProgress;
   final Color _paperColor;
   final Color _frontFallback;
   final Color _shadowColor;
   final double _textureOpacity;
   final Color? _backLineColor;
 
+  final Paint _snapshotPaint = Paint();
+  final Paint _foldShadowPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _freeEdgeShadowPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _cellPaint = Paint()..isAntiAlias = false;
+  final Paint _backLinePaint = Paint()..strokeWidth = 1;
+  final Paint _frontTexturePaint = Paint();
+  final Paint _backTexturePaint = Paint();
+  final Paint _highlightPaint = Paint()
+    ..color = Colors.white.withValues(alpha: 0.28)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.4
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.4);
+  final Paint _edgeDarkPaint = Paint()
+    ..color = Colors.black.withValues(alpha: 0.22)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2.2;
+  final Paint _edgeLightPaint = Paint()
+    ..color = Colors.white.withValues(alpha: 0.34)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 0.8;
+  final Path _foldShadowPath = Path();
+  final Path _backLinesPath = Path();
+  final Path _highlightPath = Path();
+  final Path _edgePathBuffer = Path();
+  _PageTurnMesh? _mesh;
+  final _PageTurnCellVertices _cellVertices = _PageTurnCellVertices();
+
   static const double _focalLength = 900;
+  static final Float64List _identityMatrix = Float64List.fromList(const [
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+  ]);
+
+  static ui.ImageShader _imageShader(ui.Image image) {
+    return ui.ImageShader(
+      image,
+      TileMode.clamp,
+      TileMode.clamp,
+      _identityMatrix,
+    );
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
-    final normalizedProgress = progress.clamp(0.0, 1.0);
+    final easedProgress = Curves.easeInOutCubic.transform(animation.value);
+    final normalizedProgress =
+        (reverseProgress ? 1 - easedProgress : easedProgress).clamp(0.0, 1.0);
     if (normalizedProgress <= 0.0001) {
       canvas.drawColor(_frontFallback, BlendMode.src);
       canvas.drawImageRect(
         image,
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
         Offset.zero & size,
-        Paint()..filterQuality = FilterQuality.medium,
+        _snapshotPaint,
       );
       return;
     }
@@ -770,64 +838,53 @@ class _PageTurnPainter extends CustomPainter {
     );
     final columns = (size.width / 8).ceil().clamp(48, 72);
     final rows = (size.height / 240).ceil().clamp(3, 5);
-    final projected = <List<_ProjectedVertex>>[];
+    final mesh = _meshFor(size, columns, rows);
+    final projected = mesh.projected;
     for (var column = 0; column <= columns; column++) {
       final materialX = size.width * column / columns;
-      final projectedColumn = <_ProjectedVertex>[];
       for (var row = 0; row <= rows; row++) {
         final verticalT = row / rows;
         final materialY = size.height * verticalT;
-        projectedColumn.add(
-          _projectVertex(
-            geometry.project(materialX, verticalT: verticalT),
-            materialX,
-            materialY,
-            size,
-          ),
+        _updateProjectedVertex(
+          projected[column][row],
+          geometry.project(materialX, verticalT: verticalT),
+          materialX,
+          materialY,
+          size,
         );
       }
-      projected.add(projectedColumn);
     }
 
     _paintFoldShadow(canvas, size, geometry);
     _paintFreeEdgeShadow(canvas, projected.last, geometry.motionEnvelope);
 
-    final cells = <_ProjectedCell>[];
-    for (var column = 0; column < columns; column++) {
-      for (var row = 0; row < rows; row++) {
-        cells.add(
-          _ProjectedCell(
-            topLeft: projected[column][row],
-            bottomLeft: projected[column][row + 1],
-            topRight: projected[column + 1][row],
-            bottomRight: projected[column + 1][row + 1],
-          ),
-        );
-      }
+    final cells = mesh.cells;
+    for (final cell in cells) {
+      cell.updatePath();
     }
     cells.sort((a, b) => a.averageDepth.compareTo(b.averageDepth));
 
     _paintOpaqueSilhouette(canvas, cells);
-    for (final cell in cells) {
-      _paintCell(canvas, size, cell);
-    }
+    _paintCells(canvas, size, cells);
     _paintCurlHighlight(canvas, size, geometry);
     _paintFreeEdge(canvas, projected.last);
   }
 
-  _ProjectedVertex _projectVertex(
+  _PageTurnMesh _meshFor(Size size, int columns, int rows) {
+    final current = _mesh;
+    if (current != null && current.matches(size, columns, rows)) return current;
+    return _mesh = _PageTurnMesh(size: size, columns: columns, rows: rows);
+  }
+
+  void _updateProjectedVertex(
+    _ProjectedVertex target,
     PageTurnGeometryPoint point,
     double materialX,
     double materialY,
     Size size,
   ) {
-    final focalLength = math.max(_focalLength, size.longestSide * 1.35);
-    final perspective = focalLength / (focalLength - point.depth);
-    return _ProjectedVertex(
-      offset: Offset(
-        point.x * perspective,
-        size.height / 2 + (materialY - size.height / 2) * perspective,
-      ),
+    target.update(
+      offset: _projectOffset(point, materialY, size),
       materialX: materialX,
       materialY: materialY,
       depth: point.depth,
@@ -835,10 +892,23 @@ class _PageTurnPainter extends CustomPainter {
     );
   }
 
+  Offset _projectOffset(
+    PageTurnGeometryPoint point,
+    double materialY,
+    Size size,
+  ) {
+    final focalLength = math.max(_focalLength, size.longestSide * 1.35);
+    final perspective = focalLength / (focalLength - point.depth);
+    return Offset(
+      point.x * perspective,
+      size.height / 2 + (materialY - size.height / 2) * perspective,
+    );
+  }
+
   void _paintFoldShadow(Canvas canvas, Size size, PageTurnGeometry geometry) {
     final strength = geometry.motionEnvelope;
     if (strength <= 0.001) return;
-    final path = Path();
+    final path = _foldShadowPath..reset();
     for (var sample = 0; sample <= 8; sample++) {
       final verticalT = sample / 8;
       final point = Offset(
@@ -852,19 +922,16 @@ class _PageTurnPainter extends CustomPainter {
       }
     }
     final radius = geometry.radius;
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = _shadowColor.withValues(
-          alpha: _shadowColor.a * 0.42 * strength,
-        )
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = (radius * 0.62).clamp(16.0, 38.0)
-        ..maskFilter = MaskFilter.blur(
-          BlurStyle.normal,
-          (radius * 0.32).clamp(6.0, 18.0),
-        ),
-    );
+    _foldShadowPaint
+      ..color = _shadowColor.withValues(
+        alpha: _shadowColor.a * 0.42 * strength,
+      )
+      ..strokeWidth = (radius * 0.62).clamp(16.0, 38.0)
+      ..maskFilter = MaskFilter.blur(
+        BlurStyle.normal,
+        (radius * 0.32).clamp(6.0, 18.0),
+      );
+    canvas.drawPath(path, _foldShadowPaint);
   }
 
   void _paintFreeEdgeShadow(
@@ -873,82 +940,105 @@ class _PageTurnPainter extends CustomPainter {
     double strength,
   ) {
     if (strength <= 0.001) return;
-    final path = _edgePath(edge);
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = _shadowColor.withValues(
-          alpha: _shadowColor.a * 0.5 * strength,
-        )
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 10 + 8 * strength
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 7 + 5 * strength),
-    );
+    final path = _updateEdgePath(edge);
+    _freeEdgeShadowPaint
+      ..color = _shadowColor.withValues(
+        alpha: _shadowColor.a * 0.5 * strength,
+      )
+      ..strokeWidth = 10 + 8 * strength
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 7 + 5 * strength);
+    canvas.drawPath(path, _freeEdgeShadowPaint);
   }
 
   void _paintOpaqueSilhouette(
     Canvas canvas,
     List<_ProjectedCell> cells,
   ) {
-    final paint = Paint()
-      ..color = _paperColor
-      ..isAntiAlias = false;
+    _cellPaint.color = _paperColor;
     for (final cell in cells) {
-      // Paint every projected cell independently. Folded cells can reverse
-      // their winding, so combining them into one path may punch tiny holes
-      // through the non-zero fill rule on high-contrast content such as the
-      // calendar grid.
-      canvas.drawPath(cell.path, paint);
+      // Independent paths keep reversed folds opaque without relying on a
+      // combined Path's winding rule.
+      canvas.drawPath(cell.path, _cellPaint);
+    }
+  }
+
+  void _paintCells(
+    Canvas canvas,
+    Size size,
+    List<_ProjectedCell> cells,
+  ) {
+    for (final cell in cells) {
+      _paintCell(canvas, size, cell);
     }
   }
 
   void _paintCell(Canvas canvas, Size size, _ProjectedCell cell) {
-    final midAngle = cell.averageAngle;
-    final isBack = midAngle > math.pi / 2;
-    final light = _lightFor(midAngle, isBack: isBack);
-    final path = cell.path;
+    final isBack = cell.averageAngle > math.pi / 2;
+    final light = _pageTurnLight(cell.averageAngle, isBack: isBack);
+    _cellPaint.color = Color.lerp(
+      Colors.black,
+      isBack ? _paperColor : _frontFallback,
+      light,
+    )!;
+    canvas.drawPath(cell.path, _cellPaint);
 
     if (isBack) {
-      canvas.drawPath(
-        path,
-        Paint()..color = Color.lerp(Colors.black, _paperColor, light)!,
-      );
       final texture = paperTexture;
       if (texture != null && _textureOpacity > 0) {
-        _drawTexturedStrip(
+        _drawTexturedCell(
           canvas,
           cell,
           texture,
           size,
+          paint: _backTexturePaint,
           opacity: _textureOpacity,
           mirrorX: true,
           isBack: true,
         );
       }
-      _paintBackLines(canvas, cell, light);
+      _paintBackLines(
+        canvas,
+        cell,
+        light,
+      );
       return;
     }
 
-    canvas.drawPath(
-      path,
-      Paint()..color = Color.lerp(Colors.black, _frontFallback, light)!,
-    );
-    _drawTexturedStrip(
+    _drawTexturedCell(
       canvas,
       cell,
       image,
       size,
+      paint: _frontTexturePaint,
       opacity: 1,
       mirrorX: false,
       isBack: false,
     );
   }
 
-  double _lightFor(double angle, {required bool isBack}) {
-    final edgeOn = math.pow(math.sin(angle).abs(), 1.6).toDouble();
-    final flatLight = isBack ? 0.93 : 1.0;
-    final foldLight = isBack ? 0.64 : 0.58;
-    return ui.lerpDouble(flatLight, foldLight, edgeOn)!.clamp(0.0, 1.0);
+  void _drawTexturedCell(
+    Canvas canvas,
+    _ProjectedCell cell,
+    ui.Image texture,
+    Size size, {
+    required Paint paint,
+    required double opacity,
+    required bool mirrorX,
+    required bool isBack,
+  }) {
+    _cellVertices.update(
+      cell,
+      size: size,
+      texture: texture,
+      opacity: opacity,
+      mirrorX: mirrorX,
+      isBack: isBack,
+    );
+    canvas.drawVertices(
+      _cellVertices.toVertices(),
+      BlendMode.modulate,
+      paint,
+    );
   }
 
   void _paintBackLines(
@@ -965,9 +1055,7 @@ class _PageTurnPainter extends CustomPainter {
       light,
     )!
         .withValues(alpha: lineColor.a);
-    final paint = Paint()
-      ..color = litColor
-      ..strokeWidth = 1;
+    _backLinePaint.color = litColor;
 
     final topY = cell.topLeft.materialY;
     final bottomY = cell.bottomLeft.materialY;
@@ -976,7 +1064,7 @@ class _PageTurnPainter extends CustomPainter {
       materialY += ((topY - materialY) / notebookPageLineHeight).ceil() *
           notebookPageLineHeight;
     }
-    final lines = Path();
+    final lines = _backLinesPath..reset();
     while (materialY <= bottomY + 0.001) {
       final verticalT = (materialY - topY) / (bottomY - topY);
       final left = Offset.lerp(
@@ -996,56 +1084,8 @@ class _PageTurnPainter extends CustomPainter {
 
     canvas.save();
     canvas.clipPath(cell.path);
-    canvas.drawPath(lines, paint);
+    canvas.drawPath(lines, _backLinePaint);
     canvas.restore();
-  }
-
-  void _drawTexturedStrip(
-    Canvas canvas,
-    _ProjectedCell cell,
-    ui.Image texture,
-    Size size, {
-    required double opacity,
-    required bool mirrorX,
-    required bool isBack,
-  }) {
-    final verticesInOrder = cell.vertices;
-    final positions = Float32List(verticesInOrder.length * 2);
-    final textureCoordinates = Float32List(verticesInOrder.length * 2);
-    final colors = Int32List(verticesInOrder.length);
-    for (var index = 0; index < verticesInOrder.length; index++) {
-      final vertex = verticesInOrder[index];
-      positions[index * 2] = vertex.offset.dx;
-      positions[index * 2 + 1] = vertex.offset.dy;
-      final horizontalU = vertex.materialX / size.width;
-      textureCoordinates[index * 2] =
-          (mirrorX ? 1 - horizontalU : horizontalU) * texture.width;
-      textureCoordinates[index * 2 + 1] =
-          vertex.materialY / size.height * texture.height;
-      final light = _lightFor(vertex.angle, isBack: isBack);
-      final channel = (light * 255).round();
-      colors[index] =
-          Color.fromRGBO(channel, channel, channel, opacity).toARGB32();
-    }
-    final vertices = ui.Vertices.raw(
-      ui.VertexMode.triangles,
-      positions,
-      textureCoordinates: textureCoordinates,
-      colors: colors,
-      indices: Uint16List.fromList(const [0, 1, 2, 1, 3, 2]),
-    );
-    canvas.drawVertices(
-      vertices,
-      BlendMode.modulate,
-      Paint()
-        ..shader = ImageShader(
-          texture,
-          TileMode.clamp,
-          TileMode.clamp,
-          Matrix4.identity().storage,
-        )
-        ..filterQuality = FilterQuality.medium,
-    );
   }
 
   void _paintCurlHighlight(
@@ -1053,7 +1093,7 @@ class _PageTurnPainter extends CustomPainter {
     Size size,
     PageTurnGeometry geometry,
   ) {
-    final highlight = Path();
+    final highlight = _highlightPath..reset();
     var started = false;
     for (var sample = 0; sample <= 12; sample++) {
       final verticalT = sample / 12;
@@ -1063,49 +1103,29 @@ class _PageTurnPainter extends CustomPainter {
         started = false;
         continue;
       }
-      final vertex = _projectVertex(
+      final offset = _projectOffset(
         geometry.project(materialX, verticalT: verticalT),
-        materialX,
         size.height * verticalT,
         size,
       );
       if (!started) {
-        highlight.moveTo(vertex.offset.dx, vertex.offset.dy);
+        highlight.moveTo(offset.dx, offset.dy);
         started = true;
       } else {
-        highlight.lineTo(vertex.offset.dx, vertex.offset.dy);
+        highlight.lineTo(offset.dx, offset.dy);
       }
     }
-    canvas.drawPath(
-      highlight,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.28)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.4),
-    );
+    canvas.drawPath(highlight, _highlightPaint);
   }
 
   void _paintFreeEdge(Canvas canvas, List<_ProjectedVertex> edge) {
-    final path = _edgePath(edge);
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = Colors.black.withValues(alpha: 0.22)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2,
-    );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.34)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8,
-    );
+    final path = _updateEdgePath(edge);
+    canvas.drawPath(path, _edgeDarkPaint);
+    canvas.drawPath(path, _edgeLightPaint);
   }
 
-  Path _edgePath(List<_ProjectedVertex> edge) {
-    final path = Path();
+  Path _updateEdgePath(List<_ProjectedVertex> edge) {
+    final path = _edgePathBuffer..reset();
     for (var index = 0; index < edge.length; index++) {
       final point = edge[index].offset;
       if (index == 0) {
@@ -1121,7 +1141,8 @@ class _PageTurnPainter extends CustomPainter {
   bool shouldRepaint(_PageTurnPainter oldDelegate) {
     return oldDelegate.image != image ||
         oldDelegate.paperTexture != paperTexture ||
-        oldDelegate.progress != progress ||
+        oldDelegate.animation != animation ||
+        oldDelegate.reverseProgress != reverseProgress ||
         oldDelegate._paperColor != _paperColor ||
         oldDelegate._frontFallback != _frontFallback ||
         oldDelegate._shadowColor != _shadowColor ||
@@ -1130,20 +1151,73 @@ class _PageTurnPainter extends CustomPainter {
   }
 }
 
+class _PageTurnMesh {
+  _PageTurnMesh({
+    required this.size,
+    required this.columns,
+    required this.rows,
+  }) : projected = List.generate(
+          columns + 1,
+          (column) => List.generate(
+            rows + 1,
+            (row) => _ProjectedVertex(
+              materialX: size.width * column / columns,
+              materialY: size.height * row / rows,
+            ),
+            growable: false,
+          ),
+          growable: false,
+        ) {
+    cells = <_ProjectedCell>[
+      for (var column = 0; column < columns; column++)
+        for (var row = 0; row < rows; row++)
+          _ProjectedCell(
+            topLeft: projected[column][row],
+            bottomLeft: projected[column][row + 1],
+            topRight: projected[column + 1][row],
+            bottomRight: projected[column + 1][row + 1],
+          ),
+    ];
+  }
+
+  final Size size;
+  final int columns;
+  final int rows;
+  final List<List<_ProjectedVertex>> projected;
+  late final List<_ProjectedCell> cells;
+
+  bool matches(Size otherSize, int otherColumns, int otherRows) {
+    return size == otherSize && columns == otherColumns && rows == otherRows;
+  }
+}
+
 class _ProjectedVertex {
-  const _ProjectedVertex({
-    required this.offset,
+  _ProjectedVertex({
     required this.materialX,
     required this.materialY,
-    required this.depth,
-    required this.angle,
-  });
+  })  : offset = Offset.zero,
+        depth = 0,
+        angle = 0;
 
-  final Offset offset;
-  final double materialX;
-  final double materialY;
-  final double depth;
-  final double angle;
+  Offset offset;
+  double materialX;
+  double materialY;
+  double depth;
+  double angle;
+
+  void update({
+    required Offset offset,
+    required double materialX,
+    required double materialY,
+    required double depth,
+    required double angle,
+  }) {
+    this.offset = offset;
+    this.materialX = materialX;
+    this.materialY = materialY;
+    this.depth = depth;
+    this.angle = angle;
+  }
 }
 
 class _ProjectedCell {
@@ -1152,20 +1226,24 @@ class _ProjectedCell {
     required this.bottomLeft,
     required this.topRight,
     required this.bottomRight,
-  })  : vertices = [topLeft, bottomLeft, topRight, bottomRight],
-        path = (Path()
-          ..moveTo(topLeft.offset.dx, topLeft.offset.dy)
-          ..lineTo(bottomLeft.offset.dx, bottomLeft.offset.dy)
-          ..lineTo(bottomRight.offset.dx, bottomRight.offset.dy)
-          ..lineTo(topRight.offset.dx, topRight.offset.dy)
-          ..close());
+  }) : vertices = [topLeft, bottomLeft, topRight, bottomRight];
 
   final _ProjectedVertex topLeft;
   final _ProjectedVertex bottomLeft;
   final _ProjectedVertex topRight;
   final _ProjectedVertex bottomRight;
   final List<_ProjectedVertex> vertices;
-  final Path path;
+  final Path path = Path();
+
+  void updatePath() {
+    path
+      ..reset()
+      ..moveTo(topLeft.offset.dx, topLeft.offset.dy)
+      ..lineTo(bottomLeft.offset.dx, bottomLeft.offset.dy)
+      ..lineTo(bottomRight.offset.dx, bottomRight.offset.dy)
+      ..lineTo(topRight.offset.dx, topRight.offset.dy)
+      ..close();
+  }
 
   double get averageDepth =>
       (topLeft.depth + bottomLeft.depth + topRight.depth + bottomRight.depth) /
@@ -1174,4 +1252,52 @@ class _ProjectedCell {
   double get averageAngle =>
       (topLeft.angle + bottomLeft.angle + topRight.angle + bottomRight.angle) /
       4;
+}
+
+class _PageTurnCellVertices {
+  final Float32List _positions = Float32List(8);
+  final Float32List _textureCoordinates = Float32List(8);
+  final Int32List _colors = Int32List(4);
+  final Uint16List _indices = Uint16List.fromList(const [0, 1, 2, 1, 3, 2]);
+
+  void update(
+    _ProjectedCell cell, {
+    required Size size,
+    required ui.Image texture,
+    required double opacity,
+    required bool mirrorX,
+    required bool isBack,
+  }) {
+    for (var index = 0; index < cell.vertices.length; index++) {
+      final vertex = cell.vertices[index];
+      _positions[index * 2] = vertex.offset.dx;
+      _positions[index * 2 + 1] = vertex.offset.dy;
+      final horizontalU = vertex.materialX / size.width;
+      _textureCoordinates[index * 2] =
+          (mirrorX ? 1 - horizontalU : horizontalU) * texture.width;
+      _textureCoordinates[index * 2 + 1] =
+          vertex.materialY / size.height * texture.height;
+      final channel =
+          (_pageTurnLight(vertex.angle, isBack: isBack) * 255).round();
+      _colors[index] =
+          Color.fromRGBO(channel, channel, channel, opacity).toARGB32();
+    }
+  }
+
+  ui.Vertices toVertices() {
+    return ui.Vertices.raw(
+      ui.VertexMode.triangles,
+      _positions,
+      textureCoordinates: _textureCoordinates,
+      colors: _colors,
+      indices: _indices,
+    );
+  }
+}
+
+double _pageTurnLight(double angle, {required bool isBack}) {
+  final edgeOn = math.pow(math.sin(angle).abs(), 1.6).toDouble();
+  final flatLight = isBack ? 0.93 : 1.0;
+  final foldLight = isBack ? 0.64 : 0.58;
+  return ui.lerpDouble(flatLight, foldLight, edgeOn)!.clamp(0.0, 1.0);
 }
