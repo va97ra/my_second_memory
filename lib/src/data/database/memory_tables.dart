@@ -48,6 +48,7 @@ class RecurrenceSeriesRows extends Table {
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get generatedThrough => dateTime().nullable()();
   DateTimeColumn get endDate => dateTime().nullable()();
+  DateTimeColumn get subscriptionEndDate => dateTime().nullable()();
   DateTimeColumn get historyThrough => dateTime().nullable()();
 
   @override

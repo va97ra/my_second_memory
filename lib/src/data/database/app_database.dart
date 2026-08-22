@@ -19,7 +19,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -61,18 +61,26 @@ class AppDatabase extends _$AppDatabase {
             );
           }
           if (from < 7) {
-            await migrator.addColumn(
-              recurrenceSeriesRows,
-              recurrenceSeriesRows.endDate,
-            );
-            await migrator.addColumn(
-              recurrenceSeriesRows,
-              recurrenceSeriesRows.historyThrough,
-            );
+            if (from >= 5) {
+              await migrator.addColumn(
+                recurrenceSeriesRows,
+                recurrenceSeriesRows.endDate,
+              );
+              await migrator.addColumn(
+                recurrenceSeriesRows,
+                recurrenceSeriesRows.historyThrough,
+              );
+            }
             await migrator.createTable(recurrenceOccurrenceExceptionRows);
           }
           if (from < 8) {
             await migrator.addColumn(memoryItems, memoryItems.isUndated);
+          }
+          if (from >= 5 && from < 9) {
+            await migrator.addColumn(
+              recurrenceSeriesRows,
+              recurrenceSeriesRows.subscriptionEndDate,
+            );
           }
         },
       );

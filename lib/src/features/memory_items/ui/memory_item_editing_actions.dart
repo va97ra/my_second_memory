@@ -45,6 +45,23 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
     _scheduleAutosave();
   }
 
+  Future<void> _pickSubscriptionTerm() async {
+    final selected = await showModalBottomSheet<int>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => _SubscriptionTermSheet(
+        initialMonths: _subscriptionTermMonths,
+      ),
+    );
+    if (selected == null || !mounted) return;
+    _update(() {
+      _subscriptionTermMonths = selected == 0 ? null : selected;
+      _subscriptionTermDirty = true;
+    });
+    _scheduleAutosave();
+  }
+
   Future<void> _openRepeatPicker() async {
     final selected = await showModalBottomSheet<String>(
       context: context,
@@ -82,7 +99,14 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
     if (selected == null || !mounted) return;
     final item = _readItem();
     if (selected == 'none') {
-      _update(() => _recurrenceFrequency = null);
+      _update(() {
+        _recurrenceFrequency = null;
+        if (_type == MemoryType.payment &&
+            _paymentCategory == PaymentCategory.subscription) {
+          _subscriptionTermMonths = null;
+          _subscriptionTermDirty = true;
+        }
+      });
       if (item != null && item.seriesId != null) {
         await ref
             .read(recurrenceSeriesControllerProvider.notifier)
@@ -91,6 +115,12 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
     } else {
       _update(() {
         _recurrenceFrequency = RecurrenceFrequency.values.byName(selected);
+        if (_recurrenceFrequency != RecurrenceFrequency.monthly &&
+            _type == MemoryType.payment &&
+            _paymentCategory == PaymentCategory.subscription) {
+          _subscriptionTermMonths = null;
+          _subscriptionTermDirty = true;
+        }
       });
     }
     _scheduleAutosave();

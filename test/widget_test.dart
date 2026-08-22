@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -6,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ezhednevnik_v2/src/app.dart';
+import 'package:ezhednevnik_v2/src/core/routing/app_router.dart';
 import 'package:ezhednevnik_v2/src/data/local_storage/local_storage_scope.dart';
 import 'package:ezhednevnik_v2/src/data/local_storage/local_storage_scope_provider.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/data/local_memory_repository.dart';
@@ -19,6 +22,7 @@ import 'package:ezhednevnik_v2/src/features/home_feed/ui/widgets/memory_item_car
 import 'package:ezhednevnik_v2/src/features/recurrence/data/local_recurrence_exception_repository.dart';
 import 'package:ezhednevnik_v2/src/features/recurrence/data/local_recurrence_repository.dart';
 import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_series.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_projection_service.dart';
 import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_controller.dart';
 import 'package:ezhednevnik_v2/src/core/theme/app_theme_controller.dart';
 import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_background.dart';

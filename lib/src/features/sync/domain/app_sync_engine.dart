@@ -45,6 +45,7 @@ class AppSyncEngine {
       updatedAtOf: (item) => item.updatedAt,
       toJson: (item) => item.toJson(),
       fromJson: MemoryItem.fromJson,
+      withCanonicalUpdatedAt: _canonicalMemoryItem,
     ).merge(
       localItems: memoryItems,
       remoteEntities: remoteEntities,
@@ -59,6 +60,8 @@ class AppSyncEngine {
       updatedAtOf: (schedule) => schedule.syncUpdatedAt,
       toJson: (schedule) => schedule.toJson(),
       fromJson: ShiftSchedule.fromJson,
+      withCanonicalUpdatedAt: (schedule, updatedAt) =>
+          schedule.copyWith(updatedAt: updatedAt),
     );
     var mergedShiftSchedules = shiftSchedules;
     Future<void> replaceMergedShiftSchedules(
@@ -119,6 +122,13 @@ class AppSyncEngine {
       updatedAtOf: (account) => account.updatedAt,
       toJson: (account) => account.toJson(),
       fromJson: AccountItem.fromJson,
+      withCanonicalUpdatedAt: (account, updatedAt) {
+        final delta = updatedAt.difference(account.updatedAt);
+        return account.copyWith(
+          createdAt: account.createdAt.add(delta),
+          updatedAt: updatedAt,
+        );
+      },
     ).merge(
       localItems: accounts,
       remoteEntities: remoteEntities,
@@ -134,6 +144,21 @@ class AppSyncEngine {
       updatedAtOf: (exception) => exception.updatedAt,
       toJson: (exception) => exception.toJson(),
       fromJson: RecurrenceOccurrenceException.fromJson,
+      withCanonicalUpdatedAt: (exception, updatedAt) {
+        final delta = updatedAt.difference(exception.updatedAt);
+        final item = exception.item;
+        return exception.copyWith(
+          item: item == null
+              ? null
+              : _shiftMemoryItem(
+                  item,
+                  delta,
+                  updatedAt: updatedAt,
+                ),
+          createdAt: exception.createdAt.add(delta),
+          updatedAt: updatedAt,
+        );
+      },
     ).merge(
       localItems: recurrenceExceptions,
       remoteEntities: remoteEntities,
@@ -149,6 +174,14 @@ class AppSyncEngine {
       updatedAtOf: (series) => series.updatedAt,
       toJson: (series) => series.toJson(),
       fromJson: RecurrenceSeries.fromJson,
+      withCanonicalUpdatedAt: (series, updatedAt) {
+        final delta = updatedAt.difference(series.updatedAt);
+        return series.copyWith(
+          template: _shiftMemoryItem(series.template, delta),
+          createdAt: series.createdAt.add(delta),
+          updatedAt: updatedAt,
+        );
+      },
     ).merge(
       localItems: recurrenceSeries,
       remoteEntities: remoteEntities,
@@ -178,4 +211,25 @@ class AppSyncEngine {
       deleted: results.fold(0, (total, item) => total + item.deleted),
     );
   }
+}
+
+MemoryItem _canonicalMemoryItem(MemoryItem item, DateTime updatedAt) {
+  return _shiftMemoryItem(
+    item,
+    updatedAt.difference(item.updatedAt),
+    updatedAt: updatedAt,
+  );
+}
+
+MemoryItem _shiftMemoryItem(
+  MemoryItem item,
+  Duration delta, {
+  DateTime? updatedAt,
+}) {
+  final reminder = item.remindAt;
+  return item.copyWith(
+    createdAt: item.createdAt.add(delta),
+    updatedAt: updatedAt ?? item.updatedAt.add(delta),
+    remindAt: reminder?.add(delta),
+  );
 }

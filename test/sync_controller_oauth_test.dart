@@ -92,6 +92,63 @@ void main() {
     expect(remote.fetchEntitiesCalls, 1);
     expect(controller.state.status, SyncStatus.ready);
   });
+
+  test('deletion is recorded while the sync cipher is still loading', () async {
+    final remote = _ConnectedRemoteStore();
+    final tombstones = _RecordingTombstoneStore();
+    final controller = SyncController(
+      remote: remote,
+      keyStore: _EmptyKeyStore(),
+      tombstones: tombstones,
+      readMemoryItems: () async => <MemoryItem>[],
+      replaceMemoryItems: (_) async {},
+    );
+    addTearDown(() {
+      controller.dispose();
+      remote.dispose();
+    });
+
+    expect(controller.state.status, SyncStatus.loading);
+    await controller.recordDeletion(
+      SyncEntityKind.memoryItem,
+      'deleted-during-startup',
+      DateTime.utc(2026, 8, 22, 12),
+    );
+
+    expect(
+      (await tombstones.read('google-user'))['deleted-during-startup'],
+      DateTime.utc(2026, 8, 22, 12),
+    );
+  });
+
+  test('sync requested during an active run performs a second run', () async {
+    SharedPreferences.setMockInitialValues({});
+    var localDataAvailable = false;
+    final remote = _BlockingConnectedRemoteStore();
+    final controller = SyncController(
+      remote: remote,
+      keyStore: _ConnectedKeyStore(),
+      tombstones: const SyncTombstoneStore(),
+      canAccessLocalData: () => localDataAvailable,
+      readMemoryItems: () async => <MemoryItem>[],
+      replaceMemoryItems: (_) async {},
+    );
+    addTearDown(() {
+      controller.dispose();
+      remote.dispose();
+    });
+    await controller.load();
+    localDataAvailable = true;
+
+    final firstRun = controller.syncNow();
+    await remote.firstFetchStarted.future;
+    final repeatedRequest = controller.syncNow();
+    remote.releaseFirstFetch.complete();
+
+    await remote.secondFetchStarted.future.timeout(const Duration(seconds: 2));
+    await Future.wait([firstRun, repeatedRequest]);
+    expect(remote.fetchEntitiesCalls, 2);
+  });
 }
 
 class _EmptyKeyStore extends SyncKeyStore {
@@ -117,6 +174,54 @@ class _ConnectedRemoteStore extends _OAuthRemoteStore {
   Future<List<SyncRemoteEntity>> fetchEntities() async {
     fetchEntitiesCalls++;
     return const [];
+  }
+}
+
+class _BlockingConnectedRemoteStore extends _ConnectedRemoteStore {
+  final firstFetchStarted = Completer<void>();
+  final releaseFirstFetch = Completer<void>();
+  final secondFetchStarted = Completer<void>();
+
+  @override
+  Future<List<SyncRemoteEntity>> fetchEntities() async {
+    fetchEntitiesCalls++;
+    if (fetchEntitiesCalls == 1) {
+      firstFetchStarted.complete();
+      await releaseFirstFetch.future;
+    } else if (fetchEntitiesCalls == 2) {
+      secondFetchStarted.complete();
+    }
+    return const [];
+  }
+}
+
+class _RecordingTombstoneStore extends SyncTombstoneStore {
+  final _values = <SyncEntityKind, Map<String, DateTime>>{};
+
+  @override
+  Future<Map<String, DateTime>> read(
+    String userId, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async =>
+      {...?_values[kind]};
+
+  @override
+  Future<void> write(
+    String userId,
+    Map<String, DateTime> values, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async {
+    _values[kind] = {...values};
+  }
+
+  @override
+  Future<void> markDeleted(
+    String userId,
+    String id,
+    DateTime deletedAt, {
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async {
+    (_values[kind] ??= {})[id] = deletedAt;
   }
 }
 

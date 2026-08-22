@@ -28,6 +28,7 @@ class AccountItem {
     String? email,
     String? website,
     String? note,
+    DateTime? createdAt,
     DateTime? updatedAt,
   }) {
     return AccountItem(
@@ -38,7 +39,7 @@ class AccountItem {
       email: email ?? this.email,
       website: website ?? this.website,
       note: note ?? this.note,
-      createdAt: createdAt,
+      createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -52,8 +53,8 @@ class AccountItem {
       'email': email,
       'website': website,
       'note': note,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'createdAt': createdAt.toUtc().toIso8601String(),
+      'updatedAt': updatedAt.toUtc().toIso8601String(),
     };
   }
 
@@ -66,8 +67,8 @@ class AccountItem {
       email: json['email'] as String? ?? '',
       website: json['website'] as String? ?? '',
       note: json['note'] as String? ?? '',
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+      updatedAt: DateTime.parse(json['updatedAt'] as String).toLocal(),
     );
   }
 }

@@ -36,6 +36,11 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
       amountMinor: _parseAmountMinor(_amountController.text),
       paymentCategory:
           _type == MemoryType.payment ? _paymentCategory.name : null,
+      subscriptionTermMonths: _type == MemoryType.payment &&
+              _paymentCategory == PaymentCategory.subscription
+          ? _subscriptionTermMonths
+          : null,
+      subscriptionTermDirty: _subscriptionTermDirty,
       birthYear: _type == MemoryType.birthday ? _birthYear : null,
       isUndated: _isUndated,
     );
@@ -55,7 +60,22 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
       if (!mounted || !_saveCoordinator.isCurrent(revision)) {
         return;
       }
-      _update(() => _isSaving = false);
+      _update(() {
+        _isSaving = false;
+        final currentCategory =
+            _type == MemoryType.payment ? _paymentCategory.name : null;
+        final currentTerm = _type == MemoryType.payment &&
+                _paymentCategory == PaymentCategory.subscription
+            ? _subscriptionTermMonths
+            : null;
+        if (snapshot.subscriptionTermDirty &&
+            snapshot.type == _type &&
+            snapshot.repeatRule == _recurrenceFrequency?.name &&
+            snapshot.paymentCategory == currentCategory &&
+            snapshot.subscriptionTermMonths == currentTerm) {
+          _subscriptionTermDirty = false;
+        }
+      });
       if (showMessage) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppStrings.of(context).saved)),
@@ -74,6 +94,9 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
 
   Future<void> _persistSnapshot(MemoryEditorDraft snapshot) async {
     final item = _readItem();
+    final recurrenceFrequency = snapshot.repeatRule == null
+        ? null
+        : RecurrenceFrequency.values.byName(snapshot.repeatRule!);
     if (item == null) {
       final created = MemoryItem(
         id: snapshot.savedAt.microsecondsSinceEpoch.toString(),
@@ -98,10 +121,15 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
         isUndated: snapshot.isUndated,
       );
       await ref.read(memoryItemsControllerProvider.notifier).add(created);
-      if (_recurrenceFrequency != null) {
-        await ref
+      if (recurrenceFrequency != null) {
+        final series = await ref
             .read(recurrenceSeriesControllerProvider.notifier)
-            .setFrequency(created, _recurrenceFrequency!);
+            .setFrequency(created, recurrenceFrequency);
+        await _persistSubscriptionTerm(
+          snapshot,
+          series.id,
+          updatesSeries: true,
+        );
       }
       _loadedItemId = created.id;
       _refreshNewSeriesTemplate = true;
@@ -145,33 +173,41 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
     final persisted = ref
         .read(memoryItemsControllerProvider)
         .any((entry) => entry.id == item.id);
-    if (_recurrenceFrequency != null) {
+    String? savedSeriesId = updated.seriesId;
+    var updatesSeries = false;
+    if (recurrenceFrequency != null) {
       if (_refreshNewSeriesTemplate && item.seriesId != null) {
         if (persisted) {
           await ref
               .read(memoryItemsControllerProvider.notifier)
               .update(updated);
         }
-        await ref
+        final series = await ref
             .read(recurrenceSeriesControllerProvider.notifier)
-            .setFrequency(updated, _recurrenceFrequency!);
-      } else if (item.repeatRule != _recurrenceFrequency!.name ||
+            .setFrequency(updated, recurrenceFrequency);
+        savedSeriesId = series.id;
+        updatesSeries = true;
+      } else if (item.repeatRule != recurrenceFrequency.name ||
           item.seriesId == null) {
         if (persisted) {
           await ref
               .read(memoryItemsControllerProvider.notifier)
               .update(updated);
         }
-        await ref
+        final series = await ref
             .read(recurrenceSeriesControllerProvider.notifier)
-            .setFrequency(updated, _recurrenceFrequency!);
+            .setFrequency(updated, recurrenceFrequency);
+        savedSeriesId = series.id;
+        updatesSeries = true;
       } else if (_editFutureOccurrences) {
-        await ref
+        final series = await ref
             .read(recurrenceSeriesControllerProvider.notifier)
             .applyToFuture(
               updated,
               occurrenceDate: _originalOccurrenceDate,
             );
+        savedSeriesId = series?.id;
+        updatesSeries = series != null;
       } else if (!persisted || item.isGeneratedOccurrence) {
         await ref
             .read(recurrenceSeriesControllerProvider.notifier)
@@ -180,11 +216,37 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
               occurrenceDate: _originalOccurrenceDate,
             );
       } else {
-        await ref.read(memoryItemsControllerProvider.notifier).update(updated);
+        await ref
+            .read(recurrenceSeriesControllerProvider.notifier)
+            .saveOccurrenceOverride(
+              updated,
+              occurrenceDate: _originalOccurrenceDate,
+            );
       }
     } else {
       await ref.read(memoryItemsControllerProvider.notifier).update(updated);
     }
+    await _persistSubscriptionTerm(
+      snapshot,
+      savedSeriesId,
+      updatesSeries: updatesSeries,
+    );
+  }
+
+  Future<void> _persistSubscriptionTerm(
+    MemoryEditorDraft snapshot,
+    String? seriesId, {
+    required bool updatesSeries,
+  }) async {
+    if (seriesId == null ||
+        snapshot.repeatRule == null ||
+        !updatesSeries ||
+        !snapshot.subscriptionTermDirty) {
+      return;
+    }
+    await ref
+        .read(recurrenceSeriesControllerProvider.notifier)
+        .setTermMonths(seriesId, snapshot.subscriptionTermMonths);
   }
 
   bool _hasContent() {

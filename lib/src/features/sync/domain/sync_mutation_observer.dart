@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 abstract interface class SyncMutationObserver {
   void memoryChanged();
   Future<void> memoryDeleted(String id, DateTime deletedAt);
+  Future<DateTime?> memoryDeletedAt(String id);
+  Future<Map<String, DateTime>> memoryDeletions();
   void shiftSchedulesChanged();
   Future<void> shiftScheduleDeleted(String id, DateTime deletedAt);
   void accountsChanged();
@@ -21,6 +23,12 @@ class NoopSyncMutationObserver implements SyncMutationObserver {
 
   @override
   Future<void> memoryDeleted(String id, DateTime deletedAt) async {}
+
+  @override
+  Future<DateTime?> memoryDeletedAt(String id) async => null;
+
+  @override
+  Future<Map<String, DateTime>> memoryDeletions() async => const {};
 
   @override
   void shiftSchedulesChanged() {}

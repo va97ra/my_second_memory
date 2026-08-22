@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../security/data/app_cipher.dart';
+import '../../../core/async/sequential_task_queue.dart';
 import '../domain/sync_models.dart';
 
 class SyncKeyStore {
@@ -31,6 +32,8 @@ class SyncKeyStore {
 
 class SyncTombstoneStore {
   const SyncTombstoneStore();
+
+  static final Map<String, SequentialTaskQueue> _queues = {};
 
   Future<Map<String, DateTime>> read(
     String userId, {
@@ -67,13 +70,52 @@ class SyncTombstoneStore {
     DateTime deletedAt, {
     SyncEntityKind kind = SyncEntityKind.memoryItem,
   }) async {
-    final values = await read(userId, kind: kind);
-    final previous = values[id];
-    if (previous == null || deletedAt.isAfter(previous)) {
-      values[id] = deletedAt;
-      await write(userId, values, kind: kind);
-    }
+    await _queue(userId, kind).add(() async {
+      final values = await read(userId, kind: kind);
+      final previous = values[id];
+      if (previous == null || deletedAt.isAfter(previous)) {
+        values[id] = deletedAt;
+        await write(userId, values, kind: kind);
+      }
+    });
   }
+
+  /// Applies an engine snapshot without overwriting tombstones recorded while
+  /// that engine was waiting on the network.
+  Future<void> reconcile(
+    String userId, {
+    required Map<String, DateTime> baseline,
+    required Map<String, DateTime> desired,
+    SyncEntityKind kind = SyncEntityKind.memoryItem,
+  }) async {
+    await _queue(userId, kind).add(() async {
+      final current = await read(userId, kind: kind);
+      var changed = false;
+
+      for (final entry in baseline.entries) {
+        if (desired.containsKey(entry.key)) continue;
+        final latest = current[entry.key];
+        if (latest != null && !latest.isAfter(entry.value)) {
+          current.remove(entry.key);
+          changed = true;
+        }
+      }
+
+      for (final entry in desired.entries) {
+        if (baseline[entry.key] == entry.value) continue;
+        final latest = current[entry.key];
+        if (latest == null || entry.value.isAfter(latest)) {
+          current[entry.key] = entry.value;
+          changed = true;
+        }
+      }
+
+      if (changed) await write(userId, current, kind: kind);
+    });
+  }
+
+  SequentialTaskQueue _queue(String userId, SyncEntityKind kind) =>
+      _queues.putIfAbsent(_key(userId, kind), SequentialTaskQueue.new);
 
   String _key(String userId, SyncEntityKind kind) {
     if (kind == SyncEntityKind.memoryItem) {

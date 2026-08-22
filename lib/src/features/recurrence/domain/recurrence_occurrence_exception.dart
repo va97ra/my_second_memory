@@ -11,6 +11,7 @@ class RecurrenceOccurrenceException {
     required this.createdAt,
     required this.updatedAt,
     this.item,
+    this.survivesMemoryDeletion = false,
   });
 
   final String id;
@@ -18,10 +19,32 @@ class RecurrenceOccurrenceException {
   final DateTime occurrenceDate;
   final RecurrenceOccurrenceExceptionKind kind;
   final MemoryItem? item;
+  final bool survivesMemoryDeletion;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   bool get isSkipped => kind == RecurrenceOccurrenceExceptionKind.skipped;
+
+  RecurrenceOccurrenceException copyWith({
+    RecurrenceOccurrenceExceptionKind? kind,
+    MemoryItem? item,
+    bool clearItem = false,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? survivesMemoryDeletion,
+  }) {
+    return RecurrenceOccurrenceException(
+      id: id,
+      seriesId: seriesId,
+      occurrenceDate: occurrenceDate,
+      kind: kind ?? this.kind,
+      item: clearItem ? null : item ?? this.item,
+      survivesMemoryDeletion:
+          survivesMemoryDeletion ?? this.survivesMemoryDeletion,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 
   Map<String, Object?> toJson() => {
         'id': id,
@@ -29,8 +52,9 @@ class RecurrenceOccurrenceException {
         'occurrenceDate': occurrenceDate.toIso8601String(),
         'kind': kind.name,
         'item': item?.toJson(),
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
+        'survivesMemoryDeletion': survivesMemoryDeletion,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        'updatedAt': updatedAt.toUtc().toIso8601String(),
       };
 
   factory RecurrenceOccurrenceException.fromJson(
@@ -47,8 +71,9 @@ class RecurrenceOccurrenceException {
       item: rawItem == null
           ? null
           : MemoryItem.fromJson(Map<String, Object?>.from(rawItem as Map)),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      survivesMemoryDeletion: json['survivesMemoryDeletion'] as bool? ?? false,
+      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+      updatedAt: DateTime.parse(json['updatedAt'] as String).toLocal(),
     );
   }
 }

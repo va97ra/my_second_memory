@@ -203,36 +203,67 @@ class _RecordEditor extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: compact ? 8 : 12),
-                    Row(
-                      children: [
-                        if (recurrenceFrequency != null)
-                          _RecurrenceBadge(
-                            frequency: recurrenceFrequency!,
-                            onTap: onRecurrenceTap,
-                          ),
-                        const Spacer(),
-                        _SquareActionButton(
-                          tooltip: strings.addImage,
-                          icon: Icons.photo_camera_rounded,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: buttonSize,
-                          onPressed: onPickImage,
-                        ),
-                        const SizedBox(width: 8),
-                        _SquareActionButton(
-                          tooltip: isRecording
-                              ? strings.stopRecording
-                              : strings.voice,
-                          icon: isRecording
-                              ? Icons.stop_rounded
-                              : Icons.mic_rounded,
-                          color: isRecording
-                              ? Theme.of(context).colorScheme.error
-                              : Theme.of(context).colorScheme.secondary,
-                          size: buttonSize,
-                          onPressed: onVoicePressed,
-                        ),
-                      ],
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final badge = recurrenceFrequency == null
+                            ? null
+                            : _RecurrenceBadge(
+                                frequency: recurrenceFrequency!,
+                                onTap: onRecurrenceTap,
+                              );
+                        final actions = Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _SquareActionButton(
+                              tooltip: strings.addImage,
+                              icon: Icons.photo_camera_rounded,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: buttonSize,
+                              onPressed: onPickImage,
+                            ),
+                            const SizedBox(width: 8),
+                            _SquareActionButton(
+                              tooltip: isRecording
+                                  ? strings.stopRecording
+                                  : strings.voice,
+                              icon: isRecording
+                                  ? Icons.stop_rounded
+                                  : Icons.mic_rounded,
+                              color: isRecording
+                                  ? Theme.of(context).colorScheme.error
+                                  : Theme.of(context).colorScheme.secondary,
+                              size: buttonSize,
+                              onPressed: onVoicePressed,
+                            ),
+                          ],
+                        );
+                        final stack = badge != null &&
+                            (constraints.maxWidth < 230 ||
+                                MediaQuery.textScalerOf(context).scale(1) >
+                                    1.5);
+                        if (stack) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: badge),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: actions,
+                              ),
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            if (badge != null) badge,
+                            const Spacer(),
+                            actions,
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),

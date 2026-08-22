@@ -1355,6 +1355,12 @@ class $RecurrenceSeriesRowsTable extends RecurrenceSeriesRows
   late final GeneratedColumn<DateTime> endDate = GeneratedColumn<DateTime>(
       'end_date', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _subscriptionEndDateMeta =
+      const VerificationMeta('subscriptionEndDate');
+  @override
+  late final GeneratedColumn<DateTime> subscriptionEndDate =
+      GeneratedColumn<DateTime>('subscription_end_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _historyThroughMeta =
       const VerificationMeta('historyThrough');
   @override
@@ -1373,6 +1379,7 @@ class $RecurrenceSeriesRowsTable extends RecurrenceSeriesRows
         updatedAt,
         generatedThrough,
         endDate,
+        subscriptionEndDate,
         historyThrough
       ];
   @override
@@ -1445,6 +1452,12 @@ class $RecurrenceSeriesRowsTable extends RecurrenceSeriesRows
       context.handle(_endDateMeta,
           endDate.isAcceptableOrUnknown(data['end_date']!, _endDateMeta));
     }
+    if (data.containsKey('subscription_end_date')) {
+      context.handle(
+          _subscriptionEndDateMeta,
+          subscriptionEndDate.isAcceptableOrUnknown(
+              data['subscription_end_date']!, _subscriptionEndDateMeta));
+    }
     if (data.containsKey('history_through')) {
       context.handle(
           _historyThroughMeta,
@@ -1480,6 +1493,9 @@ class $RecurrenceSeriesRowsTable extends RecurrenceSeriesRows
           DriftSqlType.dateTime, data['${effectivePrefix}generated_through']),
       endDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}end_date']),
+      subscriptionEndDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime,
+          data['${effectivePrefix}subscription_end_date']),
       historyThrough: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}history_through']),
     );
@@ -1503,6 +1519,7 @@ class RecurrenceSeriesRow extends DataClass
   final DateTime updatedAt;
   final DateTime? generatedThrough;
   final DateTime? endDate;
+  final DateTime? subscriptionEndDate;
   final DateTime? historyThrough;
   const RecurrenceSeriesRow(
       {required this.id,
@@ -1515,6 +1532,7 @@ class RecurrenceSeriesRow extends DataClass
       required this.updatedAt,
       this.generatedThrough,
       this.endDate,
+      this.subscriptionEndDate,
       this.historyThrough});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1532,6 +1550,9 @@ class RecurrenceSeriesRow extends DataClass
     }
     if (!nullToAbsent || endDate != null) {
       map['end_date'] = Variable<DateTime>(endDate);
+    }
+    if (!nullToAbsent || subscriptionEndDate != null) {
+      map['subscription_end_date'] = Variable<DateTime>(subscriptionEndDate);
     }
     if (!nullToAbsent || historyThrough != null) {
       map['history_through'] = Variable<DateTime>(historyThrough);
@@ -1555,6 +1576,9 @@ class RecurrenceSeriesRow extends DataClass
       endDate: endDate == null && nullToAbsent
           ? const Value.absent()
           : Value(endDate),
+      subscriptionEndDate: subscriptionEndDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subscriptionEndDate),
       historyThrough: historyThrough == null && nullToAbsent
           ? const Value.absent()
           : Value(historyThrough),
@@ -1576,6 +1600,8 @@ class RecurrenceSeriesRow extends DataClass
       generatedThrough:
           serializer.fromJson<DateTime?>(json['generatedThrough']),
       endDate: serializer.fromJson<DateTime?>(json['endDate']),
+      subscriptionEndDate:
+          serializer.fromJson<DateTime?>(json['subscriptionEndDate']),
       historyThrough: serializer.fromJson<DateTime?>(json['historyThrough']),
     );
   }
@@ -1593,6 +1619,7 @@ class RecurrenceSeriesRow extends DataClass
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'generatedThrough': serializer.toJson<DateTime?>(generatedThrough),
       'endDate': serializer.toJson<DateTime?>(endDate),
+      'subscriptionEndDate': serializer.toJson<DateTime?>(subscriptionEndDate),
       'historyThrough': serializer.toJson<DateTime?>(historyThrough),
     };
   }
@@ -1608,6 +1635,7 @@ class RecurrenceSeriesRow extends DataClass
           DateTime? updatedAt,
           Value<DateTime?> generatedThrough = const Value.absent(),
           Value<DateTime?> endDate = const Value.absent(),
+          Value<DateTime?> subscriptionEndDate = const Value.absent(),
           Value<DateTime?> historyThrough = const Value.absent()}) =>
       RecurrenceSeriesRow(
         id: id ?? this.id,
@@ -1622,6 +1650,9 @@ class RecurrenceSeriesRow extends DataClass
             ? generatedThrough.value
             : this.generatedThrough,
         endDate: endDate.present ? endDate.value : this.endDate,
+        subscriptionEndDate: subscriptionEndDate.present
+            ? subscriptionEndDate.value
+            : this.subscriptionEndDate,
         historyThrough:
             historyThrough.present ? historyThrough.value : this.historyThrough,
       );
@@ -1643,6 +1674,9 @@ class RecurrenceSeriesRow extends DataClass
           ? data.generatedThrough.value
           : this.generatedThrough,
       endDate: data.endDate.present ? data.endDate.value : this.endDate,
+      subscriptionEndDate: data.subscriptionEndDate.present
+          ? data.subscriptionEndDate.value
+          : this.subscriptionEndDate,
       historyThrough: data.historyThrough.present
           ? data.historyThrough.value
           : this.historyThrough,
@@ -1662,6 +1696,7 @@ class RecurrenceSeriesRow extends DataClass
           ..write('updatedAt: $updatedAt, ')
           ..write('generatedThrough: $generatedThrough, ')
           ..write('endDate: $endDate, ')
+          ..write('subscriptionEndDate: $subscriptionEndDate, ')
           ..write('historyThrough: $historyThrough')
           ..write(')'))
         .toString();
@@ -1679,6 +1714,7 @@ class RecurrenceSeriesRow extends DataClass
       updatedAt,
       generatedThrough,
       endDate,
+      subscriptionEndDate,
       historyThrough);
   @override
   bool operator ==(Object other) =>
@@ -1694,6 +1730,7 @@ class RecurrenceSeriesRow extends DataClass
           other.updatedAt == this.updatedAt &&
           other.generatedThrough == this.generatedThrough &&
           other.endDate == this.endDate &&
+          other.subscriptionEndDate == this.subscriptionEndDate &&
           other.historyThrough == this.historyThrough);
 }
 
@@ -1709,6 +1746,7 @@ class RecurrenceSeriesRowsCompanion
   final Value<DateTime> updatedAt;
   final Value<DateTime?> generatedThrough;
   final Value<DateTime?> endDate;
+  final Value<DateTime?> subscriptionEndDate;
   final Value<DateTime?> historyThrough;
   final Value<int> rowid;
   const RecurrenceSeriesRowsCompanion({
@@ -1722,6 +1760,7 @@ class RecurrenceSeriesRowsCompanion
     this.updatedAt = const Value.absent(),
     this.generatedThrough = const Value.absent(),
     this.endDate = const Value.absent(),
+    this.subscriptionEndDate = const Value.absent(),
     this.historyThrough = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1736,6 +1775,7 @@ class RecurrenceSeriesRowsCompanion
     required DateTime updatedAt,
     this.generatedThrough = const Value.absent(),
     this.endDate = const Value.absent(),
+    this.subscriptionEndDate = const Value.absent(),
     this.historyThrough = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -1756,6 +1796,7 @@ class RecurrenceSeriesRowsCompanion
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? generatedThrough,
     Expression<DateTime>? endDate,
+    Expression<DateTime>? subscriptionEndDate,
     Expression<DateTime>? historyThrough,
     Expression<int>? rowid,
   }) {
@@ -1770,6 +1811,8 @@ class RecurrenceSeriesRowsCompanion
       if (updatedAt != null) 'updated_at': updatedAt,
       if (generatedThrough != null) 'generated_through': generatedThrough,
       if (endDate != null) 'end_date': endDate,
+      if (subscriptionEndDate != null)
+        'subscription_end_date': subscriptionEndDate,
       if (historyThrough != null) 'history_through': historyThrough,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1786,6 +1829,7 @@ class RecurrenceSeriesRowsCompanion
       Value<DateTime>? updatedAt,
       Value<DateTime?>? generatedThrough,
       Value<DateTime?>? endDate,
+      Value<DateTime?>? subscriptionEndDate,
       Value<DateTime?>? historyThrough,
       Value<int>? rowid}) {
     return RecurrenceSeriesRowsCompanion(
@@ -1799,6 +1843,7 @@ class RecurrenceSeriesRowsCompanion
       updatedAt: updatedAt ?? this.updatedAt,
       generatedThrough: generatedThrough ?? this.generatedThrough,
       endDate: endDate ?? this.endDate,
+      subscriptionEndDate: subscriptionEndDate ?? this.subscriptionEndDate,
       historyThrough: historyThrough ?? this.historyThrough,
       rowid: rowid ?? this.rowid,
     );
@@ -1837,6 +1882,10 @@ class RecurrenceSeriesRowsCompanion
     if (endDate.present) {
       map['end_date'] = Variable<DateTime>(endDate.value);
     }
+    if (subscriptionEndDate.present) {
+      map['subscription_end_date'] =
+          Variable<DateTime>(subscriptionEndDate.value);
+    }
     if (historyThrough.present) {
       map['history_through'] = Variable<DateTime>(historyThrough.value);
     }
@@ -1859,6 +1908,7 @@ class RecurrenceSeriesRowsCompanion
           ..write('updatedAt: $updatedAt, ')
           ..write('generatedThrough: $generatedThrough, ')
           ..write('endDate: $endDate, ')
+          ..write('subscriptionEndDate: $subscriptionEndDate, ')
           ..write('historyThrough: $historyThrough, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3107,6 +3157,7 @@ typedef $$RecurrenceSeriesRowsTableCreateCompanionBuilder
   required DateTime updatedAt,
   Value<DateTime?> generatedThrough,
   Value<DateTime?> endDate,
+  Value<DateTime?> subscriptionEndDate,
   Value<DateTime?> historyThrough,
   Value<int> rowid,
 });
@@ -3122,6 +3173,7 @@ typedef $$RecurrenceSeriesRowsTableUpdateCompanionBuilder
   Value<DateTime> updatedAt,
   Value<DateTime?> generatedThrough,
   Value<DateTime?> endDate,
+  Value<DateTime?> subscriptionEndDate,
   Value<DateTime?> historyThrough,
   Value<int> rowid,
 });
@@ -3165,6 +3217,10 @@ class $$RecurrenceSeriesRowsTableFilterComposer
 
   ColumnFilters<DateTime> get endDate => $composableBuilder(
       column: $table.endDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get subscriptionEndDate => $composableBuilder(
+      column: $table.subscriptionEndDate,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get historyThrough => $composableBuilder(
       column: $table.historyThrough,
@@ -3213,6 +3269,10 @@ class $$RecurrenceSeriesRowsTableOrderingComposer
   ColumnOrderings<DateTime> get endDate => $composableBuilder(
       column: $table.endDate, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<DateTime> get subscriptionEndDate => $composableBuilder(
+      column: $table.subscriptionEndDate,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get historyThrough => $composableBuilder(
       column: $table.historyThrough,
       builder: (column) => ColumnOrderings(column));
@@ -3256,6 +3316,9 @@ class $$RecurrenceSeriesRowsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get endDate =>
       $composableBuilder(column: $table.endDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get subscriptionEndDate => $composableBuilder(
+      column: $table.subscriptionEndDate, builder: (column) => column);
 
   GeneratedColumn<DateTime> get historyThrough => $composableBuilder(
       column: $table.historyThrough, builder: (column) => column);
@@ -3301,6 +3364,7 @@ class $$RecurrenceSeriesRowsTableTableManager extends RootTableManager<
             Value<DateTime> updatedAt = const Value.absent(),
             Value<DateTime?> generatedThrough = const Value.absent(),
             Value<DateTime?> endDate = const Value.absent(),
+            Value<DateTime?> subscriptionEndDate = const Value.absent(),
             Value<DateTime?> historyThrough = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -3315,6 +3379,7 @@ class $$RecurrenceSeriesRowsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
             generatedThrough: generatedThrough,
             endDate: endDate,
+            subscriptionEndDate: subscriptionEndDate,
             historyThrough: historyThrough,
             rowid: rowid,
           ),
@@ -3329,6 +3394,7 @@ class $$RecurrenceSeriesRowsTableTableManager extends RootTableManager<
             required DateTime updatedAt,
             Value<DateTime?> generatedThrough = const Value.absent(),
             Value<DateTime?> endDate = const Value.absent(),
+            Value<DateTime?> subscriptionEndDate = const Value.absent(),
             Value<DateTime?> historyThrough = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -3343,6 +3409,7 @@ class $$RecurrenceSeriesRowsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
             generatedThrough: generatedThrough,
             endDate: endDate,
+            subscriptionEndDate: subscriptionEndDate,
             historyThrough: historyThrough,
             rowid: rowid,
           ),

@@ -75,6 +75,7 @@ class SqliteRecurrenceRepository implements RecurrenceRepository {
       updatedAt: series.updatedAt,
       generatedThrough: Value(series.generatedThrough),
       endDate: Value(series.endDate),
+      subscriptionEndDate: Value(series.subscriptionEndDate),
       historyThrough: Value(series.historyThrough),
     );
   }
@@ -93,6 +94,7 @@ class SqliteRecurrenceRepository implements RecurrenceRepository {
       updatedAt: row.updatedAt,
       generatedThrough: row.generatedThrough,
       endDate: row.endDate,
+      subscriptionEndDate: row.subscriptionEndDate,
       historyThrough: row.historyThrough,
     );
   }

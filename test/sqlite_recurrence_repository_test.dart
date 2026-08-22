@@ -29,6 +29,7 @@ void main() {
       createdAt: date,
       updatedAt: date,
       generatedThrough: DateTime(2028, 7, 20),
+      subscriptionEndDate: DateTime(2027, 7, 20),
     );
 
     await repository.upsert(series);
@@ -36,6 +37,7 @@ void main() {
 
     expect(restored.single.template.birthYear, 1985);
     expect(restored.single.generatedThrough, DateTime(2028, 7, 20));
+    expect(restored.single.subscriptionEndDate, DateTime(2027, 7, 20));
     await repository.delete(series.id);
     expect(await repository.loadAll(), isEmpty);
     await repository.close();

@@ -41,6 +41,7 @@ class RecurrenceSeries {
     this.isEnabled = true,
     this.generatedThrough,
     this.endDate,
+    this.subscriptionEndDate,
     this.historyThrough,
   });
 
@@ -53,19 +54,35 @@ class RecurrenceSeries {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? generatedThrough;
+
+  /// A cutoff created by deleting this and later occurrences.
   final DateTime? endDate;
+
+  /// The inclusive contractual end of a finite monthly subscription.
+  final DateTime? subscriptionEndDate;
   final DateTime? historyThrough;
+
+  DateTime? get effectiveEndDate {
+    final deletionEnd = endDate;
+    final termEnd = subscriptionEndDate;
+    if (deletionEnd == null) return termEnd;
+    if (termEnd == null) return deletionEnd;
+    return deletionEnd.isBefore(termEnd) ? deletionEnd : termEnd;
+  }
 
   RecurrenceSeries copyWith({
     RecurrenceFrequency? frequency,
     MemoryItem? template,
     DateTime? startDate,
     bool? isEnabled,
+    DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? generatedThrough,
     bool clearGeneratedThrough = false,
     DateTime? endDate,
     bool clearEndDate = false,
+    DateTime? subscriptionEndDate,
+    bool clearSubscriptionEndDate = false,
     DateTime? historyThrough,
   }) {
     return RecurrenceSeries(
@@ -75,12 +92,15 @@ class RecurrenceSeries {
       startDate: startDate ?? this.startDate,
       originItemId: originItemId,
       isEnabled: isEnabled ?? this.isEnabled,
-      createdAt: createdAt,
+      createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       generatedThrough: clearGeneratedThrough
           ? null
           : generatedThrough ?? this.generatedThrough,
       endDate: clearEndDate ? null : endDate ?? this.endDate,
+      subscriptionEndDate: clearSubscriptionEndDate
+          ? null
+          : subscriptionEndDate ?? this.subscriptionEndDate,
       historyThrough: historyThrough ?? this.historyThrough,
     );
   }
@@ -92,10 +112,11 @@ class RecurrenceSeries {
         'startDate': startDate.toIso8601String(),
         'originItemId': originItemId,
         'isEnabled': isEnabled,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        'updatedAt': updatedAt.toUtc().toIso8601String(),
         'generatedThrough': generatedThrough?.toIso8601String(),
         'endDate': endDate?.toIso8601String(),
+        'subscriptionEndDate': subscriptionEndDate?.toIso8601String(),
         'historyThrough': historyThrough?.toIso8601String(),
       };
 
@@ -111,14 +132,17 @@ class RecurrenceSeries {
       startDate: DateTime.parse(json['startDate'] as String),
       originItemId: json['originItemId'] as String,
       isEnabled: json['isEnabled'] as bool? ?? true,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
+      updatedAt: DateTime.parse(json['updatedAt'] as String).toLocal(),
       generatedThrough: json['generatedThrough'] == null
           ? null
           : DateTime.parse(json['generatedThrough'] as String),
       endDate: json['endDate'] == null
           ? null
           : DateTime.parse(json['endDate'] as String),
+      subscriptionEndDate: json['subscriptionEndDate'] == null
+          ? null
+          : DateTime.parse(json['subscriptionEndDate'] as String),
       historyThrough: json['historyThrough'] == null
           ? null
           : DateTime.parse(json['historyThrough'] as String),

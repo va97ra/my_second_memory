@@ -111,7 +111,13 @@ class SqliteRecurrenceExceptionRepository
       occurrenceDate: exception.occurrenceDate,
       kind: exception.kind.name,
       itemJson: Value(
-        exception.item == null ? null : jsonEncode(exception.item!.toJson()),
+        exception.item == null
+            ? null
+            : jsonEncode({
+                ...exception.item!.toJson(),
+                if (exception.survivesMemoryDeletion)
+                  '_survivesMemoryDeletion': true,
+              }),
       ),
       createdAt: exception.createdAt,
       updatedAt: exception.updatedAt,
@@ -121,16 +127,17 @@ class SqliteRecurrenceExceptionRepository
   RecurrenceOccurrenceException _fromRow(
     RecurrenceOccurrenceExceptionRow row,
   ) {
+    final itemJson = row.itemJson == null
+        ? null
+        : Map<String, Object?>.from(jsonDecode(row.itemJson!) as Map);
     return RecurrenceOccurrenceException(
       id: row.id,
       seriesId: row.seriesId,
       occurrenceDate: row.occurrenceDate,
       kind: RecurrenceOccurrenceExceptionKind.values.byName(row.kind),
-      item: row.itemJson == null
-          ? null
-          : MemoryItem.fromJson(
-              Map<String, Object?>.from(jsonDecode(row.itemJson!) as Map),
-            ),
+      item: itemJson == null ? null : MemoryItem.fromJson(itemJson),
+      survivesMemoryDeletion:
+          itemJson?['_survivesMemoryDeletion'] as bool? ?? false,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     );

@@ -15,6 +15,10 @@ class RecurrenceProjectionService {
   }) {
     final rangeStart = dateOnly(start);
     final rangeEnd = dateOnly(end);
+    final occurrenceIndex = RecurrenceOccurrenceIndex(
+      series: series,
+      exceptions: exceptions,
+    );
     final enabledSeries = [
       for (final entry in series)
         if (entry.isEnabled) entry,
@@ -51,6 +55,7 @@ class RecurrenceProjectionService {
       final item = exception.item;
       if (exception.isSkipped ||
           item == null ||
+          occurrenceIndex.isSuppressedModified(exception) ||
           !enabledSeriesIds.contains(exception.seriesId) ||
           item.memoryDate.isBefore(rangeStart) ||
           item.memoryDate.isAfter(rangeEnd) ||
@@ -69,8 +74,20 @@ class RecurrenceProjectionService {
     required List<RecurrenceOccurrenceException> exceptions,
     required List<MemoryItem> persistedItems,
   }) {
+    final occurrenceIndex = RecurrenceOccurrenceIndex(
+      series: series,
+      exceptions: exceptions,
+    );
     for (final item in persistedItems) {
-      if (item.id == id) return item;
+      if (item.id != id) continue;
+      return occurrenceIndex.isSkippedPersisted(item) ? null : item;
+    }
+    for (final exception in exceptions) {
+      if (exception.item?.id == id &&
+          !exception.isSkipped &&
+          !occurrenceIndex.isSuppressedModified(exception)) {
+        return exception.item;
+      }
     }
     for (final entry in series) {
       final date = occurrenceDateFromId(entry.id, id);
@@ -81,11 +98,104 @@ class RecurrenceProjectionService {
             key) {
           continue;
         }
-        return exception.isSkipped ? null : exception.item;
+        if (exception.isSkipped) return null;
+        return exception.item;
       }
       return entry.isEnabled ? occurrenceFromSeries(entry, date) : null;
     }
     return null;
+  }
+}
+
+/// Resolves every stored representation back to the source occurrence. This
+/// keeps a canonical skip authoritative even when an old device uploads a
+/// persisted row or a modified marker under the moved date.
+class RecurrenceOccurrenceIndex {
+  RecurrenceOccurrenceIndex({
+    required List<RecurrenceSeries> series,
+    required List<RecurrenceOccurrenceException> exceptions,
+  })  : _seriesById = {for (final entry in series) entry.id: entry},
+        _exceptionsByKey = _newestExceptionsByKey(exceptions),
+        _sourceDateByItemId = _newestSourceDatesByItemId(exceptions);
+
+  final Map<String, RecurrenceSeries> _seriesById;
+  final Map<String, RecurrenceOccurrenceException> _exceptionsByKey;
+  final Map<String, DateTime> _sourceDateByItemId;
+
+  DateTime sourceDateFor(MemoryItem item, {DateTime? fallback}) {
+    final seriesId = item.seriesId;
+    if (seriesId == null) return dateOnly(fallback ?? item.memoryDate);
+    final entry = _seriesById[seriesId];
+    if (entry?.originItemId == item.id) return dateOnly(entry!.startDate);
+    final encoded = occurrenceDateFromId(seriesId, item.id);
+    if (encoded != null) return dateOnly(encoded);
+    return dateOnly(
+      _sourceDateByItemId[item.id] ?? fallback ?? item.memoryDate,
+    );
+  }
+
+  bool isSkippedPersisted(MemoryItem item) {
+    final seriesId = item.seriesId;
+    if (seriesId == null) return false;
+    final sourceDate = sourceDateFor(item);
+    final exception = _exceptionsByKey[occurrenceKey(seriesId, sourceDate)];
+    if (exception?.isSkipped != true) return false;
+    if (item.updatedAt.isAfter(exception!.updatedAt)) return false;
+    // Older versions represented a moved, persisted occurrence as
+    // item(source id, moved date) + null skip(source). Keep that valid shape.
+    // New deletion markers carry the deleted item id and are unambiguous.
+    return dateKey(item.memoryDate) == dateKey(sourceDate) ||
+        exception.item?.id == item.id;
+  }
+
+  bool isSuppressedModified(RecurrenceOccurrenceException exception) {
+    final item = exception.item;
+    if (exception.isSkipped || item == null) return false;
+    final sourceDate = sourceDateFor(
+      item,
+      fallback: exception.occurrenceDate,
+    );
+    final canonical =
+        _exceptionsByKey[occurrenceKey(exception.seriesId, sourceDate)];
+    if (canonical?.isSkipped == true &&
+        !exception.updatedAt.isAfter(canonical!.updatedAt)) {
+      return true;
+    }
+    final endDate = _seriesById[exception.seriesId]?.effectiveEndDate;
+    return endDate != null &&
+        (sourceDate.isAfter(dateOnly(endDate)) ||
+            item.memoryDate.isAfter(dateOnly(endDate)));
+  }
+
+  static Map<String, RecurrenceOccurrenceException> _newestExceptionsByKey(
+    List<RecurrenceOccurrenceException> exceptions,
+  ) {
+    final result = <String, RecurrenceOccurrenceException>{};
+    for (final exception in exceptions) {
+      final key = occurrenceKey(exception.seriesId, exception.occurrenceDate);
+      final existing = result[key];
+      if (existing == null || exception.updatedAt.isAfter(existing.updatedAt)) {
+        result[key] = exception;
+      }
+    }
+    return result;
+  }
+
+  static Map<String, DateTime> _newestSourceDatesByItemId(
+    List<RecurrenceOccurrenceException> exceptions,
+  ) {
+    final result = <String, DateTime>{};
+    final timestamps = <String, DateTime>{};
+    for (final exception in exceptions) {
+      final itemId = exception.item?.id;
+      if (itemId == null) continue;
+      final previous = timestamps[itemId];
+      if (previous == null || exception.updatedAt.isAfter(previous)) {
+        result[itemId] = dateOnly(exception.occurrenceDate);
+        timestamps[itemId] = exception.updatedAt;
+      }
+    }
+    return result;
   }
 }
 
@@ -96,7 +206,8 @@ List<DateTime> recurrenceDatesInRange(
 ) {
   final anchor = dateOnly(series.startDate);
   final rangeStart = latestDate(dateOnly(start), anchor);
-  final seriesEnd = series.endDate == null ? null : dateOnly(series.endDate!);
+  final effectiveEnd = series.effectiveEndDate;
+  final seriesEnd = effectiveEnd == null ? null : dateOnly(effectiveEnd);
   final rangeEnd = seriesEnd == null
       ? dateOnly(end)
       : earliestDate(dateOnly(end), seriesEnd);

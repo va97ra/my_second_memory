@@ -87,6 +87,8 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   int? _audioDurationSeconds;
   RecurrenceFrequency? _recurrenceFrequency;
   PaymentCategory _paymentCategory = PaymentCategory.other;
+  int? _subscriptionTermMonths;
+  bool _subscriptionTermDirty = false;
   int? _birthYear;
   bool _editFutureOccurrences = false;
   bool _scopeRequested = false;
@@ -134,10 +136,14 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     final recurrenceLoadState = ref.watch(recurrenceLoadProvider);
     final item = _watchItem();
     final showHints = ref.watch(appHintsProvider);
+    final needsRecurrenceForSubscriptionTerm =
+        item?.type == MemoryType.payment &&
+            item?.paymentCategory == PaymentCategory.subscription.name &&
+            item?.seriesId != null;
 
     if (loadState.isLoading ||
-        (item == null &&
-            widget.itemId != null &&
+        (((item == null && widget.itemId != null) ||
+                needsRecurrenceForSubscriptionTerm) &&
             recurrenceLoadState.isLoading)) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),

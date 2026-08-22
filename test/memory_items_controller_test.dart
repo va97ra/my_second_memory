@@ -355,4 +355,70 @@ void main() {
     expect(reminders.scheduled, isEmpty);
     expect(repository.items.single.isUndated, isTrue);
   });
+
+  test('sync replacement preserves in-flight local changes and deletions',
+      () async {
+    final baselineTime = DateTime.utc(2026, 8, 22, 12);
+    MemoryItem item(
+      String id,
+      String title, {
+      DateTime? updatedAt,
+    }) =>
+        MemoryItem(
+          id: id,
+          type: MemoryType.note,
+          title: title,
+          memoryDate: baselineTime,
+          createdAt: baselineTime,
+          updatedAt: updatedAt ?? baselineTime,
+        );
+
+    final repository = _MemoryRepository([
+      item('edited', 'Before local edit'),
+      item('deleted', 'Delete while syncing'),
+      item('remote-edit', 'Before remote edit'),
+    ]);
+    final controller = MemoryItemsController(repository);
+    await controller.load();
+    final baseline = [...controller.state];
+
+    final localTime = baselineTime.add(const Duration(minutes: 2));
+    await controller.update(
+      item('edited', 'Local edit', updatedAt: localTime),
+    );
+    await controller.add(
+      item('local-addition', 'Added locally', updatedAt: localTime),
+    );
+    await controller.delete('deleted');
+
+    final remoteTime = baselineTime.add(const Duration(minutes: 1));
+    await controller.replaceAllFromSync(
+      [
+        item('edited', 'Stale cloud edit', updatedAt: remoteTime),
+        item('deleted', 'Stale cloud copy', updatedAt: remoteTime),
+        item('remote-edit', 'Cloud edit', updatedAt: remoteTime),
+        item('remote-addition', 'Added in cloud', updatedAt: remoteTime),
+      ],
+      baseline: baseline,
+    );
+
+    final byId = {for (final value in controller.state) value.id: value};
+    expect(
+      byId.keys,
+      unorderedEquals([
+        'edited',
+        'local-addition',
+        'remote-edit',
+        'remote-addition',
+      ]),
+    );
+    expect(byId['edited']!.title, 'Local edit');
+    expect(byId['local-addition']!.title, 'Added locally');
+    expect(byId['remote-edit']!.title, 'Cloud edit');
+    expect(byId, isNot(contains('deleted')));
+    expect(
+      repository.items.map((value) => value.id),
+      unorderedEquals(byId.keys),
+    );
+  });
 }

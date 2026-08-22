@@ -50,12 +50,15 @@ class RecurrenceExceptionController
   Future<void> delete(String seriesId, DateTime occurrenceDate) async {
     await _loadFuture;
     final id = recurrenceExceptionId(seriesId, occurrenceDate);
+    final deletedAt = DateTime.now();
+    // Persist the cloud tombstone before the local delete so an interruption
+    // cannot resurrect the exception on the next synchronization.
+    await _sync?.recurrenceExceptionDeleted(id, deletedAt);
     await _repository.delete(seriesId, occurrenceDate);
     state = [
       for (final item in state)
         if (item.id != id) item
     ];
-    await _sync?.recurrenceExceptionDeleted(id, DateTime.now());
   }
 
   Future<void> deleteSeries(String seriesId) async {
@@ -64,15 +67,15 @@ class RecurrenceExceptionController
       for (final item in state)
         if (item.seriesId == seriesId) item.id,
     ];
+    final deletedAt = DateTime.now();
+    for (final id in deletedIds) {
+      await _sync?.recurrenceExceptionDeleted(id, deletedAt);
+    }
     await _repository.deleteSeries(seriesId);
     state = [
       for (final item in state)
         if (item.seriesId != seriesId) item,
     ];
-    final deletedAt = DateTime.now();
-    for (final id in deletedIds) {
-      await _sync?.recurrenceExceptionDeleted(id, deletedAt);
-    }
   }
 
   Future<void> replaceAll(
@@ -81,6 +84,31 @@ class RecurrenceExceptionController
     await _loadFuture;
     await _repository.replaceAll(exceptions);
     state = exceptions;
+  }
+
+  Future<void> replaceAllFromSync(
+    List<RecurrenceOccurrenceException> exceptions, {
+    required List<RecurrenceOccurrenceException> baseline,
+  }) async {
+    await _loadFuture;
+    final mergedById = {for (final item in exceptions) item.id: item};
+    final currentById = {for (final item in state) item.id: item};
+    final baselineById = {for (final item in baseline) item.id: item};
+    for (final id in baselineById.keys) {
+      if (!currentById.containsKey(id)) mergedById.remove(id);
+    }
+    for (final current in currentById.values) {
+      final before = baselineById[current.id];
+      final changedDuringSync =
+          before == null || current.updatedAt.isAfter(before.updatedAt);
+      if (!changedDuringSync) continue;
+      final incoming = mergedById[current.id];
+      if (incoming == null || !incoming.updatedAt.isAfter(current.updatedAt)) {
+        mergedById[current.id] = current;
+      }
+    }
+    await _repository.replaceAll(mergedById.values.toList(growable: false));
+    state = mergedById.values.toList(growable: false);
   }
 
   List<RecurrenceOccurrenceException> _replace(

@@ -71,7 +71,11 @@ extension _MemoryItemDeletionNavigation on _MemoryItemDetailScreenState {
     } else if (deleteScope == 'future' && item.seriesId != null) {
       await ref
           .read(recurrenceSeriesControllerProvider.notifier)
-          .deleteFromDate(item.seriesId!, item.memoryDate);
+          .deleteFromDate(
+            item.seriesId!,
+            item.memoryDate,
+            occurrence: item,
+          );
     } else {
       if (item.seriesId != null) {
         await ref

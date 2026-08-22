@@ -39,8 +39,20 @@ final syncControllerProvider =
       await ref.read(memoryItemsControllerProvider.notifier).load();
       return ref.read(memoryItemsControllerProvider);
     },
-    replaceMemoryItems: (items) =>
-        ref.read(memoryItemsControllerProvider.notifier).replaceAll(items),
+    replaceMemoryItems: (items) async {
+      await ref.read(memoryItemsControllerProvider.notifier).replaceAll(items);
+      await ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .reconcileOriginOverrides();
+    },
+    mergeMemoryItems: (items, baseline) async {
+      await ref
+          .read(memoryItemsControllerProvider.notifier)
+          .replaceAllFromSync(items, baseline: baseline);
+      await ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .reconcileOriginOverrides();
+    },
     readShiftSchedules: () async {
       await ref.read(shiftSchedulesControllerProvider.notifier).load();
       return ref.read(shiftSchedulesControllerProvider);
@@ -61,13 +73,29 @@ final syncControllerProvider =
     replaceRecurrenceSeries: (series) => ref
         .read(recurrenceSeriesControllerProvider.notifier)
         .replaceAll(series),
+    mergeRecurrenceSeries: (series, baseline) => ref
+        .read(recurrenceSeriesControllerProvider.notifier)
+        .replaceAllFromSync(series, baseline: baseline),
     readRecurrenceExceptions: () async {
       await ref.read(recurrenceExceptionControllerProvider.notifier).load();
       return ref.read(recurrenceExceptionControllerProvider);
     },
-    replaceRecurrenceExceptions: (exceptions) => ref
-        .read(recurrenceExceptionControllerProvider.notifier)
-        .replaceAll(exceptions),
+    replaceRecurrenceExceptions: (exceptions) async {
+      await ref
+          .read(recurrenceExceptionControllerProvider.notifier)
+          .replaceAll(exceptions);
+      await ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .reconcileOriginOverrides();
+    },
+    mergeRecurrenceExceptions: (exceptions, baseline) async {
+      await ref
+          .read(recurrenceExceptionControllerProvider.notifier)
+          .replaceAllFromSync(exceptions, baseline: baseline);
+      await ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .reconcileOriginOverrides();
+    },
   );
 });
 
@@ -90,6 +118,20 @@ class _RiverpodSyncMutationObserver implements SyncMutationObserver {
     return ref
         .read(syncControllerProvider.notifier)
         .recordDeletion(SyncEntityKind.memoryItem, id, deletedAt);
+  }
+
+  @override
+  Future<DateTime?> memoryDeletedAt(String id) {
+    return ref
+        .read(syncControllerProvider.notifier)
+        .deletionTime(SyncEntityKind.memoryItem, id);
+  }
+
+  @override
+  Future<Map<String, DateTime>> memoryDeletions() {
+    return ref
+        .read(syncControllerProvider.notifier)
+        .deletionTimes(SyncEntityKind.memoryItem);
   }
 
   @override

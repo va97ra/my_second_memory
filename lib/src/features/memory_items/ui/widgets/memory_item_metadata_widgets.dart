@@ -309,6 +309,8 @@ class _PaymentFields extends StatelessWidget {
     required this.locale,
     required this.onCategoryChanged,
     required this.onChanged,
+    required this.subscriptionTermMonths,
+    required this.onSubscriptionTermTap,
   });
 
   final TextEditingController amountController;
@@ -316,6 +318,8 @@ class _PaymentFields extends StatelessWidget {
   final String locale;
   final ValueChanged<PaymentCategory> onCategoryChanged;
   final VoidCallback onChanged;
+  final int? subscriptionTermMonths;
+  final VoidCallback? onSubscriptionTermTap;
 
   @override
   Widget build(BuildContext context) {
@@ -326,52 +330,285 @@ class _PaymentFields extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<PaymentCategory>(
-                value: category,
-                isExpanded: true,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                items: [
-                  for (final value in PaymentCategory.values)
-                    DropdownMenuItem(
-                      value: value,
-                      child: Text(value.label(locale),
-                          overflow: TextOverflow.ellipsis),
-                    ),
-                ],
-                onChanged: (value) {
-                  if (value != null) onCategoryChanged(value);
-                },
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<PaymentCategory>(
+                    value: category,
+                    isExpanded: true,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    items: [
+                      for (final value in PaymentCategory.values)
+                        DropdownMenuItem(
+                          value: value,
+                          child: Text(
+                            value.label(locale),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) onCategoryChanged(value);
+                    },
+                  ),
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 28,
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+              SizedBox(
+                width: 104,
+                child: TextField(
+                  controller: amountController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  textAlign: TextAlign.end,
+                  decoration: InputDecoration(
+                    hintText: locale == 'ru' ? 'Сумма ₽' : 'Amount ₽',
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                  ),
+                  onChanged: (_) => onChanged(),
+                ),
+              ),
+            ],
+          ),
+          if (category == PaymentCategory.subscription &&
+              onSubscriptionTermTap != null) ...[
+            Divider(
+              height: 1,
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+            InkWell(
+              key: const ValueKey('subscription_term_picker'),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(8),
+              ),
+              onTap: onSubscriptionTermTap,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.date_range_rounded,
+                        size: 19,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          locale == 'ru'
+                              ? 'Срок подписки'
+                              : 'Subscription term',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          _subscriptionTermLabel(
+                            subscriptionTermMonths,
+                            locale,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.end,
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      const Icon(Icons.chevron_right_rounded, size: 20),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-          Container(
-            width: 1,
-            height: 28,
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-          SizedBox(
-            width: 104,
-            child: TextField(
-              controller: amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              textAlign: TextAlign.end,
-              decoration: InputDecoration(
-                hintText: locale == 'ru' ? 'Сумма ₽' : 'Amount ₽',
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-              ),
-              onChanged: (_) => onChanged(),
-            ),
-          ),
+          ],
         ],
       ),
     );
   }
+}
+
+class _SubscriptionTermSheet extends StatefulWidget {
+  const _SubscriptionTermSheet({required this.initialMonths});
+
+  final int? initialMonths;
+
+  @override
+  State<_SubscriptionTermSheet> createState() => _SubscriptionTermSheetState();
+}
+
+class _SubscriptionTermSheetState extends State<_SubscriptionTermSheet> {
+  late bool _unlimited;
+  late int _years;
+  late int _months;
+
+  @override
+  void initState() {
+    super.initState();
+    final total = widget.initialMonths;
+    _unlimited = total == null;
+    _years = (total ?? 3) ~/ 12;
+    _months = (total ?? 3) % 12;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    final ru = locale == 'ru';
+    final total = _years * 12 + _months;
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          0,
+          20,
+          20 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              ru ? 'Срок подписки' : 'Subscription term',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              ru
+                  ? 'Платёж будет появляться каждый месяц только в течение выбранного срока.'
+                  : 'The payment will appear monthly only for the selected term.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            SwitchListTile.adaptive(
+              key: const ValueKey('subscription_term_unlimited'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(ru ? 'Без срока' : 'No end date'),
+              value: _unlimited,
+              onChanged: (value) => setState(() {
+                _unlimited = value;
+                if (!value && _years == 0 && _months == 0) {
+                  _months = 3;
+                }
+              }),
+            ),
+            if (!_unlimited) ...[
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 12,
+                runSpacing: 10,
+                children: [
+                  SizedBox(
+                    width: 160,
+                    child: DropdownButtonFormField<int>(
+                      key: const ValueKey('subscription_term_years'),
+                      initialValue: _years,
+                      decoration: InputDecoration(
+                        labelText: ru ? 'Лет' : 'Years',
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: [
+                        for (var value = 0; value <= 30; value++)
+                          DropdownMenuItem(
+                            value: value,
+                            child: Text('$value'),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) setState(() => _years = value);
+                      },
+                    ),
+                  ),
+                  SizedBox(
+                    width: 160,
+                    child: DropdownButtonFormField<int>(
+                      key: const ValueKey('subscription_term_months'),
+                      initialValue: _months,
+                      decoration: InputDecoration(
+                        labelText: ru ? 'Месяцев' : 'Months',
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: [
+                        for (var value = 0; value < 12; value++)
+                          DropdownMenuItem(
+                            value: value,
+                            child: Text('$value'),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) setState(() => _months = value);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              key: const ValueKey('subscription_term_save'),
+              onPressed: !_unlimited && total == 0
+                  ? null
+                  : () => Navigator.of(context).pop(_unlimited ? 0 : total),
+              icon: const Icon(Icons.check_rounded),
+              label: Text(ru ? 'Готово' : 'Done'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _subscriptionTermLabel(int? totalMonths, String locale) {
+  if (totalMonths == null) return locale == 'ru' ? 'Без срока' : 'No end date';
+  final years = totalMonths ~/ 12;
+  final months = totalMonths % 12;
+  if (locale != 'ru') {
+    final parts = <String>[];
+    if (years > 0) parts.add('$years ${years == 1 ? 'year' : 'years'}');
+    if (months > 0) parts.add('$months ${months == 1 ? 'month' : 'months'}');
+    return parts.join(' ');
+  }
+  final parts = <String>[];
+  if (years > 0) parts.add('$years ${_ruCount(years, 'год', 'года', 'лет')}');
+  if (months > 0) {
+    parts.add('$months ${_ruCount(months, 'месяц', 'месяца', 'месяцев')}');
+  }
+  return parts.join(' ');
+}
+
+String _ruCount(int value, String one, String few, String many) {
+  final mod100 = value % 100;
+  if (mod100 >= 11 && mod100 <= 14) return many;
+  return switch (value % 10) {
+    1 => one,
+    2 || 3 || 4 => few,
+    _ => many,
+  };
 }
 
 class _BirthdayFields extends StatelessWidget {

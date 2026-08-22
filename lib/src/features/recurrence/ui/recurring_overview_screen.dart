@@ -43,9 +43,14 @@ class _RecurringOverviewScreenState
     final projected = ref.watch(
       recurrenceItemsForRangeProvider(RecurrenceRange(rangeStart, rangeEnd)),
     );
+    final occurrenceIndex = RecurrenceOccurrenceIndex(
+      series: series,
+      exceptions: ref.watch(recurrenceExceptionControllerProvider),
+    );
     final persisted = [
       for (final item in ref.watch(memoryItemsControllerProvider))
         if (seriesById.containsKey(item.seriesId) &&
+            !occurrenceIndex.isSkippedPersisted(item) &&
             !item.memoryDate.isBefore(rangeStart) &&
             !item.memoryDate.isAfter(rangeEnd))
           item,

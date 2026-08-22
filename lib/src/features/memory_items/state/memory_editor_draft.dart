@@ -19,6 +19,8 @@ class MemoryEditorDraft {
     required this.repeatRule,
     required this.amountMinor,
     required this.paymentCategory,
+    required this.subscriptionTermMonths,
+    required this.subscriptionTermDirty,
     required this.birthYear,
     required this.isUndated,
   });
@@ -39,6 +41,8 @@ class MemoryEditorDraft {
   final String? repeatRule;
   final int? amountMinor;
   final String? paymentCategory;
+  final int? subscriptionTermMonths;
+  final bool subscriptionTermDirty;
   final int? birthYear;
   final bool isUndated;
 }

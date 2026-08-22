@@ -23,34 +23,44 @@ class SyncController extends StateNotifier<SyncState> {
     bool Function()? canAccessLocalData,
     required Future<List<MemoryItem>> Function() readMemoryItems,
     required Future<void> Function(List<MemoryItem>) replaceMemoryItems,
+    Future<void> Function(List<MemoryItem>, List<MemoryItem>)? mergeMemoryItems,
     Future<List<ShiftSchedule>> Function()? readShiftSchedules,
     Future<void> Function(List<ShiftSchedule>)? replaceShiftSchedules,
     Future<List<AccountItem>> Function()? readAccounts,
     Future<void> Function(List<AccountItem>)? replaceAccounts,
     Future<List<RecurrenceSeries>> Function()? readRecurrenceSeries,
     Future<void> Function(List<RecurrenceSeries>)? replaceRecurrenceSeries,
+    Future<void> Function(List<RecurrenceSeries>, List<RecurrenceSeries>)?
+        mergeRecurrenceSeries,
     Future<List<RecurrenceOccurrenceException>> Function()?
         readRecurrenceExceptions,
     Future<void> Function(List<RecurrenceOccurrenceException>)?
         replaceRecurrenceExceptions,
+    Future<void> Function(
+      List<RecurrenceOccurrenceException>,
+      List<RecurrenceOccurrenceException>,
+    )? mergeRecurrenceExceptions,
   })  : _remote = remote,
         _keyStore = keyStore,
         _tombstones = tombstones,
         _canAccessLocalData = canAccessLocalData ?? _alwaysAccessible,
         _readMemoryItems = readMemoryItems,
-        _replaceMemoryItems = replaceMemoryItems,
+        _mergeMemoryItems = mergeMemoryItems ??
+            ((items, _) => replaceMemoryItems(items)),
         _readShiftSchedules = readShiftSchedules ?? _readNoShiftSchedules,
         _replaceShiftSchedules =
             replaceShiftSchedules ?? _replaceNoShiftSchedules,
         _readAccounts = readAccounts ?? _readNoAccounts,
         _replaceAccounts = replaceAccounts ?? _replaceNoAccounts,
         _readRecurrenceSeries = readRecurrenceSeries ?? _readNoRecurrenceSeries,
-        _replaceRecurrenceSeries =
-            replaceRecurrenceSeries ?? _replaceNoRecurrenceSeries,
+        _mergeRecurrenceSeries = mergeRecurrenceSeries ??
+            ((items, _) => (replaceRecurrenceSeries ??
+                _replaceNoRecurrenceSeries)(items)),
         _readRecurrenceExceptions =
             readRecurrenceExceptions ?? _readNoRecurrenceExceptions,
-        _replaceRecurrenceExceptions =
-            replaceRecurrenceExceptions ?? _replaceNoRecurrenceExceptions,
+        _mergeRecurrenceExceptions = mergeRecurrenceExceptions ??
+            ((items, _) => (replaceRecurrenceExceptions ??
+                _replaceNoRecurrenceExceptions)(items)),
         super(remote == null
             ? const SyncState.unconfigured()
             : const SyncState(status: SyncStatus.loading));
@@ -60,17 +70,21 @@ class SyncController extends StateNotifier<SyncState> {
   final SyncTombstoneStore _tombstones;
   final bool Function() _canAccessLocalData;
   final Future<List<MemoryItem>> Function() _readMemoryItems;
-  final Future<void> Function(List<MemoryItem>) _replaceMemoryItems;
+  final Future<void> Function(List<MemoryItem>, List<MemoryItem>)
+      _mergeMemoryItems;
   final Future<List<ShiftSchedule>> Function() _readShiftSchedules;
   final Future<void> Function(List<ShiftSchedule>) _replaceShiftSchedules;
   final Future<List<AccountItem>> Function() _readAccounts;
   final Future<void> Function(List<AccountItem>) _replaceAccounts;
   final Future<List<RecurrenceSeries>> Function() _readRecurrenceSeries;
-  final Future<void> Function(List<RecurrenceSeries>) _replaceRecurrenceSeries;
+  final Future<void> Function(List<RecurrenceSeries>, List<RecurrenceSeries>)
+      _mergeRecurrenceSeries;
   final Future<List<RecurrenceOccurrenceException>> Function()
       _readRecurrenceExceptions;
-  final Future<void> Function(List<RecurrenceOccurrenceException>)
-      _replaceRecurrenceExceptions;
+  final Future<void> Function(
+    List<RecurrenceOccurrenceException>,
+    List<RecurrenceOccurrenceException>,
+  ) _mergeRecurrenceExceptions;
   final SyncVaultCrypto _vaultCrypto = const SyncVaultCrypto();
   StreamSubscription<void>? _remoteSubscription;
   StreamSubscription<void>? _authSubscription;
@@ -79,6 +93,7 @@ class SyncController extends StateNotifier<SyncState> {
   Future<void>? _activeSync;
   Future<void>? _activeAuthTransition;
   bool _loaded = false;
+  bool _syncAgain = false;
 
   Future<void> load() async {
     if (_loaded) return;
@@ -250,15 +265,28 @@ class SyncController extends StateNotifier<SyncState> {
 
   Future<void> syncNow() {
     final active = _activeSync;
-    if (active != null) return active;
+    if (active != null) {
+      _syncAgain = true;
+      return active;
+    }
     if (!_canAccessLocalData() ||
         state.cipher == null ||
         _remote?.currentUserId == null) {
       return Future.value();
     }
-    final future = _runSync();
+    final future = _runSyncUntilIdle();
     _activeSync = future;
     return future.whenComplete(() => _activeSync = null);
+  }
+
+  Future<void> _runSyncUntilIdle() async {
+    do {
+      _syncAgain = false;
+      await _runSync();
+    } while (_syncAgain &&
+        _canAccessLocalData() &&
+        state.cipher != null &&
+        _remote?.currentUserId != null);
   }
 
   Future<void> _runSync() async {
@@ -268,23 +296,26 @@ class SyncController extends StateNotifier<SyncState> {
       final memoryItems = await _readMemoryItems();
       final shiftSchedules = await _readShiftSchedules();
       final accounts = await _readAccounts();
-      final recurrenceExceptions = await _readRecurrenceExceptions();
       final recurrenceSeries = await _readRecurrenceSeries();
+      final recurrenceExceptions = await _readRecurrenceExceptions();
       final result = await AppSyncEngine(
         remote: _remote!,
         cipher: cipher,
         tombstones: _tombstones,
       ).synchronize(
         memoryItems: memoryItems,
-        replaceMemoryItems: _replaceMemoryItems,
+        replaceMemoryItems: (items) =>
+            _mergeMemoryItems(items, memoryItems),
         shiftSchedules: shiftSchedules,
         replaceShiftSchedules: _replaceShiftSchedules,
         accounts: accounts,
         replaceAccounts: _replaceAccounts,
         recurrenceSeries: recurrenceSeries,
-        replaceRecurrenceSeries: _replaceRecurrenceSeries,
+        replaceRecurrenceSeries: (items) =>
+            _mergeRecurrenceSeries(items, recurrenceSeries),
         recurrenceExceptions: recurrenceExceptions,
-        replaceRecurrenceExceptions: _replaceRecurrenceExceptions,
+        replaceRecurrenceExceptions: (items) =>
+            _mergeRecurrenceExceptions(items, recurrenceExceptions),
       );
       state = state.copyWith(
         status: SyncStatus.ready,
@@ -317,9 +348,21 @@ class SyncController extends StateNotifier<SyncState> {
     DateTime deletedAt,
   ) async {
     final userId = _remote?.currentUserId;
-    if (userId == null || !state.isConnected) return;
+    if (userId == null) return;
     await _tombstones.markDeleted(userId, id, deletedAt, kind: kind);
-    schedule();
+    if (state.isConnected) schedule();
+  }
+
+  Future<DateTime?> deletionTime(SyncEntityKind kind, String id) async {
+    final userId = _remote?.currentUserId;
+    if (userId == null) return null;
+    return (await _tombstones.read(userId, kind: kind))[id];
+  }
+
+  Future<Map<String, DateTime>> deletionTimes(SyncEntityKind kind) async {
+    final userId = _remote?.currentUserId;
+    if (userId == null) return const {};
+    return _tombstones.read(userId, kind: kind);
   }
 
   Future<void> signOut() async {

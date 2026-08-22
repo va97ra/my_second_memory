@@ -25,6 +25,7 @@ class EncryptedEntitySyncEngine<T> {
     required this.updatedAtOf,
     required this.toJson,
     required this.fromJson,
+    this.withCanonicalUpdatedAt,
   });
 
   final SyncRemoteStore remote;
@@ -35,6 +36,7 @@ class EncryptedEntitySyncEngine<T> {
   final DateTime Function(T item) updatedAtOf;
   final Map<String, Object?> Function(T item) toJson;
   final T Function(Map<String, Object?> json) fromJson;
+  final T Function(T item, DateTime updatedAt)? withCanonicalUpdatedAt;
 
   Future<EntitySyncOutcome> merge({
     required List<T> localItems,
@@ -52,10 +54,27 @@ class EncryptedEntitySyncEngine<T> {
     };
     final localById = {for (final item in localItems) idOf(item): item};
     final deletedById = await tombstones.read(userId, kind: kind);
+    final initialDeletedById = {...deletedById};
     final changesToUpload = <SyncRemoteEntity>[];
     var downloaded = 0;
     var deleted = 0;
     var tombstonesChanged = false;
+    var localChanged = false;
+
+    // A previous interrupted sync can leave a stale local row beside its
+    // tombstone. Resolve that state before considering cloud entities.
+    for (final entry in [...deletedById.entries]) {
+      final local = localById[entry.key];
+      if (local == null) continue;
+      if (updatedAtOf(local).isAfter(entry.value)) {
+        deletedById.remove(entry.key);
+        tombstonesChanged = true;
+      } else {
+        localById.remove(entry.key);
+        localChanged = true;
+        deleted++;
+      }
+    }
 
     for (final entry in remoteById.entries) {
       final id = entry.key;
@@ -91,15 +110,14 @@ class EncryptedEntitySyncEngine<T> {
       }
 
       final remoteItem = await _decode(remoteEntity);
-      if (local == null ||
-          updatedAtOf(remoteItem).isAfter(updatedAtOf(local))) {
+      if (local == null || remoteEntity.updatedAt.isAfter(updatedAtOf(local))) {
         localById[id] = remoteItem;
         downloaded++;
         if (localDeletion != null) {
           deletedById.remove(id);
           tombstonesChanged = true;
         }
-      } else if (updatedAtOf(local).isAfter(updatedAtOf(remoteItem))) {
+      } else if (updatedAtOf(local).isAfter(remoteEntity.updatedAt)) {
         changesToUpload.add(await _encode(local));
       }
     }
@@ -122,11 +140,16 @@ class EncryptedEntitySyncEngine<T> {
       }
     }
 
-    if (downloaded > 0 || deleted > 0) {
-      await replaceLocal(localById.values.toList(growable: false));
-    }
     if (tombstonesChanged) {
-      await tombstones.write(userId, deletedById, kind: kind);
+      await tombstones.reconcile(
+        userId,
+        baseline: initialDeletedById,
+        desired: deletedById,
+        kind: kind,
+      );
+    }
+    if (downloaded > 0 || deleted > 0 || localChanged) {
+      await replaceLocal(localById.values.toList(growable: false));
     }
 
     return EntitySyncOutcome(
@@ -158,7 +181,7 @@ class EncryptedEntitySyncEngine<T> {
     if (idOf(item) != entity.entityId) {
       throw const FormatException('Synchronization entity id mismatch');
     }
-    return item;
+    return withCanonicalUpdatedAt?.call(item, entity.updatedAt) ?? item;
   }
 
   SyncRemoteEntity _deletion(String id, DateTime deletedAt) {

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/memory_item.dart';
 import 'memory_items_controller.dart';
+import '../../recurrence/domain/recurrence_projection_service.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 
 class MemoryItemsIndex {
@@ -62,7 +63,14 @@ class MemoryItemsIndex {
 }
 
 final memoryItemsIndexProvider = Provider<MemoryItemsIndex>((ref) {
-  return MemoryItemsIndex.build(ref.watch(memoryItemsControllerProvider));
+  final occurrenceIndex = RecurrenceOccurrenceIndex(
+    series: ref.watch(recurrenceSeriesControllerProvider),
+    exceptions: ref.watch(recurrenceExceptionControllerProvider),
+  );
+  return MemoryItemsIndex.build([
+    for (final item in ref.watch(memoryItemsControllerProvider))
+      if (!occurrenceIndex.isSkippedPersisted(item)) item,
+  ]);
 });
 
 final memoryItemByIdProvider = Provider.family<MemoryItem?, String>((ref, id) {

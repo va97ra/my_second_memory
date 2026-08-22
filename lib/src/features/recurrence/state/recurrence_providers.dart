@@ -164,6 +164,10 @@ final recurringItemsForPeriodProvider =
             exceptions: ref.watch(recurrenceExceptionControllerProvider),
             persistedItems: ref.watch(memoryItemsControllerProvider),
           );
+  final occurrenceIndex = RecurrenceOccurrenceIndex(
+    series: matchingSeries,
+    exceptions: ref.watch(recurrenceExceptionControllerProvider),
+  );
   final byId = <String, MemoryItem>{};
   for (final item in projected) {
     if (!item.isArchived) byId[item.id] = item;
@@ -171,6 +175,7 @@ final recurringItemsForPeriodProvider =
   for (final item in ref.watch(memoryItemsControllerProvider)) {
     if (item.isArchived || item.seriesId == null) continue;
     if (!ids.contains(item.seriesId)) continue;
+    if (occurrenceIndex.isSkippedPersisted(item)) continue;
     if (item.memoryDate.isBefore(period.start) ||
         item.memoryDate.isAfter(period.end)) {
       continue;

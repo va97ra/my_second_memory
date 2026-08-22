@@ -179,12 +179,15 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     await _loadFuture;
     final deletedAt = DateTime.now();
     final removed = _findById(id);
+    // Persist the cloud deletion before removing the local row. If the app is
+    // interrupted between these writes, the next sync can still finish the
+    // deletion instead of downloading the stale cloud copy again.
+    await _sync?.memoryDeleted(id, deletedAt);
     state = [
       for (final item in state)
         if (item.id != id) item,
     ];
     await _writes.add(() => _repository.delete(id));
-    await _sync?.memoryDeleted(id, deletedAt);
     if (removed != null) {
       await _deleteUnusedMedia(_mediaPaths(removed));
     }
@@ -223,8 +226,81 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
 
   Future<void> replaceAll(List<MemoryItem> items) async {
     await _loadFuture;
+    await _persistReplacement(await _withoutDeletedItems(items));
+  }
+
+  Future<void> replaceAllFromSync(
+    List<MemoryItem> items, {
+    required List<MemoryItem> baseline,
+  }) async {
+    await _loadFuture;
+    final mergedById = {
+      for (final item in await _withoutDeletedItems(items)) item.id: item,
+    };
+    final currentById = {for (final item in state) item.id: item};
+    final baselineById = {for (final item in baseline) item.id: item};
+
+    // A missing current row that existed in the snapshot was deleted while
+    // the network request was in flight. Never re-add it from that snapshot.
+    for (final id in baselineById.keys) {
+      if (!currentById.containsKey(id)) mergedById.remove(id);
+    }
+    for (final current in currentById.values) {
+      final before = baselineById[current.id];
+      final changedDuringSync =
+          before == null || current.updatedAt.isAfter(before.updatedAt);
+      if (!changedDuringSync) continue;
+      final incoming = mergedById[current.id];
+      if (incoming == null ||
+          !incoming.updatedAt.isAfter(current.updatedAt)) {
+        mergedById[current.id] = current;
+      }
+    }
+    await _persistReplacement(mergedById.values.toList(growable: false));
+  }
+
+  Future<List<MemoryItem>> _withoutDeletedItems(
+    Iterable<MemoryItem> items,
+  ) async {
+    final accepted = <MemoryItem>[];
+    for (final item in items) {
+      final deletedAt = await _sync?.memoryDeletedAt(item.id);
+      if (deletedAt == null || item.updatedAt.isAfter(deletedAt)) {
+        accepted.add(item);
+      }
+    }
+    return accepted;
+  }
+
+  Future<void> _persistReplacement(List<MemoryItem> items) async {
     state = _sort(items);
     await _writes.add(() => _repository.replaceAll(state));
+    unawaited(_safeReconcile());
+  }
+
+  /// Removes legacy generated rows after their user edits have been migrated
+  /// to recurrence exceptions. Media stays intact because an exception may be
+  /// its only remaining owner, while sync still receives deletion tombstones.
+  Future<void> removeMigratedRecurrenceCopies(Iterable<String> ids) async {
+    await _loadFuture;
+    final requested = ids.toSet();
+    final removedIds = {
+      for (final item in state)
+        if (requested.contains(item.id)) item.id,
+    };
+    if (removedIds.isEmpty) return;
+    final deletedAt = DateTime.now();
+    for (final id in removedIds) {
+      await _sync?.memoryDeleted(id, deletedAt);
+    }
+    state = _sort([
+      for (final item in state)
+        if (!removedIds.contains(item.id)) item,
+    ]);
+    await _writes.add(() => _repository.replaceAll(state));
+    for (final id in removedIds) {
+      unawaited(_safeCancel(id));
+    }
     unawaited(_safeReconcile());
   }
 

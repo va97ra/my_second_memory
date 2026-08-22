@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:ezhednevnik_v2/src/features/accounts/domain/account_item.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
@@ -181,6 +183,179 @@ void main() {
     );
     expect(deletion.deleted, 1);
     expect(itemsB, isEmpty);
+  });
+
+  test('newer tombstone removes an item from a stale local snapshot', () async {
+    SharedPreferences.setMockInitialValues({});
+    final remote = _SyncRemote();
+    final cipher = AppCipher.fromKeyBytes(
+      List<int>.generate(32, (index) => index + 1),
+    );
+    final tombstones = _MemoryTombstoneStore();
+    final updatedAt = DateTime.utc(2026, 8, 22, 12);
+    final deletedAt = updatedAt.add(const Duration(minutes: 1));
+    final stale = _memoryItem('stale', 'Already deleted', updatedAt);
+    var localItems = [stale];
+    addTearDown(cipher.destroy);
+    remote._entities['memory_item:stale'] = SyncRemoteEntity(
+      kind: SyncEntityKind.memoryItem,
+      entityId: stale.id,
+      encryptedPayload: await cipher.encryptString(jsonEncode(stale.toJson())),
+      updatedAt: updatedAt,
+    );
+    await tombstones.markDeleted('user', stale.id, deletedAt);
+
+    await _sync(
+      remote: remote,
+      cipher: cipher,
+      tombstones: tombstones,
+      memoryItems: localItems,
+      replaceMemoryItems: (items) async => localItems = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+
+    expect(localItems, isEmpty);
+    final remoteItem = remote._entities['memory_item:stale']!;
+    expect(remoteItem.isDeleted, isTrue);
+    expect(remoteItem.deletedAt, deletedAt);
+  });
+
+  test('remote envelope timestamp wins over a future legacy payload timestamp',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final remote = _SyncRemote();
+    final cipher = AppCipher.fromKeyBytes(
+      List<int>.generate(32, (index) => index + 1),
+    );
+    final remoteUpdatedAt = DateTime.utc(2026, 8, 22, 12);
+    final localUpdatedAt = remoteUpdatedAt.add(const Duration(minutes: 1));
+    final local = _memoryItem('clock-skew', 'Local edit', localUpdatedAt);
+    final legacyPayload = _memoryItem(
+      'clock-skew',
+      'Old cloud edit',
+      remoteUpdatedAt,
+    ).toJson()
+      ..['updatedAt'] = '2099-08-22T17:00:00.000';
+    var localItems = [local];
+    addTearDown(cipher.destroy);
+    remote._entities['memory_item:clock-skew'] = SyncRemoteEntity(
+      kind: SyncEntityKind.memoryItem,
+      entityId: local.id,
+      encryptedPayload: await cipher.encryptString(jsonEncode(legacyPayload)),
+      updatedAt: remoteUpdatedAt,
+    );
+
+    await _sync(
+      remote: remote,
+      cipher: cipher,
+      tombstones: _MemoryTombstoneStore(),
+      memoryItems: localItems,
+      replaceMemoryItems: (items) async => localItems = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+
+    expect(localItems.single.title, 'Local edit');
+    expect(
+      remote._entities['memory_item:clock-skew']!.updatedAt,
+      localUpdatedAt,
+    );
+  });
+
+  test('downloaded legacy payload receives its envelope timestamp', () async {
+    SharedPreferences.setMockInitialValues({});
+    final remote = _SyncRemote();
+    final cipher = AppCipher.fromKeyBytes(
+      List<int>.generate(32, (index) => index + 1),
+    );
+    final remoteUpdatedAt = DateTime.utc(2026, 8, 22, 12);
+    final legacyPayload = _memoryItem(
+      'legacy-download',
+      'Cloud record',
+      remoteUpdatedAt,
+    ).toJson()
+      ..['updatedAt'] = '2099-08-22T17:00:00.000';
+    var localItems = <MemoryItem>[];
+    addTearDown(cipher.destroy);
+    remote._entities['memory_item:legacy-download'] = SyncRemoteEntity(
+      kind: SyncEntityKind.memoryItem,
+      entityId: 'legacy-download',
+      encryptedPayload: await cipher.encryptString(jsonEncode(legacyPayload)),
+      updatedAt: remoteUpdatedAt,
+    );
+
+    await _sync(
+      remote: remote,
+      cipher: cipher,
+      tombstones: _MemoryTombstoneStore(),
+      memoryItems: localItems,
+      replaceMemoryItems: (items) async => localItems = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+
+    expect(localItems.single.title, 'Cloud record');
+    expect(localItems.single.updatedAt, remoteUpdatedAt);
+  });
+
+  test(
+      'tombstone defeats an older remote envelope with a future legacy payload timestamp',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final remote = _SyncRemote();
+    final cipher = AppCipher.fromKeyBytes(
+      List<int>.generate(32, (index) => index + 1),
+    );
+    final tombstones = _MemoryTombstoneStore();
+    final remoteUpdatedAt = DateTime.utc(2026, 8, 22, 12);
+    final deletedAt = remoteUpdatedAt.add(const Duration(minutes: 1));
+    final legacyPayload = _memoryItem(
+      'deleted-clock-skew',
+      'Deleted cloud copy',
+      remoteUpdatedAt,
+    ).toJson()
+      ..['updatedAt'] = '2099-08-22T17:00:00.000';
+    var localItems = <MemoryItem>[];
+    addTearDown(cipher.destroy);
+    remote._entities['memory_item:deleted-clock-skew'] = SyncRemoteEntity(
+      kind: SyncEntityKind.memoryItem,
+      entityId: 'deleted-clock-skew',
+      encryptedPayload: await cipher.encryptString(jsonEncode(legacyPayload)),
+      updatedAt: remoteUpdatedAt,
+    );
+    await tombstones.markDeleted(
+      'user',
+      'deleted-clock-skew',
+      deletedAt,
+    );
+
+    await _sync(
+      remote: remote,
+      cipher: cipher,
+      tombstones: tombstones,
+      memoryItems: localItems,
+      replaceMemoryItems: (items) async => localItems = items,
+      shifts: const [],
+      replaceShifts: (_) async {},
+      accounts: const [],
+      replaceAccounts: (_) async {},
+    );
+
+    expect(localItems, isEmpty);
+    final remoteItem = remote._entities['memory_item:deleted-clock-skew']!;
+    expect(remoteItem.isDeleted, isTrue);
+    expect(remoteItem.deletedAt, deletedAt);
+    expect(
+      await tombstones.read('user'),
+      containsPair('deleted-clock-skew', deletedAt),
+    );
   });
 
   test('shift colors and accounts merge across two devices', () async {
