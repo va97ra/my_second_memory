@@ -104,9 +104,12 @@ extension _MemoryItemDeletionNavigation on _MemoryItemDetailScreenState {
     }
     _update(() => _allowPop = true);
     if (context.canPop()) {
-      context.pop();
+      await context.pageTurnPop();
       return;
     }
-    context.go('/');
+    await context.pageTurnGo(
+      '/',
+      direction: PageTurnDirection.backward,
+    );
   }
 }

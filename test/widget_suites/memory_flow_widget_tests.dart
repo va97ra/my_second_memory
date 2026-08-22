@@ -20,17 +20,16 @@ void registerMemoryFlowWidgetTests() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Аккаунты'));
-    await tester.pumpAndSettle();
+    await openTab(tester, 'accounts');
 
-    expect(find.text('Аккаунтов пока нет'), findsOneWidget);
-    expect(find.text('Добавить аккаунт'), findsWidgets);
+    expect(find.text('Аккаунтов пока нет'), findsNothing);
+    expect(find.byKey(const ValueKey('accounts_add')), findsOneWidget);
     expect(
       find.text('Для хранения аккаунтов сначала включите PIN'),
       findsNothing,
     );
 
-    await tester.tap(find.text('Добавить аккаунт').last);
+    await tester.tap(find.byKey(const ValueKey('accounts_add')));
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(TextField, 'Email'), findsOneWidget);
@@ -62,8 +61,7 @@ void registerMemoryFlowWidgetTests() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Календарь'));
-    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     await tester.tap(find.text('${today.day}').first);
@@ -113,6 +111,7 @@ void registerMemoryFlowWidgetTests() {
     );
 
     await tester.pumpAndSettle();
+    await openTab(tester, 'feed');
     await tester.tap(find.text('Длинная запись'));
     await tester.pumpAndSettle();
 

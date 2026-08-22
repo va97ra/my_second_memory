@@ -1,5 +1,13 @@
 part of '../widget_test.dart';
 
+/// The app opens on the calendar, so a test that wants another tab says so.
+/// Tapping by key rather than by label keeps this unambiguous: the open
+/// screen's own header carries the same word as its navigation entry.
+Future<void> openTab(WidgetTester tester, String tab) async {
+  await tester.tap(find.byKey(ValueKey('bottom_$tab')));
+  await tester.pumpAndSettle();
+}
+
 Widget testProviderScope({
   required Widget child,
   List<Override> overrides = const [],
@@ -130,6 +138,18 @@ abstract class _TestMemoryRepository implements MemoryRepository {
 
   @override
   Future<void> close() async {}
+}
+
+class _EmptyMemoryRepository extends _TestMemoryRepository {
+  List<MemoryItem> savedItems = const [];
+
+  @override
+  Future<List<MemoryItem>> loadAll() async => savedItems;
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {
+    savedItems = List.of(items);
+  }
 }
 
 class _FeedMemoryRepository extends _TestMemoryRepository {
@@ -275,6 +295,26 @@ class _FutureFeedMemoryRepository extends _TestMemoryRepository {
         memoryDate: today,
         createdAt: now,
         updatedAt: now,
+      ),
+      MemoryItem(
+        id: 'monthly-informer',
+        type: MemoryType.payment,
+        title: 'Ежемесячный информер',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+        repeatRule: RecurrenceFrequency.monthly.name,
+        seriesId: 'monthly-series',
+      ),
+      MemoryItem(
+        id: 'yearly-informer',
+        type: MemoryType.birthday,
+        title: 'Ежегодный информер',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+        repeatRule: RecurrenceFrequency.yearly.name,
+        seriesId: 'yearly-series',
       ),
       MemoryItem(
         id: 'past-after-focus',

@@ -64,9 +64,9 @@ class AppSurfaceTextures extends ThemeExtension<AppSurfaceTextures> {
     backgroundAsset: LightThemeAssets.wood,
     surfaceAsset: LightThemeAssets.paper,
     accentAsset: LightThemeAssets.leather,
-    lineColor: Color(0x3D5C7280),
-    backgroundOpacity: 0.62,
-    surfaceOpacity: 0.52,
+    lineColor: Color(0x3D6B5D47),
+    backgroundOpacity: 0.22,
+    surfaceOpacity: 0.45,
     accentOpacity: 0.4,
   );
 

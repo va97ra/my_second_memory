@@ -18,7 +18,10 @@ import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_cont
 import 'package:ezhednevnik_v2/src/features/home_feed/ui/widgets/memory_item_card.dart';
 import 'package:ezhednevnik_v2/src/features/recurrence/data/local_recurrence_exception_repository.dart';
 import 'package:ezhednevnik_v2/src/features/recurrence/data/local_recurrence_repository.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_series.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_controller.dart';
 import 'package:ezhednevnik_v2/src/core/theme/app_theme_controller.dart';
+import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_background.dart';
 import 'package:ezhednevnik_v2/src/core/theme/app_theme_style.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/holiday_detail_screen.dart';
 import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';

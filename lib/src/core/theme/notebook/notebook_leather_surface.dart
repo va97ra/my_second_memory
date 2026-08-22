@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../app_surface_palette.dart';
 import '../app_surface_textures.dart';
-import 'notebook_assets.dart';
 import 'notebook_visuals.dart';
 
 class NotebookLeatherSurface extends StatelessWidget {
@@ -49,7 +48,7 @@ class NotebookLeatherSurface extends StatelessWidget {
         color: notebook == null ? color : null,
         image: DecorationImage(
           image: AssetImage(
-            notebook == null ? textures!.accentAsset : NotebookAssets.leather,
+            notebook == null ? textures!.accentAsset : notebook.leatherAsset,
           ),
           fit: BoxFit.cover,
           filterQuality: FilterQuality.low,

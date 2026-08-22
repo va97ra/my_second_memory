@@ -14,6 +14,10 @@ class NotebookVisuals extends ThemeExtension<NotebookVisuals> {
     required this.green,
     required this.teal,
     required this.yellow,
+    required this.paperAsset,
+    required this.leatherAsset,
+    required this.cardSurface,
+    required this.cardInk,
   });
 
   final Color paper;
@@ -27,6 +31,16 @@ class NotebookVisuals extends ThemeExtension<NotebookVisuals> {
   final Color green;
   final Color teal;
   final Color yellow;
+
+  /// Which grain this notebook wears. The dark book is the same object under
+  /// different light, so it uses darker stock rather than a tinted copy.
+  final String paperAsset;
+  final String leatherAsset;
+
+  /// Loose paper lying on the book: memory cards and calendar day cells stay
+  /// light in both themes, so they carry their own surface and ink.
+  final Color cardSurface;
+  final Color cardInk;
 
   static NotebookVisuals? maybeOf(BuildContext context) {
     return Theme.of(context).extension<NotebookVisuals>();
@@ -45,6 +59,10 @@ class NotebookVisuals extends ThemeExtension<NotebookVisuals> {
     Color? green,
     Color? teal,
     Color? yellow,
+    String? paperAsset,
+    String? leatherAsset,
+    Color? cardSurface,
+    Color? cardInk,
   }) {
     return NotebookVisuals(
       paper: paper ?? this.paper,
@@ -58,6 +76,10 @@ class NotebookVisuals extends ThemeExtension<NotebookVisuals> {
       green: green ?? this.green,
       teal: teal ?? this.teal,
       yellow: yellow ?? this.yellow,
+      paperAsset: paperAsset ?? this.paperAsset,
+      leatherAsset: leatherAsset ?? this.leatherAsset,
+      cardSurface: cardSurface ?? this.cardSurface,
+      cardInk: cardInk ?? this.cardInk,
     );
   }
 
@@ -78,6 +100,11 @@ class NotebookVisuals extends ThemeExtension<NotebookVisuals> {
       green: Color.lerp(green, other.green, t)!,
       teal: Color.lerp(teal, other.teal, t)!,
       yellow: Color.lerp(yellow, other.yellow, t)!,
+      // A texture cannot be blended; it swaps at the halfway point.
+      paperAsset: t < 0.5 ? paperAsset : other.paperAsset,
+      leatherAsset: t < 0.5 ? leatherAsset : other.leatherAsset,
+      cardSurface: Color.lerp(cardSurface, other.cardSurface, t)!,
+      cardInk: Color.lerp(cardInk, other.cardInk, t)!,
     );
   }
 }

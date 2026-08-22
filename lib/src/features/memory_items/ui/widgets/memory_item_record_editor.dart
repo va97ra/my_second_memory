@@ -227,8 +227,8 @@ class _RecordEditor extends StatelessWidget {
                               ? Icons.stop_rounded
                               : Icons.mic_rounded,
                           color: isRecording
-                              ? const Color(0xFFDC2626)
-                              : const Color(0xFFDB2777),
+                              ? Theme.of(context).colorScheme.error
+                              : Theme.of(context).colorScheme.secondary,
                           size: buttonSize,
                           onPressed: onVoicePressed,
                         ),

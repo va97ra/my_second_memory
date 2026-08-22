@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/localization/app_locale_controller.dart';
 import 'core/localization/app_strings.dart';
 import 'core/routing/app_router.dart';
-import 'core/theme/app_theme.dart';
 import 'core/theme/app_content_font.dart';
 import 'core/theme/app_theme_controller.dart';
 import 'core/theme/app_theme_style.dart';
@@ -21,6 +20,7 @@ import 'features/sync/state/sync_controller.dart';
 import 'features/notifications/data/notification_service.dart';
 import 'platform/windows/windows_desktop.dart';
 import 'platform/windows/windows_tray_frame.dart';
+import 'shared/ui/page_turn_transition.dart';
 
 class EzhednevnikV2App extends ConsumerStatefulWidget {
   const EzhednevnikV2App({super.key});
@@ -30,6 +30,7 @@ class EzhednevnikV2App extends ConsumerStatefulWidget {
 }
 
 class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
+  final GlobalKey<PageTurnFrameState> _rootPageTurnKey = GlobalKey();
   StreamSubscription<String>? _notificationSubscription;
   Locale? _desktopLocale;
   late final AppLifecycleListener _lifecycleObserver;
@@ -103,9 +104,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     final notifications = ref.read(notificationServiceProvider);
     _notificationSubscription = notifications.openedItemIds.listen((itemId) {
       if (mounted) {
-        ref.read(appRouterProvider).go(
-              '/memory/view/${Uri.encodeComponent(itemId)}',
-            );
+        unawaited(_openNotificationItem(itemId));
       }
     });
     try {
@@ -113,6 +112,21 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     } catch (_) {
       // The app remains usable when notifications are unavailable.
     }
+  }
+
+  Future<void> _openNotificationItem(String itemId) async {
+    final router = ref.read(appRouterProvider);
+    final location = '/memory/view/${Uri.encodeComponent(itemId)}';
+    final frame = _rootPageTurnKey.currentState;
+    if (frame == null) {
+      router.go(location);
+      return;
+    }
+    final started = await frame.beginTurn(
+      direction: PageTurnDirection.forward,
+      switchContent: () => router.go(location),
+    );
+    if (!started) router.go(location);
   }
 
   @override
@@ -134,9 +148,10 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     final themeStyle = ref.watch(appThemeControllerProvider);
     final contentFont = ref.watch(appContentFontControllerProvider);
     final baseTheme = switch (themeStyle) {
-      AppThemeStyle.light => buildAppTheme(brightness: Brightness.light),
-      AppThemeStyle.dark => buildAppTheme(brightness: Brightness.dark),
-      AppThemeStyle.notebook => buildNotebookTheme(),
+      AppThemeStyle.notebookLight =>
+        buildNotebookTheme(brightness: Brightness.light),
+      AppThemeStyle.notebookDark =>
+        buildNotebookTheme(brightness: Brightness.dark),
     };
     final selectedTheme = baseTheme.copyWith(
       extensions: [
@@ -150,8 +165,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
       onGenerateTitle: (context) => AppStrings.of(context).appTitle,
       theme: selectedTheme,
       darkTheme: selectedTheme,
-      themeMode:
-          themeStyle == AppThemeStyle.dark ? ThemeMode.dark : ThemeMode.light,
+      themeMode: themeStyle.isDark ? ThemeMode.dark : ThemeMode.light,
       locale: locale,
       supportedLocales: AppStrings.supportedLocales,
       localizationsDelegates: const [
@@ -174,10 +188,14 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
 
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: overlayStyle,
-          child: AppBackground(
-            child: WindowsTrayFrame(
-              child: SecurityGate(
-                child: child ?? const SizedBox.shrink(),
+          child: PageTurnFrame(
+            key: _rootPageTurnKey,
+            provideNavigation: true,
+            child: AppBackground(
+              child: WindowsTrayFrame(
+                child: SecurityGate(
+                  child: child ?? const SizedBox.shrink(),
+                ),
               ),
             ),
           ),

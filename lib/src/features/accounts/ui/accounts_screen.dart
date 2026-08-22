@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/notebook/notebook_background.dart';
-import '../../../shared/ui/empty_state.dart';
+import '../../../shared/ui/notebook_icon_button.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../domain/account_item.dart';
 import '../state/accounts_controller.dart';
@@ -18,42 +18,34 @@ class AccountsScreen extends ConsumerWidget {
     final accounts = ref.watch(accountsControllerProvider);
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAccountEditor(context, ref),
-        icon: const Icon(Icons.add_rounded),
-        label: Text(strings.addAccount),
-      ),
       body: WarmGradientBackground(
         child: CustomScrollView(
           slivers: [
-            MainSliverAppBar(title: strings.accounts, backLocation: '/'),
-            if (accounts.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: AppEmptyState(
-                    icon: Icons.vpn_key_rounded,
-                    title: strings.noAccounts,
-                    actionLabel: strings.addAccount,
-                    onAction: () => _showAccountEditor(context, ref),
-                  ),
-                ),
-              )
-            else
-              SliverList.builder(
-                itemCount: accounts.length,
-                itemBuilder: (context, index) {
-                  final account = accounts[index];
-                  return _AccountCard(
-                    account: account,
-                    onEdit: () => _showAccountEditor(context, ref, account),
-                    onDelete: () => ref
-                        .read(accountsControllerProvider.notifier)
-                        .delete(account.id),
-                  );
-                },
+            MainSliverAppBar(
+              title: strings.accounts,
+              backLocation: '/calendar',
+              trailing: IconButton(
+                key: const ValueKey('accounts_add'),
+                tooltip: strings.addAccount,
+                onPressed: () => _showAccountEditor(context, ref),
+                icon: const Icon(Icons.add_rounded, size: 22),
+                style: notebookIconButtonStyle(),
               ),
-            const SliverPadding(padding: EdgeInsets.only(bottom: 92)),
+            ),
+            SliverList.builder(
+              itemCount: accounts.length,
+              itemBuilder: (context, index) {
+                final account = accounts[index];
+                return _AccountCard(
+                  account: account,
+                  onEdit: () => _showAccountEditor(context, ref, account),
+                  onDelete: () => ref
+                      .read(accountsControllerProvider.notifier)
+                      .delete(account.id),
+                );
+              },
+            ),
+            const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
           ],
         ),
       ),

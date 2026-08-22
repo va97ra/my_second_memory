@@ -21,7 +21,7 @@ import '../../shared/ui/page_turn_transition.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/calendar',
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -31,11 +31,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/',
+                path: '/calendar',
                 pageBuilder: (context, state) => pageTurnPage(
                   context: context,
                   state: state,
-                  child: const HomeFeedScreen(),
+                  child: const CalendarScreen(),
                 ),
               ),
             ],
@@ -43,11 +43,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/calendar',
+                path: '/',
                 pageBuilder: (context, state) => pageTurnPage(
                   context: context,
                   state: state,
-                  child: const CalendarScreen(),
+                  child: const HomeFeedScreen(),
                 ),
               ),
             ],
@@ -87,6 +87,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return pageTurnPage(
             context: context,
             state: state,
+            backFallback: '/',
             child: RecurringOverviewScreen(frequency: frequency),
           );
         },
@@ -96,6 +97,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          backFallback: '/settings',
           child: const MemoryLibraryScreen(),
         ),
       ),
@@ -105,6 +107,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return pageTurnPage(
             context: context,
             state: state,
+            interceptBack: false,
             child: MemoryItemDetailScreen(
               itemId: state.pathParameters['id'] ?? '',
               newlyCreated: state.uri.queryParameters['new'] == '1',
@@ -122,6 +125,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return pageTurnPage(
             context: context,
             state: state,
+            interceptBack: false,
             child: MemoryItemDetailScreen(
               initialDate: DateTime(date.year, date.month, date.day),
             ),
@@ -133,6 +137,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          interceptBack: false,
           child: const MemoryItemDetailScreen(createUndated: true),
         ),
       ),
@@ -142,6 +147,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return pageTurnPage(
             context: context,
             state: state,
+            backFallback: '/',
             child: MemoryItemViewScreen(
               itemId: state.pathParameters['id'] ?? '',
             ),
@@ -158,6 +164,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return pageTurnPage(
             context: context,
             state: state,
+            backFallback: '/calendar',
             child: CalendarDayScreen(
               date: DateTime(date.year, date.month, date.day),
             ),
@@ -174,6 +181,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return pageTurnPage(
             context: context,
             state: state,
+            backFallback: _calendarDayLocation(date),
             child: HolidayDetailScreen(
               date: DateTime(date.year, date.month, date.day),
             ),
@@ -185,6 +193,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          backFallback: '/settings',
           child: const ShiftSchedulesScreen(),
         ),
       ),
@@ -193,6 +202,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          backFallback: '/settings',
           child: const BackupScreen(),
         ),
       ),
@@ -201,6 +211,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          backFallback: '/settings',
           child: const SyncScreen(),
         ),
       ),
@@ -209,9 +220,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          backFallback: '/settings',
           child: const SecurityScreen(),
         ),
       ),
     ],
   );
 });
+
+String _calendarDayLocation(DateTime date) {
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '/calendar/day?date=${date.year}-$month-$day';
+}

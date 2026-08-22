@@ -1,109 +1,140 @@
 part of '../home_feed_screen.dart';
 
-class _FeedDayDivider extends StatelessWidget {
-  const _FeedDayDivider({
-    required this.label,
-    required this.expanded,
-    required this.collapsible,
-    required this.onTap,
-    super.key,
-  });
+class _FeedGroupDivider extends StatelessWidget {
+  const _FeedGroupDivider({required this.label});
 
   final String label;
-  final bool expanded;
-  final bool collapsible;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final divider = AppLabeledDivider(
-      label: label,
-      trailingIcon: collapsible
-          ? expanded
-              ? Icons.expand_less_rounded
-              : Icons.expand_more_rounded
-          : null,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-    );
-    if (!collapsible) return divider;
-    return Semantics(
-      button: true,
-      expanded: expanded,
-      label: label,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(height: 48, child: Center(child: divider)),
+    return SizedBox(
+      height: 48,
+      child: Center(
+        child: AppLabeledDivider(
+          label: label,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
         ),
       ),
     );
   }
 }
 
-String _feedDividerLabel(BuildContext context, DateTime date) {
-  final strings = AppStrings.of(context);
-  final locale = Localizations.localeOf(context).languageCode;
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final checked = DateTime(date.year, date.month, date.day);
-  final shortDate = DateFormat(
-    locale == 'ru' ? 'd MMMM' : 'MMMM d',
-    locale,
-  ).format(checked);
-  if (checked == today) return '${strings.today} · $shortDate';
-  if (checked == today.subtract(const Duration(days: 1))) {
-    return '${strings.yesterday} · $shortDate';
-  }
-  return DateFormat(
-    locale == 'ru' ? 'd MMMM y' : 'MMMM d, y',
-    locale,
-  ).format(checked);
-}
-
-String _feedDateKey(DateTime date) =>
-    '${date.year}-${date.month.toString().padLeft(2, '0')}-'
-    '${date.day.toString().padLeft(2, '0')}';
+/// The notebook sheet starts this far below the top of the ruled background.
+const double _sheetTopInset = 3;
 
 class _FeedHeader extends StatelessWidget {
   const _FeedHeader({
     required this.title,
+    required this.periodLabel,
     required this.filter,
+    required this.showHelp,
+    required this.alignToRuling,
+    required this.onGoToToday,
     required this.onFilterSelected,
+    required this.onPrevious,
+    required this.onNext,
+    required this.onShowHelp,
   });
 
   final String title;
+  final String? periodLabel;
   final FeedFilter filter;
+  final bool showHelp;
+  final bool alignToRuling;
+
+  /// Null once the page on screen is already the current one.
+  final VoidCallback? onGoToToday;
   final ValueChanged<FeedFilter> onFilterSelected;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+  final VoidCallback onShowHelp;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.w900,
-                    ),
+    final strings = AppStrings.of(context);
+    return NotebookPageHeader(
+      cardKey: const ValueKey('feed_header_card'),
+      alignToRuling: alignToRuling,
+      sheetTopInset: _sheetTopInset,
+      bands: [
+        NotebookHeaderBand(
+          child: Row(
+            children: [
+              if (showHelp)
+                IconButton(
+                  key: const ValueKey('feed_help'),
+                  tooltip: strings.allFeatures,
+                  onPressed: onShowHelp,
+                  icon: const Icon(Icons.menu_book_rounded, size: 22),
+                  style: notebookIconButtonStyle(),
+                )
+              else
+                const SizedBox(width: notebookHeaderSlot),
+              // Balances the today button on the right.
+              const SizedBox(width: notebookHeaderSlot),
+              Expanded(
+                // Long section names shrink to fit rather than losing their
+                // tail to an ellipsis; short ones keep the full size.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w900,
+                        ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            _FeedFilterButton(
-              selected: filter,
-              onSelected: onFilterSelected,
-              padding: EdgeInsets.zero,
-            ),
-          ],
+              IconButton(
+                key: const ValueKey('feed_today'),
+                tooltip: strings.backToToday,
+                onPressed: onGoToToday,
+                icon: const Icon(Icons.today_rounded, size: 22),
+                style: notebookIconButtonStyle(),
+              ),
+              _FeedFilterButton(
+                selected: filter,
+                onSelected: onFilterSelected,
+              ),
+            ],
+          ),
         ),
-      ),
+        if (periodLabel != null)
+          NotebookHeaderBand(
+            child: Row(
+              children: [
+                IconButton(
+                  key: const ValueKey('feed_previous_period'),
+                  tooltip: strings.previousPeriod,
+                  onPressed: onPrevious,
+                  icon: const Icon(Icons.chevron_left_rounded, size: 24),
+                  style: notebookIconButtonStyle(),
+                ),
+                Expanded(
+                  child: Text(
+                    periodLabel!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          height: 1.08,
+                        ),
+                  ),
+                ),
+                IconButton(
+                  key: const ValueKey('feed_next_period'),
+                  tooltip: strings.nextPeriod,
+                  onPressed: onNext,
+                  icon: const Icon(Icons.chevron_right_rounded, size: 24),
+                  style: notebookIconButtonStyle(),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
@@ -111,9 +142,11 @@ class _FeedHeader extends StatelessWidget {
 class _MemorySliverList extends StatelessWidget {
   const _MemorySliverList({
     required this.itemIds,
+    required this.showDate,
   });
 
   final List<String> itemIds;
+  final bool showDate;
 
   @override
   Widget build(BuildContext context) {
@@ -126,60 +159,8 @@ class _MemorySliverList extends StatelessWidget {
       itemBuilder: (context, index) {
         return _FeedMemoryCard(
           itemId: itemIds[index],
+          showDate: showDate,
         );
-      },
-    );
-  }
-}
-
-class _UndatedNotesList extends StatelessWidget {
-  const _UndatedNotesList({required this.itemIds});
-
-  final List<String> itemIds;
-
-  @override
-  Widget build(BuildContext context) {
-    if (itemIds.isEmpty) return const SizedBox.shrink();
-
-    final textScale = MediaQuery.textScalerOf(context).scale(1);
-    final estimatedCardHeight = textScale <= 1.3
-        ? 76 + ((textScale - 1).clamp(0.0, 0.3) * 40)
-        : 88 + (((textScale - 1.3) / 0.7).clamp(0.0, 1.0) * 64);
-    final contentHeight = itemIds.length * (estimatedCardHeight + 8);
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.32;
-
-    return SizedBox(
-      height: contentHeight.clamp(0.0, maxHeight),
-      child: ListView.builder(
-        padding: EdgeInsets.zero,
-        itemCount: itemIds.length,
-        itemBuilder: (context, index) => _UndatedNoteCard(
-          itemId: itemIds[index],
-        ),
-      ),
-    );
-  }
-}
-
-class _UndatedNoteCard extends ConsumerWidget {
-  const _UndatedNoteCard({required this.itemId});
-
-  final String itemId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final item = ref.watch(memoryItemByIdProvider(itemId));
-    if (item == null) return const SizedBox.shrink();
-    return MemoryItemCard(
-      item: item,
-      showDate: false,
-      compact: true,
-      denseFeedLayout: true,
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      onOpen: () =>
-          context.push('/memory/view/${Uri.encodeComponent(item.id)}'),
-      onArchive: () {
-        ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
       },
     );
   }
@@ -188,9 +169,11 @@ class _UndatedNoteCard extends ConsumerWidget {
 class _FeedMemoryCard extends ConsumerWidget {
   const _FeedMemoryCard({
     required this.itemId,
+    required this.showDate,
   });
 
   final String itemId;
+  final bool showDate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -198,13 +181,13 @@ class _FeedMemoryCard extends ConsumerWidget {
     if (item == null) return const SizedBox.shrink();
     return MemoryItemCard(
       item: item,
-      showDate: false,
+      showDate: showDate,
       compact: true,
       denseFeedLayout: true,
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      onOpen: () {
-        context.push('/memory/view/${Uri.encodeComponent(item.id)}');
-      },
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      onOpen: () => context.pageTurnPush(
+        '/memory/view/${Uri.encodeComponent(item.id)}',
+      ),
       onToggleDone: () {
         ref.read(memoryItemsControllerProvider.notifier).toggleDone(item.id);
       },

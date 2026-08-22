@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_surface_palette.dart';
@@ -9,6 +8,7 @@ import '../../../core/theme/app_content_font.dart';
 import '../../../core/theme/notebook/notebook_background.dart';
 import '../../../core/theme/notebook/notebook_leather_surface.dart';
 import '../../../core/theme/notebook/notebook_visuals.dart';
+import '../../../shared/ui/page_turn_transition.dart';
 import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/domain/memory_type.dart';
 import '../../memory_items/ui/widgets/memory_item_presentation.dart';
@@ -92,7 +92,7 @@ class _RecurringInformer extends ConsumerWidget {
           children: [
             InkWell(
               borderRadius: BorderRadius.circular(8),
-              onTap: () => context.push(route),
+              onTap: () => context.pageTurnPush(route),
               child: SizedBox(
                 height: 36,
                 child: Row(
@@ -150,7 +150,7 @@ class _RecurringInformer extends ConsumerWidget {
                           return _RecurringMiniCard(
                             item: item,
                             locale: locale,
-                            onTap: () => context.push(
+                            onTap: () => context.pageTurnPush(
                               '/memory/view/${Uri.encodeComponent(item.id)}',
                             ),
                           );

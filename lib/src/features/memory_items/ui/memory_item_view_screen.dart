@@ -7,7 +7,6 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_content_font.dart';
 import '../../../core/theme/app_surface_palette.dart';
 import '../../../core/theme/app_surface_textures.dart';
-import '../../../core/theme/notebook/notebook_assets.dart';
 import '../../../core/theme/notebook/notebook_visuals.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
@@ -74,7 +73,7 @@ class MemoryItemViewScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: item.isUndated ? strings.editNote : strings.editRecord,
-            onPressed: () => context.push(
+            onPressed: () => context.pageTurnPush(
               '/memory/item/${Uri.encodeComponent(item.id)}',
             ),
             icon: const Icon(Icons.edit_rounded),
@@ -106,8 +105,8 @@ class MemoryItemViewScreen extends ConsumerWidget {
                         gradient:
                             textures == null ? null : palette.surfaceGradient(),
                         image: notebook != null
-                            ? const DecorationImage(
-                                image: AssetImage(NotebookAssets.paper),
+                            ? DecorationImage(
+                                image: AssetImage(notebook.paperAsset),
                                 fit: BoxFit.cover,
                                 opacity: 0.62,
                               )
@@ -304,10 +303,13 @@ class MemoryItemViewScreen extends ConsumerWidget {
 
   void _goBack(BuildContext context) {
     if (context.canPop()) {
-      context.pop();
+      context.pageTurnPop();
       return;
     }
-    context.go('/');
+    context.pageTurnGo(
+      '/',
+      direction: PageTurnDirection.backward,
+    );
   }
 }
 

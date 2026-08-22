@@ -1,63 +1,279 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/state/memory_items_controller.dart';
+import '../../recurrence/domain/recurrence_series.dart';
+import '../../recurrence/state/recurrence_controller.dart';
 import '../domain/feed_rules.dart';
 
-final feedFilterProvider = StateProvider<FeedFilter>((ref) => FeedFilter.all);
+enum FeedSection { day, month, year, notes }
 
-final feedLayoutProvider = Provider<FeedLayout>((ref) {
-  final groups = groupItemsByDate(
-    ref.watch(memoryItemsControllerProvider),
-    filter: ref.watch(feedFilterProvider),
-  );
-  return FeedLayout([
-    for (final group in groups)
-      FeedDayLayout(
-        date: group.date,
-        itemIds: [for (final item in group.items) item.id],
-      ),
-  ]);
-});
+@immutable
+class FeedViewState {
+  const FeedViewState({
+    required this.section,
+    required this.anchorDate,
+    required this.filter,
+  });
 
-class FeedLayout {
-  const FeedLayout(this.days);
-
-  final List<FeedDayLayout> days;
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    if (other is! FeedLayout || other.days.length != days.length) return false;
-    for (var index = 0; index < days.length; index++) {
-      if (days[index] != other.days[index]) return false;
-    }
-    return true;
+  factory FeedViewState.initial() {
+    final now = DateTime.now();
+    return FeedViewState(
+      section: FeedSection.day,
+      anchorDate: DateTime(now.year, now.month, now.day),
+      filter: FeedFilter.all,
+    );
   }
 
-  @override
-  int get hashCode => Object.hashAll(days);
+  final FeedSection section;
+  final DateTime anchorDate;
+  final FeedFilter filter;
+
+  /// Whether the page on screen is the one holding [now]. Notes have no
+  /// period, so they always count as current.
+  bool showsPeriodOf(DateTime now) {
+    return switch (section) {
+      FeedSection.day => anchorDate.year == now.year &&
+          anchorDate.month == now.month &&
+          anchorDate.day == now.day,
+      FeedSection.month =>
+        anchorDate.year == now.year && anchorDate.month == now.month,
+      FeedSection.year => anchorDate.year == now.year,
+      FeedSection.notes => true,
+    };
+  }
+
+  FeedViewState copyWith({
+    FeedSection? section,
+    DateTime? anchorDate,
+    FeedFilter? filter,
+  }) {
+    return FeedViewState(
+      section: section ?? this.section,
+      anchorDate: anchorDate ?? this.anchorDate,
+      filter: filter ?? this.filter,
+    );
+  }
 }
 
-class FeedDayLayout {
-  const FeedDayLayout({required this.date, required this.itemIds});
+class FeedViewController extends StateNotifier<FeedViewState> {
+  FeedViewController({FeedViewState? initialState})
+      : super(initialState ?? FeedViewState.initial());
 
-  final DateTime date;
-  final List<String> itemIds;
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    if (other is! FeedDayLayout ||
-        other.date != date ||
-        other.itemIds.length != itemIds.length) {
-      return false;
-    }
-    for (var index = 0; index < itemIds.length; index++) {
-      if (itemIds[index] != other.itemIds[index]) return false;
-    }
-    return true;
+  void selectSection(FeedSection section) {
+    if (section == state.section) return;
+    state = state.copyWith(section: section);
   }
 
-  @override
-  int get hashCode => Object.hash(date, Object.hashAll(itemIds));
+  void selectFilter(FeedFilter filter) {
+    if (filter == state.filter) return;
+    state = state.copyWith(filter: filter);
+  }
+
+  /// Returns the anchor to today without leaving the current section.
+  void goToToday() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (state.anchorDate == today) return;
+    state = state.copyWith(anchorDate: today);
+  }
+
+  void movePeriod(int delta) {
+    if (delta == 0 || state.section == FeedSection.notes) return;
+    final anchor = state.anchorDate;
+    final next = switch (state.section) {
+      FeedSection.day => anchor.add(Duration(days: delta)),
+      FeedSection.month => _shiftMonth(anchor, delta),
+      FeedSection.year => _shiftYear(anchor, delta),
+      FeedSection.notes => anchor,
+    };
+    state = state.copyWith(anchorDate: next);
+  }
+}
+
+final feedViewProvider =
+    StateNotifierProvider<FeedViewController, FeedViewState>(
+  (ref) => FeedViewController(),
+);
+
+@immutable
+class FeedPeriodQuery {
+  const FeedPeriodQuery({
+    required this.section,
+    required this.anchorDate,
+    this.start,
+    this.end,
+  });
+
+  factory FeedPeriodQuery.fromState(FeedViewState state) {
+    final anchor = _dateOnly(state.anchorDate);
+    return switch (state.section) {
+      FeedSection.day => FeedPeriodQuery(
+          section: state.section,
+          anchorDate: anchor,
+          start: anchor,
+          end: anchor,
+        ),
+      FeedSection.month => FeedPeriodQuery(
+          section: state.section,
+          anchorDate: anchor,
+          start: DateTime(anchor.year, anchor.month),
+          end: DateTime(anchor.year, anchor.month + 1, 0),
+        ),
+      FeedSection.year => FeedPeriodQuery(
+          section: state.section,
+          anchorDate: anchor,
+          start: DateTime(anchor.year),
+          end: DateTime(anchor.year, 12, 31),
+        ),
+      FeedSection.notes => FeedPeriodQuery(
+          section: state.section,
+          anchorDate: anchor,
+        ),
+    };
+  }
+
+  final FeedSection section;
+  final DateTime anchorDate;
+  final DateTime? start;
+  final DateTime? end;
+}
+
+@immutable
+class FeedLayout {
+  const FeedLayout({required this.query, required this.groups});
+
+  final FeedPeriodQuery query;
+  final List<FeedGroupLayout> groups;
+
+  List<String> get itemIds => [
+        for (final group in groups) ...group.itemIds,
+      ];
+}
+
+@immutable
+class FeedGroupLayout {
+  const FeedGroupLayout({required this.period, required this.itemIds});
+
+  final DateTime period;
+  final List<String> itemIds;
+}
+
+final feedLayoutProvider = Provider<FeedLayout>((ref) {
+  final state = ref.watch(feedViewProvider);
+  final query = FeedPeriodQuery.fromState(state);
+  final persisted = ref.watch(memoryItemsControllerProvider);
+
+  if (state.section == FeedSection.notes) {
+    final notes = persisted
+        .where((item) =>
+            item.isUndated &&
+            !item.isArchived &&
+            matchesFeedFilter(item, state.filter))
+        .toList()
+      ..sort((left, right) {
+        final byUpdated = right.updatedAt.compareTo(left.updatedAt);
+        return byUpdated != 0
+            ? byUpdated
+            : right.createdAt.compareTo(left.createdAt);
+      });
+    return FeedLayout(
+      query: query,
+      groups: [
+        if (notes.isNotEmpty)
+          FeedGroupLayout(
+            period: query.anchorDate,
+            itemIds: [for (final item in notes) item.id],
+          ),
+      ],
+    );
+  }
+
+  final start = query.start!;
+  final end = query.end!;
+  final source = switch (state.section) {
+    FeedSection.day => [
+        for (final item in persisted)
+          if (!_isRecurringItem(item)) item,
+      ],
+    FeedSection.month || FeedSection.year => ref.watch(
+        recurringItemsForPeriodProvider(
+          RecurrencePeriod(
+            frequency: state.section == FeedSection.month
+                ? RecurrenceFrequency.monthly
+                : RecurrenceFrequency.yearly,
+            start: start,
+            end: end,
+          ),
+        ),
+      ),
+    FeedSection.notes => const <MemoryItem>[],
+  };
+  final byId = <String, MemoryItem>{};
+  for (final item in source) {
+    if (item.isUndated || item.isArchived) continue;
+    final date = _dateOnly(item.memoryDate);
+    if (date.isBefore(start) || date.isAfter(end)) continue;
+    if (!matchesFeedFilter(item, state.filter)) continue;
+    byId[item.id] = item;
+  }
+
+  final items = byId.values.toList()..sort(_compareDatedItems);
+  final grouped = <DateTime, List<String>>{};
+  for (final item in items) {
+    final period = switch (state.section) {
+      FeedSection.year => DateTime(item.memoryDate.year, item.memoryDate.month),
+      FeedSection.day || FeedSection.month => _dateOnly(item.memoryDate),
+      FeedSection.notes => query.anchorDate,
+    };
+    grouped.putIfAbsent(period, () => <String>[]).add(item.id);
+  }
+
+  return FeedLayout(
+    query: query,
+    groups: [
+      for (final entry in grouped.entries)
+        FeedGroupLayout(period: entry.key, itemIds: entry.value),
+    ],
+  );
+});
+
+bool _isRecurringItem(MemoryItem item) {
+  final repeatRule = item.repeatRule?.trim().toLowerCase();
+  return item.seriesId != null ||
+      repeatRule == RecurrenceFrequency.monthly.name ||
+      repeatRule == RecurrenceFrequency.yearly.name;
+}
+
+int _compareDatedItems(MemoryItem left, MemoryItem right) {
+  final byDate =
+      _dateOnly(left.memoryDate).compareTo(_dateOnly(right.memoryDate));
+  if (byDate != 0) return byDate;
+  final leftTime = left.timeMinutes;
+  final rightTime = right.timeMinutes;
+  if (leftTime != null || rightTime != null) {
+    if (leftTime == null) return 1;
+    if (rightTime == null) return -1;
+    final byTime = leftTime.compareTo(rightTime);
+    if (byTime != 0) return byTime;
+  }
+  final byPriority = right.priority.compareTo(left.priority);
+  if (byPriority != 0) return byPriority;
+  return left.createdAt.compareTo(right.createdAt);
+}
+
+DateTime _dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
+
+DateTime _shiftMonth(DateTime anchor, int delta) {
+  final first = DateTime(anchor.year, anchor.month + delta);
+  final lastDay = DateTime(first.year, first.month + 1, 0).day;
+  return DateTime(first.year, first.month, anchor.day.clamp(1, lastDay));
+}
+
+DateTime _shiftYear(DateTime anchor, int delta) {
+  final year = anchor.year + delta;
+  final lastDay = DateTime(year, anchor.month + 1, 0).day;
+  return DateTime(year, anchor.month, anchor.day.clamp(1, lastDay));
 }

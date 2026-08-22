@@ -1,7 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/notebook/notebook_visuals.dart';
+import 'notebook_icon_button.dart';
+import 'page_turn_transition.dart';
+
+export 'page_turn_transition.dart'
+    show PageTurnDirection, PageTurnNavigationBuildContext;
 
 class WarmGradientBackground extends StatelessWidget {
   const WarmGradientBackground({
@@ -39,20 +46,18 @@ class AppBackButton extends StatelessWidget {
           return;
         }
         if (context.canPop()) {
-          context.pop();
+          unawaited(context.pageTurnPop());
           return;
         }
-        context.go(fallbackLocation!);
+        unawaited(
+          context.pageTurnGo(
+            fallbackLocation!,
+            direction: PageTurnDirection.backward,
+          ),
+        );
       },
       icon: const Icon(Icons.arrow_back_rounded, size: 22),
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(width: 40, height: 40),
-      style: IconButton.styleFrom(
-        fixedSize: const Size.square(40),
-        minimumSize: const Size.square(40),
-        maximumSize: const Size.square(40),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
+      style: notebookIconButtonStyle(),
     );
   }
 }
@@ -64,6 +69,7 @@ class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onBack,
     this.actions,
     this.bottom,
+    this.toolbarHeight = 48,
     super.key,
   }) : assert(fallbackLocation != null || onBack != null);
 
@@ -72,17 +78,19 @@ class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onBack;
   final List<Widget>? actions;
   final PreferredSizeWidget? bottom;
+  final double toolbarHeight;
 
   @override
   Size get preferredSize =>
-      Size.fromHeight(48 + (bottom?.preferredSize.height ?? 0));
+      Size.fromHeight(toolbarHeight + (bottom?.preferredSize.height ?? 0));
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      toolbarHeight: 48,
-      leadingWidth: 56,
+      toolbarHeight: toolbarHeight,
+      leadingWidth: 64,
       titleSpacing: 4,
+      centerTitle: true,
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       leading: Padding(
@@ -93,7 +101,10 @@ class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       title: title,
-      actions: actions,
+      actions: [
+        ...?actions,
+        const SizedBox(width: 16),
+      ],
       bottom: bottom,
     );
   }
@@ -114,8 +125,11 @@ class AppLabeledDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = NotebookVisuals.maybeOf(context) != null
-        ? Colors.black.withValues(alpha: 0.82)
+    final notebook = NotebookVisuals.maybeOf(context);
+    // Ink, not black: on the dark notebook a black rule and a black label are
+    // invisible against the page.
+    final color = notebook != null
+        ? notebook.ink.withValues(alpha: 0.82)
         : theme.colorScheme.onSurface.withValues(alpha: 0.58);
     return Padding(
       padding: padding,
@@ -182,29 +196,44 @@ class MainSliverAppBar extends StatelessWidget {
   const MainSliverAppBar({
     required this.title,
     this.backLocation,
+    this.trailing,
     super.key,
   });
 
   final String title;
   final String? backLocation;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
-      child: MainPageHeader(title: title, backLocation: backLocation),
+      child: MainPageHeader(
+        title: title,
+        backLocation: backLocation,
+        trailing: trailing,
+      ),
     );
   }
 }
+
+/// Width claimed on each side of a header title, so the title stays centred on
+/// the header rather than on the leftover space. Whatever sits in a slot is
+/// pushed to the page edge.
+const double _mainHeaderSlot = 48;
 
 class MainPageHeader extends StatelessWidget {
   const MainPageHeader({
     required this.title,
     this.backLocation,
+    this.trailing,
     super.key,
   });
 
   final String title;
   final String? backLocation;
+
+  /// Sits in the trailing slot, flush with the edge of the page.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -214,20 +243,34 @@ class MainPageHeader extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
         child: Row(
           children: [
-            if (backLocation != null) ...[
-              AppBackButton(fallbackLocation: backLocation!),
-              const SizedBox(width: 4),
-            ],
+            // A centred title needs the same width claimed on either side of
+            // it, whether or not there is a back button to put there.
+            SizedBox(
+              width: _mainHeaderSlot,
+              child: backLocation == null
+                  ? null
+                  : Align(
+                      alignment: Alignment.centerLeft,
+                      child: AppBackButton(fallbackLocation: backLocation!),
+                    ),
+            ),
             Expanded(
               child: Text(
                 title,
                 maxLines: 1,
+                textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w900,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
               ),
+            ),
+            SizedBox(
+              width: _mainHeaderSlot,
+              child: trailing == null
+                  ? null
+                  : Align(alignment: Alignment.centerRight, child: trailing),
             ),
           ],
         ),

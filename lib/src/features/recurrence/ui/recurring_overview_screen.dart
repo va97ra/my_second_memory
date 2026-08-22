@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/ui/empty_state.dart';
@@ -68,7 +67,7 @@ class _RecurringOverviewScreenState
         child: SafeArea(
           child: Column(
             children: [
-              MainPageHeader(title: title, backLocation: '/'),
+              MainPageHeader(title: title, backLocation: '/calendar'),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -112,7 +111,7 @@ class _RecurringOverviewScreenState
                           return _OccurrenceTile(
                             item: item,
                             enabled: entry.isEnabled,
-                            onOpen: () => context.push(
+                            onOpen: () => context.pageTurnPush(
                               '/memory/item/${Uri.encodeComponent(item.id)}',
                             ),
                             onEnabled: (value) => ref

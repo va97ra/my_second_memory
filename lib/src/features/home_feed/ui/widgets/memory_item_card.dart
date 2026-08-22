@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -7,8 +9,11 @@ import '../../../../core/theme/app_surface_textures.dart';
 import '../../../../core/theme/notebook/notebook_assets.dart';
 import '../../../../core/theme/notebook/notebook_background.dart';
 import '../../../../core/theme/notebook/notebook_leather_surface.dart';
+import '../../../../core/theme/notebook/notebook_paper_island.dart';
 import '../../../../core/theme/notebook/notebook_visuals.dart';
 import '../../../../core/localization/app_strings.dart';
+import '../../../../shared/ui/notebook_icon_button.dart';
+import '../../../../shared/ui/notebook_pressable.dart';
 import '../../../memory_items/domain/memory_item.dart';
 import '../../../memory_items/domain/memory_type.dart';
 import '../../../memory_items/ui/widgets/memory_item_presentation.dart';
@@ -18,6 +23,7 @@ import 'memory_image_viewer.dart';
 
 part 'memory_item_card_content.dart';
 part 'memory_item_card_rails.dart';
+part 'memory_item_card_shape.dart';
 
 class MemoryItemCard extends StatelessWidget {
   const MemoryItemCard({
@@ -61,76 +67,92 @@ class MemoryItemCard extends StatelessWidget {
         ? const Color(0xFF86EFAC)
         : typeColor.withValues(alpha: 0.34);
     final cardShadowColor = notebook != null
-        ? const Color(0xFF3B1D0E).withValues(alpha: 0.5)
+        ? const Color(0xFF3B1D0E).withValues(alpha: 0.45)
         : isDark
             ? Colors.black.withValues(alpha: 0.68)
             : const Color(0xFF536575).withValues(alpha: 0.34);
+    final roundedBorder = BorderRadius.circular(8);
+    final cardShape = notebook == null
+        ? RoundedRectangleBorder(borderRadius: roundedBorder)
+        : _TornPaperShapeBorder(
+            variant: _stablePaperVariant(item.id),
+            side: BorderSide(color: borderColor, width: 1),
+          );
 
-    return Padding(
-      padding: margin,
-      child: Material(
-        color: cardColor,
-        elevation: 6,
-        shadowColor: cardShadowColor,
-        surfaceTintColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: SizedBox(
-          key: ValueKey('memory_card_${item.id}'),
-          height: denseFeedLayout
-              ? _denseFeedCardHeight(context)
-              : compact
-                  ? 108
-                  : 118,
-          child: Ink(
-            decoration: BoxDecoration(
-              color: notebook == null ? null : cardColor,
-              gradient: notebook == null
-                  ? palette.surfaceGradient(base: cardColor)
-                  : null,
-              image: notebook != null
-                  ? const DecorationImage(
-                      image: AssetImage(NotebookAssets.paper),
-                      fit: BoxFit.cover,
-                      opacity: 0.5,
-                    )
-                  : textures == null
-                      ? null
-                      : DecorationImage(
-                          image: AssetImage(textures.surfaceAsset),
-                          fit: BoxFit.cover,
-                          opacity: textures.surfaceOpacity,
-                          filterQuality: FilterQuality.low,
-                        ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              clipBehavior: Clip.antiAlias,
+    // A card is loose paper: it stays light even on the dark notebook.
+    return NotebookPaperIsland(
+      child: Padding(
+        padding: margin,
+        child: Material(
+          color: cardColor,
+          elevation: 6,
+          shadowColor: cardShadowColor,
+          surfaceTintColor: Colors.transparent,
+          shape: cardShape,
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            key: ValueKey('memory_card_${item.id}'),
+            height: denseFeedLayout
+                ? _denseFeedCardHeight(context) + (showDate ? 8 : 0)
+                : compact
+                    ? 108
+                    : 118,
+            child: Ink(
+              decoration: BoxDecoration(
+                color: notebook == null ? null : cardColor,
+                gradient: notebook == null
+                    ? palette.surfaceGradient(base: cardColor)
+                    : null,
+                image: notebook != null
+                    // Loose paper keeps its own light grain in either notebook.
+                    ? const DecorationImage(
+                        image: AssetImage(NotebookAssets.paper),
+                        fit: BoxFit.cover,
+                        opacity: 0.5,
+                      )
+                    : textures == null
+                        ? null
+                        : DecorationImage(
+                            image: AssetImage(textures.surfaceAsset),
+                            fit: BoxFit.cover,
+                            opacity: textures.surfaceOpacity,
+                            filterQuality: FilterQuality.low,
+                          ),
+                borderRadius: notebook == null ? roundedBorder : null,
+              ),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      InkWell(
-                        onTap: onOpen,
-                        child: _TypeRail(
-                          key: ValueKey('memory_card_type_${item.id}'),
-                          item: item,
-                          color: typeColor,
-                          showDate: showDate,
-                          compact: compact,
-                          denseFeedLayout: denseFeedLayout,
-                        ),
-                      ),
+                      // Paper does not ripple. Pressing the sheet presses the
+                      // whole sheet; the action rail stays its own target.
                       Expanded(
-                        child: InkWell(
+                        child: NotebookPressable(
                           onTap: onOpen,
-                          child: _CardContent(
-                            key: ValueKey('memory_card_content_${item.id}'),
-                            item: item,
-                            compact: compact,
-                            denseFeedLayout: denseFeedLayout,
+                          borderRadius: BorderRadius.zero,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _TypeRail(
+                                key: ValueKey('memory_card_type_${item.id}'),
+                                item: item,
+                                color: typeColor,
+                                showDate: showDate,
+                                compact: compact,
+                                denseFeedLayout: denseFeedLayout,
+                              ),
+                              Expanded(
+                                child: _CardContent(
+                                  key: ValueKey(
+                                      'memory_card_content_${item.id}'),
+                                  item: item,
+                                  compact: compact,
+                                  denseFeedLayout: denseFeedLayout,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -145,14 +167,15 @@ class MemoryItemCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: borderColor),
+                  if (notebook == null)
+                    IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: roundedBorder,
+                          border: Border.all(color: borderColor),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

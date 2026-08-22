@@ -22,6 +22,7 @@ void registerResponsiveWidgetTests() {
         ),
       );
       await tester.pumpAndSettle();
+      await openTab(tester, 'feed');
 
       final card = find.byKey(const ValueKey('memory_card_today-plan'));
       await tester.scrollUntilVisible(
@@ -69,6 +70,7 @@ void registerResponsiveWidgetTests() {
         ),
       );
       await tester.pumpAndSettle();
+      await openTab(tester, 'feed');
 
       final card = find.byKey(const ValueKey('memory_card_today-plan'));
       if (card.evaluate().isEmpty) {
@@ -118,6 +120,7 @@ void registerResponsiveWidgetTests() {
         ),
       );
       await tester.pumpAndSettle();
+      await openTab(tester, 'feed');
 
       expect(
         find.byKey(const ValueKey('memory_card_today-plan')),

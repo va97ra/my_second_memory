@@ -18,7 +18,18 @@ class AppStrings {
       appFlavor == 'sync' ? 'Ежедневник Sync' : 'Ежедневник V2';
   String get feed => isRu ? 'Лента' : 'Feed';
   String get dayFeed => isRu ? 'Лента дня' : 'Day feed';
+  String get monthFeed => isRu ? 'Лента месяца' : 'Month feed';
+  String get yearFeed => isRu ? 'Лента года' : 'Year feed';
+  String get dayTab => isRu ? 'День' : 'Day';
+  String get monthTab => isRu ? 'Месяц' : 'Month';
+  String get monthTabShort => isRu ? 'Мес.' : 'Mon.';
+  String get yearTab => isRu ? 'Год' : 'Year';
+  String get notesTabShort => isRu ? 'Зап.' : 'Notes';
   String get feedFilter => isRu ? 'Фильтр' : 'Filter';
+  String get previousPeriod => isRu ? 'Предыдущий период' : 'Previous period';
+  String get nextPeriod => isRu ? 'Следующий период' : 'Next period';
+  String get allFeatures => isRu ? 'Все возможности' : 'All features';
+  String get backToToday => isRu ? 'Вернуться к сегодня' : 'Back to today';
   String get allRecords => isRu ? 'Все записи' : 'All records';
   String get activeRecords => isRu ? 'Активные' : 'Active';
   String get completedRecords => isRu ? 'Выполненные' : 'Done';
@@ -55,7 +66,6 @@ class AppStrings {
   String get note => isRu ? 'Заметка' : 'Note';
   String get copyPassword => isRu ? 'Скопировать пароль' : 'Copy password';
   String get passwordCopied => isRu ? 'Пароль скопирован' : 'Password copied';
-  String get noAccounts => isRu ? 'Аккаунтов пока нет' : 'No accounts yet';
   String get add => isRu ? 'Добавить' : 'Add';
   String get addRecord => isRu ? 'Добавить запись' : 'Add record';
   String get newRecord => isRu ? 'Новая запись' : 'New record';
@@ -254,8 +264,6 @@ class AppStrings {
   String get save => isRu ? 'Сохранить' : 'Save';
   String get saved => isRu ? 'Сохранено' : 'Saved';
   String get requiredDate => isRu ? 'Дата обязательна' : 'Date is required';
-  String get emptyFeed =>
-      isRu ? 'На этот день пока ничего нет' : 'Nothing for this day yet';
   String get noRecords => isRu ? 'Записей нет' : 'No records';
   String get voice => isRu ? 'Голос' : 'Voice';
   String get startRecording => isRu ? 'Начать запись' : 'Start recording';
@@ -281,8 +289,6 @@ class AppStrings {
   String get photo => isRu ? 'Фото' : 'Photo';
   String get voiceMessage => isRu ? 'Голосовое сообщение' : 'Voice message';
   String get recordingNow => isRu ? 'Идёт запись' : 'Recording';
-  String get noMessagesForDay =>
-      isRu ? 'За этот день пока ничего нет' : 'No messages for this day yet';
   String get pinSecurity => isRu ? 'PIN и биометрия' : 'PIN and biometrics';
   String get shiftSchedules => isRu ? 'Графики смен' : 'Shift schedules';
   String get addShiftSchedule => isRu ? 'Добавить график' : 'Add schedule';

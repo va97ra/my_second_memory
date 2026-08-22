@@ -2,15 +2,26 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'page_turn_frame.dart';
+
+export 'page_turn_frame.dart';
+
 Page<void> pageTurnPage({
   required BuildContext context,
   required GoRouterState state,
   required Widget child,
+  bool interceptBack = true,
+  String? backFallback,
 }) {
   final useFastTransition = _useFastTransition(context);
   return CustomTransitionPage<void>(
     key: state.pageKey,
-    child: child,
+    child: interceptBack
+        ? PageTurnBackScope(
+            fallbackLocation: backFallback,
+            child: child,
+          )
+        : child,
     transitionDuration: useFastTransition
         ? const Duration(milliseconds: 120)
         : const Duration(milliseconds: 260),
@@ -19,6 +30,17 @@ Page<void> pageTurnPage({
         : const Duration(milliseconds: 230),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       if (MediaQuery.disableAnimationsOf(context)) return child;
+      final activePageTurn =
+          PageTurnNavigationScope.maybeOf(context)?.isTurning ?? false;
+      if (activePageTurn) {
+        // The rasterized sheet owns the visible transition. Remove a route
+        // that is popping immediately so the backward target snapshot cannot
+        // accidentally capture the outgoing editor during its fallback fade.
+        if (animation.status == AnimationStatus.reverse) {
+          return const SizedBox.expand();
+        }
+        return child;
+      }
       if (useFastTransition) {
         return FadeTransition(
           opacity: CurvedAnimation(
@@ -45,9 +67,8 @@ bool _useFastTransition(BuildContext context) {
       platform == TargetPlatform.windows;
 }
 
-/// A light fade-through transition that never paints two readable pages at
-/// once. The shared textured app background stays visible between the pages,
-/// so a route cannot briefly expose a flat scaffold color while images decode.
+/// A short fallback transition used while no rasterized page is available.
+/// The physical page-turn overlay normally covers this transition completely.
 class PageTurnTransition extends StatelessWidget {
   const PageTurnTransition({
     required this.animation,
@@ -110,95 +131,5 @@ class PageTurnTransition extends StatelessWidget {
         Curves.easeInCubic.transform(
           (value / 0.35).clamp(0.0, 1.0),
         );
-  }
-}
-
-/// Animates only the newly selected tab. The previous tab is removed before
-/// this animation begins, which avoids the snapshot overlay used previously.
-class PageTurnTabFrame extends StatefulWidget {
-  const PageTurnTabFrame({
-    required this.index,
-    required this.child,
-    super.key,
-  });
-
-  final int index;
-  final Widget child;
-
-  @override
-  State<PageTurnTabFrame> createState() => _PageTurnTabFrameState();
-}
-
-class _PageTurnTabFrameState extends State<PageTurnTabFrame>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  int _direction = 1;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 210),
-      value: 1,
-    );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _controller.duration = _useFastTransition(context)
-        ? const Duration(milliseconds: 120)
-        : const Duration(milliseconds: 210);
-  }
-
-  @override
-  void didUpdateWidget(covariant PageTurnTabFrame oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.index == widget.index) return;
-    _direction = widget.index > oldWidget.index ? 1 : -1;
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _controller.value = 1;
-      return;
-    }
-    _controller.forward(from: 0);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
-    if (_useFastTransition(context)) {
-      return FadeTransition(
-        key: const ValueKey('app_tab_transition'),
-        opacity: CurvedAnimation(
-          parent: _controller,
-          curve: Curves.easeOutCubic,
-        ),
-        child: widget.child,
-      );
-    }
-    return AnimatedBuilder(
-      animation: _controller,
-      child: widget.child,
-      builder: (context, child) {
-        final progress = Curves.easeOutCubic.transform(_controller.value);
-        return ClipRect(
-          child: Opacity(
-            key: const ValueKey('app_tab_transition'),
-            opacity: progress,
-            child: Transform.translate(
-              offset: Offset(_direction * 14 * (1 - progress), 0),
-              child: child,
-            ),
-          ),
-        );
-      },
-    );
   }
 }

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/notebook/notebook_background.dart';
-import '../../../shared/ui/empty_state.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../domain/holiday_calendar_service.dart';
 import '../domain/holiday_occurrence.dart';
@@ -26,7 +24,6 @@ class CalendarDayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = Localizations.localeOf(context).languageCode;
-    final strings = AppStrings.of(context);
     final dayItems = ref.watch(memoryItemsForDayProvider(date)).toList()
       ..sort(_compareDayItems);
     final workingSchedules = ref
@@ -43,10 +40,12 @@ class CalendarDayScreen extends ConsumerWidget {
         fallbackLocation: '/calendar',
         title: Text(
           DateFormat.yMMMMEEEEd(locale).format(date),
-          maxLines: 1,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.08,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
         ),
@@ -69,38 +68,27 @@ class CalendarDayScreen extends ConsumerWidget {
                   date: date,
                 ),
               Expanded(
-                child: dayItems.isEmpty
-                    ? Center(
-                        child: AppEmptyState(
-                          icon: Icons.view_agenda_rounded,
-                          title: strings.noMessagesForDay,
-                          actionLabel: strings.addRecord,
-                          onAction: () => _openNewRecord(context),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(12, 14, 12, 18),
-                        itemCount: dayItems.length,
-                        itemBuilder: (context, index) {
-                          final item = dayItems[index];
-                          return MemoryItemCard(
-                            item: item,
-                            showDate: false,
-                            compact: true,
-                            margin: const EdgeInsets.only(bottom: 4),
-                            onOpen: () => context.push(
-                              '/memory/item/${Uri.encodeComponent(item.id)}',
-                            ),
-                            onToggleDone: () => _toggleDone(ref, item),
-                            onArchive: item.isArchived
-                                ? null
-                                : () => _archive(ref, item),
-                            onRestore: item.isArchived
-                                ? () => _restore(ref, item)
-                                : null,
-                          );
-                        },
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 14, 12, 18),
+                  itemCount: dayItems.length,
+                  itemBuilder: (context, index) {
+                    final item = dayItems[index];
+                    return MemoryItemCard(
+                      item: item,
+                      showDate: false,
+                      compact: true,
+                      margin: const EdgeInsets.only(bottom: 4),
+                      onOpen: () => context.pageTurnPush(
+                        '/memory/item/${Uri.encodeComponent(item.id)}',
                       ),
+                      onToggleDone: () => _toggleDone(ref, item),
+                      onArchive:
+                          item.isArchived ? null : () => _archive(ref, item),
+                      onRestore:
+                          item.isArchived ? () => _restore(ref, item) : null,
+                    );
+                  },
+                ),
               ),
               if (holidays.isNotEmpty)
                 _HolidaySummaryCard(
@@ -117,7 +105,7 @@ class CalendarDayScreen extends ConsumerWidget {
   }
 
   void _openNewRecord(BuildContext context) {
-    context.push(
+    context.pageTurnPush(
       '/memory/new?date=${DateFormat('yyyy-MM-dd').format(date)}',
     );
   }
@@ -186,7 +174,7 @@ class _HolidaySummaryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: InkWell(
             borderRadius: BorderRadius.circular(8),
-            onTap: () => context.push(
+            onTap: () => context.pageTurnPush(
               '/calendar/holidays?date=${DateFormat('yyyy-MM-dd').format(date)}',
             ),
             child: Padding(

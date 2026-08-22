@@ -123,6 +123,65 @@ final recurrenceItemByIdProvider =
       );
 });
 
+class RecurrencePeriod {
+  const RecurrencePeriod({
+    required this.frequency,
+    required this.start,
+    required this.end,
+  });
+
+  final RecurrenceFrequency frequency;
+  final DateTime start;
+  final DateTime end;
+
+  @override
+  bool operator ==(Object other) =>
+      other is RecurrencePeriod &&
+      other.frequency == frequency &&
+      dateKey(other.start) == dateKey(start) &&
+      dateKey(other.end) == dateKey(end);
+
+  @override
+  int get hashCode => Object.hash(
+        frequency,
+        dateKey(start),
+        dateKey(end),
+      );
+}
+
+final recurringItemsForPeriodProvider =
+    Provider.family<List<MemoryItem>, RecurrencePeriod>((ref, period) {
+  final matchingSeries = [
+    for (final series in ref.watch(recurrenceSeriesControllerProvider))
+      if (series.isEnabled && series.frequency == period.frequency) series,
+  ];
+  final ids = {for (final series in matchingSeries) series.id};
+  final projected =
+      ref.watch(recurrenceProjectionServiceProvider).itemsForRange(
+            start: period.start,
+            end: period.end,
+            series: matchingSeries,
+            exceptions: ref.watch(recurrenceExceptionControllerProvider),
+            persistedItems: ref.watch(memoryItemsControllerProvider),
+          );
+  final byId = <String, MemoryItem>{};
+  for (final item in projected) {
+    if (!item.isArchived) byId[item.id] = item;
+  }
+  for (final item in ref.watch(memoryItemsControllerProvider)) {
+    if (item.isArchived || item.seriesId == null) continue;
+    if (!ids.contains(item.seriesId)) continue;
+    if (item.memoryDate.isBefore(period.start) ||
+        item.memoryDate.isAfter(period.end)) {
+      continue;
+    }
+    // A persisted occurrence contains the user's current done/archive state
+    // and must win over an equivalent projection.
+    byId[item.id] = item;
+  }
+  return byId.values.toList()..sort(compareOccurrences);
+});
+
 final recurringCurrentPeriodItemsProvider =
     Provider.family<List<MemoryItem>, RecurrenceFrequency>((ref, frequency) {
   final now = DateTime.now();
@@ -132,26 +191,9 @@ final recurringCurrentPeriodItemsProvider =
   final end = frequency == RecurrenceFrequency.monthly
       ? DateTime(now.year, now.month + 1, 0)
       : DateTime(now.year, 12, 31);
-  final matchingSeries = [
-    for (final series in ref.watch(recurrenceSeriesControllerProvider))
-      if (series.isEnabled && series.frequency == frequency) series,
-  ];
-  final ids = {for (final series in matchingSeries) series.id};
-  final persisted = [
-    for (final item in ref.watch(memoryItemsControllerProvider))
-      if (item.seriesId != null &&
-          ids.contains(item.seriesId) &&
-          !item.memoryDate.isBefore(start) &&
-          !item.memoryDate.isAfter(end))
-        item,
-  ];
-  final projected =
-      ref.watch(recurrenceProjectionServiceProvider).itemsForRange(
-            start: start,
-            end: end,
-            series: matchingSeries,
-            exceptions: ref.watch(recurrenceExceptionControllerProvider),
-            persistedItems: ref.watch(memoryItemsControllerProvider),
-          );
-  return [...persisted, ...projected]..sort(compareOccurrences);
+  return ref.watch(
+    recurringItemsForPeriodProvider(
+      RecurrencePeriod(frequency: frequency, start: start, end: end),
+    ),
+  );
 });

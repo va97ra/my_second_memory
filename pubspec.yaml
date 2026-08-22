@@ -53,6 +53,7 @@ flutter:
   assets:
     - assets/textures/notebook_wood.webp
     - assets/textures/notebook_paper.webp
+    - assets/textures/notebook_paper_grain.webp
     - assets/textures/notebook_leather_contrast.png
     - assets/textures/dark_wood.webp
     - assets/textures/dark_paper.webp

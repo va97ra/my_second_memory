@@ -3,13 +3,15 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_surface_palette.dart';
 import '../../../core/theme/notebook/notebook_background.dart';
+import '../../../core/theme/notebook/notebook_paper_island.dart';
 import '../../../core/theme/notebook/notebook_visuals.dart';
+import '../../../shared/ui/notebook_icon_button.dart';
+import '../../../shared/ui/notebook_page_header.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../domain/holiday_occurrence.dart';
 import '../state/calendar_month_data.dart';
@@ -77,7 +79,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
       return WarmGradientBackground(
         child: Column(
           children: [
-            MainPageHeader(title: strings.calendar, backLocation: '/'),
+            _calendarHeader(locale: locale, schedules: const []),
             Expanded(
               child: Center(
                 child: loadState.isLoading
@@ -110,9 +112,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                   key: const ValueKey('calendar_landscape_scroll'),
                   physics: const ClampingScrollPhysics(),
                   slivers: [
-                    MainSliverAppBar(
-                      title: strings.calendar,
-                      backLocation: '/',
+                    SliverToBoxAdapter(
+                      child: _calendarHeader(
+                        locale: locale,
+                        schedules: monthData.shiftSchedules,
+                      ),
                     ),
                     SliverToBoxAdapter(
                       child: SizedBox(
@@ -124,15 +128,118 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                 )
               : Column(
                   children: [
-                    MainPageHeader(
-                      title: strings.calendar,
-                      backLocation: '/',
+                    _calendarHeader(
+                      locale: locale,
+                      schedules: monthData.shiftSchedules,
                     ),
                     Expanded(child: panel),
                   ],
                 ),
         );
       },
+    );
+  }
+
+  /// The page header: title, month navigation and the shift schedules that
+  /// colour this month. Same card, same bands and same type sizes as the feed.
+  Widget _calendarHeader({
+    required String locale,
+    required List<ShiftSchedule> schedules,
+  }) {
+    final strings = AppStrings.of(context);
+    final month = _capitalizeMonth(
+      DateFormat('LLLL', locale).format(_visibleMonth),
+    );
+    final legend = [
+      for (final schedule in schedules)
+        if (schedule.isEnabled) schedule,
+    ];
+    // A chip clears one ruled row at ordinary type sizes; large type needs the
+    // second row rather than spilling over the band.
+    final legendRows = MediaQuery.textScalerOf(context).scale(1) <= 1.3 ? 1 : 2;
+
+    return NotebookPageHeader(
+      cardKey: const ValueKey('calendar_header_card'),
+      bands: [
+        NotebookHeaderBand(
+          child: Row(
+            children: [
+              // Home tab: nothing to go back to, but the slot stays so the
+              // title keeps its centre.
+              const SizedBox(width: notebookHeaderSlot),
+              Expanded(
+                child: Text(
+                  strings.calendar,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+              ),
+              IconButton(
+                key: const ValueKey('calendar_today'),
+                tooltip: strings.today,
+                onPressed: _goToToday,
+                icon: const Icon(Icons.today_rounded, size: 22),
+                style: notebookIconButtonStyle(),
+              ),
+            ],
+          ),
+        ),
+        NotebookHeaderBand(
+          child: Row(
+            children: [
+              IconButton(
+                key: const ValueKey('calendar_previous_month'),
+                tooltip: strings.previousMonth,
+                onPressed: () => _changeMonth(-1),
+                icon: const Icon(Icons.chevron_left_rounded, size: 24),
+                style: notebookIconButtonStyle(),
+              ),
+              Expanded(
+                child: Text(
+                  '$month ${_visibleMonth.year}',
+                  key: const ValueKey('calendar_month_label'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        height: 1.08,
+                      ),
+                ),
+              ),
+              IconButton(
+                key: const ValueKey('calendar_next_month'),
+                tooltip: strings.nextMonth,
+                onPressed: () => _changeMonth(1),
+                icon: const Icon(Icons.chevron_right_rounded, size: 24),
+                style: notebookIconButtonStyle(),
+              ),
+            ],
+          ),
+        ),
+        if (legend.isNotEmpty)
+          NotebookHeaderBand(
+            ruledRows: legendRows,
+            child: SingleChildScrollView(
+              key: const ValueKey('calendar_shift_legend'),
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final schedule in legend)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _ShiftLegendChip(schedule: schedule),
+                    ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -162,20 +269,37 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
       onVerticalDragCancel: enableYearSwipe ? () => _yearDragExtent = 0 : null,
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final outgoingMonth = _outgoingMonth;
+          final incomingPanel = RepaintBoundary(
+            key: const ValueKey('calendar_incoming_panel'),
+            child: _calendarPanel(
+              locale: locale,
+              visibleMonth: _visibleMonth,
+              monthData: monthData,
+              showHints: showHints,
+            ),
+          );
+
+          if (outgoingMonth == null || outgoingMonthData == null) {
+            return ClipRect(child: incomingPanel);
+          }
+
+          final outgoingPanel = RepaintBoundary(
+            key: const ValueKey('calendar_outgoing_panel'),
+            child: IgnorePointer(
+              child: _calendarPanel(
+                locale: locale,
+                visibleMonth: outgoingMonth,
+                monthData: outgoingMonthData,
+                showHints: showHints,
+              ),
+            ),
+          );
+
           return ClipRect(
             child: AnimatedBuilder(
               animation: _calendarPageController,
               builder: (context, _) {
-                final outgoingMonth = _outgoingMonth;
-                if (outgoingMonth == null || outgoingMonthData == null) {
-                  return _calendarPanel(
-                    locale: locale,
-                    visibleMonth: _visibleMonth,
-                    monthData: monthData,
-                    showHints: showHints,
-                  );
-                }
-
                 final progress = Curves.easeOutCubic.transform(
                   _calendarPageController.value,
                 );
@@ -195,24 +319,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                     Transform.translate(
                       key: const ValueKey('calendar_page_outgoing'),
                       offset: offsetFor(outgoingOffset),
-                      child: IgnorePointer(
-                        child: _calendarPanel(
-                          locale: locale,
-                          visibleMonth: outgoingMonth,
-                          monthData: outgoingMonthData,
-                          showHints: showHints,
-                        ),
-                      ),
+                      child: outgoingPanel,
                     ),
                     Transform.translate(
                       key: const ValueKey('calendar_page_incoming'),
                       offset: offsetFor(incomingOffset),
-                      child: _calendarPanel(
-                        locale: locale,
-                        visibleMonth: _visibleMonth,
-                        monthData: monthData,
-                        showHints: showHints,
-                      ),
+                      child: incomingPanel,
                     ),
                   ],
                 );
@@ -238,9 +350,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         selectedDate: _selectedDate,
         monthData: monthData,
         showHints: showHints,
-        onPreviousMonth: () => _changeMonth(-1),
-        onNextMonth: () => _changeMonth(1),
-        onToday: _goToToday,
         onSelectDate: _openDayDialog,
       ),
     );
@@ -349,11 +458,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         _selectedDate = selected;
         _visibleMonth = DateTime(selected.year, selected.month);
       });
-      context.go(location);
+      await context.pageTurnGo(location);
       return;
     }
 
-    await context.push(location);
+    await context.pageTurnPush(location);
     if (!mounted) return;
 
     final selectedMonth = DateTime(selected.year, selected.month);

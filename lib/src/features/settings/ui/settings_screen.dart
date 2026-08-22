@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_locale_controller.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_theme_controller.dart';
 import '../../../core/theme/app_content_font.dart';
-import '../../../core/theme/app_surface_textures.dart';
 import '../../../core/theme/app_theme_style.dart';
 import '../../../core/theme/notebook/notebook_assets.dart';
 import '../../../core/theme/notebook/notebook_background.dart';
@@ -42,7 +40,7 @@ class SettingsScreen extends ConsumerWidget {
     return WarmGradientBackground(
       child: CustomScrollView(
         slivers: [
-          MainSliverAppBar(title: strings.settings, backLocation: '/'),
+          MainSliverAppBar(title: strings.settings, backLocation: '/calendar'),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
@@ -53,10 +51,11 @@ class SettingsScreen extends ConsumerWidget {
                     children: [
                       _SettingsTile(
                         icon: Icons.language_rounded,
-                        iconColor: const Color(0xFF0FA3B1),
                         title: strings.language,
                         subtitle: isRu ? 'Русский' : 'English',
                         trailing: SegmentedButton<String>(
+                          // The label already says which one is on.
+                          showSelectedIcon: false,
                           segments: const [
                             ButtonSegment(value: 'ru', label: Text('RU')),
                             ButtonSegment(value: 'en', label: Text('EN')),
@@ -73,17 +72,13 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                       ),
                       _SettingsTile(
-                        icon: switch (themeStyle) {
-                          AppThemeStyle.light => Icons.light_mode_rounded,
-                          AppThemeStyle.dark => Icons.dark_mode_rounded,
-                          AppThemeStyle.notebook => Icons.menu_book_rounded,
-                        },
-                        iconColor: Theme.of(context).colorScheme.primary,
+                        icon: themeStyle.isDark
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
                         title: strings.appearance,
                         subtitle: switch (themeStyle) {
-                          AppThemeStyle.light => strings.lightTheme,
-                          AppThemeStyle.dark => strings.darkTheme,
-                          AppThemeStyle.notebook => strings.notebookTheme,
+                          AppThemeStyle.notebookLight => strings.lightTheme,
+                          AppThemeStyle.notebookDark => strings.darkTheme,
                         },
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () async {
@@ -93,24 +88,10 @@ class SettingsScreen extends ConsumerWidget {
                             isRu: isRu,
                           );
                           if (selected != null && context.mounted) {
-                            if (selected == AppThemeStyle.light) {
-                              try {
-                                await LightThemeAssets.preload();
-                              } catch (_) {
-                                // The light theme has a gradient fallback.
-                              }
-                            } else if (selected == AppThemeStyle.notebook) {
-                              try {
-                                await NotebookAssets.preload();
-                              } catch (_) {
-                                // The notebook theme has a gradient fallback.
-                              }
-                            } else if (selected == AppThemeStyle.dark) {
-                              try {
-                                await DarkThemeAssets.preload();
-                              } catch (_) {
-                                // The dark theme has a gradient fallback.
-                              }
+                            try {
+                              await NotebookAssets.preload();
+                            } catch (_) {
+                              // Flat colour is the fallback.
                             }
                             await ref
                                 .read(appThemeControllerProvider.notifier)
@@ -120,7 +101,6 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SettingsTile(
                         icon: Icons.font_download_rounded,
-                        iconColor: const Color(0xFF7A5AF8),
                         title: isRu ? 'Шрифт записей' : 'Record font',
                         subtitle: contentFont.label,
                         trailing: const Icon(Icons.chevron_right_rounded),
@@ -139,7 +119,6 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SettingsTile(
                         icon: Icons.tips_and_updates_rounded,
-                        iconColor: const Color(0xFF008C85),
                         title: isRu ? 'Показывать подсказки' : 'Show hints',
                         subtitle: isRu
                             ? 'Подсказки для новых пользователей'
@@ -152,7 +131,6 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SettingsTile(
                         icon: Icons.celebration_rounded,
-                        iconColor: const Color(0xFFD69A00),
                         title: isRu ? 'Показывать праздники' : 'Show holidays',
                         subtitle: isRu
                             ? 'Праздники в календаре и экране дня'
@@ -166,7 +144,6 @@ class SettingsScreen extends ConsumerWidget {
                       if (windowsStartup != null)
                         _SettingsTile(
                           icon: Icons.desktop_windows_rounded,
-                          iconColor: const Color(0xFF2563EB),
                           title: strings.launchWithWindows,
                           subtitle: strings.launchWithWindowsSubtitle,
                           trailing: windowsStartup.when(
@@ -216,10 +193,9 @@ class SettingsScreen extends ConsumerWidget {
                     children: [
                       _SettingsTile(
                         icon: Icons.lock_rounded,
-                        iconColor: const Color(0xFF7A5AF8),
                         title: strings.pinSecurity,
                         trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => context.go('/security'),
+                        onTap: () => context.pageTurnGo('/security'),
                       ),
                     ],
                   ),
@@ -228,24 +204,21 @@ class SettingsScreen extends ConsumerWidget {
                     children: [
                       _SettingsTile(
                         icon: Icons.work_history_rounded,
-                        iconColor: const Color(0xFF20B26B),
                         title: strings.shiftSchedules,
                         trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => context.go('/settings/shifts'),
+                        onTap: () => context.pageTurnGo('/settings/shifts'),
                       ),
                       _SettingsTile(
                         icon: Icons.inventory_2_rounded,
-                        iconColor: const Color(0xFFF26B38),
                         title: strings.memoryArchive,
                         trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => context.go('/memory'),
+                        onTap: () => context.pageTurnGo('/memory'),
                       ),
                       if (syncEnabled)
                         _SettingsTile(
                           icon: syncState.status == SyncStatus.syncing
                               ? Icons.sync_rounded
                               : Icons.cloud_sync_rounded,
-                          iconColor: const Color(0xFF2563EB),
                           title: strings.synchronization,
                           subtitle: _syncSubtitle(strings, syncState),
                           trailing: syncState.status == SyncStatus.syncing
@@ -256,15 +229,14 @@ class SettingsScreen extends ConsumerWidget {
                                   ),
                                 )
                               : const Icon(Icons.chevron_right_rounded),
-                          onTap: () => context.go('/settings/sync'),
+                          onTap: () => context.pageTurnGo('/settings/sync'),
                         ),
                       _SettingsTile(
                         icon: Icons.cloud_upload_rounded,
-                        iconColor: Theme.of(context).colorScheme.primary,
                         title: strings.backup,
                         subtitle: strings.backupSubtitle,
                         trailing: const Icon(Icons.chevron_right_rounded),
-                        onTap: () => context.go('/settings/backup'),
+                        onTap: () => context.pageTurnGo('/settings/backup'),
                       ),
                     ],
                   ),
@@ -417,7 +389,6 @@ class _SettingsSection extends StatelessWidget {
 class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
     required this.icon,
-    required this.iconColor,
     required this.title,
     this.subtitle,
     this.trailing,
@@ -425,7 +396,6 @@ class _SettingsTile extends StatelessWidget {
   });
 
   final IconData icon;
-  final Color iconColor;
   final String title;
   final String? subtitle;
   final Widget? trailing;
@@ -435,30 +405,15 @@ class _SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final tile = ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      leading: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              iconColor.withValues(alpha: 0.3),
-              iconColor.withValues(alpha: 0.1),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: iconColor.withValues(alpha: 0.34)),
-          boxShadow: [
-            BoxShadow(
-              color: iconColor.withValues(alpha: 0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(icon, color: iconColor, size: 22),
+      // Ink on paper, no badge: in this app a bordered square is a button,
+      // and colour names a record type. A settings row is neither.
+      leading: SizedBox(
+        width: 40,
+        height: 40,
+        child: Icon(
+          icon,
+          size: 22,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
       title: Text(

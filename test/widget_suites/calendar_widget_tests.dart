@@ -1,6 +1,134 @@
 part of '../widget_test.dart';
 
 void registerCalendarWidgetTests() {
+  for (final scale in [1.0, 1.3, 2.0]) {
+    testWidgets('calendar header holds its bands at ${scale}x text',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 900));
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await tester.pumpWidget(
+        testProviderScope(
+          overrides: [
+            securityServiceProvider
+                .overrideWithValue(_UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+            shiftScheduleRepositoryProvider.overrideWithValue(
+              _FakeShiftScheduleRepository([
+                ShiftSchedule(
+                  id: 'factory',
+                  organizationName: 'СВ Консалтинг',
+                  colorValue: 0xFF2563EB,
+                  startDate: DateTime.now(),
+                  workDays: 5,
+                  restDays: 2,
+                ),
+              ]),
+            ),
+          ],
+          child: const EzhednevnikV2App(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openTab(tester, 'calendar');
+
+      // The band never spills: pumping would have thrown on an overflow.
+      final header = tester.getRect(
+        find.byKey(const ValueKey('calendar_header_card')),
+      );
+      expect(header.height % notebookPageLineHeight, closeTo(0, 0.01));
+      expect(
+        find.byKey(const ValueKey('calendar_shift_legend')),
+        findsOneWidget,
+      );
+    });
+  }
+
+  testWidgets('calendar header wears the same bands as the feed',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      testProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository([
+              ShiftSchedule(
+                id: 'factory',
+                organizationName: 'Завод',
+                colorValue: 0xFF2563EB,
+                startDate: DateTime.now(),
+                workDays: 5,
+                restDays: 2,
+              ),
+            ]),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
+
+    final header = tester.getRect(
+      find.byKey(const ValueKey('calendar_header_card')),
+    );
+    expect(
+      (header.top - notebookPageLineTop) % notebookPageLineHeight,
+      closeTo(0, 0.01),
+    );
+    expect(header.height % notebookPageLineHeight, closeTo(0, 0.01));
+
+    // Title, month navigation and the shift legend all live in the header.
+    expect(find.text('Календарь'), findsWidgets);
+    expect(find.byKey(const ValueKey('calendar_month_label')), findsOneWidget);
+    expect(find.byKey(const ValueKey('calendar_today')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('calendar_shift_legend')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('empty calendar day stays clean without an empty-state card',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    await tester.pumpWidget(
+      testProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(_EmptyMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
+    final todayCell = find.text('${today.day}').first;
+    await tester.ensureVisible(todayCell);
+    await tester.tap(todayCell);
+    await tester.pumpAndSettle();
+
+    expect(find.text('На этот день пока ничего нет'), findsNothing);
+    expect(find.text('За этот день пока ничего нет'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('calendar_day_add_record')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('calendar date opens day and add opens editor on selected date',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 900));
@@ -24,8 +152,7 @@ void registerCalendarWidgetTests() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Календарь'));
-    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
     expect(find.byTooltip('Сегодня'), findsOneWidget);
     expect(find.text('09:30 План на сегодня'), findsOneWidget);
     final eventBar = tester.widget<DecoratedBox>(
@@ -136,15 +263,14 @@ void registerCalendarWidgetTests() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Календарь'));
-    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
 
     final now = DateTime.now();
     final currentMonth = DateTime(now.year, now.month);
     final nextMonth = DateTime(now.year, now.month + 1);
     String monthLabel(DateTime month) {
       final value = DateFormat('LLLL', 'ru').format(month);
-      return '${value[0].toUpperCase()}${value.substring(1)}';
+      return '${value[0].toUpperCase()}${value.substring(1)} ${month.year}';
     }
 
     final swipeArea = find.byKey(
@@ -196,8 +322,7 @@ void registerCalendarWidgetTests() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Календарь'));
-    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
 
     final now = DateTime.now();
     final currentMonth = DateTime(now.year, now.month);
@@ -226,18 +351,18 @@ void registerCalendarWidgetTests() {
     await tester.pumpAndSettle();
     expect(
       tester
-          .widget<Text>(find.byKey(const ValueKey('calendar_year_label')))
+          .widget<Text>(find.byKey(const ValueKey('calendar_month_label')))
           .data,
-      '${nextYear.year}',
+      contains('${nextYear.year}'),
     );
 
     await tester.drag(swipeArea, const Offset(0, 180));
     await tester.pumpAndSettle();
     expect(
       tester
-          .widget<Text>(find.byKey(const ValueKey('calendar_year_label')))
+          .widget<Text>(find.byKey(const ValueKey('calendar_month_label')))
           .data,
-      '${currentMonth.year}',
+      contains('${currentMonth.year}'),
     );
   });
 
@@ -264,8 +389,7 @@ void registerCalendarWidgetTests() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Календарь'));
-    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
     await tester.tap(find.text('${today.day}').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('План на сегодня'));
@@ -295,8 +419,7 @@ void registerCalendarWidgetTests() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Календарь'));
-    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
     expect(
       find.byKey(const ValueKey('calendar_landscape_scroll')),
       findsNothing,
@@ -357,8 +480,7 @@ void registerCalendarWidgetTests() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Календарь'));
-    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
     await tester.tap(find.text('${now.day}').first);
     await tester.pumpAndSettle();
 

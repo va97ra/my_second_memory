@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../shared/ui/app_shell.dart';
@@ -71,7 +70,10 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
                     icon: Icons.inventory_2_rounded,
                     title: strings.emptyArchive,
                     actionLabel: strings.feed,
-                    onAction: () => context.go('/'),
+                    onAction: () => context.pageTurnGo(
+                      '/',
+                      direction: PageTurnDirection.backward,
+                    ),
                   ),
                 ),
               )
@@ -83,7 +85,7 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
                   return MemoryItemCard(
                     item: item,
                     onOpen: () {
-                      context.push(
+                      context.pageTurnPush(
                         '/memory/view/${Uri.encodeComponent(item.id)}',
                       );
                     },

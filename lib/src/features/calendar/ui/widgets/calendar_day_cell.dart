@@ -28,6 +28,12 @@ class _CalendarDayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A day cell is loose paper too, so it keeps the light scheme on the dark
+    // notebook and reads its own ink rather than the page's.
+    return NotebookPaperIsland(child: Builder(builder: _buildCell));
+  }
+
+  Widget _buildCell(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final palette = AppSurfacePalette.of(context);
     final hasItems = items.isNotEmpty;

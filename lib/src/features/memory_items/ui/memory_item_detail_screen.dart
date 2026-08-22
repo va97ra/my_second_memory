@@ -220,8 +220,8 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
               child: AnimatedContainer(
                 key: const ValueKey('memory_autosave_status'),
                 duration: const Duration(milliseconds: 220),
-                width: 34,
-                height: 34,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: (_saveError != null
                           ? Theme.of(context).colorScheme.error
@@ -244,7 +244,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                             ? 'memory_autosave_saving'
                             : 'memory_autosave_saved',
                   ),
-                  size: 20,
+                  size: 22,
                   color: _saveError != null
                       ? Theme.of(context).colorScheme.error
                       : _isSaving
@@ -260,6 +260,8 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                     : Localizations.localeOf(context).languageCode == 'ru'
                         ? 'Повтор и действия'
                         : 'Repeat and actions',
+                iconSize: 22,
+                padding: const EdgeInsets.all(9),
                 icon: Icon(
                   _isUndated
                       ? Icons.more_vert_rounded

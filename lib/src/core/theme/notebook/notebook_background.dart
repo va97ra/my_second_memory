@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../app_surface_palette.dart';
 import '../app_surface_textures.dart';
-import 'notebook_assets.dart';
+import 'notebook_leather_surface.dart';
 import 'notebook_visuals.dart';
+
+const double notebookPageLineTop = 34;
+const double notebookPageLineHeight = 28;
 
 class AppBackground extends StatelessWidget {
   const AppBackground({required this.child, super.key});
@@ -15,45 +18,55 @@ class AppBackground extends StatelessWidget {
     final notebook = NotebookVisuals.maybeOf(context);
     final palette = AppSurfacePalette.of(context);
     if (notebook == null) {
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: palette.backgroundGradient,
-          image: switch (AppSurfaceTextures.maybeOf(context)) {
-            null => null,
-            final textures => DecorationImage(
-                image: AssetImage(textures.backgroundAsset),
-                fit: BoxFit.cover,
-                opacity: textures.backgroundOpacity,
-                filterQuality: FilterQuality.low,
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          RepaintBoundary(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: palette.backgroundGradient,
+                image: switch (AppSurfaceTextures.maybeOf(context)) {
+                  null => null,
+                  final textures => DecorationImage(
+                      image: AssetImage(textures.backgroundAsset),
+                      fit: BoxFit.cover,
+                      opacity: textures.backgroundOpacity,
+                      filterQuality: FilterQuality.low,
+                    ),
+                },
               ),
-          },
-        ),
-        child: child,
+            ),
+          ),
+          RepaintBoundary(child: child),
+        ],
       );
     }
 
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFC98D57), Color(0xFF96572F)],
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(
-            NotebookAssets.wood,
-            fit: BoxFit.cover,
-            filterQuality: FilterQuality.low,
-            gaplessPlayback: true,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        RepaintBoundary(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: notebook.paper,
+              image: DecorationImage(
+                image: AssetImage(notebook.paperAsset),
+                fit: BoxFit.cover,
+                opacity: 0.62,
+                filterQuality: FilterQuality.low,
+              ),
+            ),
+            child: CustomPaint(
+              painter: NotebookPaperLinesPainter(
+                color: notebook.line,
+                top: notebookPageLineTop,
+                lineHeight: notebookPageLineHeight,
+              ),
+            ),
           ),
-          ColoredBox(color: const Color(0xFF4B2410).withValues(alpha: 0.08)),
-          child,
-        ],
-      ),
+        ),
+        RepaintBoundary(child: child),
+      ],
     );
   }
 }
@@ -62,8 +75,8 @@ class NotebookPageSurface extends StatelessWidget {
   const NotebookPageSurface({
     required this.child,
     this.showLines = false,
-    this.lineTop = 34,
-    this.lineHeight = 28,
+    this.lineTop = notebookPageLineTop,
+    this.lineHeight = notebookPageLineHeight,
     this.padding,
     super.key,
   });
@@ -117,8 +130,8 @@ class NotebookPageSurface extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: notebook.paper,
-        image: const DecorationImage(
-          image: AssetImage(NotebookAssets.paper),
+        image: DecorationImage(
+          image: AssetImage(notebook.paperAsset),
           fit: BoxFit.cover,
           opacity: 0.62,
         ),
@@ -209,10 +222,14 @@ List<BoxShadow> notebookSurfaceShadow(
   ];
 }
 
+/// What a surface is made of: a sheet of the notebook, or its cover.
+enum NotebookSurfaceMaterial { paper, leather }
+
 class NotebookCardSurface extends StatelessWidget {
   const NotebookCardSurface({
     required this.child,
     this.depth = NotebookSurfaceDepth.card,
+    this.material = NotebookSurfaceMaterial.paper,
     this.showLines = false,
     this.lineTop = 24,
     this.lineHeight = 24,
@@ -224,6 +241,7 @@ class NotebookCardSurface extends StatelessWidget {
 
   final Widget child;
   final NotebookSurfaceDepth depth;
+  final NotebookSurfaceMaterial material;
   final bool showLines;
   final double lineTop;
   final double lineHeight;
@@ -270,30 +288,43 @@ class NotebookCardSurface extends StatelessWidget {
         ),
       );
     }
+    final surfaceColor = color ?? notebook.paper;
+    final lined = CustomPaint(
+      painter: showLines
+          ? NotebookPaperLinesPainter(
+              color: notebook.line,
+              top: lineTop,
+              lineHeight: lineHeight,
+            )
+          : null,
+      child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
+    );
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: color ?? notebook.paper,
-        image: const DecorationImage(
-          image: AssetImage(NotebookAssets.paper),
-          fit: BoxFit.cover,
-          opacity: 0.52,
-        ),
+        color: surfaceColor,
+        // Paper grain is laid on directly; leather comes through the same
+        // surface the navigation panel wears, so the two materials match.
+        image: material == NotebookSurfaceMaterial.paper
+            ? DecorationImage(
+                image: AssetImage(notebook.paperAsset),
+                fit: BoxFit.cover,
+                opacity: 0.52,
+              )
+            : null,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderColor ?? const Color(0xFFB97742)),
         boxShadow: notebookSurfaceShadow(context, depth),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: CustomPaint(
-          painter: showLines
-              ? NotebookPaperLinesPainter(
-                  color: notebook.line,
-                  top: lineTop,
-                  lineHeight: lineHeight,
-                )
-              : null,
-          child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
-        ),
+        child: material == NotebookSurfaceMaterial.paper
+            ? lined
+            : NotebookLeatherSurface(
+                color: surfaceColor,
+                lightweight: true,
+                child: lined,
+              ),
       ),
     );
   }

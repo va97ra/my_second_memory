@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_surface_textures.dart';
 import '../../../../core/theme/app_theme_style.dart';
 import '../../../../core/theme/notebook/notebook_assets.dart';
 import '../../../../shared/ui/notebook_pressable.dart';
@@ -36,10 +35,10 @@ Future<AppThemeStyle?> showThemePickerSheet({
                         style: style,
                         selected: style == selected,
                         label: switch (style) {
-                          AppThemeStyle.light => isRu ? 'Светлая' : 'Light',
-                          AppThemeStyle.dark => isRu ? 'Тёмная' : 'Dark',
-                          AppThemeStyle.notebook =>
-                            isRu ? 'Блокнот' : 'Notebook',
+                          AppThemeStyle.notebookLight =>
+                            isRu ? 'Светлый' : 'Light',
+                          AppThemeStyle.notebookDark =>
+                            isRu ? 'Тёмный' : 'Dark',
                         },
                         onTap: () => Navigator.of(context).pop(style),
                       ),
@@ -73,23 +72,21 @@ class _ThemePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = switch (style) {
-      AppThemeStyle.light => const [Color(0xFFF4F7F8), Color(0xFFDDE6EA)],
-      AppThemeStyle.dark => const [Color(0xFF07090D), Color(0xFF27333F)],
-      AppThemeStyle.notebook => const [Color(0xFFC98D57), Color(0xFFFFF0CD)],
+      AppThemeStyle.notebookLight => const [
+          Color(0xFFC98D57),
+          Color(0xFFFFF0CD),
+        ],
+      AppThemeStyle.notebookDark => const [
+          Color(0xFF1C1512),
+          Color(0xFF3A332C),
+        ],
     };
-    final ink = style == AppThemeStyle.dark
-        ? const Color(0xFFF7F9FC)
-        : const Color(0xFF17222B);
-    final backgroundTexture = switch (style) {
-      AppThemeStyle.light => LightThemeAssets.wood,
-      AppThemeStyle.dark => DarkThemeAssets.wood,
-      AppThemeStyle.notebook => NotebookAssets.wood,
-    };
-    final panelTexture = switch (style) {
-      AppThemeStyle.light => LightThemeAssets.paper,
-      AppThemeStyle.dark => DarkThemeAssets.paper,
-      AppThemeStyle.notebook => NotebookAssets.paper,
-    };
+    final ink =
+        style.isDark ? const Color(0xFFEDE6DA) : const Color(0xFF201712);
+    final backgroundTexture =
+        style.isDark ? NotebookAssets.darkWood : NotebookAssets.wood;
+    final panelTexture =
+        style.isDark ? NotebookAssets.darkPaper : NotebookAssets.paper;
     return NotebookPressable(
       onTap: onTap,
       child: AnimatedContainer(
@@ -120,11 +117,7 @@ class _ThemePreview extends StatelessWidget {
                     image: DecorationImage(
                       image: AssetImage(backgroundTexture),
                       fit: BoxFit.cover,
-                      opacity: switch (style) {
-                        AppThemeStyle.light => 0.62,
-                        AppThemeStyle.dark => 0.9,
-                        AppThemeStyle.notebook => 0.75,
-                      },
+                      opacity: style.isDark ? 0.9 : 0.75,
                     ),
                   ),
                   child: Padding(
@@ -163,29 +156,44 @@ class _ThemePreview extends StatelessWidget {
                         Container(
                           height: 16,
                           decoration: BoxDecoration(
-                            gradient: style == AppThemeStyle.light
-                                ? const LinearGradient(
-                                    colors: [
-                                      Color(0xFFFF7D52),
-                                      Color(0xFFF05A30),
-                                      Color(0xFFB72F1B),
-                                    ],
-                                  )
-                                : style == AppThemeStyle.dark
-                                    ? const LinearGradient(
-                                        colors: [
-                                          Color(0xFFFF8B65),
-                                          Color(0xFFFF6A3D),
-                                          Color(0xFFC9361E),
-                                        ],
-                                      )
-                                    : const LinearGradient(
-                                        colors: [
-                                          Color(0xFFFF7F57),
-                                          Color(0xFFF4512A),
-                                          Color(0xFFB92B16),
-                                        ],
-                                      ),
+                            // Terracotta belongs to both notebooks.
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFC97655),
+                                Color(0xFFC2492E),
+                                Color(0xFF8E3520),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: colors.last,
+                              image: DecorationImage(
+                                image: AssetImage(panelTexture),
+                                fit: BoxFit.cover,
+                                opacity: 0.42,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                  color: ink.withValues(alpha: 0.25)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          height: 16,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFC97655),
+                                Color(0xFFC2492E),
+                                Color(0xFF8E3520),
+                              ],
+                            ),
                             borderRadius: BorderRadius.circular(4),
                             boxShadow: const [
                               BoxShadow(

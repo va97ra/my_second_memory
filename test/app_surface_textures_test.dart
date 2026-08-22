@@ -1,7 +1,9 @@
 import 'package:ezhednevnik_v2/src/core/theme/app_surface_textures.dart';
 import 'package:ezhednevnik_v2/src/core/theme/app_surface_palette.dart';
 import 'package:ezhednevnik_v2/src/core/theme/app_theme.dart';
+import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_assets.dart';
 import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_background.dart';
+import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_theme.dart';
 import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -64,6 +66,34 @@ void main() {
     final image = decoration.image!.image as AssetImage;
 
     expect(image.assetName, LightThemeAssets.wood);
+  });
+
+  testWidgets('notebook app background is a ruled paper sheet', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildNotebookTheme(),
+        home: const AppBackground(child: SizedBox.expand()),
+      ),
+    );
+
+    final background = tester.widget<DecoratedBox>(find.byType(DecoratedBox));
+    final decoration = background.decoration as BoxDecoration;
+    final image = decoration.image!.image as AssetImage;
+    final lines = tester
+        .widgetList<CustomPaint>(find.byType(CustomPaint))
+        .map((paint) => paint.painter)
+        .whereType<NotebookPaperLinesPainter>()
+        .single;
+
+    expect(image.assetName, NotebookAssets.paper);
+    expect(
+        lines.color,
+        NotebookVisuals.maybeOf(
+          tester.element(find.byType(AppBackground)),
+        )!
+            .line);
+    expect(lines.top, notebookPageLineTop);
+    expect(lines.lineHeight, notebookPageLineHeight);
   });
 
   testWidgets('dark paper surfaces paint ruled lines when requested',

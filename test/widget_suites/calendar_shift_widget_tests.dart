@@ -53,8 +53,7 @@ void registerCalendarShiftWidgetTests() {
     );
 
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Календарь'));
-    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
 
     final cell = find.byKey(ValueKey('calendar_day_$dayKey'));
     expect(cell, findsOneWidget);

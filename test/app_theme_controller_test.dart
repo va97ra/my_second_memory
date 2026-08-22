@@ -8,26 +8,33 @@ void main() {
     SharedPreferences.setMockInitialValues({});
 
     final controller = AppThemeController();
-    await controller.setStyle(AppThemeStyle.notebook);
+    await controller.setStyle(AppThemeStyle.notebookDark);
 
-    expect(controller.state, AppThemeStyle.notebook);
+    expect(controller.state, AppThemeStyle.notebookDark);
     expect(
       (await SharedPreferences.getInstance()).getString('app_theme_style_v2'),
-      'notebook',
+      'notebookDark',
     );
 
     final restored = AppThemeController();
     await Future<void>.delayed(Duration.zero);
-    expect(restored.state, AppThemeStyle.notebook);
+    expect(restored.state, AppThemeStyle.notebookDark);
   });
 
-  test('legacy light theme choice migrates to light style', () async {
+  test('legacy light theme choice migrates to the light notebook', () async {
     SharedPreferences.setMockInitialValues({'app_light_theme_v1': true});
 
     final controller = AppThemeController();
     await Future<void>.delayed(Duration.zero);
 
-    expect(controller.state, AppThemeStyle.light);
+    expect(controller.state, AppThemeStyle.notebookLight);
+  });
+
+  test('the retired flat themes migrate by brightness', () {
+    expect(AppThemeStyle.fromStorage('light'), AppThemeStyle.notebookLight);
+    expect(AppThemeStyle.fromStorage('notebook'), AppThemeStyle.notebookLight);
+    expect(AppThemeStyle.fromStorage('dark'), AppThemeStyle.notebookDark);
+    expect(AppThemeStyle.fromStorage('nonsense'), isNull);
   });
 
   test('fresh install uses the controller default style', () async {

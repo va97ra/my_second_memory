@@ -11,30 +11,30 @@ ThemeData buildAppTheme({required Brightness brightness}) {
       isDark ? const Color(0xFF39C3D5) : const Color(0xFF087C8C);
   final tertiaryAccent =
       isDark ? const Color(0xFF2AC495) : const Color(0xFF087A62);
-  final background = isDark ? const Color(0xFF07090D) : const Color(0xFFF4F7F8);
-  final surface = isDark ? const Color(0xFF1D252E) : const Color(0xFFFFFFFF);
-  final surfaceLow = isDark ? const Color(0xFF161C23) : const Color(0xFFF7FAFB);
+  final background = isDark ? const Color(0xFF07090D) : const Color(0xFFF6F4EF);
+  final surface = isDark ? const Color(0xFF1D252E) : const Color(0xFFFFFDFA);
+  final surfaceLow = isDark ? const Color(0xFF161C23) : const Color(0xFFF8F6F1);
   final surfaceContainer =
-      isDark ? const Color(0xFF202A34) : const Color(0xFFF0F5F7);
+      isDark ? const Color(0xFF202A34) : const Color(0xFFF2EEE6);
   final surfaceHigh =
-      isDark ? const Color(0xFF27333F) : const Color(0xFFE9F0F3);
-  final surfaceAlt = isDark ? const Color(0xFF303E4B) : const Color(0xFFD8E3E8);
-  final border = isDark ? const Color(0xFF526272) : const Color(0xFF8799A3);
-  final onSurface = isDark ? const Color(0xFFF7F9FC) : const Color(0xFF17222B);
-  final secondary = isDark ? const Color(0xFFBCC7D2) : const Color(0xFF566976);
+      isDark ? const Color(0xFF27333F) : const Color(0xFFEEEAE0);
+  final surfaceAlt = isDark ? const Color(0xFF303E4B) : const Color(0xFFE5E0D3);
+  final border = isDark ? const Color(0xFF526272) : const Color(0xFFA8A192);
+  final onSurface = isDark ? const Color(0xFFF7F9FC) : const Color(0xFF231F1A);
+  final secondary = isDark ? const Color(0xFFBCC7D2) : const Color(0xFF6E6559);
   final onPrimary = isDark ? const Color(0xFF260B04) : const Color(0xFFFFFFFF);
   final palette = AppSurfacePalette(
     backgroundStart: background,
-    backgroundEnd: isDark ? const Color(0xFF151018) : const Color(0xFFDDE6EA),
+    backgroundEnd: isDark ? const Color(0xFF151018) : const Color(0xFFEDE9DE),
     navigationSurface:
-        isDark ? const Color(0xFF161C23) : const Color(0xFFFCFEFF),
+        isDark ? const Color(0xFF161C23) : const Color(0xFFFCFAF6),
     panelSurface: surface,
     raisedSurface: surfaceHigh,
-    nestedSurface: isDark ? const Color(0xFF303E4B) : const Color(0xFFD8E3E8),
-    calendarTile: isDark ? const Color(0xFF202A34) : const Color(0xFFEDF2F4),
-    weekdaySurface: isDark ? const Color(0xFF2A3642) : const Color(0xFFDCE7EB),
-    borderStart: isDark ? const Color(0xFF718397) : const Color(0xFF6F8490),
-    borderEnd: isDark ? const Color(0xFF344351) : const Color(0xFFBCCAD0),
+    nestedSurface: isDark ? const Color(0xFF303E4B) : const Color(0xFFE5E0D3),
+    calendarTile: isDark ? const Color(0xFF202A34) : const Color(0xFFF2EEE4),
+    weekdaySurface: isDark ? const Color(0xFF2A3642) : const Color(0xFFE8E2D2),
+    borderStart: isDark ? const Color(0xFF718397) : const Color(0xFF96907F),
+    borderEnd: isDark ? const Color(0xFF344351) : const Color(0xFFDDD8C8),
     accentStart: seed,
     accentEnd: accentEnd,
   );

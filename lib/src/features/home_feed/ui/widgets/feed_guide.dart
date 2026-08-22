@@ -1,87 +1,12 @@
 part of '../home_feed_screen.dart';
 
-class _FeedUsageHint extends StatelessWidget {
-  const _FeedUsageHint();
-
-  @override
-  Widget build(BuildContext context) {
-    final ru = Localizations.localeOf(context).languageCode == 'ru';
-    final colors = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
-      child: Material(
-        color: colors.primaryContainer.withValues(alpha: 0.42),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: colors.primary.withValues(alpha: 0.32)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                ru ? 'Как пользоваться' : 'How to use the app',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: colors.onSurface,
-                      fontWeight: FontWeight.w900,
-                    ),
-              ),
-              const SizedBox(height: 5),
-              _HintLine(
-                icon: Icons.calendar_month_rounded,
-                text: ru
-                    ? 'Календарь → дата → «Добавить запись»'
-                    : 'Calendar → date → Add record',
-              ),
-              _HintLine(
-                icon: Icons.event_repeat_rounded,
-                text: ru
-                    ? '↻ включает повтор, галочка завершает запись'
-                    : '↻ repeats; the check mark completes a record',
-              ),
-              _HintLine(
-                icon: Icons.archive_rounded,
-                text: ru
-                    ? 'Архив переносит запись в Архив памяти'
-                    : 'Archive moves a record to Memory archive',
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _showFullGuide(context, ru),
-                  icon: const Icon(Icons.menu_book_rounded, size: 17),
-                  label: Text(
-                    ru ? 'Все возможности' : 'All features',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                ru
-                    ? 'Подсказки отключаются в Настройки → Показывать подсказки.'
-                    : 'Turn hints off in Settings → Show hints.',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showFullGuide(BuildContext context, bool ru) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => _FullGuideSheet(ru: ru),
-    );
-  }
+Future<void> _showFullGuide(BuildContext context, bool ru) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (context) => _FullGuideSheet(ru: ru),
+  );
 }
 
 class _FullGuideSheet extends StatelessWidget {
@@ -156,8 +81,8 @@ class _FullGuideSheet extends StatelessWidget {
           _GuideItem(
             Icons.edit_note_rounded,
             ru
-                ? 'Центральная кнопка «Записка» создаёт запись без даты, которая всегда находится в разделе «Записки» над лентой.'
-                : 'The center Note button creates an undated note that stays in the Notes section above the feed.',
+                ? 'Центральная кнопка «Записка» создаёт запись без даты. Она находится на отдельной закладке «Записки».'
+                : 'The center Note button creates an undated note. It appears on the separate Notes tab.',
           ),
           _GuideItem(
             Icons.filter_list_rounded,
@@ -168,8 +93,8 @@ class _FullGuideSheet extends StatelessWidget {
           _GuideItem(
             Icons.view_timeline_rounded,
             ru
-                ? 'Информеры месяца и года показывают повторяющиеся записи текущего периода.'
-                : 'Month and year panels show recurring records for the current period.',
+                ? '«День» показывает обычные записи выбранной даты. «Месяц» и «Год» — только настроенные ежемесячные и ежегодные повторы.'
+                : 'Day shows regular records for the selected date. Month and Year show only configured monthly and yearly recurrences.',
           ),
           _GuideItem(
             Icons.task_alt_rounded,
@@ -321,34 +246,4 @@ class _GuideItem {
 
   final IconData icon;
   final String text;
-}
-
-class _HintLine extends StatelessWidget {
-  const _HintLine({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Row(
-        children: [
-          Icon(icon, size: 15, color: colors.primary),
-          const SizedBox(width: 7),
-          Expanded(
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

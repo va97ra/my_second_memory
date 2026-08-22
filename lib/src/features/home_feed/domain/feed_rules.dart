@@ -76,7 +76,7 @@ List<FeedDay> groupItemsByDate(
         !item.isUndated &&
         !_isRecurringFeedItem(item) &&
         !hiddenFutureOccurrence &&
-        _matchesFilter(item, filter);
+        matchesFeedFilter(item, filter);
   }).toList()
     ..sort((a, b) {
       final byDate = b.memoryDate.compareTo(a.memoryDate);
@@ -118,7 +118,7 @@ bool _isRecurringFeedItem(MemoryItem item) {
       repeatRule == 'yearly';
 }
 
-bool _matchesFilter(MemoryItem item, FeedFilter filter) {
+bool matchesFeedFilter(MemoryItem item, FeedFilter filter) {
   return switch (filter) {
     FeedFilter.all => true,
     FeedFilter.active => !item.isDone,

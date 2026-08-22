@@ -7,9 +7,6 @@ class _CalendarPanel extends StatelessWidget {
     required this.selectedDate,
     required this.monthData,
     required this.showHints,
-    required this.onPreviousMonth,
-    required this.onNextMonth,
-    required this.onToday,
     required this.onSelectDate,
   });
 
@@ -18,9 +15,6 @@ class _CalendarPanel extends StatelessWidget {
   final DateTime selectedDate;
   final CalendarMonthData monthData;
   final bool showHints;
-  final VoidCallback onPreviousMonth;
-  final VoidCallback onNextMonth;
-  final VoidCallback onToday;
   final ValueChanged<DateTime> onSelectDate;
 
   @override
@@ -34,15 +28,6 @@ class _CalendarPanel extends StatelessWidget {
           padding: const EdgeInsets.all(2),
           child: Column(
             children: [
-              _CalendarMonthHeader(
-                locale: locale,
-                visibleMonth: visibleMonth,
-                onPreviousMonth: onPreviousMonth,
-                onNextMonth: onNextMonth,
-                onToday: onToday,
-              ),
-              _CalendarShiftLegend(schedules: monthData.shiftSchedules),
-              const SizedBox(height: 8),
               if (NotebookVisuals.maybeOf(context) == null)
                 DecoratedBox(
                   key: const ValueKey('calendar_weekdays'),
@@ -253,153 +238,10 @@ class _CalendarPanel extends StatelessWidget {
   }
 }
 
-class _CalendarMonthHeader extends StatelessWidget {
-  const _CalendarMonthHeader({
-    required this.locale,
-    required this.visibleMonth,
-    required this.onPreviousMonth,
-    required this.onNextMonth,
-    required this.onToday,
-  });
-
-  final String locale;
-  final DateTime visibleMonth;
-  final VoidCallback onPreviousMonth;
-  final VoidCallback onNextMonth;
-  final VoidCallback onToday;
-
-  @override
-  Widget build(BuildContext context) {
-    final month = DateFormat('LLLL', locale).format(visibleMonth);
-    final strings = AppStrings.of(context);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: AppSurfacePalette.of(context).surfaceGradient(),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color:
-                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: Row(
-          children: [
-            _MonthIconButton(
-              tooltip: strings.previousMonth,
-              icon: Icons.chevron_left_rounded,
-              onPressed: onPreviousMonth,
-            ),
-            const SizedBox(width: 7),
-            Expanded(
-              child: Semantics(
-                label: '${_capitalize(month)} ${visibleMonth.year}',
-                container: true,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _capitalize(month),
-                      key: const ValueKey('calendar_month_label'),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                          ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${visibleMonth.year}',
-                      key: const ValueKey('calendar_year_label'),
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                            letterSpacing: 0.8,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 7),
-            IconButton.filledTonal(
-              tooltip: strings.today,
-              onPressed: onToday,
-              icon: const Icon(Icons.today_rounded),
-              style: IconButton.styleFrom(
-                fixedSize: const Size(40, 40),
-                backgroundColor:
-                    Theme.of(context).colorScheme.surfaceContainerHighest,
-                foregroundColor: Theme.of(context).colorScheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            _MonthIconButton(
-              tooltip: strings.nextMonth,
-              icon: Icons.chevron_right_rounded,
-              onPressed: onNextMonth,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _capitalize(String value) {
-    if (value.isEmpty) {
-      return value;
-    }
-    return '${value[0].toUpperCase()}${value.substring(1)}';
-  }
-}
-
-class _CalendarShiftLegend extends StatelessWidget {
-  const _CalendarShiftLegend({required this.schedules});
-
-  final List<ShiftSchedule> schedules;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabledSchedules = [
-      for (final schedule in schedules)
-        if (schedule.isEnabled) schedule,
-    ];
-
-    if (enabledSchedules.isEmpty) {
-      return const SizedBox(height: 8);
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final schedule in enabledSchedules)
-              _ShiftLegendChip(schedule: schedule),
-          ],
-        ),
-      ),
-    );
-  }
+/// Month names arrive lower-cased from intl in some locales.
+String _capitalizeMonth(String value) {
+  if (value.isEmpty) return value;
+  return '${value[0].toUpperCase()}${value.substring(1)}';
 }
 
 class _ShiftLegendChip extends StatelessWidget {
@@ -418,7 +260,7 @@ class _ShiftLegendChip extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -447,7 +289,7 @@ class _ShiftLegendChip extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 child: Text(
                   '${schedule.workDays}/${schedule.restDays}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -460,33 +302,6 @@ class _ShiftLegendChip extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _MonthIconButton extends StatelessWidget {
-  const _MonthIconButton({
-    required this.tooltip,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton.filledTonal(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      icon: Icon(icon),
-      style: IconButton.styleFrom(
-        fixedSize: const Size(40, 40),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: Theme.of(context).colorScheme.primary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }

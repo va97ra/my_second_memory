@@ -20,7 +20,7 @@ class AppThemeController extends StateNotifier<AppThemeStyle> {
     }
   }
 
-  static const defaultStyle = AppThemeStyle.notebook;
+  static const defaultStyle = AppThemeStyle.notebookLight;
   static const storageKey = 'app_theme_style_v2';
   static const legacyLightKey = 'app_light_theme_v1';
 
@@ -33,8 +33,8 @@ class AppThemeController extends StateNotifier<AppThemeStyle> {
     }
     if (preferences.containsKey(legacyLightKey)) {
       return preferences.getBool(legacyLightKey) == true
-          ? AppThemeStyle.light
-          : AppThemeStyle.dark;
+          ? AppThemeStyle.notebookLight
+          : AppThemeStyle.notebookDark;
     }
     return defaultStyle;
   }

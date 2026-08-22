@@ -19,9 +19,11 @@ class _TypeRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
-    final foreground = NotebookVisuals.maybeOf(context) == null
-        ? Colors.white
-        : notebookLeatherForeground(color);
+    final notebook = NotebookVisuals.maybeOf(context);
+    final foreground =
+        notebook == null ? Colors.white : notebookLeatherForeground(color);
+    // The torn edge bites into this rail, so keep its content clear of it.
+    final tearInset = notebook == null ? 0.0 : _TornPaperShapeBorder.tearDepth;
     final time = item.timeMinutes == null
         ? DateFormat.Hm(locale).format(item.createdAt)
         : formatMemoryTime(item.timeMinutes!);
@@ -29,11 +31,17 @@ class _TypeRail extends StatelessWidget {
     return NotebookLeatherSurface(
       color: color,
       child: SizedBox(
-        width: compact ? 50 : 54,
+        width: (compact ? 50 : 54) + tearInset,
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: 3,
-            vertical: denseFeedLayout
+          padding: EdgeInsets.fromLTRB(
+            3 + tearInset,
+            denseFeedLayout
+                ? 4
+                : compact
+                    ? 6
+                    : 8,
+            3,
+            denseFeedLayout
                 ? 4
                 : compact
                     ? 6
@@ -155,13 +163,11 @@ class _ActionRail extends StatelessWidget {
                       : Icons.task_alt_rounded,
                   size: 24,
                 ),
-                style: IconButton.styleFrom(
+                style: notebookIconButtonStyle(
                   foregroundColor: item.isDone
                       ? const Color(0xFF16A34A)
                       : const Color(0xFF94A3B8),
-                  minimumSize: const Size(34, 34),
-                  padding: EdgeInsets.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shrinkTapTarget: true,
                 ),
               ),
             if (onArchive != null || onRestore != null)
@@ -177,11 +183,9 @@ class _ActionRail extends StatelessWidget {
                       : Icons.archive_rounded,
                   size: 22,
                 ),
-                style: IconButton.styleFrom(
+                style: notebookIconButtonStyle(
                   foregroundColor: const Color(0xFFB45309),
-                  minimumSize: const Size(34, 34),
-                  padding: EdgeInsets.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shrinkTapTarget: true,
                 ),
               ),
             const Spacer(),
