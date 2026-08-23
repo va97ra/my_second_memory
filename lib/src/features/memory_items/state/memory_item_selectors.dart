@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/memory_item.dart';
 import 'memory_items_controller.dart';
+import '../../recurrence/domain/recurrence_occurrence_exception.dart';
 import '../../recurrence/domain/recurrence_projection_service.dart';
+import '../../recurrence/domain/recurrence_series.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 
 class MemoryItemsIndex {
@@ -102,8 +104,43 @@ Map<int, List<MemoryItem>> indexMemoryItemsByDate(List<MemoryItem> items) {
 int memoryItemDateKey(DateTime date) =>
     date.year * 10000 + date.month * 100 + date.day;
 
+/// Everything the archive shows. A recurring occurrence is archived by writing
+/// an override, not by keeping a row, so the markers have to be read too or
+/// archiving one would look like losing it.
+List<MemoryItem> archivedMemoryItems({
+  required List<MemoryItem> rows,
+  required List<RecurrenceSeries> series,
+  required List<RecurrenceOccurrenceException> exceptions,
+}) {
+  final index = RecurrenceOccurrenceIndex(
+    series: series,
+    exceptions: exceptions,
+  );
+  final liveSeriesIds = {
+    for (final entry in series)
+      if (entry.isEnabled) entry.id,
+  };
+  final result = <String, MemoryItem>{for (final row in rows) row.id: row};
+  for (final exception in exceptions) {
+    final item = exception.item;
+    if (exception.isSkipped ||
+        item == null ||
+        !item.isArchived ||
+        !liveSeriesIds.contains(exception.seriesId) ||
+        index.isSuppressedModified(exception)) {
+      continue;
+    }
+    result[item.id] = item;
+  }
+  return result.values.toList(growable: false);
+}
+
 final archivedMemoryItemsProvider = Provider<List<MemoryItem>>((ref) {
-  return ref.watch(memoryItemsIndexProvider.select((index) => index.archived));
+  return archivedMemoryItems(
+    rows: ref.watch(memoryItemsIndexProvider.select((index) => index.archived)),
+    series: ref.watch(recurrenceSeriesControllerProvider),
+    exceptions: ref.watch(recurrenceExceptionControllerProvider),
+  );
 });
 
 final undatedNotesProvider = Provider<List<MemoryItem>>((ref) {

@@ -8,6 +8,7 @@ import '../../../shared/ui/screen_chrome.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
 import '../domain/memory_type.dart';
 import '../state/memory_items_controller.dart';
+import '../../recurrence/state/recurrence_controller.dart';
 import '../state/memory_item_selectors.dart';
 
 class MemoryLibraryScreen extends ConsumerStatefulWidget {
@@ -90,9 +91,17 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
                       );
                     },
                     onRestore: () {
-                      ref
-                          .read(memoryItemsControllerProvider.notifier)
-                          .restore(item.id);
+                      // A recurring occurrence has no row to restore; its
+                      // state lives in the series override.
+                      if (item.seriesId != null) {
+                        ref
+                            .read(recurrenceSeriesControllerProvider.notifier)
+                            .restoreOccurrence(item);
+                      } else {
+                        ref
+                            .read(memoryItemsControllerProvider.notifier)
+                            .restore(item.id);
+                      }
                     },
                   );
                 },
