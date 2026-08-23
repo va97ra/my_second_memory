@@ -28,7 +28,7 @@ void main() {
       originItemId: template.id,
       createdAt: date,
       updatedAt: date,
-      generatedThrough: DateTime(2028, 7, 20),
+      historyThrough: DateTime(2028, 7, 20),
       subscriptionEndDate: DateTime(2027, 7, 20),
     );
 
@@ -36,7 +36,7 @@ void main() {
     final restored = await repository.loadAll();
 
     expect(restored.single.template.birthYear, 1985);
-    expect(restored.single.generatedThrough, DateTime(2028, 7, 20));
+    expect(restored.single.historyThrough, DateTime(2028, 7, 20));
     expect(restored.single.subscriptionEndDate, DateTime(2027, 7, 20));
     await repository.delete(series.id);
     expect(await repository.loadAll(), isEmpty);

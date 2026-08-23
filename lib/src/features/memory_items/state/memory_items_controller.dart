@@ -194,6 +194,21 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     unawaited(_safeCancel(id));
   }
 
+  /// Removes a row whose content another representation has taken over.
+  /// Unlike [delete] this keeps the media and the reminder: the record still
+  /// exists, only where it is stored has changed. Deleting the media here
+  /// would strip photos that the new owner still points at.
+  Future<void> retireRow(String id) async {
+    await _loadFuture;
+    if (!state.any((item) => item.id == id)) return;
+    await _sync?.memoryDeleted(id, DateTime.now());
+    state = [
+      for (final item in state)
+        if (item.id != id) item,
+    ];
+    await _writes.add(() => _repository.delete(id));
+  }
+
   Future<List<MemoryItem>> duplicateToDates(
     MemoryItem source,
     Iterable<DateTime> dates,

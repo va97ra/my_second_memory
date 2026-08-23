@@ -39,7 +39,6 @@ class RecurrenceSeries {
     required this.createdAt,
     required this.updatedAt,
     this.isEnabled = true,
-    this.generatedThrough,
     this.endDate,
     this.subscriptionEndDate,
     this.historyThrough,
@@ -53,13 +52,16 @@ class RecurrenceSeries {
   final bool isEnabled;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final DateTime? generatedThrough;
 
   /// A cutoff created by deleting this and later occurrences.
   final DateTime? endDate;
 
   /// The inclusive contractual end of a finite monthly subscription.
   final DateTime? subscriptionEndDate;
+  /// Compatibility only: this build never materializes occurrences, so nothing
+  /// reads this. It is still written so that a device left on an older build
+  /// does not re-materialize the whole history behind us. Remove it once no
+  /// such device is left.
   final DateTime? historyThrough;
 
   DateTime? get effectiveEndDate {
@@ -77,8 +79,6 @@ class RecurrenceSeries {
     bool? isEnabled,
     DateTime? createdAt,
     DateTime? updatedAt,
-    DateTime? generatedThrough,
-    bool clearGeneratedThrough = false,
     DateTime? endDate,
     bool clearEndDate = false,
     DateTime? subscriptionEndDate,
@@ -94,9 +94,6 @@ class RecurrenceSeries {
       isEnabled: isEnabled ?? this.isEnabled,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      generatedThrough: clearGeneratedThrough
-          ? null
-          : generatedThrough ?? this.generatedThrough,
       endDate: clearEndDate ? null : endDate ?? this.endDate,
       subscriptionEndDate: clearSubscriptionEndDate
           ? null
@@ -114,7 +111,6 @@ class RecurrenceSeries {
         'isEnabled': isEnabled,
         'createdAt': createdAt.toUtc().toIso8601String(),
         'updatedAt': updatedAt.toUtc().toIso8601String(),
-        'generatedThrough': generatedThrough?.toIso8601String(),
         'endDate': endDate?.toIso8601String(),
         'subscriptionEndDate': subscriptionEndDate?.toIso8601String(),
         'historyThrough': historyThrough?.toIso8601String(),
@@ -134,9 +130,6 @@ class RecurrenceSeries {
       isEnabled: json['isEnabled'] as bool? ?? true,
       createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
       updatedAt: DateTime.parse(json['updatedAt'] as String).toLocal(),
-      generatedThrough: json['generatedThrough'] == null
-          ? null
-          : DateTime.parse(json['generatedThrough'] as String),
       endDate: json['endDate'] == null
           ? null
           : DateTime.parse(json['endDate'] as String),

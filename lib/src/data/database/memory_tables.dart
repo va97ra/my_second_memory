@@ -46,6 +46,8 @@ class RecurrenceSeriesRows extends Table {
   BoolColumn get isEnabled => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
+  /// Unused. Kept so existing databases keep a column nothing reads or
+  /// writes; dropping it would need a migration for no gain.
   DateTimeColumn get generatedThrough => dateTime().nullable()();
   DateTimeColumn get endDate => dateTime().nullable()();
   DateTimeColumn get subscriptionEndDate => dateTime().nullable()();

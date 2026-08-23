@@ -425,7 +425,18 @@ void main() {
     await controller.load();
 
     expect(controller.state.single.template.title, 'Купить');
-    expect(memories.state.single.title, 'Купить молоко');
+    expect(
+      const RecurrenceProjectionService()
+          .itemById(
+            id: template.id,
+            series: controller.state,
+            exceptions: exceptions.state,
+            persistedItems: memories.state,
+          )
+          ?.title,
+      'Купить молоко',
+      reason: 'the record shows the edit, wherever it is stored',
+    );
   });
 
   test('load does not promote an interior word fragment', () async {
@@ -477,7 +488,18 @@ void main() {
     await controller.load();
 
     expect(controller.state.single.template.title, 'дом');
-    expect(memories.state.single.title, 'уведомление');
+    expect(
+      const RecurrenceProjectionService()
+          .itemById(
+            id: template.id,
+            series: controller.state,
+            exceptions: exceptions.state,
+            persistedItems: memories.state,
+          )
+          ?.title,
+      'уведомление',
+      reason: 'the record shows the edit, wherever it is stored',
+    );
   });
 
   test('origin override marker prevents metadata edits becoming a template',
@@ -533,8 +555,10 @@ void main() {
 
     expect(exceptions.state, hasLength(1));
     expect(exceptions.state.single.item?.id, template.id);
-    expect(exceptions.state.single.item?.isGeneratedOccurrence, isFalse);
-    expect(memories.state.single.birthYear, 1991);
+    // Every occurrence, the first one included, is projected from the series.
+    expect(exceptions.state.single.item?.isGeneratedOccurrence, isTrue);
+    expect(exceptions.state.single.item?.birthYear, 1991);
+    expect(memories.state, isEmpty);
 
     final reloadedMemories =
         MemoryItemsController(const LocalMemoryRepository());
@@ -552,7 +576,7 @@ void main() {
     await reloaded.load();
 
     expect(reloaded.state.single.template.birthYear, isNull);
-    expect(reloadedMemories.state.single.birthYear, 1991);
+    expect(reloadedExceptions.state.single.item?.birthYear, 1991);
     expect(reloadedExceptions.state, hasLength(1));
   });
 
@@ -615,7 +639,18 @@ void main() {
     await controller.load();
 
     expect(controller.state.single.template.title, 'Старое значение');
-    expect(memories.state.single.title, 'Новое значение');
+    expect(
+      const RecurrenceProjectionService()
+          .itemById(
+            id: template.id,
+            series: controller.state,
+            exceptions: exceptions.state,
+            persistedItems: memories.state,
+          )
+          ?.title,
+      'Новое значение',
+      reason: 'the record shows the edit, wherever it is stored',
+    );
     expect(
       const RecurrenceProjectionService()
           .itemById(
@@ -628,7 +663,10 @@ void main() {
       'Новое значение',
     );
     expect(
-      (await const LocalMemoryRepository().loadAll()).single.title,
+      (await const LocalRecurrenceExceptionRepository().loadAll())
+          .single
+          .item
+          ?.title,
       'Новое значение',
     );
   });
@@ -693,7 +731,18 @@ void main() {
 
     await controller.reconcileOriginOverrides();
 
-    expect(memories.state.single.title, 'Значение с другого устройства');
+    expect(
+      const RecurrenceProjectionService()
+          .itemById(
+            id: template.id,
+            series: controller.state,
+            exceptions: exceptions.state,
+            persistedItems: memories.state,
+          )
+          ?.title,
+      'Значение с другого устройства',
+      reason: 'the record shows the edit, wherever it is stored',
+    );
   });
 
   test('moved origin can be deleted without returning from its marker',
@@ -743,7 +792,7 @@ void main() {
       template.copyWith(memoryDate: movedDate),
       occurrenceDate: sourceDate,
     );
-    final moved = memories.state.single;
+    final moved = exceptions.state.single.item!;
     final duplicateUpdatedAt = moved.updatedAt.add(const Duration(seconds: 1));
     await exceptions.upsert(
       RecurrenceOccurrenceException(
@@ -849,7 +898,18 @@ void main() {
 
     await controller.load();
 
-    expect(memories.state.single.title, 'Вторая правка');
+    expect(
+      const RecurrenceProjectionService()
+          .itemById(
+            id: template.id,
+            series: controller.state,
+            exceptions: exceptions.state,
+            persistedItems: memories.state,
+          )
+          ?.title,
+      'Вторая правка',
+      reason: 'the record shows the edit, wherever it is stored',
+    );
     expect(exceptions.state, hasLength(1));
     expect(exceptions.state.single.occurrenceDate, sourceDate);
     expect(exceptions.state.single.item?.title, 'Вторая правка');
@@ -1076,18 +1136,30 @@ void main() {
     );
 
     final reloaded = await loadControllers();
-    final persistedMoved = reloaded.memories.state.singleWhere(
-      (item) => item.id == occurrenceId(series.id, sourceDate),
+    // The moved occurrence lives in its exception only; nothing about it is
+    // materialized into a memory row any more.
+    expect(
+      reloaded.memories.state.map((item) => item.id),
+      isNot(contains(occurrenceId(series.id, sourceDate))),
     );
-    expect(persistedMoved.memoryDate, movedDate);
     expect(reloaded.exceptions.state.single.isSkipped, isFalse);
+    final movedOccurrence = const RecurrenceProjectionService()
+        .itemsForRange(
+          start: sourceDate,
+          end: movedDate,
+          series: reloaded.controller.state,
+          exceptions: reloaded.exceptions.state,
+          persistedItems: reloaded.memories.state,
+        )
+        .single;
+    expect(movedOccurrence.memoryDate, movedDate);
 
-    await reloaded.controller.deleteOccurrence(persistedMoved);
+    await reloaded.controller.deleteOccurrence(movedOccurrence);
     final afterDelete = await loadControllers();
 
     expect(
       afterDelete.memories.state.map((item) => item.id),
-      isNot(contains(persistedMoved.id)),
+      isNot(contains(movedOccurrence.id)),
     );
     expect(afterDelete.exceptions.state.single.isSkipped, isTrue);
     expect(

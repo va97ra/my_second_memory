@@ -56,14 +56,14 @@ void main() {
     final series = _series(
       frequency: RecurrenceFrequency.monthly,
       start: DateTime(2026, 7, 20),
-    ).copyWith(generatedThrough: DateTime(2028, 7, 20));
+    ).copyWith(historyThrough: DateTime(2028, 7, 20));
 
     final restored = RecurrenceSeries.fromJson(series.toJson());
 
     expect(restored.frequency, RecurrenceFrequency.monthly);
     expect(restored.template.type, MemoryType.payment);
     expect(restored.template.amountMinor, 450000);
-    expect(restored.generatedThrough, DateTime(2028, 7, 20));
+    expect(restored.historyThrough, DateTime(2028, 7, 20));
   });
 
   test('recurrence can generate only the missing tail', () {

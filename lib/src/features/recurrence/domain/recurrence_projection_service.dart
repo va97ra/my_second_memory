@@ -90,7 +90,9 @@ class RecurrenceProjectionService {
       }
     }
     for (final entry in series) {
-      final date = occurrenceDateFromId(entry.id, id);
+      final date = entry.originItemId == id
+          ? dateOnly(entry.startDate)
+          : occurrenceDateFromId(entry.id, id);
       if (date == null || !isOccurrenceDate(entry, date)) continue;
       final key = occurrenceKey(entry.id, date);
       for (final exception in exceptions) {
@@ -140,12 +142,32 @@ class RecurrenceOccurrenceIndex {
     final sourceDate = sourceDateFor(item);
     final exception = _exceptionsByKey[occurrenceKey(seriesId, sourceDate)];
     if (exception?.isSkipped != true) return false;
-    if (item.updatedAt.isAfter(exception!.updatedAt)) return false;
+    if (item.updatedAt.isAfter(exception!.updatedAt) &&
+        !isMaterializedProjection(item, sourceDate)) {
+      return false;
+    }
     // Older versions represented a moved, persisted occurrence as
     // item(source id, moved date) + null skip(source). Keep that valid shape.
     // New deletion markers carry the deleted item id and are unambiguous.
     return dateKey(item.memoryDate) == dateKey(sourceDate) ||
         exception.item?.id == item.id;
+  }
+
+  /// Whether [item] is only a cached copy of what the series projects for
+  /// [sourceDate]. Materialization stamps such a row with the timestamp of the
+  /// launch that wrote it, so a device that materializes history before it
+  /// downloads a deletion marker would otherwise out-rank that marker and push
+  /// the occurrence back to every other device.
+  bool isMaterializedProjection(MemoryItem item, DateTime sourceDate) {
+    final seriesId = item.seriesId;
+    if (seriesId == null || !item.isGeneratedOccurrence) return false;
+    if (dateKey(item.memoryDate) != dateKey(sourceDate)) return false;
+    final series = _seriesById[seriesId];
+    if (series == null || series.originItemId == item.id) return false;
+    return isUntouchedGeneratedOccurrence(
+      item,
+      occurrenceFromSeries(series, sourceDate),
+    );
   }
 
   bool isSuppressedModified(RecurrenceOccurrenceException exception) {
@@ -249,7 +271,7 @@ MemoryItem occurrenceFromSeries(RecurrenceSeries series, DateTime date) {
   final normalized = dateOnly(date);
   final reminder = shiftedReminder(template, normalized);
   return template.copyWith(
-    id: occurrenceId(series.id, normalized),
+    id: occurrenceIdFor(series, normalized),
     memoryDate: normalized,
     status: MemoryStatus.active,
     remindAt: reminder,
@@ -281,6 +303,14 @@ DateTime? shiftedReminder(MemoryItem template, DateTime date) {
   ).subtract(offset);
 }
 
+/// Identity of the occurrence of [series] on [date]. The first occurrence keeps
+/// the id of the record the user created, so links and reminders pointing at it
+/// stay valid even though it is projected like every other occurrence.
+String occurrenceIdFor(RecurrenceSeries series, DateTime date) =>
+    dateKey(date) == dateKey(series.startDate)
+        ? series.originItemId
+        : occurrenceId(series.id, date);
+
 String occurrenceId(String seriesId, DateTime date) =>
     '${seriesId}_${dateKey(date)}';
 
@@ -301,6 +331,41 @@ DateTime? occurrenceDateFromId(String seriesId, String id) {
   return date.year == year && date.month == month && date.day == day
       ? date
       : null;
+}
+
+/// Whether [item] still carries exactly what the series would project for its
+/// date. Such a row is a materialized cache of the projection, never a user
+/// action, so it must not win conflict resolution against a real edit or a
+/// deletion marker.
+bool isUntouchedGeneratedOccurrence(MemoryItem item, MemoryItem expected) {
+  return item.status == MemoryStatus.active &&
+      item.type == expected.type &&
+      item.title == expected.title &&
+      item.body == expected.body &&
+      item.timeMinutes == expected.timeMinutes &&
+      item.remindAt == expected.remindAt &&
+      item.reminderSoundUri == expected.reminderSoundUri &&
+      item.reminderSoundName == expected.reminderSoundName &&
+      item.priority == expected.priority &&
+      _sameStrings(item.tags, expected.tags) &&
+      item.projectId == expected.projectId &&
+      _sameStrings(item.personIds, expected.personIds) &&
+      item.placeId == expected.placeId &&
+      item.audioPath == expected.audioPath &&
+      item.audioDurationSeconds == expected.audioDurationSeconds &&
+      _sameStrings(item.imagePaths, expected.imagePaths) &&
+      item.transcript == expected.transcript &&
+      item.amountMinor == expected.amountMinor &&
+      item.paymentCategory == expected.paymentCategory &&
+      item.birthYear == expected.birthYear;
+}
+
+bool _sameStrings(List<String> left, List<String> right) {
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
 }
 
 int compareOccurrences(MemoryItem left, MemoryItem right) {

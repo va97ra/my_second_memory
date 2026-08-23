@@ -36,10 +36,10 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     state = await _repository.loadAll();
     await _migrateGeneratedCopies();
     await _applyMemoryDeletionTombstones();
-    await _restoreOriginOverrides();
     await _applySkippedOccurrenceDeletes();
+    await _restoreOriginOverrides();
     await _refreshStaleTemplatesFromOrigins();
-    await _materializeHistory(DateTime.now());
+    await _foldOriginRowsIntoSeries();
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -56,11 +56,6 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
       isGeneratedOccurrence: false,
       updatedAt: now,
     );
-    if (_memoryItems.state.any((item) => item.id == linked.id)) {
-      await _memoryItems.update(linked);
-    } else {
-      await _memoryItems.add(linked);
-    }
     final existing = _find(id);
     final series = RecurrenceSeries(
       id: id,
@@ -82,8 +77,21 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     await _repository.upsert(series);
     state = _replace(series);
     _sync?.recurrenceSeriesChanged();
+    // Write the series before retiring the row, so an interruption can never
+    // leave the record with no representation at all.
+    await _retireOriginRow(series);
     unawaited(_reconcileRecurringReminders());
     return series;
+  }
+
+  /// Drops the standalone row a recurring record used to keep beside its
+  /// series. The template is the record now and the first occurrence is
+  /// projected from it, so a row would only be a second copy able to disagree.
+  Future<void> _retireOriginRow(RecurrenceSeries series) async {
+    if (!_memoryItems.state.any((item) => item.id == series.originItemId)) {
+      return;
+    }
+    await _memoryItems.retireRow(series.originItemId);
   }
 
   Future<void> clearFrequency(MemoryItem item) async {
@@ -95,6 +103,23 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     // the process is interrupted during the local cleanup, the next sync must
     // finish the deletion instead of downloading the live cloud row again.
     await _sync?.recurrenceSeriesDeleted(seriesId, now);
+    // The series held the record, so hand it back a standalone row before the
+    // series goes. Without this the record would have no representation left.
+    final series = _find(seriesId);
+    if (series != null) {
+      final restored = item.copyWith(
+        id: series.originItemId,
+        clearSeries: true,
+        clearRepeatRule: true,
+        isGeneratedOccurrence: false,
+        updatedAt: now,
+      );
+      if (_memoryItems.state.any((entry) => entry.id == restored.id)) {
+        await _memoryItems.update(restored);
+      } else {
+        await _memoryItems.add(restored);
+      }
+    }
     for (final occurrence in [..._memoryItems.state]) {
       if (occurrence.seriesId != seriesId) continue;
       await _memoryItems.update(
@@ -174,6 +199,36 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     final now = DateTime.now();
     final cutoff = _sourceDateForItem(edited, occurrenceDate);
     final replacementStart = dateOnly(edited.memoryDate);
+
+    // Re-saving the same "this and future" edit must not split again. Autosave
+    // fires on every pause in typing, and every split used to mint a new series
+    // id, so one record could end up owning a whole chain of series.
+    if (current.originItemId == edited.id &&
+        dateKey(current.startDate) == dateKey(cutoff)) {
+      final linked = edited.copyWith(
+        seriesId: current.id,
+        repeatRule: current.frequency.name,
+        isGeneratedOccurrence: false,
+        updatedAt: now,
+      );
+      final keepsTerm = current.frequency == RecurrenceFrequency.monthly &&
+          linked.type == MemoryType.payment &&
+          linked.paymentCategory == PaymentCategory.subscription.name;
+      final updated = current.copyWith(
+        template: linked,
+        startDate: replacementStart,
+        subscriptionEndDate: keepsTerm ? current.subscriptionEndDate : null,
+        clearSubscriptionEndDate: !keepsTerm,
+        updatedAt: now,
+      );
+      await _repository.upsert(updated);
+      state = _replace(updated);
+      _sync?.recurrenceSeriesChanged();
+      await _retireOriginRow(updated);
+      unawaited(_reconcileRecurringReminders());
+      return updated;
+    }
+
     final ended = current.copyWith(
       endDate: cutoff.subtract(const Duration(days: 1)),
       updatedAt: now,
@@ -205,12 +260,12 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     await _repository.upsertAll([ended, replacement]);
     state = [..._replace(ended), replacement];
     _sync?.recurrenceSeriesChanged();
-    if (_memoryItems.state.any((item) => item.id == linked.id)) {
-      await _memoryItems.update(linked);
-    } else {
-      await _memoryItems.add(linked);
+    await _retireOriginRow(replacement);
+    if (_exceptions.state.any(
+      (exception) => exception.id == recurrenceExceptionId(currentId, cutoff),
+    )) {
+      await _exceptions.delete(currentId, cutoff);
     }
-    await _exceptions.delete(currentId, cutoff);
     unawaited(_reconcileRecurringReminders());
     return replacement;
   }
@@ -224,52 +279,16 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     if (seriesId == null) return;
     final sourceDate = _sourceDateForItem(item, occurrenceDate);
     final series = _find(seriesId);
-    if (series?.originItemId == item.id) {
-      final now = DateTime.now();
-      final exceptionId = recurrenceExceptionId(seriesId, sourceDate);
-      RecurrenceOccurrenceException? existing;
-      for (final exception in _exceptions.state) {
-        if (exception.id == exceptionId) {
-          existing = exception;
-          break;
-        }
-      }
-      final normalized = item.copyWith(
-        seriesId: seriesId,
-        repeatRule: series!.frequency.name,
-        isGeneratedOccurrence: false,
-        updatedAt: now,
-      );
-      await _deleteMiskeyedOverrides(normalized, sourceDate);
-      // The exception is also an explicit marker that this origin was edited
-      // as a single occurrence. Persist it before the origin so a restart can
-      // never mistake that edit for a stale series template.
-      await _exceptions.upsert(
-        RecurrenceOccurrenceException(
-          id: exceptionId,
-          seriesId: seriesId,
-          occurrenceDate: sourceDate,
-          kind: RecurrenceOccurrenceExceptionKind.modified,
-          item: normalized,
-          createdAt: existing?.createdAt ?? now,
-          updatedAt: now,
-        ),
-      );
-      if (_memoryItems.state.any((entry) => entry.id == normalized.id)) {
-        await _memoryItems.update(normalized);
-      } else {
-        await _memoryItems.add(normalized);
-      }
-      unawaited(_reconcileRecurringReminders());
-      return;
-    }
+    // An occurrence override lives in exactly one place: the exception for its
+    // source date. Nothing is materialized any more, so no persisted row can
+    // disagree with the marker about what this occurrence is.
     final normalized = item.copyWith(
-      id: occurrenceId(seriesId, sourceDate),
+      id: series == null
+          ? occurrenceId(seriesId, sourceDate)
+          : occurrenceIdFor(series, sourceDate),
       isGeneratedOccurrence: true,
       updatedAt: DateTime.now(),
     );
-    final isPastOrToday =
-        !dateOnly(item.memoryDate).isAfter(dateOnly(DateTime.now()));
     final exceptionId = recurrenceExceptionId(seriesId, sourceDate);
     RecurrenceOccurrenceException? existing;
     for (final exception in _exceptions.state) {
@@ -278,44 +297,26 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
         break;
       }
     }
-    final survivesMemoryDeletion =
-        !isPastOrToday && existing?.survivesMemoryDeletion == true;
-    if (isPastOrToday) {
-      if (_memoryItems.state.any((entry) => entry.id == normalized.id)) {
-        await _memoryItems.update(normalized);
-      } else {
-        await _memoryItems.add(normalized);
-      }
-      if (dateKey(sourceDate) == dateKey(item.memoryDate)) {
-        await _exceptions.delete(seriesId, sourceDate);
-      } else {
-        final now = DateTime.now();
-        await _exceptions.upsert(
-          RecurrenceOccurrenceException(
-            id: exceptionId,
-            seriesId: seriesId,
-            occurrenceDate: sourceDate,
-            kind: RecurrenceOccurrenceExceptionKind.modified,
-            item: normalized,
-            createdAt: existing?.createdAt ?? now,
-            updatedAt: now,
-          ),
-        );
-      }
-    } else {
-      final now = DateTime.now();
-      await _exceptions.upsert(
-        RecurrenceOccurrenceException(
-          id: exceptionId,
-          seriesId: seriesId,
-          occurrenceDate: sourceDate,
-          kind: RecurrenceOccurrenceExceptionKind.modified,
-          item: normalized,
-          survivesMemoryDeletion: survivesMemoryDeletion,
-          createdAt: existing?.createdAt ?? now,
-          updatedAt: now,
-        ),
-      );
+    final now = DateTime.now();
+    final hasLegacyRow =
+        _memoryItems.state.any((entry) => entry.id == normalized.id);
+    await _exceptions.upsert(
+      RecurrenceOccurrenceException(
+        id: exceptionId,
+        seriesId: seriesId,
+        occurrenceDate: sourceDate,
+        kind: RecurrenceOccurrenceExceptionKind.modified,
+        item: normalized,
+        // Dropping the legacy row below records a deletion tombstone for its
+        // id. This marker takes that row's place, so it has to outlive it.
+        survivesMemoryDeletion:
+            hasLegacyRow || existing?.survivesMemoryDeletion == true,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      ),
+    );
+    if (hasLegacyRow) {
+      await _memoryItems.delete(normalized.id);
     }
     unawaited(_reconcileRecurringReminders());
   }
@@ -441,24 +442,16 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     state = series;
     await _migrateGeneratedCopies();
     await _applyMemoryDeletionTombstones();
-    await _restoreOriginOverrides();
     await _applySkippedOccurrenceDeletes();
+    await _restoreOriginOverrides();
     await _refreshStaleTemplatesFromOrigins();
-    await _materializeHistory(DateTime.now());
+    await _foldOriginRowsIntoSeries();
     unawaited(_reconcileRecurringReminders());
   }
 
-  Future<void> ensureOccurrences() async {
-    await _loadFuture;
-    await _materializeHistory(DateTime.now());
-    await _reconcileRecurringReminders();
-  }
-
-  Future<void> ensureHorizonFor(DateTime visibleMonth) async {
-    await _loadFuture;
-    // Calendar occurrences are projected on demand; no database work is needed.
-  }
-
+  // Everything below repairs records written by older builds. Once
+  // `_foldOriginRowsIntoSeries` has retired the standalone rows these
+  // passes have nothing left to read and become permanent no-ops.
   Future<void> _refreshStaleTemplatesFromOrigins() async {
     if (state.isEmpty || _memoryItems.state.isEmpty) return;
     final itemsById = {
@@ -652,6 +645,55 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     }
   }
 
+  /// Folds the standalone row a recurring record used to keep into its series.
+  /// Whatever that row still says is kept as an override of the first
+  /// occurrence, never promoted to the template: an edit is only ever known to
+  /// apply to the occurrence it was made on, and guessing wider once corrupted
+  /// whole series.
+  Future<void> _foldOriginRowsIntoSeries() async {
+    if (state.isEmpty || _memoryItems.state.isEmpty) return;
+    final rowsById = {for (final item in _memoryItems.state) item.id: item};
+    final overrides = <RecurrenceOccurrenceException>[];
+    for (final series in state) {
+      final row = rowsById[series.originItemId];
+      if (row == null || row.seriesId != series.id) continue;
+      final startDate = dateOnly(series.startDate);
+      final exceptionId = recurrenceExceptionId(series.id, startDate);
+      final hasMarker =
+          _exceptions.state.any((exception) => exception.id == exceptionId);
+      if (hasMarker) continue;
+      if (isUntouchedGeneratedOccurrence(
+        row,
+        occurrenceFromSeries(series, startDate),
+      )) {
+        continue;
+      }
+      overrides.add(
+        RecurrenceOccurrenceException(
+          id: exceptionId,
+          seriesId: series.id,
+          occurrenceDate: startDate,
+          kind: RecurrenceOccurrenceExceptionKind.modified,
+          item: row.copyWith(
+            seriesId: series.id,
+            repeatRule: series.frequency.name,
+            isGeneratedOccurrence: true,
+          ),
+          // The row is dropped below, which tombstones its id. This marker
+          // takes its place, so it has to outlive that tombstone.
+          survivesMemoryDeletion: true,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+        ),
+      );
+    }
+    // Write the overrides before dropping the rows they came from.
+    await _exceptions.upsertAll(overrides);
+    for (final series in state) {
+      await _retireOriginRow(series);
+    }
+  }
+
   DateTime _sourceDateForItem(MemoryItem item, [DateTime? fallback]) {
     final seriesId = item.seriesId;
     if (seriesId == null) return dateOnly(fallback ?? item.memoryDate);
@@ -696,48 +738,15 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
   Future<void> reconcileOriginOverrides() async {
     await _loadFuture;
     await _applyMemoryDeletionTombstones();
-    await _restoreOriginOverrides();
     await _applySkippedOccurrenceDeletes();
   }
 
   Future<void> _applyMemoryDeletionTombstones() async {
     if (_sync == null) return;
     final memoryDeletions = await _sync.memoryDeletions();
-    for (final series in state) {
-      final deletedAt = memoryDeletions[series.originItemId];
-      if (deletedAt == null) continue;
-      final id = recurrenceExceptionId(series.id, series.startDate);
-      RecurrenceOccurrenceException? existing;
-      for (final exception in _exceptions.state) {
-        if (exception.id == id) {
-          existing = exception;
-          break;
-        }
-      }
-      final markerIsNewer = existing != null &&
-          (existing.updatedAt.isAfter(deletedAt) ||
-              existing.item?.updatedAt.isAfter(deletedAt) == true);
-      if (markerIsNewer) {
-        continue;
-      }
-      if (existing?.isSkipped == true &&
-          existing?.item?.id == series.originItemId &&
-          !deletedAt.isAfter(existing!.updatedAt)) {
-        continue;
-      }
-      final origin = series.template.copyWith(
-        id: series.originItemId,
-        seriesId: series.id,
-        repeatRule: series.frequency.name,
-        isGeneratedOccurrence: false,
-      );
-      await _writeDeletionMarker(
-        origin,
-        dateOnly(series.startDate),
-        deletedAt: deletedAt,
-      );
-      await _deleteMiskeyedOverrides(origin, dateOnly(series.startDate));
-    }
+    // A tombstone on the origin id only means its standalone row was
+    // retired when the record became recurring. Deleting the first
+    // occurrence writes an explicit skip marker like any other.
     if (_exceptions.state.isEmpty) return;
     for (final exception in [..._exceptions.state]) {
       final item = exception.item;
@@ -796,6 +805,10 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     if (_exceptions.state.isEmpty || _memoryItems.state.isEmpty) return;
     final memoryDeletions =
         await _sync?.memoryDeletions() ?? const <String, DateTime>{};
+    final occurrenceIndex = RecurrenceOccurrenceIndex(
+      series: state,
+      exceptions: _exceptions.state,
+    );
     for (final exception in [..._exceptions.state]) {
       if (!exception.isSkipped) continue;
       for (final item in [..._memoryItems.state]) {
@@ -811,7 +824,15 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
         final isUnmoved =
             dateKey(item.memoryDate) == dateKey(exception.occurrenceDate);
         if (!explicitlyDeleted && !isUnmoved && !deletionWins) continue;
-        if (!deletionWins && item.updatedAt.isAfter(exception.updatedAt)) {
+        // A row materialized from the series only caches the projection, so
+        // its launch timestamp must never outrank the deletion marker.
+        final isCachedProjection = occurrenceIndex.isMaterializedProjection(
+          item,
+          exception.occurrenceDate,
+        );
+        if (!deletionWins &&
+            !isCachedProjection &&
+            item.updatedAt.isAfter(exception.updatedAt)) {
           continue;
         }
         await _memoryItems.delete(item.id);
@@ -823,17 +844,20 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     final today = dateOnly(DateTime.now());
     final memoryDeletions =
         await _sync?.memoryDeletions() ?? const <String, DateTime>{};
-    final future = [
+    // Every materialized occurrence is legacy now, past ones included: an
+    // edited one becomes its exception, an untouched one goes back to being a
+    // plain projection.
+    final legacy = [
       for (final item in _memoryItems.state)
-        if (item.isGeneratedOccurrence && item.memoryDate.isAfter(today)) item,
+        if (item.isGeneratedOccurrence) item,
     ];
-    if (future.isEmpty) return;
+    if (legacy.isEmpty) return;
     final migrated = <RecurrenceOccurrenceException>[];
     final migratedIds = <String>{};
     final existingExceptions = {
       for (final exception in _exceptions.state) exception.id: exception,
     };
-    for (final item in future) {
+    for (final item in legacy) {
       final seriesId = item.seriesId;
       final series = seriesId == null ? null : _find(seriesId);
       if (series != null) {
@@ -863,7 +887,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
                               dateKey(item.memoryDate)))),
         );
         final hasModifiedCopy = existing != null && !existing.isSkipped;
-        final wasEdited = wasMoved || !_isUntouchedGenerated(item, expected);
+        final wasEdited = wasMoved || !isUntouchedGeneratedOccurrence(item, expected);
         if (!hasDeletionSkip && (hasModifiedCopy || wasEdited)) {
           final markerItem = existing != null &&
                   !item.updatedAt.isAfter(existing.updatedAt) &&
@@ -899,54 +923,11 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     final reset = [
       for (final series in state)
         series.copyWith(
-          clearGeneratedThrough: true,
           historyThrough: today,
         ),
     ];
     await _repository.upsertAll(reset);
     state = reset;
-  }
-
-  Future<void> _materializeHistory(DateTime reference) async {
-    final today = dateOnly(reference);
-    const projection = RecurrenceProjectionService();
-    final additions = <MemoryItem>[];
-    final updatedSeries = <RecurrenceSeries>[];
-    for (final series in state) {
-      if (!series.isEnabled || series.startDate.isAfter(today)) continue;
-      final start = series.historyThrough == null
-          ? dateOnly(series.startDate)
-          : dateOnly(series.historyThrough!).add(const Duration(days: 1));
-      if (start.isAfter(today)) continue;
-      additions.addAll(
-        projection
-            .itemsForRange(
-              start: start,
-              end: today,
-              series: [series],
-              exceptions: _exceptions.state,
-              persistedItems: [..._memoryItems.state, ...additions],
-            )
-            .map((item) => item.copyWith(
-                  createdAt: reference,
-                  updatedAt: reference,
-                )),
-      );
-      updatedSeries.add(
-        series.copyWith(
-          historyThrough: today,
-          clearGeneratedThrough: true,
-          updatedAt: reference,
-        ),
-      );
-    }
-    await _memoryItems.addAll(additions);
-    if (updatedSeries.isNotEmpty) {
-      await _repository.upsertAll(updatedSeries);
-      final replacements = {for (final item in updatedSeries) item.id: item};
-      state = [for (final item in state) replacements[item.id] ?? item];
-      _sync?.recurrenceSeriesChanged();
-    }
   }
 
   Future<void> _reconcileRecurringReminders() async {
@@ -964,37 +945,6 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {
     } catch (_) {
       // A later launch retries Android scheduling.
     }
-  }
-
-  bool _isUntouchedGenerated(MemoryItem item, MemoryItem expected) {
-    return item.status == MemoryStatus.active &&
-        item.type == expected.type &&
-        item.title == expected.title &&
-        item.body == expected.body &&
-        item.timeMinutes == expected.timeMinutes &&
-        item.remindAt == expected.remindAt &&
-        item.reminderSoundUri == expected.reminderSoundUri &&
-        item.reminderSoundName == expected.reminderSoundName &&
-        item.priority == expected.priority &&
-        _sameStrings(item.tags, expected.tags) &&
-        item.projectId == expected.projectId &&
-        _sameStrings(item.personIds, expected.personIds) &&
-        item.placeId == expected.placeId &&
-        item.audioPath == expected.audioPath &&
-        item.audioDurationSeconds == expected.audioDurationSeconds &&
-        _sameStrings(item.imagePaths, expected.imagePaths) &&
-        item.transcript == expected.transcript &&
-        item.amountMinor == expected.amountMinor &&
-        item.paymentCategory == expected.paymentCategory &&
-        item.birthYear == expected.birthYear;
-  }
-
-  bool _sameStrings(List<String> left, List<String> right) {
-    if (left.length != right.length) return false;
-    for (var index = 0; index < left.length; index++) {
-      if (left[index] != right[index]) return false;
-    }
-    return true;
   }
 
   List<RecurrenceSeries> _replace(RecurrenceSeries value) => [
