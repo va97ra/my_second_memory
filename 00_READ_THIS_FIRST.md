@@ -1,8 +1,9 @@
 # Читать первым: стабильные правила проекта
 
 `Ежедневник V2` — local-first Flutter-приложение для личной памяти по датам.
-Перед изменениями также читать [`README.md`](README.md) и
-[`docs/architecture.md`](docs/architecture.md).
+Перед изменениями также читать [`README.md`](README.md),
+[`docs/architecture.md`](docs/architecture.md) и — прежде чем трогать
+повторы — [`docs/recurrence.md`](docs/recurrence.md).
 
 ## Продуктовый смысл
 

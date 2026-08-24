@@ -8,6 +8,7 @@ Local-first Flutter-приложение для личных записей, к�
 - [`00_READ_THIS_FIRST.md`](00_READ_THIS_FIRST.md) — стабильные продуктовые
   правила;
 - [`docs/architecture.md`](docs/architecture.md) — устройство кода и данных;
+- [`docs/recurrence.md`](docs/recurrence.md) — модель повторов и её инвариант;
 - [`docs/sync_setup.md`](docs/sync_setup.md) — настройка зашифрованной
   синхронизации.
 
