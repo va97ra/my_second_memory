@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:async';
 
 import 'package:file_selector/file_selector.dart' as file_selector;
@@ -8,33 +7,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:record/record.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/app_content_font.dart';
-import '../../../core/theme/app_surface_textures.dart';
-import '../../../core/theme/notebook/notebook_background.dart';
-import '../../../core/theme/notebook/notebook_visuals.dart';
-import '../../../shared/ui/notebook_action_button.dart';
-import '../../../shared/ui/notebook_pressable.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../home_feed/ui/widgets/memory_image_viewer.dart';
-import '../../media/data/media_storage.dart';
-import '../../notifications/data/notification_service.dart';
+import 'package:ez_data/ez_data.dart';
 import '../../notifications/ui/reminder_sound_picker.dart';
-import '../../recurrence/domain/recurrence_series.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
-import '../domain/memory_item.dart';
-import '../domain/memory_status.dart';
-import '../domain/memory_type.dart';
 import '../state/memory_items_controller.dart';
 import '../state/memory_item_selectors.dart';
 import '../state/memory_editor_draft.dart';
 import '../state/memory_editor_save_coordinator.dart';
+import '../state/memory_attachment_service.dart';
+import '../state/memory_editor_saver.dart';
 import 'widgets/memory_item_presentation.dart';
+import '../../../navigation/page_turn_navigation.dart';
+import '../../notifications/state/notification_providers.dart';
 
 part 'widgets/memory_item_reminder_widgets.dart';
 part 'widgets/memory_item_metadata_widgets.dart';
@@ -69,8 +62,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   final _formKey = GlobalKey<FormState>();
   final _bodyController = TextEditingController();
   final _amountController = TextEditingController();
-  final _recorder = AudioRecorder();
-  final _mediaStorage = MediaStorage();
+  final _attachments = MemoryAttachmentService();
   final _imagePicker = ImagePicker();
   final _imagePaths = <String>[];
 
@@ -93,7 +85,6 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   bool _editFutureOccurrences = false;
   bool _scopeRequested = false;
   bool _refreshNewSeriesTemplate = false;
-  DateTime? _recordingStartedAt;
   bool _isRecording = false;
   bool _isSaving = false;
   bool _isUndated = false;
@@ -101,6 +92,27 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   bool _allowPop = false;
   bool _isLeaving = false;
   final _saveCoordinator = MemoryEditorSaveCoordinator();
+
+  /// Метка ещё не сохранённого черновика в [_loadedItemId].
+  static const _newRecordKey = '__new__';
+
+  /// Уводит с экрана исчезнувшей записи после того, как кадр дорисован.
+  ///
+  /// Без перелистывания: анимировать нечего, а сама анимация в этот момент
+  /// может быть занята другим переходом и отменила бы уход.
+  void _leaveAfterFrame() {
+    if (_isLeaving) return;
+    _isLeaving = true;
+    _saveCoordinator.discardPending();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/');
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -116,7 +128,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     _saveCoordinator.dispose();
     _bodyController.dispose();
     _amountController.dispose();
-    _recorder.dispose();
+    _attachments.dispose();
     super.dispose();
   }
 
@@ -146,7 +158,9 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                 needsRecurrenceForSubscriptionTerm) &&
             recurrenceLoadState.isLoading)) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: CircularProgressIndicator(key: ValueKey('editor_loading')),
+        ),
       );
     }
     if (loadState.hasError || recurrenceLoadState.hasError) {
@@ -154,6 +168,12 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     }
 
     if (item == null && widget.itemId != null) {
+      // Запись, исчезнувшую при открытом редакторе (её удалили здесь или на
+      // другом устройстве), править больше нечем: экран уходит назад сам.
+      if (_loadedItemId != null && _loadedItemId != _newRecordKey) {
+        _leaveAfterFrame();
+        return const Scaffold(body: SizedBox.shrink());
+      }
       return Scaffold(
         appBar: AppPageAppBar(
           onBack: _goBack,
@@ -261,6 +281,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
             ),
             if (!_isUndated || item != null)
               PopupMenuButton<String>(
+                key: const ValueKey('memory_editor_menu'),
                 tooltip: _isUndated
                     ? strings.delete
                     : Localizations.localeOf(context).languageCode == 'ru'
@@ -418,7 +439,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
 
   String? _currentItemId() {
     return widget.itemId ??
-        (_loadedItemId == null || _loadedItemId == '__new__'
+        (_loadedItemId == null || _loadedItemId == _newRecordKey
             ? null
             : _loadedItemId);
   }

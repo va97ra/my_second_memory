@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/memory_type.dart';
+import 'package:ez_domain/ez_domain.dart';
 
 const memoryAttachmentPreviewHeight = 210.0;
 const memoryAttachmentPreviewMaxWidth = 320.0;

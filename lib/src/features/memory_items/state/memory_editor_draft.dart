@@ -1,5 +1,4 @@
-import '../domain/memory_status.dart';
-import '../domain/memory_type.dart';
+import 'package:ez_domain/ez_domain.dart';
 
 class MemoryEditorDraft {
   const MemoryEditorDraft({

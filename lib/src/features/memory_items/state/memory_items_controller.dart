@@ -2,17 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/async/sequential_task_queue.dart';
-import '../../../data/local_storage/local_storage_scope_provider.dart';
-import '../../security/data/encrypted_json_store.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_data/ez_data.dart';
 import '../../security/state/security_provider.dart';
-import '../../sync/domain/sync_mutation_observer.dart';
-import '../../notifications/data/notification_service.dart';
-import '../../media/data/media_storage.dart';
-import '../data/encrypted_memory_repository.dart';
-import '../data/memory_repository.dart';
-import '../domain/memory_item.dart';
-import '../domain/memory_status.dart';
+import 'package:ez_domain/ez_domain.dart';
+import '../../sync/state/sync_mutation_observer_provider.dart';
+import '../../../app/local_storage_scope_provider.dart';
+import '../../notifications/state/notification_providers.dart';
 
 final plainMemoryRepositoryProvider = Provider<MemoryRepository>((ref) {
   return ref.watch(localStorageScopeProvider).memoryRepository;
@@ -73,6 +69,12 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     state = _sort(items);
     unawaited(_safeReconcile());
   }
+
+  /// Записи, лежащие в хранилище прямо сейчас.
+  ///
+  /// Вхождение повтора обычно проецируется и строки не имеет, поэтому тем,
+  /// кто сохраняет правку, нужно уметь отличить одно от другого.
+  List<MemoryItem> get items => state;
 
   Future<void> add(MemoryItem item) async {
     await _loadFuture;

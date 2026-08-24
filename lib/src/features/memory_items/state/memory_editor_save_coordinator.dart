@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import '../../../core/async/sequential_task_queue.dart';
+import 'package:ez_core/ez_core.dart';
 
 class MemoryEditorSaveCoordinator {
   MemoryEditorSaveCoordinator({

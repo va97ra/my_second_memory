@@ -3,22 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/app_content_font.dart';
-import '../../../core/theme/app_surface_palette.dart';
-import '../../../core/theme/app_surface_textures.dart';
-import '../../../core/theme/notebook/notebook_visuals.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../home_feed/ui/widgets/memory_image_preview.dart';
 import '../../home_feed/ui/widgets/memory_image_viewer.dart';
 import '../../voice_notes/ui/widgets/voice_note_player.dart';
 import '../state/memory_items_controller.dart';
 import '../state/memory_item_selectors.dart';
-import '../domain/memory_type.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 import 'widgets/memory_item_presentation.dart';
+import '../../../navigation/page_turn_navigation.dart';
 
-class MemoryItemViewScreen extends ConsumerWidget {
+class MemoryItemViewScreen extends ConsumerStatefulWidget {
   const MemoryItemViewScreen({
     required this.itemId,
     super.key,
@@ -27,7 +25,23 @@ class MemoryItemViewScreen extends ConsumerWidget {
   final String itemId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MemoryItemViewScreen> createState() =>
+      _MemoryItemViewScreenState();
+}
+
+class _MemoryItemViewScreenState extends ConsumerState<MemoryItemViewScreen> {
+  /// Показывали ли эту запись хоть раз.
+  ///
+  /// Запись, которую удалили при открытом просмотре, — не ошибка адреса:
+  /// смотреть больше нечего, и экран уходит назад сам. Показать вместо неё
+  /// «Запись не найдена» значило бы оставить человека наедине с пустой
+  /// страницей там, где он только что был.
+  bool _wasShown = false;
+  bool _isLeaving = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final itemId = widget.itemId;
     final strings = AppStrings.of(context);
     final loadState = ref.watch(memoryItemsLoadProvider);
     final recurrenceLoadState = ref.watch(recurrenceLoadProvider);
@@ -36,7 +50,9 @@ class MemoryItemViewScreen extends ConsumerWidget {
     if (loadState.isLoading ||
         (item == null && recurrenceLoadState.isLoading)) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: CircularProgressIndicator(key: ValueKey('view_loading')),
+        ),
       );
     }
     if (loadState.hasError || recurrenceLoadState.hasError) {
@@ -44,6 +60,12 @@ class MemoryItemViewScreen extends ConsumerWidget {
     }
 
     if (item == null) {
+      if (_wasShown) {
+        _leave(context);
+        return const Scaffold(body: SizedBox.shrink());
+      }
+      // Сюда попадают только по несуществующему адресу — например, из старого
+      // уведомления. Тут сообщение уместно.
       return Scaffold(
         appBar: AppPageAppBar(
           onBack: () => _goBack(context),
@@ -52,6 +74,7 @@ class MemoryItemViewScreen extends ConsumerWidget {
         body: Center(child: Text(strings.recordNotFound)),
       );
     }
+    _wasShown = true;
 
     final locale = Localizations.localeOf(context).languageCode;
     final notebook = NotebookVisuals.maybeOf(context);
@@ -299,6 +322,25 @@ class MemoryItemViewScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Уводит с экрана исчезнувшей записи после того, как кадр дорисован:
+  /// менять маршрут прямо во время построения нельзя.
+  ///
+  /// Уходит без перелистывания. Страницу, которой больше нет, не показывают
+  /// уезжающей, а главное — перелистывание в этот момент уже занято возвратом
+  /// из редактора, и второй переход был бы отменён вместе с самим уходом.
+  void _leave(BuildContext context) {
+    if (_isLeaving) return;
+    _isLeaving = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/');
+      }
+    });
   }
 
   void _goBack(BuildContext context) {

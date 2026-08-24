@@ -47,11 +47,11 @@ extension _MemoryItemInitialization on _MemoryItemDetailScreenState {
   }
 
   void _initializeNew() {
-    if (_loadedItemId == '__new__') {
+    if (_loadedItemId == _MemoryItemDetailScreenState._newRecordKey) {
       return;
     }
     final date = widget.initialDate ?? DateTime.now();
-    _loadedItemId = '__new__';
+    _loadedItemId = _MemoryItemDetailScreenState._newRecordKey;
     _bodyController.clear();
     _memoryDate = DateTime(date.year, date.month, date.day);
     _originalOccurrenceDate = null;

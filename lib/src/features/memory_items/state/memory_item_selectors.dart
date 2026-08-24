@@ -1,10 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../domain/memory_item.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'memory_items_controller.dart';
-import '../../recurrence/domain/recurrence_occurrence_exception.dart';
-import '../../recurrence/domain/recurrence_projection_service.dart';
-import '../../recurrence/domain/recurrence_series.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 
 class MemoryItemsIndex {

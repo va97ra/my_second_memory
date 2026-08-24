@@ -93,160 +93,28 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
   }
 
   Future<void> _persistSnapshot(MemoryEditorDraft snapshot) async {
-    final item = _readItem();
-    final recurrenceFrequency = snapshot.repeatRule == null
-        ? null
-        : RecurrenceFrequency.values.byName(snapshot.repeatRule!);
-    if (item == null) {
-      final created = MemoryItem(
-        id: snapshot.savedAt.microsecondsSinceEpoch.toString(),
-        type: snapshot.type,
-        title: snapshot.title,
-        body: snapshot.body,
-        timeMinutes: snapshot.timeMinutes,
-        remindAt: snapshot.remindAt,
-        reminderSoundUri: snapshot.reminderSoundUri,
-        reminderSoundName: snapshot.reminderSoundName,
-        memoryDate: snapshot.memoryDate,
-        createdAt: snapshot.savedAt,
-        updatedAt: snapshot.savedAt,
-        status: snapshot.status,
-        audioPath: snapshot.audioPath,
-        audioDurationSeconds: snapshot.audioDurationSeconds,
-        imagePaths: snapshot.imagePaths,
-        repeatRule: snapshot.repeatRule,
-        amountMinor: snapshot.amountMinor,
-        paymentCategory: snapshot.paymentCategory,
-        birthYear: snapshot.birthYear,
-        isUndated: snapshot.isUndated,
-      );
-      await ref.read(memoryItemsControllerProvider.notifier).add(created);
-      if (recurrenceFrequency != null) {
-        final series = await ref
-            .read(recurrenceSeriesControllerProvider.notifier)
-            .setFrequency(created, recurrenceFrequency);
-        await _persistSubscriptionTerm(
-          snapshot,
-          series.id,
-          updatesSeries: true,
-        );
-      }
-      _loadedItemId = created.id;
-      _refreshNewSeriesTemplate = true;
-      _scopeRequested = true;
-
-      if (mounted && widget.itemId == null) {
-        context.replace(
-          '/memory/item/${Uri.encodeComponent(created.id)}?new=1',
-        );
-      }
-      return;
-    }
-
-    final updated = item.copyWith(
-      type: snapshot.type,
-      title: snapshot.title,
-      body: snapshot.body,
-      timeMinutes: snapshot.timeMinutes,
-      clearTime: snapshot.timeMinutes == null,
-      remindAt: snapshot.remindAt,
-      clearReminder: snapshot.remindAt == null,
-      reminderSoundUri: snapshot.reminderSoundUri,
-      reminderSoundName: snapshot.reminderSoundName,
-      memoryDate: snapshot.memoryDate,
-      status: snapshot.status,
-      audioPath: snapshot.audioPath,
-      audioDurationSeconds: snapshot.audioDurationSeconds,
-      clearAudio: snapshot.audioPath == null,
-      imagePaths: snapshot.imagePaths,
-      repeatRule: snapshot.repeatRule,
-      clearRepeatRule: snapshot.repeatRule == null,
-      amountMinor: snapshot.amountMinor,
-      clearAmount: snapshot.amountMinor == null,
-      paymentCategory: snapshot.paymentCategory,
-      clearPaymentCategory: snapshot.paymentCategory == null,
-      birthYear: snapshot.birthYear,
-      clearBirthYear: snapshot.birthYear == null,
-      isUndated: snapshot.isUndated,
-      updatedAt: snapshot.savedAt,
-    );
-    final persisted = ref
-        .read(memoryItemsControllerProvider)
-        .any((entry) => entry.id == item.id);
-    String? savedSeriesId = updated.seriesId;
-    var updatesSeries = false;
-    if (recurrenceFrequency != null) {
-      if (_refreshNewSeriesTemplate && item.seriesId != null) {
-        if (persisted) {
-          await ref
-              .read(memoryItemsControllerProvider.notifier)
-              .update(updated);
-        }
-        final series = await ref
-            .read(recurrenceSeriesControllerProvider.notifier)
-            .setFrequency(updated, recurrenceFrequency);
-        savedSeriesId = series.id;
-        updatesSeries = true;
-      } else if (item.repeatRule != recurrenceFrequency.name ||
-          item.seriesId == null) {
-        if (persisted) {
-          await ref
-              .read(memoryItemsControllerProvider.notifier)
-              .update(updated);
-        }
-        final series = await ref
-            .read(recurrenceSeriesControllerProvider.notifier)
-            .setFrequency(updated, recurrenceFrequency);
-        savedSeriesId = series.id;
-        updatesSeries = true;
-      } else if (_editFutureOccurrences) {
-        final series = await ref
-            .read(recurrenceSeriesControllerProvider.notifier)
-            .applyToFuture(
-              updated,
-              occurrenceDate: _originalOccurrenceDate,
-            );
-        savedSeriesId = series?.id;
-        updatesSeries = series != null;
-      } else if (!persisted || item.isGeneratedOccurrence) {
-        await ref
-            .read(recurrenceSeriesControllerProvider.notifier)
-            .saveOccurrenceOverride(
-              updated,
-              occurrenceDate: _originalOccurrenceDate,
-            );
-      } else {
-        await ref
-            .read(recurrenceSeriesControllerProvider.notifier)
-            .saveOccurrenceOverride(
-              updated,
-              occurrenceDate: _originalOccurrenceDate,
-            );
-      }
-    } else {
-      await ref.read(memoryItemsControllerProvider.notifier).update(updated);
-    }
-    await _persistSubscriptionTerm(
+    final outcome = await MemoryEditorSaver(
+      items: ref.read(memoryItemsControllerProvider.notifier),
+      series: ref.read(recurrenceSeriesControllerProvider.notifier),
+    ).persist(
       snapshot,
-      savedSeriesId,
-      updatesSeries: updatesSeries,
+      existing: _readItem(),
+      refreshSeriesTemplate: _refreshNewSeriesTemplate,
+      editFutureOccurrences: _editFutureOccurrences,
+      originalOccurrenceDate: _originalOccurrenceDate,
     );
-  }
 
-  Future<void> _persistSubscriptionTerm(
-    MemoryEditorDraft snapshot,
-    String? seriesId, {
-    required bool updatesSeries,
-  }) async {
-    if (seriesId == null ||
-        snapshot.repeatRule == null ||
-        !updatesSeries ||
-        !snapshot.subscriptionTermDirty) {
-      return;
+    if (!outcome.created) return;
+    // Первое сохранение превращает черновик в запись: дальше редактор правит
+    // её по идентификатору, а не заводит вторую.
+    _loadedItemId = outcome.item.id;
+    _refreshNewSeriesTemplate = true;
+    _scopeRequested = true;
+    if (mounted && widget.itemId == null) {
+      context.replace(
+        '/memory/item/${Uri.encodeComponent(outcome.item.id)}?new=1',
+      );
     }
-    await ref
-        .read(recurrenceSeriesControllerProvider.notifier)
-        .setTermMonths(seriesId, snapshot.subscriptionTermMonths);
   }
 
   bool _hasContent() {

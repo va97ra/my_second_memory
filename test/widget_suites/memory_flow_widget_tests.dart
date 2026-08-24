@@ -91,6 +91,46 @@ void registerMemoryFlowWidgetTests() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('deleting a record leaves no empty page behind', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 720));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      testProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await openTab(tester, 'feed');
+
+    // Лента -> просмотр -> редактор: под редактором в стеке остаётся экран
+    // просмотра той же записи.
+    await tester.tap(find.text('План на сегодня'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.edit_rounded));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('memory_editor_menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Удалить').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Удалить').last);
+    await tester.pumpAndSettle();
+
+    // Возврат не должен упереться в страницу удалённой записи.
+    expect(find.text('Запись не найдена'), findsNothing);
+    expect(find.byKey(const ValueKey('memory_readonly_view')), findsNothing);
+    expect(find.text('План на сегодня'), findsNothing);
+    expect(find.byKey(const ValueKey('feed_section_day')), findsWidgets);
+  });
+
   testWidgets('readonly image opens fullscreen viewer', (tester) async {
     await tester.binding.setSurfaceSize(const Size(430, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));

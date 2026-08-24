@@ -257,21 +257,9 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
 
   Future<void> _pickImage() async {
     final file = kIsWeb ? await _pickImageForWeb() : await _pickImageForIo();
-    if (file == null) {
-      return;
-    }
-
-    if (kIsWeb) {
-      final bytes = await file.readAsBytes();
-      final mimeType = file.mimeType ?? _mimeTypeForName(file.name);
-      final dataUrl = 'data:$mimeType;base64,${base64Encode(bytes)}';
-      _update(() => _imagePaths.add(dataUrl));
-      _scheduleAutosave();
-      return;
-    }
-
-    final savedPath = await _mediaStorage.saveImage(file);
-    _update(() => _imagePaths.add(savedPath));
+    if (file == null) return;
+    final stored = await _attachments.importImage(file);
+    _update(() => _imagePaths.add(stored));
     _scheduleAutosave();
   }
 
@@ -313,47 +301,19 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
   }
 
   Future<void> _startVoice() async {
-    final hasPermission = await _recorder.hasPermission();
-    if (!hasPermission) {
-      return;
-    }
-
-    final path = await _mediaStorage.createVoicePath();
-    await _recorder.start(const RecordConfig(), path: path);
-    _update(() {
-      _recordingStartedAt = DateTime.now();
-      _isRecording = true;
-    });
+    if (!await _attachments.startVoice()) return;
+    _update(() => _isRecording = true);
   }
 
   Future<void> _stopAndSaveVoice() async {
-    final path = await _recorder.stop();
-    final startedAt = _recordingStartedAt;
-    final duration =
-        startedAt == null ? 0 : DateTime.now().difference(startedAt).inSeconds;
-
+    final recording = await _attachments.stopVoice();
     _update(() {
-      _recordingStartedAt = null;
       _isRecording = false;
-      if (path != null) {
-        _audioPath = path;
-        _audioDurationSeconds = duration;
+      if (recording != null) {
+        _audioPath = recording.path;
+        _audioDurationSeconds = recording.durationSeconds;
       }
     });
     _scheduleAutosave();
-  }
-
-  String _mimeTypeForName(String name) {
-    final lower = name.toLowerCase();
-    if (lower.endsWith('.png')) {
-      return 'image/png';
-    }
-    if (lower.endsWith('.gif')) {
-      return 'image/gif';
-    }
-    if (lower.endsWith('.webp')) {
-      return 'image/webp';
-    }
-    return 'image/jpeg';
   }
 }

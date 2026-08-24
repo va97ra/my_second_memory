@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../shared/ui/app_shell.dart';
-import '../../../shared/ui/empty_state.dart';
+import 'package:ez_core/ez_core.dart';
+import '../../../app/app_shell.dart';
+import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
-import '../domain/memory_type.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../state/memory_items_controller.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 import '../state/memory_item_selectors.dart';
+import '../../../navigation/page_turn_navigation.dart';
 
 class MemoryLibraryScreen extends ConsumerStatefulWidget {
   const MemoryLibraryScreen({super.key});
@@ -31,7 +32,7 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
     }).toList();
 
     return AppShell(
-      currentIndex: 3,
+      activeDestinationId: 'settings',
       child: WarmGradientBackground(
         child: CustomScrollView(
           slivers: [
