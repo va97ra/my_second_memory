@@ -6,6 +6,7 @@
 library;
 
 export 'src/components/empty_state.dart';
+export 'src/components/labeled_divider.dart';
 export 'src/components/nav_bar/app_nav_bar.dart';
 export 'src/components/nav_bar/nav_bar_item.dart';
 export 'src/components/nav_bar/nav_bar_metrics.dart';
@@ -15,6 +16,7 @@ export 'src/components/notebook_icon_button.dart';
 export 'src/components/notebook_page_header.dart';
 export 'src/components/notebook_pressable.dart';
 export 'src/components/page_turn/page_turn_frame.dart';
+export 'src/components/warm_gradient_background.dart';
 export 'src/components/page_turn/page_turn_geometry.dart'
     show PageTurnGeometry, PageTurnGeometryPoint;
 export 'src/themes/app_theme.dart';

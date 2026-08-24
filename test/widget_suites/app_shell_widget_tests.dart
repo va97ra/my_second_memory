@@ -44,6 +44,54 @@ void registerAppShellWidgetTests() {
     );
   });
 
+  testWidgets('the panel survives the first autosave of a note',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _FeedMemoryRepository();
+
+    await tester.pumpWidget(
+      testProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(repository),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('bottom_add_note')), findsOneWidget);
+
+    // Первая же буква запускает автосохранение: черновик становится записью,
+    // и адрес экрана меняется. Панель обязана это пережить - человек с неё не
+    // уходил.
+    await tester.enterText(
+      find.byKey(const ValueKey('record_editor_text')),
+      'Проверка панели',
+    );
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    expect(repository.savedItems.any((item) => item.isUndated), isTrue);
+    for (final id in ['calendar', 'feed', 'add_note', 'accounts', 'settings']) {
+      expect(
+        find.byKey(ValueKey('bottom_$id')),
+        findsOneWidget,
+        reason: 'кнопка $id пропала после автосохранения',
+      );
+    }
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      2,
+    );
+  });
+
   testWidgets('note editor keeps the panel and highlights its button',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));

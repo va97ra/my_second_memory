@@ -92,8 +92,11 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
     _refreshNewSeriesTemplate = true;
     _scopeRequested = true;
     if (mounted && widget.itemId == null) {
+      // Записку заводят с панели, поэтому новый адрес несёт её пункт: иначе
+      // панель исчезнет в тот момент, когда автосохранение сменит адрес.
+      final panel = widget.createUndated ? '&panel=add_note' : '';
       context.replace(
-        '/memory/item/${Uri.encodeComponent(outcome.item.id)}?new=1',
+        '/memory/item/${Uri.encodeComponent(outcome.item.id)}?new=1$panel',
       );
     }
   }

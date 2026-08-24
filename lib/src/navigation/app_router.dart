@@ -1,21 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/accounts/ui/accounts_screen.dart';
-import '../../features/backup/ui/backup_screen.dart';
-import '../../features/calendar/ui/calendar_screen.dart';
-import '../../features/calendar/ui/calendar_day_screen.dart';
-import '../../features/calendar/ui/holiday_detail_screen.dart';
-import '../../features/home_feed/ui/home_feed_screen.dart';
-import '../../features/memory_items/ui/memory_item_detail_screen.dart';
-import '../../features/memory_items/ui/memory_library_screen.dart';
-import '../../features/memory_items/ui/memory_item_view_screen.dart';
-import '../../features/security/ui/security_screen.dart';
-import '../../features/settings/ui/settings_screen.dart';
-import '../../features/sync/ui/sync_screen.dart';
-import '../../features/shift_schedules/ui/shift_schedules_screen.dart';
-import '../../app/app_shell.dart';
-import '../../shared/ui/page_turn_transition.dart';
+import '../features/accounts/ui/accounts_screen.dart';
+import '../features/backup/ui/backup_screen.dart';
+import '../features/calendar/ui/calendar_screen.dart';
+import '../features/calendar/ui/calendar_day_screen.dart';
+import '../features/calendar/ui/holiday_detail_screen.dart';
+import '../features/home_feed/ui/home_feed_screen.dart';
+import '../features/memory_items/ui/memory_item_detail_screen.dart';
+import '../features/memory_items/ui/memory_library_screen.dart';
+import '../features/memory_items/ui/memory_item_view_screen.dart';
+import '../features/security/ui/security_screen.dart';
+import '../features/settings/ui/settings_screen.dart';
+import '../features/sync/ui/sync_screen.dart';
+import '../features/shift_schedules/ui/shift_schedules_screen.dart';
+import '../app/app_shell.dart';
+import '../navigation/page_turn_transition.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -88,14 +88,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/memory/item/:id',
         pageBuilder: (context, state) {
+          final editor = MemoryItemDetailScreen(
+            itemId: state.pathParameters['id'] ?? '',
+            newlyCreated: state.uri.queryParameters['new'] == '1',
+          );
+          // Экран, открытый с нижней панели, сохраняет её и после того, как
+          // черновик превратился в запись и адрес сменился: для человека это
+          // тот же экран, с которого он не уходил.
+          final panel = state.uri.queryParameters['panel'];
           return pageTurnPage(
             context: context,
             state: state,
             interceptBack: false,
-            child: MemoryItemDetailScreen(
-              itemId: state.pathParameters['id'] ?? '',
-              newlyCreated: state.uri.queryParameters['new'] == '1',
-            ),
+            child: panel == null
+                ? editor
+                : AppShell(activeDestinationId: panel, child: editor),
           );
         },
       ),

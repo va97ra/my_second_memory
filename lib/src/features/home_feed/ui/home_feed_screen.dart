@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
-import '../../../shared/ui/screen_chrome.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../../memory_items/state/memory_items_controller.dart';

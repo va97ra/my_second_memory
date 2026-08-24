@@ -11,6 +11,7 @@ import '../../memory_items/state/memory_items_controller.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
 import 'package:ez_data/ez_data.dart';
+import 'package:ez_design/ez_design.dart';
 
 class BackupScreen extends ConsumerStatefulWidget {
   const BackupScreen({super.key});
