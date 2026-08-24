@@ -179,8 +179,10 @@ class _TestSyncController extends SyncController {
           remote: null,
           keyStore: SyncKeyStore(),
           tombstones: const SyncTombstoneStore(),
-          readMemoryItems: () async => <MemoryItem>[],
-          replaceMemoryItems: (_) async {},
+          data: SyncDataSources(
+            readMemoryItems: () async => <MemoryItem>[],
+            replaceMemoryItems: (_) async {},
+          ),
         ) {
     state = initialState;
   }

@@ -14,8 +14,10 @@ void main() {
       remote: remote,
       keyStore: _EmptyKeyStore(),
       tombstones: const SyncTombstoneStore(),
-      readMemoryItems: () async => <MemoryItem>[],
-      replaceMemoryItems: (_) async {},
+      data: SyncDataSources(
+        readMemoryItems: () async => <MemoryItem>[],
+        replaceMemoryItems: (_) async {},
+      ),
     );
     addTearDown(() {
       controller.dispose();
@@ -44,8 +46,10 @@ void main() {
       remote: remote,
       keyStore: _EmptyKeyStore(),
       tombstones: const SyncTombstoneStore(),
-      readMemoryItems: () async => <MemoryItem>[],
-      replaceMemoryItems: (_) async {},
+      data: SyncDataSources(
+        readMemoryItems: () async => <MemoryItem>[],
+        replaceMemoryItems: (_) async {},
+      ),
     );
     addTearDown(() {
       controller.dispose();
@@ -72,8 +76,10 @@ void main() {
       keyStore: _ConnectedKeyStore(),
       tombstones: const SyncTombstoneStore(),
       canAccessLocalData: () => localDataAvailable,
-      readMemoryItems: () async => <MemoryItem>[],
-      replaceMemoryItems: (_) async {},
+      data: SyncDataSources(
+        readMemoryItems: () async => <MemoryItem>[],
+        replaceMemoryItems: (_) async {},
+      ),
     );
     addTearDown(controller.dispose);
 
@@ -97,8 +103,10 @@ void main() {
       remote: remote,
       keyStore: _EmptyKeyStore(),
       tombstones: tombstones,
-      readMemoryItems: () async => <MemoryItem>[],
-      replaceMemoryItems: (_) async {},
+      data: SyncDataSources(
+        readMemoryItems: () async => <MemoryItem>[],
+        replaceMemoryItems: (_) async {},
+      ),
     );
     addTearDown(() {
       controller.dispose();
@@ -127,8 +135,10 @@ void main() {
       keyStore: _ConnectedKeyStore(),
       tombstones: const SyncTombstoneStore(),
       canAccessLocalData: () => localDataAvailable,
-      readMemoryItems: () async => <MemoryItem>[],
-      replaceMemoryItems: (_) async {},
+      data: SyncDataSources(
+        readMemoryItems: () async => <MemoryItem>[],
+        replaceMemoryItems: (_) async {},
+      ),
     );
     addTearDown(() {
       controller.dispose();
