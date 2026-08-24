@@ -1,7 +1,8 @@
-import 'package:ezhednevnik_v2/src/core/theme/app_content_font.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ezhednevnik_v2/src/app/theme/app_content_font_controller.dart';
 
 void main() {
   test('content font choice is saved and restored', () async {

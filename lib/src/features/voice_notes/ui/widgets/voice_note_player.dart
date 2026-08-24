@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 
-import '../../../../core/localization/app_strings.dart';
+import 'package:ez_core/ez_core.dart';
 import '../../state/voice_note_playback_controller.dart';
 
 class VoiceNotePlayer extends ConsumerWidget {

@@ -1,4 +1,4 @@
-import 'package:ezhednevnik_v2/src/features/shift_schedules/domain/shift_schedule.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

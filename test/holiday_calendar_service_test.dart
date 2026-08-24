@@ -1,4 +1,4 @@
-import 'package:ezhednevnik_v2/src/features/calendar/domain/holiday_calendar_service.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

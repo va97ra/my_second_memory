@@ -1,6 +1,4 @@
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_series.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 

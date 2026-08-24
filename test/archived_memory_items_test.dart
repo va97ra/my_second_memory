@@ -1,9 +1,5 @@
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_status.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_item_selectors.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_occurrence_exception.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_series.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

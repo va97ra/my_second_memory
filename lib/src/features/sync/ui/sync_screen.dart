@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/notebook/notebook_background.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../state/sync_controller.dart';
 

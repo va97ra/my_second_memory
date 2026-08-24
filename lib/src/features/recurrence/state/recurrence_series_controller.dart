@@ -2,16 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../memory_items/domain/memory_item.dart';
-import '../../memory_items/domain/memory_status.dart';
-import '../../memory_items/domain/memory_type.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../../memory_items/state/memory_items_controller.dart';
-import '../../notifications/data/notification_service.dart';
-import '../../sync/domain/sync_mutation_observer.dart';
-import '../data/recurrence_repository.dart';
-import '../domain/recurrence_occurrence_exception.dart';
-import '../domain/recurrence_projection_service.dart';
-import '../domain/recurrence_series.dart';
+import 'package:ez_data/ez_data.dart';
 import 'recurrence_exception_controller.dart';
 
 class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>> {

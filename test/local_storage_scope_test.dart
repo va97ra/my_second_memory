@@ -1,14 +1,7 @@
-import 'package:ezhednevnik_v2/src/data/local_storage/local_storage_scope.dart';
-import 'package:ezhednevnik_v2/src/data/local_storage/local_storage_scope_provider.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/data/local_memory_repository.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/data/memory_repository.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/data/local_recurrence_exception_repository.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/data/local_recurrence_repository.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/data/recurrence_exception_repository.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/data/recurrence_repository.dart';
-import 'package:ezhednevnik_v2/src/features/security/data/secure_entity_backend.dart';
+import 'package:ez_data/ez_data.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ezhednevnik_v2/src/app/local_storage_scope_provider.dart';
 
 void main() {
   test('ProviderContainer closes its local storage scope exactly once',

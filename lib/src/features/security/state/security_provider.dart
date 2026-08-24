@@ -1,9 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/local_storage/local_storage_scope_provider.dart';
-import '../data/app_cipher.dart';
-import '../data/security_data_migration_service.dart';
-import '../data/security_service.dart';
+import 'package:ez_data/ez_data.dart';
+import '../../../app/local_storage_scope_provider.dart';
 
 final securityServiceProvider = Provider<SecurityService>(
   (ref) => SecurityService(),

@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/notebook/notebook_background.dart';
-import '../../../shared/ui/notebook_icon_button.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../domain/account_item.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../state/accounts_controller.dart';
 
 class AccountsScreen extends ConsumerWidget {

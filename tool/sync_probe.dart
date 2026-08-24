@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
-import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ez_data/ez_data.dart';
 
 Future<void> main(List<String> arguments) async {
   if (arguments.length < 3 || !{'encode', 'decode'}.contains(arguments.first)) {

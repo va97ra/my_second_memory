@@ -1,7 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ezhednevnik_v2/src/features/security/data/security_service.dart';
-import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';
+import 'package:ez_data/ez_data.dart';
 
 void main() {
   test('app cipher encrypts and restores binary media', () async {

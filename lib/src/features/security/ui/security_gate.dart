@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/notebook/notebook_background.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import '../state/security_provider.dart';
 
 part 'security_gate_views.dart';
@@ -51,7 +51,11 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
     final session = ref.watch(securitySessionProvider);
 
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(key: ValueKey('gate_loading')),
+        ),
+      );
     }
 
     if (_startupError != null) {

@@ -7,8 +7,9 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_theme.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:ezhednevnik_v2/src/shared/ui/page_turn_transition.dart';
+import 'package:ezhednevnik_v2/src/navigation/page_turn_navigation.dart';
 
 void main() {
   test('page geometry keeps the left-bound sheet length while curling', () {

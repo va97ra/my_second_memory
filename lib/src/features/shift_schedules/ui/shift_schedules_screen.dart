@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/notebook/notebook_background.dart';
-import '../../../shared/ui/empty_state.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../../notifications/data/notification_service.dart';
+import 'package:ez_data/ez_data.dart';
 import '../../notifications/ui/reminder_sound_picker.dart';
-import '../domain/shift_schedule.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../state/shift_schedules_controller.dart';
+import '../../notifications/state/notification_providers.dart';
 
 part 'widgets/shift_schedule_tile.dart';
 part 'widgets/shift_schedule_editor.dart';

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_content_font.dart';
-import '../../../../shared/ui/notebook_pressable.dart';
+import 'package:ez_design/ez_design.dart';
 
 Future<AppContentFontStyle?> showContentFontPickerSheet({
   required BuildContext context,

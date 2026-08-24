@@ -2,17 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../accounts/domain/account_item.dart';
-import '../../memory_items/domain/memory_item.dart';
-import '../../recurrence/domain/recurrence_occurrence_exception.dart';
-import '../../recurrence/domain/recurrence_series.dart';
-import '../../security/data/app_cipher.dart';
-import '../../shift_schedules/domain/shift_schedule.dart';
-import '../data/sync_local_store.dart';
-import '../data/sync_remote_store.dart';
-import '../data/sync_vault_crypto.dart';
-import '../domain/app_sync_engine.dart';
-import '../domain/sync_models.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ez_data/ez_data.dart';
 import 'sync_state.dart';
 
 class SyncController extends StateNotifier<SyncState> {

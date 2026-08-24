@@ -1,5 +1,5 @@
-import '../../security/data/app_cipher.dart';
-import '../domain/sync_models.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
 
 enum SyncStatus {
   unconfigured,

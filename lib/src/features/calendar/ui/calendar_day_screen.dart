@@ -2,19 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/notebook/notebook_background.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../domain/holiday_calendar_service.dart';
-import '../domain/holiday_occurrence.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../state/calendar_preferences_controller.dart';
 import '../../home_feed/ui/widgets/memory_item_card.dart';
-import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../memory_items/state/memory_item_selectors.dart';
 import '../../recurrence/state/recurrence_controller.dart';
-import '../../shift_schedules/domain/shift_schedule.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
+import '../state/holiday_providers.dart';
+import '../../../navigation/page_turn_navigation.dart';
 
 class CalendarDayScreen extends ConsumerWidget {
   const CalendarDayScreen({required this.date, super.key});

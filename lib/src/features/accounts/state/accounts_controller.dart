@@ -1,13 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/local_storage/local_storage_scope_provider.dart';
-import '../../security/data/encrypted_json_store.dart';
+import 'package:ez_data/ez_data.dart';
 import '../../security/state/security_provider.dart';
-import '../../sync/domain/sync_mutation_observer.dart';
-import '../data/account_repository.dart';
-import '../data/encrypted_account_repository.dart';
-import '../data/local_account_repository.dart';
-import '../domain/account_item.dart';
+import 'package:ez_domain/ez_domain.dart';
+import '../../sync/state/sync_mutation_observer_provider.dart';
+import '../../../app/local_storage_scope_provider.dart';
 
 final accountRepositoryProvider = Provider<AccountRepository>((ref) {
   final session = ref.watch(securitySessionProvider);

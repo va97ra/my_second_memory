@@ -5,22 +5,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/localization/app_locale_controller.dart';
-import 'core/localization/app_strings.dart';
+import 'package:ez_core/ez_core.dart';
 import 'core/routing/app_router.dart';
-import 'core/theme/app_content_font.dart';
-import 'core/theme/app_theme_controller.dart';
-import 'core/theme/app_theme_style.dart';
-import 'core/theme/app_surface_palette.dart';
-import 'core/theme/notebook/notebook_background.dart';
-import 'core/theme/notebook/notebook_theme.dart';
+import 'package:ez_design/ez_design.dart';
 import 'features/security/ui/security_gate.dart';
 import 'features/security/state/security_provider.dart';
 import 'features/sync/state/sync_controller.dart';
-import 'features/notifications/data/notification_service.dart';
 import 'platform/windows/windows_desktop.dart';
 import 'platform/windows/windows_tray_frame.dart';
-import 'shared/ui/page_turn_transition.dart';
+import 'app/theme/app_content_font_controller.dart';
+import 'app/theme/app_theme_controller.dart';
+import 'app/locale/app_locale_controller.dart';
+import 'features/notifications/state/notification_providers.dart';
 
 class EzhednevnikV2App extends ConsumerStatefulWidget {
   const EzhednevnikV2App({super.key});

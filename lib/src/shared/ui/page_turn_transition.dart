@@ -2,9 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'page_turn_frame.dart';
-
-export 'page_turn_frame.dart';
+import 'package:ez_design/ez_design.dart';
+import '../../navigation/page_turn_navigation.dart';
 
 Page<void> pageTurnPage({
   required BuildContext context,

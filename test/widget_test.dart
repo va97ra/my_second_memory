@@ -10,33 +10,19 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ezhednevnik_v2/src/app.dart';
 import 'package:ezhednevnik_v2/src/core/routing/app_router.dart';
-import 'package:ezhednevnik_v2/src/data/local_storage/local_storage_scope.dart';
-import 'package:ezhednevnik_v2/src/data/local_storage/local_storage_scope_provider.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/data/local_memory_repository.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/data/memory_repository.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_status.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:ezhednevnik_v2/src/features/home_feed/ui/widgets/memory_item_card.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/data/local_recurrence_exception_repository.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/data/local_recurrence_repository.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_series.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_projection_service.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_controller.dart';
-import 'package:ezhednevnik_v2/src/core/theme/app_theme_controller.dart';
-import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_background.dart';
-import 'package:ezhednevnik_v2/src/core/theme/app_theme_style.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/holiday_detail_screen.dart';
-import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';
-import 'package:ezhednevnik_v2/src/features/security/data/security_service.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
-import 'package:ezhednevnik_v2/src/features/security/data/secure_entity_backend.dart';
-import 'package:ezhednevnik_v2/src/features/shift_schedules/data/shift_schedule_repository.dart';
-import 'package:ezhednevnik_v2/src/features/shift_schedules/domain/shift_schedule.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
+import 'package:ezhednevnik_v2/src/app/local_storage_scope_provider.dart';
 
 part 'support/widget_test_harness.dart';
+part 'widget_suites/app_shell_widget_tests.dart';
 part 'widget_suites/memory_card_widget_tests.dart';
 part 'widget_suites/security_widget_tests.dart';
 part 'widget_suites/home_feed_widget_tests.dart';
@@ -56,6 +42,14 @@ void main() {
     await initializeDateFormatting('ru');
   });
 
+  setUp(() {
+    // Без этого обращения к SharedPreferences в тестовой среде не отвечают, и
+    // загрузка повторов повисает: экраны, которые её дожидаются, показывают
+    // вечный индикатор вместо содержимого.
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  registerAppShellWidgetTests();
   registerMemoryCardWidgetTests();
   registerSecurityWidgetTests();
   registerHomeFeedWidgetTests();

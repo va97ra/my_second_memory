@@ -4,12 +4,28 @@ publish_to: "none"
 
 version: 1.0.8+9
 
+# Модули приложения. Границы между слоями держит сборка:
+# чего нет в dependencies пакета, то он импортировать не может.
+workspace:
+  - packages/ez_core
+  - packages/ez_data
+  - packages/ez_design
+  - packages/ez_domain
+
 environment:
-  sdk: ">=3.4.0 <4.0.0"
+  sdk: ">=3.6.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  ez_core:
+    path: packages/ez_core
+  ez_data:
+    path: packages/ez_data
+  ez_design:
+    path: packages/ez_design
+  ez_domain:
+    path: packages/ez_domain
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.8

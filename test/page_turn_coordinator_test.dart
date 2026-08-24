@@ -1,4 +1,4 @@
-import 'package:ezhednevnik_v2/src/shared/ui/page_turn_frame.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

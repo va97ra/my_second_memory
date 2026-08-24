@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/localization/app_locale_controller.dart';
-import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/app_theme_controller.dart';
-import '../../../core/theme/app_content_font.dart';
-import '../../../core/theme/app_theme_style.dart';
-import '../../../core/theme/notebook/notebook_assets.dart';
-import '../../../core/theme/notebook/notebook_background.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import '../../../platform/windows/windows_startup_controller.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
 import '../../sync/state/sync_controller.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../../../shared/ui/notebook_pressable.dart';
 import 'widgets/theme_picker_sheet.dart';
 import 'widgets/content_font_picker_sheet.dart';
+import '../../../app/theme/app_content_font_controller.dart';
+import '../../../app/theme/app_theme_controller.dart';
+import '../../../navigation/page_turn_navigation.dart';
+import '../../../app/locale/app_locale_controller.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});

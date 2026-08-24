@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/theme/notebook/notebook_background.dart';
+import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../domain/holiday_calendar_service.dart';
-import '../domain/holiday_occurrence.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../state/calendar_preferences_controller.dart';
+import '../state/holiday_providers.dart';
 
 class HolidayDetailScreen extends ConsumerWidget {
   const HolidayDetailScreen({required this.date, super.key});

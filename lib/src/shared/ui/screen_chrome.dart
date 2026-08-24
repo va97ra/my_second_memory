@@ -3,12 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/notebook/notebook_visuals.dart';
-import 'notebook_icon_button.dart';
-import 'page_turn_transition.dart';
-
-export 'page_turn_transition.dart'
-    show PageTurnDirection, PageTurnNavigationBuildContext;
+import 'package:ez_design/ez_design.dart';
+import '../../navigation/page_turn_navigation.dart';
 
 class WarmGradientBackground extends StatelessWidget {
   const WarmGradientBackground({

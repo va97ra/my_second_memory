@@ -8,14 +8,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'src/app.dart';
-import 'src/core/theme/app_content_font.dart';
-import 'src/core/theme/app_theme_controller.dart';
-import 'src/core/theme/notebook/notebook_assets.dart';
-import 'src/features/sync/domain/sync_backend_config.dart';
-import 'src/features/sync/domain/sync_mutation_observer.dart';
+import 'package:ez_design/ez_design.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'src/features/sync/state/sync_controller.dart';
 import 'src/features/sync/state/sync_providers.dart';
 import 'src/platform/windows/windows_desktop.dart';
+import 'src/features/sync/state/sync_mutation_observer_provider.dart';
+import 'src/app/theme/app_content_font_controller.dart';
+import 'src/app/theme/app_theme_controller.dart';
 
 Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();

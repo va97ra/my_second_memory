@@ -1,8 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../sync/domain/sync_mutation_observer.dart';
-import '../data/recurrence_exception_repository.dart';
-import '../domain/recurrence_occurrence_exception.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ez_data/ez_data.dart';
 
 class RecurrenceExceptionController
     extends StateNotifier<List<RecurrenceOccurrenceException>> {

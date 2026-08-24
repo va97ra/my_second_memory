@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../data/notification_service.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_data/ez_data.dart';
 
 Future<ReminderSoundSource?> showReminderSoundSourcePicker(
   BuildContext context,

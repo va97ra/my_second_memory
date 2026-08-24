@@ -1,7 +1,6 @@
 import 'dart:ui' show FrameTiming;
 
-import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_theme.dart';
-import 'package:ezhednevnik_v2/src/shared/ui/page_turn_frame.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';

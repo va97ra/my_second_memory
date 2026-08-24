@@ -2,16 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/local_storage/local_storage_scope_provider.dart';
-import '../../security/data/encrypted_json_store.dart';
+import 'package:ez_data/ez_data.dart';
 import '../../security/state/security_provider.dart';
-import '../../notifications/data/notification_service.dart';
-import '../../sync/domain/sync_mutation_observer.dart';
-import '../data/encrypted_shift_schedule_repository.dart';
-import '../data/local_shift_schedule_repository.dart';
-import '../data/shift_schedule_repository.dart';
-import '../domain/shift_schedule.dart';
-import '../domain/shift_schedule_deduplication.dart';
+import 'package:ez_domain/ez_domain.dart';
+import '../../sync/state/sync_mutation_observer_provider.dart';
+import '../../../app/local_storage_scope_provider.dart';
+import '../../notifications/state/notification_providers.dart';
 
 final shiftScheduleRepositoryProvider =
     Provider<ShiftScheduleRepository>((ref) {

@@ -1,5 +1,4 @@
-import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';
-import 'package:ezhednevnik_v2/src/features/security/data/security_service.dart';
+import 'package:ez_data/ez_data.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 

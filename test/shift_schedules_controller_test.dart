@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ezhednevnik_v2/src/features/notifications/data/notification_service.dart';
-import 'package:ezhednevnik_v2/src/features/shift_schedules/data/shift_schedule_repository.dart';
-import 'package:ezhednevnik_v2/src/features/shift_schedules/domain/shift_schedule.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
 
 void main() {

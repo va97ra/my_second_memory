@@ -6,12 +6,8 @@ import '../../memory_items/state/memory_items_controller.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 import '../../security/state/security_provider.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
-import '../data/supabase_sync_remote_store.dart';
-import '../data/sync_local_store.dart';
-import '../data/sync_remote_store.dart';
-import '../domain/sync_backend_config.dart';
-import '../domain/sync_models.dart';
-import '../domain/sync_mutation_observer.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'sync_controller_impl.dart';
 import 'sync_state.dart';
 

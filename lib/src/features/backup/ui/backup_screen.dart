@@ -3,15 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../shared/ui/app_shell.dart';
+import 'package:ez_core/ez_core.dart';
+import '../../../app/app_shell.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../accounts/state/accounts_controller.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
-import '../data/backup_file_saver.dart';
-import '../data/backup_service.dart';
+import 'package:ez_data/ez_data.dart';
 
 class BackupScreen extends ConsumerStatefulWidget {
   const BackupScreen({super.key});
@@ -28,7 +27,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final strings = AppStrings.of(context);
 
     return AppShell(
-      currentIndex: 3,
+      activeDestinationId: 'settings',
       child: Scaffold(
         appBar: AppPageAppBar(
           fallbackLocation: '/settings',

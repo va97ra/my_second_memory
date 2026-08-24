@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme_style.dart';
-import '../../../../core/theme/notebook/notebook_assets.dart';
-import '../../../../shared/ui/notebook_pressable.dart';
+import 'package:ez_design/ez_design.dart';
 
 Future<AppThemeStyle?> showThemePickerSheet({
   required BuildContext context,

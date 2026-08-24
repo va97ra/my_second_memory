@@ -1,22 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/local_storage/local_storage_scope_provider.dart';
-import '../../memory_items/domain/memory_item.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../../memory_items/state/memory_items_controller.dart';
-import '../../notifications/data/notification_service.dart';
-import '../../security/data/encrypted_json_store.dart';
-import '../../security/data/secure_entity_backend.dart';
+import 'package:ez_data/ez_data.dart';
 import '../../security/state/security_provider.dart';
-import '../../sync/domain/sync_mutation_observer.dart';
-import '../data/encrypted_recurrence_exception_repository.dart';
-import '../data/encrypted_recurrence_repository.dart';
-import '../data/recurrence_exception_repository.dart';
-import '../data/recurrence_repository.dart';
-import '../domain/recurrence_occurrence_exception.dart';
-import '../domain/recurrence_projection_service.dart';
-import '../domain/recurrence_series.dart';
 import 'recurrence_exception_controller.dart';
 import 'recurrence_series_controller.dart';
+import '../../sync/state/sync_mutation_observer_provider.dart';
+import '../../../app/local_storage_scope_provider.dart';
+import '../../notifications/state/notification_providers.dart';
 
 final plainRecurrenceRepositoryProvider = Provider<RecurrenceRepository>((ref) {
   return ref.watch(localStorageScopeProvider).recurrenceRepository;
@@ -123,82 +115,4 @@ final recurrenceItemByIdProvider =
       );
 });
 
-class RecurrencePeriod {
-  const RecurrencePeriod({
-    required this.frequency,
-    required this.start,
-    required this.end,
-  });
 
-  final RecurrenceFrequency frequency;
-  final DateTime start;
-  final DateTime end;
-
-  @override
-  bool operator ==(Object other) =>
-      other is RecurrencePeriod &&
-      other.frequency == frequency &&
-      dateKey(other.start) == dateKey(start) &&
-      dateKey(other.end) == dateKey(end);
-
-  @override
-  int get hashCode => Object.hash(
-        frequency,
-        dateKey(start),
-        dateKey(end),
-      );
-}
-
-final recurringItemsForPeriodProvider =
-    Provider.family<List<MemoryItem>, RecurrencePeriod>((ref, period) {
-  final matchingSeries = [
-    for (final series in ref.watch(recurrenceSeriesControllerProvider))
-      if (series.isEnabled && series.frequency == period.frequency) series,
-  ];
-  final ids = {for (final series in matchingSeries) series.id};
-  final projected =
-      ref.watch(recurrenceProjectionServiceProvider).itemsForRange(
-            start: period.start,
-            end: period.end,
-            series: matchingSeries,
-            exceptions: ref.watch(recurrenceExceptionControllerProvider),
-            persistedItems: ref.watch(memoryItemsControllerProvider),
-          );
-  final occurrenceIndex = RecurrenceOccurrenceIndex(
-    series: matchingSeries,
-    exceptions: ref.watch(recurrenceExceptionControllerProvider),
-  );
-  final byId = <String, MemoryItem>{};
-  for (final item in projected) {
-    if (!item.isArchived) byId[item.id] = item;
-  }
-  for (final item in ref.watch(memoryItemsControllerProvider)) {
-    if (item.isArchived || item.seriesId == null) continue;
-    if (!ids.contains(item.seriesId)) continue;
-    if (occurrenceIndex.isSkippedPersisted(item)) continue;
-    if (item.memoryDate.isBefore(period.start) ||
-        item.memoryDate.isAfter(period.end)) {
-      continue;
-    }
-    // A persisted occurrence contains the user's current done/archive state
-    // and must win over an equivalent projection.
-    byId[item.id] = item;
-  }
-  return byId.values.toList()..sort(compareOccurrences);
-});
-
-final recurringCurrentPeriodItemsProvider =
-    Provider.family<List<MemoryItem>, RecurrenceFrequency>((ref, frequency) {
-  final now = DateTime.now();
-  final start = frequency == RecurrenceFrequency.monthly
-      ? DateTime(now.year, now.month)
-      : DateTime(now.year);
-  final end = frequency == RecurrenceFrequency.monthly
-      ? DateTime(now.year, now.month + 1, 0)
-      : DateTime(now.year, 12, 31);
-  return ref.watch(
-    recurringItemsForPeriodProvider(
-      RecurrencePeriod(frequency: frequency, start: start, end: end),
-    ),
-  );
-});

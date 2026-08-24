@@ -1,10 +1,4 @@
-import 'package:ezhednevnik_v2/src/core/theme/app_surface_textures.dart';
-import 'package:ezhednevnik_v2/src/core/theme/app_surface_palette.dart';
-import 'package:ezhednevnik_v2/src/core/theme/app_theme.dart';
-import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_assets.dart';
-import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_background.dart';
-import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_theme.dart';
-import 'package:ezhednevnik_v2/src/core/theme/notebook/notebook_visuals.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

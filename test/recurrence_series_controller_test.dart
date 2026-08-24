@@ -1,18 +1,10 @@
 import 'dart:convert';
 
-import 'package:ezhednevnik_v2/src/features/memory_items/data/local_memory_repository.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
-import 'package:ezhednevnik_v2/src/features/notifications/data/notification_service.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/data/local_recurrence_exception_repository.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/data/local_recurrence_repository.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_occurrence_exception.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_projection_service.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_series.dart';
 import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_exception_controller.dart';
 import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_series_controller.dart';
-import 'package:ezhednevnik_v2/src/features/sync/domain/sync_mutation_observer.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

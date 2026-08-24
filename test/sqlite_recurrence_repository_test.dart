@@ -1,9 +1,6 @@
 import 'package:drift/native.dart';
-import 'package:ezhednevnik_v2/src/data/database/app_database.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/data/sqlite_recurrence_repository.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_series.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/notebook/notebook_background.dart';
-import '../../../shared/ui/app_shell.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
+import '../../../app/app_shell.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../accounts/state/accounts_controller.dart';
 import '../../recurrence/state/recurrence_controller.dart';
@@ -34,7 +34,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     final session = ref.watch(securitySessionProvider);
 
     return AppShell(
-      currentIndex: 3,
+      activeDestinationId: 'settings',
       child: Scaffold(
         appBar: AppPageAppBar(
           fallbackLocation: '/settings',

@@ -1,8 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ezhednevnik_v2/src/data/database/app_database.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/data/sqlite_recurrence_exception_repository.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_occurrence_exception.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
 
 void main() {
   test('SQLite stores and removes recurrence exceptions', () async {

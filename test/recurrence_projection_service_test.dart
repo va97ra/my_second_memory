@@ -1,9 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_type.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_occurrence_exception.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_projection_service.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/domain/recurrence_series.dart';
+import 'package:ez_domain/ez_domain.dart';
 
 void main() {
   MemoryItem template(DateTime date) => MemoryItem(

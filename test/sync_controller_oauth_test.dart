@@ -1,10 +1,7 @@
 import 'dart:async';
 
-import 'package:ezhednevnik_v2/src/features/memory_items/domain/memory_item.dart';
-import 'package:ezhednevnik_v2/src/features/security/data/app_cipher.dart';
-import 'package:ezhednevnik_v2/src/features/sync/data/sync_local_store.dart';
-import 'package:ezhednevnik_v2/src/features/sync/data/sync_remote_store.dart';
-import 'package:ezhednevnik_v2/src/features/sync/domain/sync_models.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ez_data/ez_data.dart';
 import 'package:ezhednevnik_v2/src/features/sync/state/sync_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';

@@ -1,4 +1,4 @@
-import 'package:ezhednevnik_v2/src/features/sync/data/sync_vault_crypto.dart';
+import 'package:ez_data/ez_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

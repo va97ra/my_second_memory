@@ -1,7 +1,7 @@
-import 'package:ezhednevnik_v2/src/core/theme/app_theme_controller.dart';
-import 'package:ezhednevnik_v2/src/core/theme/app_theme_style.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
 
 void main() {
   test('theme choice is saved and restored', () async {

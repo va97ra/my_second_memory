@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../security/state/security_provider.dart';
-import '../data/media_storage.dart';
+import 'package:ez_data/ez_data.dart';
 
 final encryptedMediaBytesProvider =
     FutureProvider.family<Uint8List, String>((ref, path) async {

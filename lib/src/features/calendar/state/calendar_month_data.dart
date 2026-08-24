@@ -1,12 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../domain/holiday_calendar_service.dart';
-import '../domain/holiday_occurrence.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'calendar_preferences_controller.dart';
-import '../../memory_items/domain/memory_item.dart';
 import '../../memory_items/state/memory_item_selectors.dart';
-import '../../shift_schedules/domain/shift_schedule.dart';
 import '../../shift_schedules/state/shift_schedules_controller.dart';
+import 'holiday_providers.dart';
 
 class CalendarMonthData {
   const CalendarMonthData({

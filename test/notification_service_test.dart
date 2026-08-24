@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ezhednevnik_v2/src/features/notifications/data/notification_service.dart';
+import 'package:ez_data/ez_data.dart';
 
 void main() {
   test('notification ids are stable, positive and record-specific', () {
