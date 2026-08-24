@@ -4,10 +4,14 @@ class _FeedFilterButton extends StatelessWidget {
   const _FeedFilterButton({
     required this.selected,
     required this.onSelected,
+    required this.allowsRecurring,
   });
 
   final FeedFilter selected;
   final ValueChanged<FeedFilter> onSelected;
+
+  /// Записки не повторяются, поэтому на их закладке таких фильтров нет.
+  final bool allowsRecurring;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +29,8 @@ class _FeedFilterButton extends StatelessWidget {
       itemBuilder: (context) {
         return [
           for (final filter in FeedFilter.values)
-            PopupMenuItem(
+            if (allowsRecurring || filter.recurringFrequency == null)
+              PopupMenuItem(
               value: filter,
               child: Row(
                 children: [
@@ -64,6 +69,8 @@ class _FeedFilterButton extends StatelessWidget {
       FeedFilter.place => MemoryType.place.label(locale),
       FeedFilter.birthday => MemoryType.birthday.label(locale),
       FeedFilter.payment => MemoryType.payment.label(locale),
+      FeedFilter.recurringMonthly => strings.monthlyRecurring,
+      FeedFilter.recurringYearly => strings.yearlyRecurring,
     };
   }
 
@@ -82,6 +89,8 @@ class _FeedFilterButton extends StatelessWidget {
       FeedFilter.place => Icons.location_on_rounded,
       FeedFilter.birthday => Icons.cake_rounded,
       FeedFilter.payment => Icons.payments_rounded,
+      FeedFilter.recurringMonthly => Icons.sync_rounded,
+      FeedFilter.recurringYearly => Icons.event_repeat_rounded,
     };
   }
 }

@@ -77,8 +77,8 @@ void registerHomeFeedWidgetTests() {
     expect(find.text('Подготовить задачи на день'), findsOneWidget);
     expect(find.text('Ежедневник V2'), findsWidgets);
     expect(find.byKey(const ValueKey('feed_section_day')), findsOneWidget);
-    expect(find.byKey(const ValueKey('feed_section_month')), findsOneWidget);
-    expect(find.byKey(const ValueKey('feed_section_year')), findsOneWidget);
+    expect(find.byKey(const ValueKey('feed_section_month')), findsNothing);
+    expect(find.byKey(const ValueKey('feed_section_year')), findsNothing);
     expect(find.byKey(const ValueKey('feed_section_notes')), findsOneWidget);
     expect(find.text('Вчерашняя заметка'), findsNothing);
     expect(find.text('Позавчерашняя заметка'), findsNothing);
@@ -88,9 +88,11 @@ void registerHomeFeedWidgetTests() {
     expect(find.byIcon(Icons.delete_rounded), findsNothing);
     expect(find.byIcon(Icons.task_alt_rounded), findsWidgets);
     expect(find.byIcon(Icons.archive_rounded), findsWidgets);
-    await tester.tap(find.byKey(const ValueKey('feed_section_month')));
+    // Повторы за месяц достаются фильтром, а не отдельной закладкой.
+    await tester.tap(find.byKey(const ValueKey('feed_filter')));
     await tester.pumpAndSettle();
-    expect(find.text('Лента месяца'), findsOneWidget);
+    await tester.tap(find.text('Каждый месяц').last);
+    await tester.pumpAndSettle();
     expect(find.text('Старая активная запись'), findsNothing);
     expect(find.text('Архивная запись'), findsNothing);
 
@@ -260,42 +262,10 @@ void registerHomeFeedWidgetTests() {
     );
   });
 
-  testWidgets('notebook tabs switch day month year and notes', (tester) async {
+  testWidgets('day tab holds recurring records and filters open their period',
+      (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final monthlyOccurrence = MemoryItem(
-      id: 'monthly-informer',
-      type: MemoryType.payment,
-      title: 'Ежемесячный информер',
-      memoryDate: today,
-      createdAt: now,
-      updatedAt: now,
-      repeatRule: RecurrenceFrequency.monthly.name,
-      seriesId: 'monthly-series',
-    );
-    final yearlyOccurrence = MemoryItem(
-      id: 'yearly-informer',
-      type: MemoryType.birthday,
-      title: 'Ежегодный информер',
-      memoryDate: today,
-      createdAt: now,
-      updatedAt: now,
-      repeatRule: RecurrenceFrequency.yearly.name,
-      seriesId: 'yearly-series',
-    );
-    final monthPeriod = RecurrencePeriod(
-      frequency: RecurrenceFrequency.monthly,
-      start: DateTime(today.year, today.month),
-      end: DateTime(today.year, today.month + 1, 0),
-    );
-    final yearPeriod = RecurrencePeriod(
-      frequency: RecurrenceFrequency.yearly,
-      start: DateTime(today.year),
-      end: DateTime(today.year, 12, 31),
-    );
 
     await tester.pumpWidget(
       testProviderScope(
@@ -307,10 +277,6 @@ void registerHomeFeedWidgetTests() {
           shiftScheduleRepositoryProvider.overrideWithValue(
             _FakeShiftScheduleRepository(),
           ),
-          recurringItemsForPeriodProvider(monthPeriod)
-              .overrideWithValue([monthlyOccurrence]),
-          recurringItemsForPeriodProvider(yearPeriod)
-              .overrideWithValue([yearlyOccurrence]),
         ],
         child: const EzhednevnikV2App(),
       ),
@@ -318,10 +284,8 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpAndSettle();
     await openTab(tester, 'feed');
 
-    expect(
-        find.byKey(const ValueKey('feed_recurring_informers')), findsNothing);
     expect(find.text('Постоянная записка'), findsNothing);
-    for (final section in ['day', 'month', 'year', 'notes']) {
+    for (final section in ['day', 'notes']) {
       final tab = find.byKey(ValueKey('feed_section_$section'));
       expect(tester.getSize(tab).width, greaterThanOrEqualTo(48));
       expect(tester.getSize(tab).height, greaterThanOrEqualTo(48));
@@ -336,19 +300,25 @@ void registerHomeFeedWidgetTests() {
     expect(dayTabRect.top, greaterThanOrEqualTo(sheetRect.bottom - 12));
     expect(dayTabRect.bottom, greaterThan(sheetRect.bottom + 40));
 
-    await tester.tap(find.byKey(const ValueKey('feed_section_month')));
+    // Закладка задаёт день, а не разновидность записи: повтор, выпавший на
+    // сегодня, стоит рядом с обычными записями.
+    expect(find.text('Лента дня'), findsOneWidget);
+    expect(find.text('Фокус сегодня'), findsOneWidget);
+    expect(find.text('Ежемесячный информер'), findsOneWidget);
+    expect(find.text('Ежегодный информер'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('feed_filter')));
     await tester.pumpAndSettle();
-    expect(find.text('Лента месяца'), findsOneWidget);
-    expect(find.textContaining('Будущая запись'), findsNothing);
-    expect(find.text('Фокус сегодня'), findsNothing);
+    await tester.tap(find.text('Каждый месяц').last);
+    await tester.pumpAndSettle();
     expect(find.text('Ежемесячный информер'), findsOneWidget);
     expect(find.text('Ежегодный информер'), findsNothing);
-
-    await tester.tap(find.byKey(const ValueKey('feed_section_year')));
-    await tester.pumpAndSettle();
-    expect(find.text('Лента года'), findsOneWidget);
-    expect(find.textContaining('Будущая запись'), findsNothing);
     expect(find.text('Фокус сегодня'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('feed_filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Каждый год').last);
+    await tester.pumpAndSettle();
     expect(find.text('Ежемесячный информер'), findsNothing);
     expect(find.text('Ежегодный информер'), findsOneWidget);
 
@@ -361,9 +331,6 @@ void registerHomeFeedWidgetTests() {
     await tester.tap(find.byKey(const ValueKey('feed_section_day')));
     await tester.pumpAndSettle();
     expect(find.text('Постоянная записка'), findsNothing);
-    expect(find.text('Ежемесячный информер'), findsNothing);
-    expect(find.text('Ежегодный информер'), findsNothing);
-    expect(find.text('Лента дня'), findsOneWidget);
   });
 
   testWidgets('undated notes have their own notebook tab and editor',

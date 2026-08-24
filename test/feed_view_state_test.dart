@@ -1,45 +1,90 @@
-import 'package:ezhednevnik_v2/src/features/home_feed/domain/feed_rules.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/home_feed/state/feed_providers.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('feed period query uses exact calendar boundaries', () {
-    final leapMonth = FeedPeriodQuery.fromState(
+  test('day feed shows exactly the anchored day', () {
+    final query = FeedPeriodQuery.fromState(
       FeedViewState(
-        section: FeedSection.month,
+        section: FeedSection.day,
         anchorDate: DateTime(2028, 2, 20),
         filter: FeedFilter.all,
       ),
     );
-    final leapYear = FeedPeriodQuery.fromState(
+
+    expect(query.start, DateTime(2028, 2, 20));
+    expect(query.end, DateTime(2028, 2, 20));
+  });
+
+  test('recurring filters open the feed onto their own period', () {
+    final month = FeedPeriodQuery.fromState(
       FeedViewState(
-        section: FeedSection.year,
+        section: FeedSection.day,
+        anchorDate: DateTime(2028, 2, 20),
+        filter: FeedFilter.recurringMonthly,
+      ),
+    );
+    final year = FeedPeriodQuery.fromState(
+      FeedViewState(
+        section: FeedSection.day,
         anchorDate: DateTime(2028, 8, 20),
+        filter: FeedFilter.recurringYearly,
+      ),
+    );
+
+    expect(month.start, DateTime(2028, 2));
+    expect(month.end, DateTime(2028, 2, 29));
+    expect(year.start, DateTime(2028));
+    expect(year.end, DateTime(2028, 12, 31));
+  });
+
+  test('page movement follows the period the filter opened', () {
+    final controller = FeedViewController(
+      initialState: FeedViewState(
+        section: FeedSection.day,
+        anchorDate: DateTime(2028, 1, 31),
         filter: FeedFilter.all,
       ),
     );
 
-    expect(leapMonth.start, DateTime(2028, 2));
-    expect(leapMonth.end, DateTime(2028, 2, 29));
-    expect(leapYear.start, DateTime(2028));
-    expect(leapYear.end, DateTime(2028, 12, 31));
+    controller.movePeriod(1);
+    expect(controller.state.anchorDate, DateTime(2028, 2));
+
+    controller.selectFilter(FeedFilter.recurringMonthly);
+    controller.movePeriod(1);
+    expect(controller.state.anchorDate, DateTime(2028, 3));
+
+    controller.selectFilter(FeedFilter.recurringYearly);
+    controller.movePeriod(1);
+    expect(controller.state.anchorDate, DateTime(2029, 3));
   });
 
-  test('period movement clamps the shared anchor to real book pages', () {
+  test('monthly movement clamps to a day the month really has', () {
     final controller = FeedViewController(
       initialState: FeedViewState(
-        section: FeedSection.month,
+        section: FeedSection.day,
         anchorDate: DateTime(2028, 1, 31),
-        filter: FeedFilter.task,
+        filter: FeedFilter.recurringMonthly,
       ),
     );
 
     controller.movePeriod(1);
     expect(controller.state.anchorDate, DateTime(2028, 2, 29));
-    controller.selectSection(FeedSection.year);
-    controller.movePeriod(1);
-    expect(controller.state.anchorDate, DateTime(2029, 2, 28));
-    expect(controller.state.filter, FeedFilter.task);
+  });
+
+  test('picking a day returns the feed to the day section', () {
+    final controller = FeedViewController(
+      initialState: FeedViewState(
+        section: FeedSection.notes,
+        anchorDate: DateTime(2026, 8, 22),
+        filter: FeedFilter.all,
+      ),
+    );
+
+    controller.selectDate(DateTime(2026, 12, 5, 18, 30));
+
+    expect(controller.state.section, FeedSection.day);
+    expect(controller.state.anchorDate, DateTime(2026, 12, 5));
   });
 
   test('notes have no date range and keep the common anchor', () {

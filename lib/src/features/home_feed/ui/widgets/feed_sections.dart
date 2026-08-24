@@ -31,6 +31,7 @@ class _FeedHeader extends StatelessWidget {
     required this.alignToRuling,
     required this.onGoToToday,
     required this.onFilterSelected,
+    required this.onPickDate,
     required this.onPrevious,
     required this.onNext,
     required this.onShowHelp,
@@ -45,6 +46,9 @@ class _FeedHeader extends StatelessWidget {
   /// Null once the page on screen is already the current one.
   final VoidCallback? onGoToToday;
   final ValueChanged<FeedFilter> onFilterSelected;
+
+  /// Null на закладке записок: у них нет дня, который можно выбрать.
+  final VoidCallback? onPickDate;
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
   final VoidCallback onShowHelp;
@@ -97,6 +101,7 @@ class _FeedHeader extends StatelessWidget {
               _FeedFilterButton(
                 selected: filter,
                 onSelected: onFilterSelected,
+                allowsRecurring: periodLabel != null,
               ),
             ],
           ),
@@ -113,15 +118,23 @@ class _FeedHeader extends StatelessWidget {
                   style: notebookIconButtonStyle(),
                 ),
                 Expanded(
-                  child: Text(
-                    periodLabel!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          height: 1.08,
-                        ),
+                  child: InkWell(
+                    key: const ValueKey('feed_pick_date'),
+                    onTap: onPickDate,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        periodLabel!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              height: 1.08,
+                            ),
+                      ),
+                    ),
                   ),
                 ),
                 IconButton(
@@ -146,6 +159,8 @@ class _MemorySliverList extends StatelessWidget {
   });
 
   final List<String> itemIds;
+
+  /// Дата нужна только когда на странице лежит больше одного дня.
   final bool showDate;
 
   @override

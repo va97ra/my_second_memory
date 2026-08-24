@@ -145,8 +145,6 @@ class _NotebookIndexTab extends StatelessWidget {
     final notebook = NotebookVisuals.maybeOf(context)!;
     final base = switch (section) {
       FeedSection.day => notebook.yellow,
-      FeedSection.month => notebook.green,
-      FeedSection.year => notebook.blue,
       FeedSection.notes => notebook.teal,
     };
     final label = _sectionTabLabel(context, section, compact: compact);
@@ -363,8 +361,6 @@ String _sectionTabLabel(
   final strings = AppStrings.of(context);
   return switch (section) {
     FeedSection.day => strings.dayTab,
-    FeedSection.month => compact ? strings.monthTabShort : strings.monthTab,
-    FeedSection.year => strings.yearTab,
     FeedSection.notes => compact ? strings.notesTabShort : strings.notes,
   };
 }

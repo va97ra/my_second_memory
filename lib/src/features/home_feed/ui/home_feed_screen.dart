@@ -4,22 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/localization/app_strings.dart';
-import '../../../core/theme/notebook/notebook_background.dart';
-import '../../../core/theme/notebook/notebook_visuals.dart';
-import '../../../shared/ui/notebook_icon_button.dart';
-import '../../../shared/ui/notebook_page_header.dart';
-import '../../../shared/ui/notebook_pressable.dart';
-import '../../../shared/ui/page_turn_frame.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
-import '../../memory_items/domain/memory_type.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../memory_items/state/memory_item_selectors.dart';
 import '../../recurrence/state/recurrence_controller.dart';
-import '../domain/feed_rules.dart';
 import '../state/feed_providers.dart';
 import 'widgets/memory_item_card.dart';
+import '../../../navigation/page_turn_navigation.dart';
 
 part 'widgets/feed_sections.dart';
 part 'widgets/feed_guide.dart';
@@ -63,6 +58,7 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
                   : () => _goToToday(),
               onFilterSelected: (filter) =>
                   ref.read(feedViewProvider.notifier).selectFilter(filter),
+              onPickDate: _pickDate,
               onMovePeriod: _movePeriod,
               onShowHelp: () => _showFullGuide(
                 context,
@@ -159,6 +155,19 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     }
   }
 
+  /// Открывает любой день, не листая ленту по одному.
+  Future<void> _pickDate() async {
+    final view = ref.read(feedViewProvider);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: view.anchorDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null || !mounted) return;
+    ref.read(feedViewProvider.notifier).selectDate(picked);
+  }
+
   Future<void> _goToToday() async {
     final view = ref.read(feedViewProvider);
     if (view.showsPeriodOf(DateTime.now())) return;
@@ -211,6 +220,7 @@ class _FeedPage extends StatelessWidget {
     required this.onGoToToday,
     required this.onFilterSelected,
     required this.onMovePeriod,
+    required this.onPickDate,
     required this.onShowHelp,
   });
 
@@ -222,6 +232,7 @@ class _FeedPage extends StatelessWidget {
   final VoidCallback? onGoToToday;
   final ValueChanged<FeedFilter> onFilterSelected;
   final ValueChanged<int> onMovePeriod;
+  final VoidCallback onPickDate;
   final VoidCallback onShowHelp;
 
   @override
@@ -237,6 +248,7 @@ class _FeedPage extends StatelessWidget {
           alignToRuling: alignToRuling,
           onGoToToday: onGoToToday,
           onFilterSelected: onFilterSelected,
+          onPickDate: view.section == FeedSection.notes ? null : onPickDate,
           onPrevious:
               view.section == FeedSection.notes ? null : () => onMovePeriod(-1),
           onNext:
@@ -293,15 +305,18 @@ class _FeedBody extends StatelessWidget {
         key: const ValueKey('feed_dated_scroll'),
         slivers: [
           for (final group in layout.groups) ...[
-            if (section == FeedSection.month || section == FeedSection.year)
+            // Раскрытый период содержит много дней, поэтому они разделяются
+            // подписями. В обычной ленте дня разделять нечего.
+            if (filter.recurringFrequency != null)
               SliverToBoxAdapter(
                 child: _FeedGroupDivider(
-                  label: _groupLabel(context, section, group.period),
+                  label: _groupLabel(context, filter, group.period),
                 ),
               ),
             _MemorySliverList(
               itemIds: group.itemIds,
-              showDate: section == FeedSection.year,
+              showDate:
+                  filter.recurringFrequency == RecurrenceFrequency.yearly,
             ),
           ],
           const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
@@ -315,8 +330,6 @@ String _sectionTitle(BuildContext context, FeedSection section) {
   final strings = AppStrings.of(context);
   return switch (section) {
     FeedSection.day => strings.dayFeed,
-    FeedSection.month => strings.monthFeed,
-    FeedSection.year => strings.yearFeed,
     FeedSection.notes => strings.notes,
   };
 }
@@ -324,24 +337,22 @@ String _sectionTitle(BuildContext context, FeedSection section) {
 String? _periodLabel(BuildContext context, FeedViewState view) {
   if (view.section == FeedSection.notes) return null;
   final locale = Localizations.localeOf(context).languageCode;
-  final formatted = switch (view.section) {
-    FeedSection.day => DateFormat.yMMMMEEEEd(locale).format(view.anchorDate),
-    FeedSection.month => DateFormat.yMMMM(locale).format(view.anchorDate),
-    FeedSection.year => locale == 'ru'
+  // Подпись показывает ровно тот период, который лежит на странице.
+  final formatted = switch (view.filter.recurringFrequency) {
+    null => DateFormat.yMMMMEEEEd(locale).format(view.anchorDate),
+    RecurrenceFrequency.monthly =>
+      DateFormat.yMMMM(locale).format(view.anchorDate),
+    RecurrenceFrequency.yearly => locale == 'ru'
         ? '${view.anchorDate.year} год'
         : '${view.anchorDate.year}',
-    FeedSection.notes => '',
   };
   return _capitalize(formatted);
 }
 
-String _groupLabel(
-  BuildContext context,
-  FeedSection section,
-  DateTime period,
-) {
+
+String _groupLabel(BuildContext context, FeedFilter filter, DateTime period) {
   final locale = Localizations.localeOf(context).languageCode;
-  final value = section == FeedSection.year
+  final value = filter.recurringFrequency == RecurrenceFrequency.yearly
       ? DateFormat.MMMM(locale).format(period)
       : DateFormat(locale == 'ru' ? 'd MMMM, EEEE' : 'EEEE, MMMM d', locale)
           .format(period);
