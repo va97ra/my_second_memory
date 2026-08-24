@@ -1,7 +1,15 @@
-part of '../memory_item_detail_screen.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
+import 'package:flutter/material.dart';
+import 'package:ez_data/ez_data.dart';
+import '../../../notifications/ui/reminder_sound_picker.dart';
+import 'memory_item_presentation.dart';
+import 'reminder_sheet_tile.dart';
+import 'reminder_toggle_tile.dart';
 
-class _TimeReminderDraft {
-  const _TimeReminderDraft({
+/// Лист выбора времени записи и напоминания.
+class TimeReminderDraft {
+  const TimeReminderDraft({
     required this.timeMinutes,
     required this.reminderEnabled,
     required this.soundUri,
@@ -14,8 +22,8 @@ class _TimeReminderDraft {
   final String? soundName;
 }
 
-class _TimeReminderSheet extends StatefulWidget {
-  const _TimeReminderSheet({
+class TimeReminderSheet extends StatefulWidget {
+  const TimeReminderSheet({super.key, 
     required this.initialTimeMinutes,
     required this.initialReminderEnabled,
     required this.initialSoundUri,
@@ -32,10 +40,10 @@ class _TimeReminderSheet extends StatefulWidget {
   final ReminderScheduler scheduler;
 
   @override
-  State<_TimeReminderSheet> createState() => _TimeReminderSheetState();
+  State<TimeReminderSheet> createState() => _TimeReminderSheetState();
 }
 
-class _TimeReminderSheetState extends State<_TimeReminderSheet> {
+class _TimeReminderSheetState extends State<TimeReminderSheet> {
   int? _timeMinutes;
   late bool _reminderEnabled;
   String? _soundUri;
@@ -71,7 +79,7 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
                   ),
             ),
             const SizedBox(height: 14),
-            _ReminderSheetTile(
+            ReminderSheetTile(
               icon: Icons.schedule_rounded,
               accentColor: const Color(0xFF218CFF),
               title: strings.time,
@@ -90,7 +98,7 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
                     ),
             ),
             const SizedBox(height: 5),
-            _ReminderToggleTile(
+            ReminderToggleTile(
               accentColor: Theme.of(context).colorScheme.primary,
               title: strings.soundNotification,
               subtitle: !widget.scheduler.isSupported
@@ -103,7 +111,7 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
             ),
             if (_reminderEnabled) ...[
               const SizedBox(height: 5),
-              _ReminderSheetTile(
+              ReminderSheetTile(
                 icon: Icons.music_note_rounded,
                 accentColor: const Color(0xFF7C3AED),
                 title: strings.chooseSound,
@@ -247,7 +255,7 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
       return;
     }
     Navigator.of(context).pop(
-      _TimeReminderDraft(
+      TimeReminderDraft(
         timeMinutes: minutes,
         reminderEnabled: _reminderEnabled,
         soundUri: _soundUri,
@@ -263,139 +271,4 @@ class _TimeReminderSheetState extends State<_TimeReminderSheet> {
         minutes ~/ 60,
         minutes % 60,
       );
-}
-
-class _ReminderSheetTile extends StatelessWidget {
-  const _ReminderSheetTile({
-    required this.icon,
-    required this.accentColor,
-    required this.title,
-    required this.value,
-    required this.onTap,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final Color accentColor;
-  final String title;
-  final String value;
-  final VoidCallback? onTap;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final tile = Material(
-      color: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        height: 52,
-        child: Row(
-          children: [
-            SizedBox(
-              width: 5,
-              height: double.infinity,
-              child: ColoredBox(color: accentColor),
-            ),
-            const SizedBox(width: 10),
-            Icon(icon, color: accentColor, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.labelLarge),
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-            trailing ?? const Icon(Icons.chevron_right_rounded),
-            const SizedBox(width: 8),
-          ],
-        ),
-      ),
-    );
-    return NotebookPressable(onTap: onTap, child: tile);
-  }
-}
-
-class _ReminderToggleTile extends StatelessWidget {
-  const _ReminderToggleTile({
-    required this.accentColor,
-    required this.title,
-    required this.value,
-    required this.onChanged,
-    this.subtitle,
-  });
-
-  final Color accentColor;
-  final String title;
-  final String? subtitle;
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final tile = Material(
-      color: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        height: 52,
-        child: Row(
-          children: [
-            SizedBox(
-              width: 5,
-              height: double.infinity,
-              child: ColoredBox(color: accentColor),
-            ),
-            const SizedBox(width: 10),
-            Icon(Icons.notifications_active_rounded,
-                color: accentColor, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.labelLarge),
-                  if (subtitle != null)
-                    Text(
-                      subtitle!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
-                ],
-              ),
-            ),
-            IgnorePointer(
-              child: Switch.adaptive(value: value, onChanged: (_) {}),
-            ),
-            const SizedBox(width: 4),
-          ],
-        ),
-      ),
-    );
-    return NotebookPressable(
-      onTap: onChanged == null ? null : () => onChanged!(!value),
-      child: tile,
-    );
-  }
 }

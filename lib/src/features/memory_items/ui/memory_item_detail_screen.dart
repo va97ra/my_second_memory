@@ -12,13 +12,8 @@ import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
-import '../../home_feed/ui/widgets/memory_image_preview.dart';
-import '../../home_feed/ui/widgets/memory_image_viewer.dart';
-import 'package:ez_data/ez_data.dart';
-import '../../notifications/ui/reminder_sound_picker.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../../recurrence/state/recurrence_controller.dart';
-import '../../voice_notes/ui/widgets/voice_note_player.dart';
 import '../state/memory_items_controller.dart';
 import '../state/memory_item_selectors.dart';
 import '../state/memory_editor_draft.dart';
@@ -26,13 +21,16 @@ import '../state/memory_editor_save_coordinator.dart';
 import '../state/memory_attachment_service.dart';
 import '../state/memory_editor_saver.dart';
 import 'widgets/memory_item_presentation.dart';
+import 'widgets/time_reminder_sheet.dart';
+import 'widgets/record_editor.dart';
+import 'widgets/editor_body.dart';
+import 'widgets/payment_fields.dart';
+import 'widgets/subscription_term_sheet.dart';
+import 'widgets/birthday_fields.dart';
+import 'widgets/multi_date_picker_sheet.dart';
 import '../../../navigation/page_turn_navigation.dart';
 import '../../notifications/state/notification_providers.dart';
 
-part 'widgets/memory_item_reminder_widgets.dart';
-part 'widgets/memory_item_metadata_widgets.dart';
-part 'widgets/memory_item_record_editor.dart';
-part 'widgets/memory_item_picker_widgets.dart';
 part 'memory_item_initialization.dart';
 part 'memory_item_editing_actions.dart';
 part 'memory_item_persistence.dart';
@@ -373,7 +371,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
         body: SafeArea(
           child: Form(
             key: _formKey,
-            child: _EditorBody(
+            child: EditorBody(
               isUndated: _isUndated,
               selectedType: _type,
               dateText: _formattedDate(context),
@@ -398,7 +396,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
               showRecurrenceHint:
                   !_isUndated && showHints && _recurrenceFrequency == null,
               onRecurrenceHintTap: _openRepeatPicker,
-              recordEditor: _RecordEditor(
+              recordEditor: RecordEditor(
                 controller: _bodyController,
                 imagePaths: _imagePaths,
                 audioPath: _audioPath,

@@ -1,7 +1,18 @@
-part of '../memory_item_detail_screen.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:flutter/material.dart';
+import '../../../home_feed/ui/widgets/memory_image_preview.dart';
+import '../../../home_feed/ui/widgets/memory_image_viewer.dart';
+import '../../../voice_notes/ui/widgets/voice_note_player.dart';
+import 'memory_item_presentation.dart';
+import 'recording_pill.dart';
+import 'recurrence_badge.dart';
+import 'square_action_button.dart';
 
-class _RecordEditor extends StatelessWidget {
-  const _RecordEditor({
+/// Поле записи с кнопками фотографии, голоса и сохранения.
+class RecordEditor extends StatelessWidget {
+  const RecordEditor({super.key, 
     required this.controller,
     required this.imagePaths,
     required this.audioPath,
@@ -155,7 +166,7 @@ class _RecordEditor extends StatelessWidget {
                       ),
                       SizedBox(height: compact ? 8 : 12),
                     ] else if (isRecording) ...[
-                      _RecordingPill(text: strings.recordingNow),
+                      RecordingPill(text: strings.recordingNow),
                       SizedBox(height: compact ? 8 : 12),
                     ],
                     Expanded(
@@ -207,14 +218,14 @@ class _RecordEditor extends StatelessWidget {
                       builder: (context, constraints) {
                         final badge = recurrenceFrequency == null
                             ? null
-                            : _RecurrenceBadge(
+                            : RecurrenceBadge(
                                 frequency: recurrenceFrequency!,
                                 onTap: onRecurrenceTap,
                               );
                         final actions = Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _SquareActionButton(
+                            SquareActionButton(
                               tooltip: strings.addImage,
                               icon: Icons.photo_camera_rounded,
                               color: Theme.of(context).colorScheme.primary,
@@ -222,7 +233,7 @@ class _RecordEditor extends StatelessWidget {
                               onPressed: onPickImage,
                             ),
                             const SizedBox(width: 8),
-                            _SquareActionButton(
+                            SquareActionButton(
                               tooltip: isRecording
                                   ? strings.stopRecording
                                   : strings.voice,
@@ -308,98 +319,4 @@ Future<void> _showMediaDeleteMenu(
     ],
   );
   if (selected == true && context.mounted) onDelete();
-}
-
-class _RecordingPill extends StatelessWidget {
-  const _RecordingPill({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).colorScheme.error),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.fiber_manual_record_rounded,
-              size: 12,
-              color: Color(0xFFDC2626),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              text,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: const Color(0xFF991B1B),
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SquareActionButton extends StatelessWidget {
-  const _SquareActionButton({
-    required this.tooltip,
-    required this.icon,
-    required this.color,
-    required this.onPressed,
-    this.size = 42,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onPressed;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final notebook = NotebookVisuals.maybeOf(context);
-    if (notebook == null) {
-      return IconButton(
-        tooltip: tooltip,
-        onPressed: onPressed,
-        icon: Icon(icon),
-        style: IconButton.styleFrom(
-          fixedSize: Size.square(size),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          foregroundColor: color,
-          backgroundColor: color.withValues(alpha: 0.12),
-          side: BorderSide(color: color.withValues(alpha: 0.22)),
-        ),
-      );
-    }
-    return Tooltip(
-      message: tooltip,
-      child: NotebookPressable(
-        onTap: onPressed,
-        child: Container(
-          width: size,
-          height: size,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.16),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: color.withValues(alpha: 0.68)),
-            boxShadow: notebookSurfaceShadow(
-              context,
-              NotebookSurfaceDepth.tile,
-            ),
-          ),
-          child: Icon(icon, color: color),
-        ),
-      ),
-    );
-  }
 }

@@ -1,80 +1,17 @@
-part of '../memory_item_detail_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-class _TypePickerRow extends StatelessWidget {
-  const _TypePickerRow({
-    required this.type,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final MemoryType type;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = memoryTypeColor(type);
-
-    final row = Material(
-      color: selected
-          ? color.withValues(alpha: 0.12)
-          : Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: selected
-              ? color.withValues(alpha: 0.36)
-              : Theme.of(context).colorScheme.outlineVariant,
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        height: 48,
-        child: Row(
-          children: [
-            SizedBox(
-              width: 5,
-              height: double.infinity,
-              child: ColoredBox(color: color),
-            ),
-            const SizedBox(width: 11),
-            Icon(memoryTypeIcon(type), color: color, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-            ),
-            if (selected)
-              Icon(Icons.check_circle_rounded, color: color, size: 20),
-            const SizedBox(width: 12),
-          ],
-        ),
-      ),
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: NotebookPressable(onTap: onTap, child: row),
-    );
-  }
-}
-
-class _MultiDatePickerSheet extends StatefulWidget {
-  const _MultiDatePickerSheet({required this.sourceDate});
+/// Выбор нескольких дат сразу — для дублирования записи.
+class MultiDatePickerSheet extends StatefulWidget {
+  const MultiDatePickerSheet({super.key, required this.sourceDate});
 
   final DateTime sourceDate;
 
   @override
-  State<_MultiDatePickerSheet> createState() => _MultiDatePickerSheetState();
+  State<MultiDatePickerSheet> createState() => MultiDatePickerSheetState();
 }
 
-class _MultiDatePickerSheetState extends State<_MultiDatePickerSheet> {
+class MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
   late DateTime _month = DateTime(
     widget.sourceDate.year,
     widget.sourceDate.month,

@@ -140,7 +140,7 @@ extension _MemoryItemInitialization on _MemoryItemDetailScreenState {
               (item?.seriesId == null ||
                   _editFutureOccurrences ||
                   _refreshNewSeriesTemplate);
-      return _PaymentFields(
+      return PaymentFields(
         amountController: _amountController,
         category: _paymentCategory,
         locale: locale,
@@ -163,7 +163,7 @@ extension _MemoryItemInitialization on _MemoryItemDetailScreenState {
       );
     }
     if (_type == MemoryType.birthday) {
-      return _BirthdayFields(
+      return BirthdayFields(
         birthYear: _birthYear,
         locale: locale,
         onTap: _pickBirthYear,

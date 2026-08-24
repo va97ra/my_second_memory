@@ -50,7 +50,7 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => _SubscriptionTermSheet(
+      builder: (context) => SubscriptionTermSheet(
         initialMonths: _subscriptionTermMonths,
       ),
     );
@@ -166,7 +166,7 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (context) => _MultiDatePickerSheet(sourceDate: item.memoryDate),
+      builder: (context) => MultiDatePickerSheet(sourceDate: item.memoryDate),
     );
     if (dates == null || dates.isEmpty || !mounted) return;
     final copies = await ref
@@ -219,12 +219,12 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
   }
 
   Future<void> _openTimeAndReminder() async {
-    final result = await showModalBottomSheet<_TimeReminderDraft>(
+    final result = await showModalBottomSheet<TimeReminderDraft>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (context) => _TimeReminderSheet(
+      builder: (context) => TimeReminderSheet(
         initialTimeMinutes: _timeMinutes,
         initialReminderEnabled: _remindAt != null,
         initialSoundUri: _reminderSoundUri,
