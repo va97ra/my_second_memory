@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
+import 'broken_image_placeholder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../state/encrypted_media_provider.dart';
@@ -34,7 +36,7 @@ class MemoryImagePreview extends ConsumerWidget {
                 cacheHeight: cacheHeight,
               ),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const _BrokenImagePlaceholder(),
+              error: (_, __) => const BrokenImagePlaceholder(),
             )
         : path.startsWith('data:')
             ? Image.memory(
@@ -43,7 +45,7 @@ class MemoryImagePreview extends ConsumerWidget {
                 cacheWidth: cacheWidth,
                 cacheHeight: cacheHeight,
                 errorBuilder: (context, error, stackTrace) =>
-                    const _BrokenImagePlaceholder(),
+                    const BrokenImagePlaceholder(),
               )
             : isRemoteLike
                 ? Image.network(
@@ -52,7 +54,7 @@ class MemoryImagePreview extends ConsumerWidget {
                     cacheWidth: cacheWidth,
                     cacheHeight: cacheHeight,
                     errorBuilder: (context, error, stackTrace) =>
-                        const _BrokenImagePlaceholder(),
+                        const BrokenImagePlaceholder(),
                   )
                 : Image.file(
                     File(path),
@@ -60,7 +62,7 @@ class MemoryImagePreview extends ConsumerWidget {
                     cacheWidth: cacheWidth,
                     cacheHeight: cacheHeight,
                     errorBuilder: (context, error, stackTrace) =>
-                        const _BrokenImagePlaceholder(),
+                        const BrokenImagePlaceholder(),
                   );
 
     return DecoratedBox(
@@ -68,24 +70,6 @@ class MemoryImagePreview extends ConsumerWidget {
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
       child: child,
-    );
-  }
-}
-
-class _BrokenImagePlaceholder extends StatelessWidget {
-  const _BrokenImagePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          Icons.broken_image_rounded,
-          color: Theme.of(context).colorScheme.primary,
-          size: 28,
-        ),
-      ),
     );
   }
 }

@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import 'broken_image_placeholder.dart';
+
 class MemoryImagePreview extends StatelessWidget {
   const MemoryImagePreview({
     required this.path,
@@ -25,7 +27,7 @@ class MemoryImagePreview extends StatelessWidget {
             cacheWidth: cacheWidth,
             cacheHeight: cacheHeight,
             errorBuilder: (context, error, stackTrace) =>
-                const _BrokenImagePlaceholder(),
+                const BrokenImagePlaceholder(),
           )
         : Image.network(
             path,
@@ -33,7 +35,7 @@ class MemoryImagePreview extends StatelessWidget {
             cacheWidth: cacheWidth,
             cacheHeight: cacheHeight,
             errorBuilder: (context, error, stackTrace) =>
-                const _BrokenImagePlaceholder(),
+                const BrokenImagePlaceholder(),
           );
 
     return DecoratedBox(
@@ -41,24 +43,6 @@ class MemoryImagePreview extends StatelessWidget {
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
       child: child,
-    );
-  }
-}
-
-class _BrokenImagePlaceholder extends StatelessWidget {
-  const _BrokenImagePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          Icons.broken_image_rounded,
-          color: Theme.of(context).colorScheme.primary,
-          size: 28,
-        ),
-      ),
     );
   }
 }
