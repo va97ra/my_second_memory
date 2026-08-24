@@ -14,12 +14,6 @@ class _ShiftScheduleEditorSheetState
     extends ConsumerState<_ShiftScheduleEditorSheet> {
   static const _defaultColor = Color(0xFF2F7DD1);
 
-  static const _presets = [
-    _ShiftPreset('5/2', '5/2', '5/2', 5, 2),
-    _ShiftPreset('2/2', '2/2', '2/2', 2, 2),
-    _ShiftPreset('1/3', 'сутки/трое', '24h/3 off', 1, 3),
-  ];
-
   late final TextEditingController _organizationController;
   late final TextEditingController _workDaysController;
   late final TextEditingController _restDaysController;
@@ -48,7 +42,7 @@ class _ShiftScheduleEditorSheetState
     _selectedColor = Color(schedule?.colorValue ?? _defaultColor.toARGB32());
     _isEnabled = schedule?.isEnabled ?? true;
     _alarms = List.of(schedule?.alarms ?? const [ShiftAlarm(), ShiftAlarm()]);
-    while (_alarms.length < 2) {
+    while (_alarms.length < shiftAlarmSlots) {
       _alarms.add(const ShiftAlarm());
     }
     _vacations = List.of(schedule?.vacations ?? const <ShiftVacation>[])
@@ -159,14 +153,14 @@ class _ShiftScheduleEditorSheetState
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      for (var index = 0; index < _presets.length; index++) ...[
+                      for (var index = 0; index < shiftPresets.length; index++) ...[
                         if (index > 0) const SizedBox(width: 8),
                         Expanded(
                           child: _PresetButton(
-                            label: _presets[index].label(locale),
+                            label: shiftPresets[index].label(locale),
                             isSelected:
-                                _selectedPresetKey == _presets[index].key,
-                            onTap: () => _applyPreset(_presets[index]),
+                                _selectedPresetKey == shiftPresets[index].key,
+                            onTap: () => _applyPreset(shiftPresets[index]),
                           ),
                         ),
                       ],
@@ -328,7 +322,7 @@ class _ShiftScheduleEditorSheetState
     });
   }
 
-  void _applyPreset(_ShiftPreset preset) {
+  void _applyPreset(ShiftPreset preset) {
     setState(() {
       _selectedPresetKey = preset.key;
       _showManualSchedule = false;
@@ -466,19 +460,13 @@ class _ShiftScheduleEditorSheetState
     }
   }
 
-  String? _presetKeyFor(int workDays, int restDays) {
-    for (final preset in _presets) {
-      if (preset.workDays == workDays && preset.restDays == restDays) {
-        return preset.key;
-      }
-    }
-    return null;
-  }
+  String? _presetKeyFor(int workDays, int restDays) =>
+      shiftPresetFor(workDays, restDays)?.key;
 
-  bool get _supportsNextDayAlarm {
-    return int.tryParse(_workDaysController.text) == 1 &&
-        int.tryParse(_restDaysController.text) == 3;
-  }
+  bool get _supportsNextDayAlarm => supportsNextDayAlarm(
+        int.tryParse(_workDaysController.text) ?? 0,
+        int.tryParse(_restDaysController.text) ?? 0,
+      );
 
   DateTime _dateOnly(DateTime value) {
     return DateTime(value.year, value.month, value.day);

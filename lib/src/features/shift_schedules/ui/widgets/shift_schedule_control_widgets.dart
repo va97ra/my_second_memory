@@ -269,23 +269,3 @@ class _AlarmActionRow extends StatelessWidget {
     );
   }
 }
-
-class _ShiftPreset {
-  const _ShiftPreset(
-    this.key,
-    this.ruLabel,
-    this.enLabel,
-    this.workDays,
-    this.restDays,
-  );
-
-  final String key;
-  final String ruLabel;
-  final String enLabel;
-  final int workDays;
-  final int restDays;
-
-  String label(String locale) {
-    return locale == 'ru' ? ruLabel : enLabel;
-  }
-}
