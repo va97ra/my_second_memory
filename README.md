@@ -12,7 +12,8 @@ Local-first Flutter-приложение для личных записей, к�
   действия человека;
 - [`docs/recurrence.md`](docs/recurrence.md) — модель повторов и её инвариант;
 - [`docs/sync_setup.md`](docs/sync_setup.md) — настройка зашифрованной
-  синхронизации.
+  синхронизации;
+- [`docs/debt.md`](docs/debt.md) — чем код сегодня расходится с картой.
 
 ## Платформы
 
@@ -42,7 +43,8 @@ $env:FLUTTER_SUPPRESS_ANALYTICS='true'
 
 ## Архитектурные ориентиры
 
-- feature-first структура с `domain`, `data`, `state` и `ui`;
+- четыре пакета (`ez_domain`, `ez_data`, `ez_design`, `ez_core`) и
+  приложение поверх них, где каждая фича делится на `state` и `ui`;
 - Riverpod управляет состоянием и временем жизни локального хранилища;
 - UI зависит от контрактов репозиториев, а не от конкретной SQLite/Web
   реализации;
