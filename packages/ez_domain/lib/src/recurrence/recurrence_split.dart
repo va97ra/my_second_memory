@@ -55,7 +55,8 @@ RecurrenceSplit splitSeriesForFutureEdit({
     );
   }
 
-  final newId = '${current.id}_${dateKey(cutoff)}_${now.microsecondsSinceEpoch}';
+  final newId =
+      '${current.id}_${dateKey(cutoff)}_${now.microsecondsSinceEpoch}';
   final template = _linkToSeries(edited, newId, current.frequency, now);
   return RecurrenceSplit(
     ended: current.copyWith(
