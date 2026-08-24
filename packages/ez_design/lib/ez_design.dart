@@ -15,6 +15,7 @@ export 'src/components/notebook_action_button.dart';
 export 'src/components/notebook_icon_button.dart';
 export 'src/components/notebook_page_header.dart';
 export 'src/components/notebook_pressable.dart';
+export 'src/components/page_swipe_area.dart';
 export 'src/components/page_turn/page_turn_frame.dart';
 export 'src/components/torn_paper_shape_border.dart';
 export 'src/components/warm_gradient_background.dart';

@@ -7,7 +7,6 @@ import '../../recurrence/state/recurrence_controller.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
 import '../state/feed_providers.dart';
 import 'widgets/feed_page.dart';
-import 'widgets/feed_period_swipe_area.dart';
 import 'widgets/feed_top_section_selector.dart';
 import 'widgets/full_guide_sheet.dart';
 import 'widgets/notebook_feed_book.dart';
@@ -109,7 +108,11 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     // Страницу листают пальцем, а не только стрелками. У записок периода нет,
     // поэтому они остаются на месте.
     if (view.section == FeedSection.notes) return sheet;
-    return FeedPeriodSwipeArea(onMovePeriod: _movePeriod, child: sheet);
+    return PageSwipeArea(
+      key: const ValueKey('feed_period_swipe_area'),
+      onHorizontalSwipe: _movePeriod,
+      child: sheet,
+    );
   }
 
   Future<void> _selectSection(FeedSection section) async {

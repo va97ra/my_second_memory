@@ -1,27 +1,20 @@
-
+import 'package:ez_design/ez_design.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'package:ez_core/ez_core.dart';
-import 'package:ez_design/ez_design.dart';
-import 'package:ez_domain/ez_domain.dart';
-import '../state/calendar_month_data.dart';
-import '../state/calendar_preferences_controller.dart';
+import '../../../navigation/page_turn_navigation.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../recurrence/state/recurrence_controller.dart';
-import '../../../navigation/page_turn_navigation.dart';
+import '../state/calendar_month_data.dart';
+import '../state/calendar_preferences_controller.dart';
+import 'widgets/calendar_header.dart';
+import 'widgets/calendar_loading_view.dart';
+import 'widgets/calendar_month_pages.dart';
 
-import 'widgets/holiday_bar.dart';
-import 'widgets/calendar_cell_border_painter.dart';
-import 'widgets/day_number.dart';
-import 'widgets/calendar_day_cell_layout.dart';
-import 'widgets/calendar_event_bar.dart';
-import 'widgets/shift_fill.dart';
-part 'widgets/calendar_panel_widgets.dart';
-part 'widgets/calendar_day_cell.dart';
-
+/// Календарь месяца: страница, которую листают стрелками и пальцем.
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
 
@@ -33,12 +26,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     with SingleTickerProviderStateMixin {
   late DateTime _visibleMonth;
   late DateTime _selectedDate;
-  late final AnimationController _calendarPageController;
+  late final AnimationController _pageController;
   DateTime? _outgoingMonth;
   Axis _transitionAxis = Axis.horizontal;
   int _transitionDirection = 1;
-  double _monthDragExtent = 0;
-  double _yearDragExtent = 0;
 
   @override
   void initState() {
@@ -46,7 +37,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     final now = DateTime.now();
     _visibleMonth = DateTime(now.year, now.month);
     _selectedDate = DateTime(now.year, now.month, now.day);
-    _calendarPageController = AnimationController(
+    _pageController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 320),
     );
@@ -54,350 +45,91 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
 
   @override
   void dispose() {
-    _calendarPageController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).languageCode;
     final loadState = ref.watch(memoryItemsLoadProvider);
     final monthData = ref.watch(calendarMonthDataProvider(_visibleMonth));
-    final outgoingMonth = _outgoingMonth;
-    final outgoingMonthData = outgoingMonth == null
-        ? null
-        : ref.watch(calendarMonthDataProvider(outgoingMonth));
     final showHints = ref.watch(appHintsProvider);
     ref.watch(recurrenceLoadProvider);
 
     if (loadState.isLoading || loadState.hasError) {
-      return WarmGradientBackground(
-        child: Column(
-          children: [
-            _calendarHeader(locale: locale, schedules: const []),
-            Expanded(
-              child: Center(
-                child: loadState.isLoading
-                    ? const CircularProgressIndicator()
-                    : Text(strings.loadFailed),
-              ),
-            ),
-          ],
-        ),
+      return CalendarLoadingView(
+        header: _header(locale, const []),
+        isLoading: loadState.isLoading,
       );
     }
 
     return LayoutBuilder(
-      builder: (context, viewportConstraints) {
-        final isLandscape =
-            viewportConstraints.maxWidth > viewportConstraints.maxHeight;
-        final needsLandscapeScroll =
-            isLandscape && viewportConstraints.maxHeight < 680;
-        final panel = _buildPanel(
-          locale,
-          monthData,
-          outgoingMonthData,
-          showHints,
-          enableYearSwipe: !needsLandscapeScroll,
-        );
+      builder: (context, constraints) {
+        final isLandscape = constraints.maxWidth > constraints.maxHeight;
+        // В низком ландшафте страница не помещается целиком, поэтому экран
+        // прокручивается.
+        final needsScroll = isLandscape && constraints.maxHeight < 680;
+        final panel = _panel(locale, showHints, scrolls: needsScroll);
+        final header = _header(locale, monthData.shiftSchedules);
 
         return WarmGradientBackground(
-          child: needsLandscapeScroll
+          child: needsScroll
               ? CustomScrollView(
                   key: const ValueKey('calendar_landscape_scroll'),
                   physics: const ClampingScrollPhysics(),
                   slivers: [
+                    SliverToBoxAdapter(child: header),
                     SliverToBoxAdapter(
-                      child: _calendarHeader(
-                        locale: locale,
-                        schedules: monthData.shiftSchedules,
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 600,
-                        child: panel,
-                      ),
+                      child: SizedBox(height: 600, child: panel),
                     ),
                   ],
                 )
-              : Column(
-                  children: [
-                    _calendarHeader(
-                      locale: locale,
-                      schedules: monthData.shiftSchedules,
-                    ),
-                    Expanded(child: panel),
-                  ],
-                ),
+              : Column(children: [header, Expanded(child: panel)]),
         );
       },
     );
   }
 
-  /// The page header: title, month navigation and the shift schedules that
-  /// colour this month. Same card, same bands and same type sizes as the feed.
-  Widget _calendarHeader({
-    required String locale,
-    required List<ShiftSchedule> schedules,
-  }) {
-    final strings = AppStrings.of(context);
-    final month = _capitalizeMonth(
-      DateFormat('LLLL', locale).format(_visibleMonth),
-    );
-    final legend = [
-      for (final schedule in schedules)
-        if (schedule.isEnabled) schedule,
-    ];
-    // A chip clears one ruled row at ordinary type sizes; large type needs the
-    // second row rather than spilling over the band.
-    final legendRows = MediaQuery.textScalerOf(context).scale(1) <= 1.3 ? 1 : 2;
-
-    return NotebookPageHeader(
-      cardKey: const ValueKey('calendar_header_card'),
-      bands: [
-        NotebookHeaderBand(
-          child: Row(
-            children: [
-              // Home tab: nothing to go back to, but the slot stays so the
-              // title keeps its centre.
-              const SizedBox(width: notebookHeaderSlot),
-              Expanded(
-                child: Text(
-                  strings.calendar,
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-              ),
-              IconButton(
-                key: const ValueKey('calendar_today'),
-                tooltip: strings.today,
-                onPressed: _goToToday,
-                icon: const Icon(Icons.today_rounded, size: 22),
-                style: notebookIconButtonStyle(),
-              ),
-            ],
-          ),
-        ),
-        NotebookHeaderBand(
-          child: Row(
-            children: [
-              IconButton(
-                key: const ValueKey('calendar_previous_month'),
-                tooltip: strings.previousMonth,
-                onPressed: () => _changeMonth(-1),
-                icon: const Icon(Icons.chevron_left_rounded, size: 24),
-                style: notebookIconButtonStyle(),
-              ),
-              Expanded(
-                child: Text(
-                  '$month ${_visibleMonth.year}',
-                  key: const ValueKey('calendar_month_label'),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        height: 1.08,
-                      ),
-                ),
-              ),
-              IconButton(
-                key: const ValueKey('calendar_next_month'),
-                tooltip: strings.nextMonth,
-                onPressed: () => _changeMonth(1),
-                icon: const Icon(Icons.chevron_right_rounded, size: 24),
-                style: notebookIconButtonStyle(),
-              ),
-            ],
-          ),
-        ),
-        if (legend.isNotEmpty)
-          NotebookHeaderBand(
-            ruledRows: legendRows,
-            child: SingleChildScrollView(
-              key: const ValueKey('calendar_shift_legend'),
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final schedule in legend)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: _ShiftLegendChip(schedule: schedule),
-                    ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildPanel(
-    String locale,
-    CalendarMonthData monthData,
-    CalendarMonthData? outgoingMonthData,
-    bool showHints, {
-    required bool enableYearSwipe,
-  }) {
-    return GestureDetector(
-      key: const ValueKey('calendar_month_swipe_area'),
-      behavior: HitTestBehavior.opaque,
-      onHorizontalDragStart: (_) => _monthDragExtent = 0,
-      onHorizontalDragUpdate: (details) {
-        _monthDragExtent += details.primaryDelta ?? 0;
-      },
-      onHorizontalDragEnd: _finishMonthSwipe,
-      onHorizontalDragCancel: () => _monthDragExtent = 0,
-      onVerticalDragStart: enableYearSwipe ? (_) => _yearDragExtent = 0 : null,
-      onVerticalDragUpdate: enableYearSwipe
-          ? (details) {
-              _yearDragExtent += details.primaryDelta ?? 0;
-            }
-          : null,
-      onVerticalDragEnd: enableYearSwipe ? _finishYearSwipe : null,
-      onVerticalDragCancel: enableYearSwipe ? () => _yearDragExtent = 0 : null,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final outgoingMonth = _outgoingMonth;
-          final incomingPanel = RepaintBoundary(
-            key: const ValueKey('calendar_incoming_panel'),
-            child: _calendarPanel(
-              locale: locale,
-              visibleMonth: _visibleMonth,
-              monthData: monthData,
-              showHints: showHints,
-            ),
-          );
-
-          if (outgoingMonth == null || outgoingMonthData == null) {
-            return ClipRect(child: incomingPanel);
-          }
-
-          final outgoingPanel = RepaintBoundary(
-            key: const ValueKey('calendar_outgoing_panel'),
-            child: IgnorePointer(
-              child: _calendarPanel(
-                locale: locale,
-                visibleMonth: outgoingMonth,
-                monthData: outgoingMonthData,
-                showHints: showHints,
-              ),
-            ),
-          );
-
-          return ClipRect(
-            child: AnimatedBuilder(
-              animation: _calendarPageController,
-              builder: (context, _) {
-                final progress = Curves.easeOutCubic.transform(
-                  _calendarPageController.value,
-                );
-                final horizontal = _transitionAxis == Axis.horizontal;
-                final extent =
-                    horizontal ? constraints.maxWidth : constraints.maxHeight;
-                final outgoingOffset =
-                    -_transitionDirection * extent * progress;
-                final incomingOffset =
-                    _transitionDirection * extent * (1 - progress);
-                Offset offsetFor(double value) =>
-                    horizontal ? Offset(value, 0) : Offset(0, value);
-
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Transform.translate(
-                      key: const ValueKey('calendar_page_outgoing'),
-                      offset: offsetFor(outgoingOffset),
-                      child: outgoingPanel,
-                    ),
-                    Transform.translate(
-                      key: const ValueKey('calendar_page_incoming'),
-                      offset: offsetFor(incomingOffset),
-                      child: incomingPanel,
-                    ),
-                  ],
-                );
-              },
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _calendarPanel({
-    required String locale,
-    required DateTime visibleMonth,
-    required CalendarMonthData monthData,
-    required bool showHints,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-      child: _CalendarPanel(
+  Widget _header(String locale, List<ShiftSchedule> schedules) => CalendarHeader(
+        visibleMonth: _visibleMonth,
         locale: locale,
-        visibleMonth: visibleMonth,
+        schedules: schedules,
+        onToday: _goToToday,
+        onChangeMonth: _changeMonth,
+      );
+
+  Widget _panel(String locale, bool showHints, {required bool scrolls}) {
+    return PageSwipeArea(
+      key: const ValueKey('calendar_month_swipe_area'),
+      onHorizontalSwipe: _changeMonth,
+      // В прокручиваемом ландшафте вертикальный жест принадлежит прокрутке.
+      onVerticalSwipe: scrolls ? null : _changeYear,
+      child: CalendarMonthPages(
+        locale: locale,
+        visibleMonth: _visibleMonth,
+        outgoingMonth: _outgoingMonth,
         selectedDate: _selectedDate,
-        monthData: monthData,
         showHints: showHints,
-        onSelectDate: _openDayDialog,
+        animation: _pageController,
+        axis: _transitionAxis,
+        direction: _transitionDirection,
+        onSelectDate: _openDay,
       ),
     );
   }
 
-  void _finishMonthSwipe(DragEndDetails details) {
-    const distanceThreshold = 48.0;
-    const velocityThreshold = 350.0;
-    final velocity = details.primaryVelocity ?? 0;
-    final distance = _monthDragExtent;
-    _monthDragExtent = 0;
+  void _changeMonth(int offset) => _startTransition(
+        DateTime(_visibleMonth.year, _visibleMonth.month + offset),
+        axis: Axis.horizontal,
+        direction: offset.sign,
+      );
 
-    if (distance.abs() >= distanceThreshold) {
-      _changeMonth(distance < 0 ? 1 : -1);
-      return;
-    }
-    if (velocity.abs() >= velocityThreshold) {
-      _changeMonth(velocity < 0 ? 1 : -1);
-    }
-  }
-
-  void _finishYearSwipe(DragEndDetails details) {
-    const distanceThreshold = 48.0;
-    const velocityThreshold = 350.0;
-    final velocity = details.primaryVelocity ?? 0;
-    final distance = _yearDragExtent;
-    _yearDragExtent = 0;
-
-    if (distance.abs() >= distanceThreshold) {
-      _changeYear(distance < 0 ? 1 : -1);
-      return;
-    }
-    if (velocity.abs() >= velocityThreshold) {
-      _changeYear(velocity < 0 ? 1 : -1);
-    }
-  }
-
-  void _changeMonth(int offset) {
-    _startCalendarTransition(
-      DateTime(_visibleMonth.year, _visibleMonth.month + offset),
-      axis: Axis.horizontal,
-      direction: offset.sign,
-    );
-  }
-
-  void _changeYear(int offset) {
-    _startCalendarTransition(
-      DateTime(_visibleMonth.year + offset, _visibleMonth.month),
-      axis: Axis.vertical,
-      direction: offset.sign,
-    );
-  }
+  void _changeYear(int offset) => _startTransition(
+        DateTime(_visibleMonth.year + offset, _visibleMonth.month),
+        axis: Axis.vertical,
+        direction: offset.sign,
+      );
 
   void _goToToday() {
     final now = DateTime.now();
@@ -408,24 +140,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
       return;
     }
 
-    final direction = targetMonth.isAfter(_visibleMonth) ? 1 : -1;
-    _startCalendarTransition(
+    _startTransition(
       targetMonth,
       axis: Axis.horizontal,
-      direction: direction,
+      direction: targetMonth.isAfter(_visibleMonth) ? 1 : -1,
       selectedDate: today,
     );
   }
 
-  void _startCalendarTransition(
+  void _startTransition(
     DateTime targetMonth, {
     required Axis axis,
     required int direction,
     DateTime? selectedDate,
   }) {
-    if (_calendarPageController.isAnimating || targetMonth == _visibleMonth) {
-      return;
-    }
+    if (_pageController.isAnimating || targetMonth == _visibleMonth) return;
 
     final outgoingMonth = _visibleMonth;
     setState(() {
@@ -436,36 +165,35 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
       if (selectedDate != null) _selectedDate = selectedDate;
     });
 
-    _calendarPageController.forward(from: 0).whenComplete(() {
+    _pageController.forward(from: 0).whenComplete(() {
       if (!mounted || _outgoingMonth != outgoingMonth) return;
       setState(() => _outgoingMonth = null);
-      _calendarPageController.value = 0;
+      _pageController.value = 0;
     });
   }
 
-  Future<void> _openDayDialog(DateTime date) async {
+  Future<void> _openDay(DateTime date) async {
     final selected = DateTime(date.year, date.month, date.day);
     final location =
         '/calendar/day?date=${DateFormat('yyyy-MM-dd').format(selected)}';
-    final isWindows =
-        !kIsWeb && Theme.of(context).platform == TargetPlatform.windows;
-    if (!isWindows) {
-      setState(() {
-        _selectedDate = selected;
-        _visibleMonth = DateTime(selected.year, selected.month);
-      });
-      await context.pageTurnGo(location);
+
+    // На Windows день открывается поверх календаря, поэтому выбранная дата
+    // переносится уже после возвращения.
+    if (!kIsWeb && Theme.of(context).platform == TargetPlatform.windows) {
+      await context.pageTurnPush(location);
+      if (mounted) _selectDay(selected);
       return;
     }
+    _selectDay(selected);
+    await context.pageTurnGo(location);
+  }
 
-    await context.pageTurnPush(location);
-    if (!mounted) return;
-
-    final selectedMonth = DateTime(selected.year, selected.month);
-    if (_selectedDate == selected && _visibleMonth == selectedMonth) return;
+  void _selectDay(DateTime day) {
+    final month = DateTime(day.year, day.month);
+    if (_selectedDate == day && _visibleMonth == month) return;
     setState(() {
-      _selectedDate = selected;
-      _visibleMonth = selectedMonth;
+      _selectedDate = day;
+      _visibleMonth = month;
     });
   }
 }

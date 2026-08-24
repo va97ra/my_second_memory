@@ -1,7 +1,7 @@
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
+import '../../state/calendar_month_data.dart';
 import 'vacation_ribbon.dart';
-
 
 /// Заливка ячейки цветом смены.
 class ShiftFill extends StatelessWidget {
@@ -28,7 +28,7 @@ class ShiftFill extends StatelessWidget {
                 if (schedules[index].isVacationWorkday(date))
                   VacationRibbon(
                     key: ValueKey(
-                      'vacation_ribbon_${schedules[index].id}_${_dateKey(date)}',
+                      'vacation_ribbon_${schedules[index].id}_${calendarDateStringKey(date)}',
                     ),
                   ),
               ],
@@ -36,10 +36,5 @@ class ShiftFill extends StatelessWidget {
           ),
       ],
     );
-  }
-
-  String _dateKey(DateTime value) {
-    return '${value.year}-${value.month.toString().padLeft(2, '0')}-'
-        '${value.day.toString().padLeft(2, '0')}';
   }
 }
