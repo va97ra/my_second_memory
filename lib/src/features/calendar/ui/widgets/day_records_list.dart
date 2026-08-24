@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../navigation/page_turn_navigation.dart';
 import '../../../../shared/ui/memory_card/memory_item_card.dart';
-import '../../../memory_items/state/memory_item_commands.dart';
+import '../../../memory_items/memory_items.dart';
 
 /// Записи выбранного дня.
 ///

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../navigation/page_turn_navigation.dart';
-import '../../../sync/state/sync_controller.dart';
+import '../../../sync/sync.dart';
 import 'settings_section.dart';
 import 'settings_tile.dart';
 

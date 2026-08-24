@@ -7,7 +7,7 @@ import '../../../shared/ui/screen_chrome.dart';
 import '../../../shared/ui/memory_card/memory_item_card.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../state/memory_items_controller.dart';
-import '../../recurrence/state/recurrence_controller.dart';
+import '../../recurrence/recurrence.dart';
 import '../state/memory_item_selectors.dart';
 import '../../../navigation/page_turn_navigation.dart';
 

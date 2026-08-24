@@ -1,6 +1,6 @@
 import 'package:ez_domain/ez_domain.dart';
 
-import '../../recurrence/state/recurrence_series_controller.dart';
+import '../../recurrence/recurrence.dart';
 import 'memory_editor_draft.dart';
 import 'memory_items_controller.dart';
 

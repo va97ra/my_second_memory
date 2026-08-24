@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../navigation/page_turn_navigation.dart';
-import '../../../memory_items/state/memory_item_selectors.dart';
-import '../../../memory_items/state/memory_items_controller.dart';
+import '../../../memory_items/memory_items.dart';
 import '../../../../shared/ui/memory_card/memory_item_card.dart';
 
 /// Карточка ленты, подписанная на одну запись.

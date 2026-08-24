@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_domain/ez_domain.dart';
-import '../../memory_items/state/memory_item_selectors.dart';
-import '../../recurrence/state/recurrence_controller.dart';
+import '../../memory_items/memory_items.dart';
+import '../../recurrence/recurrence.dart';
 
 /// Закладки ленты.
 ///

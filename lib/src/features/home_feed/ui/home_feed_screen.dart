@@ -2,9 +2,9 @@ import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../memory_items/state/memory_items_controller.dart';
-import '../../recurrence/state/recurrence_controller.dart';
-import '../../calendar/state/calendar_preferences_controller.dart';
+import '../../memory_items/memory_items.dart';
+import '../../recurrence/recurrence.dart';
+import '../../calendar/calendar.dart';
 import '../state/feed_providers.dart';
 import 'widgets/feed_page.dart';
 import 'widgets/feed_top_section_selector.dart';

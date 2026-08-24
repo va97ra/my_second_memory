@@ -25,9 +25,8 @@ lib/src/features/memory_items/state/memory_editor_form.dart           306
 ```
 
 Плюс мелочь того же рода: `time_reminder_sheet` 273, `theme_picker_sheet` 240,
-`page_turn_geometry` 233, `account_editor` 217, `screen_chrome` 188,
-`account_card` 174, `multi_date_picker_sheet` 167, `subscription_term_sheet`
-166.
+`page_turn_geometry` 233, `account_editor` 217, `account_card` 174,
+`multi_date_picker_sheet` 167, `subscription_term_sheet` 166.
 
 ## Сверх потолка осознанно
 
@@ -70,7 +69,5 @@ lib/src/features/recurrence/state/recurrence_series_controller.dart   505
 
 - **Семнадцать приватных классов-виджетов внутри `ui/`** — все в файлах из
   первого списка; уйдут вместе с ними.
-- **Barrel-файлов нет ни у одной из 10 фич**, поэтому снаружи импортируют
-  прямо во внутренности.
 - **Тесты лежат в `test/` плоской кучей** — 56 файлов, ни одного в пакетах.
   Карта требует раскладки по слоям.

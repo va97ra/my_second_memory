@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../navigation/page_turn_navigation.dart';
-import '../../memory_items/state/memory_items_controller.dart';
-import '../../recurrence/state/recurrence_controller.dart';
+import '../../memory_items/memory_items.dart';
+import '../../recurrence/recurrence.dart';
 import '../state/calendar_month_data.dart';
 import '../state/calendar_preferences_controller.dart';
 import 'widgets/calendar_header.dart';

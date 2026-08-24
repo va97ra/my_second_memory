@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/locale/app_locale_controller.dart';
 import '../../../navigation/page_turn_navigation.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../../calendar/state/calendar_preferences_controller.dart';
+import '../../calendar/calendar.dart';
 import 'widgets/app_settings_section.dart';
 import 'widgets/data_settings_section.dart';
 import 'widgets/feedback_request_card.dart';

@@ -11,7 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../navigation/leave_after_frame.dart' as navigation;
 import '../../../navigation/page_turn_navigation.dart';
 import '../../../shared/state/notification_providers.dart';
-import '../../recurrence/state/recurrence_controller.dart';
+import '../../recurrence/recurrence.dart';
 import '../state/memory_attachment_service.dart';
 import '../state/memory_editor_controller.dart';
 import '../state/memory_items_controller.dart';

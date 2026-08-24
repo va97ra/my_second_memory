@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_data/ez_data.dart';
-import '../../security/state/security_provider.dart';
+import '../../security/security.dart';
 import 'package:ez_domain/ez_domain.dart';
-import '../../sync/state/sync_mutation_observer_provider.dart';
+import '../../sync/sync.dart';
 import '../../../app/local_storage_scope_provider.dart';
 import '../../../shared/state/notification_providers.dart';
 

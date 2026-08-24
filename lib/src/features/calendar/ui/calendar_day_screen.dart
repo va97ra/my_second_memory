@@ -6,8 +6,8 @@ import 'package:intl/intl.dart';
 
 import '../../../navigation/page_turn_navigation.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../../memory_items/state/memory_item_selectors.dart';
-import '../../shift_schedules/state/shift_schedules_controller.dart';
+import '../../memory_items/memory_items.dart';
+import '../../shift_schedules/shift_schedules.dart';
 import '../state/calendar_preferences_controller.dart';
 import '../state/holiday_providers.dart';
 import 'widgets/add_record_bar.dart';

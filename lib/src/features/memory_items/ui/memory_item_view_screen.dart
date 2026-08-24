@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../navigation/leave_after_frame.dart' as navigation;
 import '../../../navigation/page_turn_navigation.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../../recurrence/state/recurrence_controller.dart';
+import '../../recurrence/recurrence.dart';
 import '../state/memory_item_selectors.dart';
 import '../state/memory_items_controller.dart';
 import 'widgets/editor_load_gate.dart';

@@ -10,10 +10,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'src/app/app.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
-import 'src/features/sync/state/sync_controller.dart';
-import 'src/features/sync/state/sync_providers.dart';
+import 'src/features/sync/sync.dart';
 import 'src/platform/windows/windows_desktop.dart';
-import 'src/features/sync/state/sync_mutation_observer_provider.dart';
 import 'src/app/theme/app_content_font_controller.dart';
 import 'src/app/theme/app_theme_controller.dart';
 

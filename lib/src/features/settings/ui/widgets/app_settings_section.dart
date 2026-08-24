@@ -7,7 +7,7 @@ import '../../../../app/locale/app_locale_controller.dart';
 import '../../../../app/theme/app_content_font_controller.dart';
 import '../../../../app/theme/app_theme_controller.dart';
 import '../../../../platform/windows/windows_startup_controller.dart';
-import '../../../calendar/state/calendar_preferences_controller.dart';
+import '../../../calendar/calendar.dart';
 import 'content_font_picker_sheet.dart';
 import 'settings_section.dart';
 import 'settings_tile.dart';

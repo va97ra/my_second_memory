@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../calendar/state/calendar_preferences_controller.dart';
-import '../../recurrence/state/recurrence_controller.dart';
+import '../../calendar/calendar.dart';
+import '../../recurrence/recurrence.dart';
 import '../state/memory_attachment_service.dart';
 import '../state/memory_editor_controller.dart';
 import '../state/memory_editor_fields.dart';

@@ -2,10 +2,10 @@ import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../accounts/state/accounts_controller.dart';
-import '../../memory_items/state/memory_items_controller.dart';
-import '../../recurrence/state/recurrence_controller.dart';
-import '../../shift_schedules/state/shift_schedules_controller.dart';
+import '../../accounts/accounts.dart';
+import '../../memory_items/memory_items.dart';
+import '../../recurrence/recurrence.dart';
+import '../../shift_schedules/shift_schedules.dart';
 import '../state/security_provider.dart';
 import 'widgets/current_pin_dialog.dart';
 

@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../accounts/state/accounts_controller.dart';
-import '../../memory_items/state/memory_items_controller.dart';
-import '../../recurrence/state/recurrence_controller.dart';
-import '../../security/state/security_provider.dart';
-import '../../shift_schedules/state/shift_schedules_controller.dart';
+import '../../accounts/accounts.dart';
+import '../../memory_items/memory_items.dart';
+import '../../recurrence/recurrence.dart';
+import '../../security/security.dart';
+import '../../shift_schedules/shift_schedules.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'sync_controller_impl.dart';

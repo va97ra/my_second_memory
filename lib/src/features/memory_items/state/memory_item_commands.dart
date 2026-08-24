@@ -1,7 +1,7 @@
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../recurrence/state/recurrence_controller.dart';
+import '../../recurrence/recurrence.dart';
 import 'memory_items_controller.dart';
 
 /// Действия над записью из списка.
