@@ -7,6 +7,11 @@ import '../themes/notebook/notebook_visuals.dart';
 ///
 /// A centred title needs the same width claimed on both sides, so a header
 /// with nothing to put in a slot leaves the slot empty rather than closing it.
+/// Ширина, которую шапка занимает под кнопку с каждой стороны заголовка.
+///
+/// Одна на все шапки приложения: и на бумажную шапку страницы, и на AppBar.
+/// Пока их было две, кнопка «назад» на разных экранах выходила разного
+/// размера — это видно невооружённым глазом.
 const double notebookHeaderSlot = 48;
 
 /// One band of a page header, two ruled rows tall unless told otherwise.

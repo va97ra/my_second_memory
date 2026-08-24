@@ -1,6 +1,49 @@
 part of '../widget_test.dart';
 
 void registerAppShellWidgetTests() {
+  testWidgets('the back key is the same size in every header', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      testProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Size visibleKey() => tester.getSize(
+          find
+              .descendant(
+                of: find.byKey(const ValueKey('app_back')),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+
+    // Шапка страницы и шапка AppBar устроены по-разному, и вторая норовит
+    // растянуть кнопку на весь свой слот. Клавиша должна быть одна и та же:
+    // разные размеры одной кнопки на соседних экранах видно невооружённым
+    // глазом.
+    await openTab(tester, 'accounts');
+    final inPageHeader = visibleKey();
+
+    await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
+    await tester.pumpAndSettle();
+    final inAppBar = visibleKey();
+
+    const expected = Size(notebookIconButtonSize, notebookIconButtonSize);
+    expect(inPageHeader, expected);
+    expect(inAppBar, expected);
+  });
+
   testWidgets('bottom panel is drawn from the destination list',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));

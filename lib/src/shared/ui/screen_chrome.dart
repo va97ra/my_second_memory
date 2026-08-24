@@ -69,22 +69,28 @@ class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       toolbarHeight: toolbarHeight,
-      leadingWidth: 64,
+      leadingWidth: notebookHeaderSlot + _headerEdgeInset,
       titleSpacing: 4,
       centerTitle: true,
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
+      // AppBar растягивает leading на весь слот, и клавиша выросла бы до
+      // ширины слота против размера клавиши в остальных шапках. Align
+      // оставляет кнопке её размер, чтобы она была одной и той же везде.
       leading: Padding(
-        padding: const EdgeInsets.only(left: 16),
-        child: AppBackButton(
-          fallbackLocation: fallbackLocation,
-          onPressed: onBack,
+        padding: const EdgeInsets.only(left: _headerEdgeInset),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: AppBackButton(
+            fallbackLocation: fallbackLocation,
+            onPressed: onBack,
+          ),
         ),
       ),
       title: title,
       actions: [
         ...?actions,
-        const SizedBox(width: 16),
+        const SizedBox(width: _headerEdgeInset),
       ],
       bottom: bottom,
     );
@@ -115,10 +121,8 @@ class MainSliverAppBar extends StatelessWidget {
   }
 }
 
-/// Width claimed on each side of a header title, so the title stays centred on
-/// the header rather than on the leftover space. Whatever sits in a slot is
-/// pushed to the page edge.
-const double _mainHeaderSlot = 48;
+/// Отступ содержимого шапки от края страницы.
+const double _headerEdgeInset = 16;
 
 class MainPageHeader extends StatelessWidget {
   const MainPageHeader({
@@ -139,13 +143,18 @@ class MainPageHeader extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+        padding: const EdgeInsets.fromLTRB(
+          _headerEdgeInset,
+          4,
+          _headerEdgeInset,
+          4,
+        ),
         child: Row(
           children: [
             // A centred title needs the same width claimed on either side of
             // it, whether or not there is a back button to put there.
             SizedBox(
-              width: _mainHeaderSlot,
+              width: notebookHeaderSlot,
               child: backLocation == null
                   ? null
                   : Align(
@@ -166,7 +175,7 @@ class MainPageHeader extends StatelessWidget {
               ),
             ),
             SizedBox(
-              width: _mainHeaderSlot,
+              width: notebookHeaderSlot,
               child: trailing == null
                   ? null
                   : Align(alignment: Alignment.centerRight, child: trailing),
