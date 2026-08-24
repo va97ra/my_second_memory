@@ -335,59 +335,36 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     };
 
     final now = DateTime.now();
-    final lastDay = now.add(const Duration(days: 45));
     final desiredIds = <int>{};
     for (final schedule in schedules) {
-      if (!schedule.isEnabled) continue;
-      for (var alarmIndex = 0;
-          alarmIndex < schedule.alarms.length;
-          alarmIndex++) {
-        final alarm = schedule.alarms[alarmIndex];
-        if (!alarm.isEnabled) continue;
-        if (alarmIndex == 1 && !schedule.supportsNextDayAlarm) continue;
+      for (var slot = 0; slot < schedule.alarms.length; slot++) {
+        final alarm = schedule.alarms[slot];
+        final times = shiftAlarmTimes(schedule, alarm, slot, now: now);
+        if (times.isEmpty) continue;
+        // Звук берётся один раз на будильник: обращение за системным звуком
+        // ходит на платформу, а дней у одного графика десятки.
         var soundUri = alarm.soundUri ??
             await _notificationChannel.invokeMethod<String>(
               'getDefaultAlarmSound',
             );
-        for (var day = DateTime(now.year, now.month, now.day);
-            !day.isAfter(lastDay);
-            day = day.add(const Duration(days: 1))) {
-          if (!schedule.isWorkday(day)) continue;
-          final alarmDay =
-              alarmIndex == 1 ? day.add(const Duration(days: 1)) : day;
-          final alarmAt = DateTime(
-            alarmDay.year,
-            alarmDay.month,
-            alarmDay.day,
-            alarm.timeMinutes ~/ 60,
-            alarm.timeMinutes % 60,
-          );
-          if (!alarmAt.isAfter(now)) continue;
-          final notificationId = _shiftAlarmId(
-            schedule.id,
-            alarmIndex,
-            alarmAt,
-          );
+        for (final alarmAt in times) {
+          final notificationId = _shiftAlarmId(schedule.id, slot, alarmAt);
           desiredIds.add(notificationId);
           if (!force && pendingShiftIds.contains(notificationId)) continue;
           try {
             await _scheduleShiftAlarm(
               schedule,
               alarm,
-              alarmIndex,
+              slot,
               alarmAt,
               soundUri,
             );
           } catch (_) {
+            // Свой звук может оказаться недоступен — тогда остальные дни этого
+            // будильника ставятся уже со звуком по умолчанию.
             if (soundUri != null) {
               soundUri = null;
-              await _scheduleShiftAlarm(
-                schedule,
-                alarm,
-                alarmIndex,
-                alarmAt,
-                null,
-              );
+              await _scheduleShiftAlarm(schedule, alarm, slot, alarmAt, null);
             }
           }
         }

@@ -18,6 +18,7 @@ export 'src/recurrence/recurrence_occurrence_exception.dart';
 export 'src/recurrence/recurrence_projection_service.dart';
 export 'src/recurrence/recurrence_series.dart';
 export 'src/recurrence/recurrence_split.dart';
+export 'src/shifts/shift_alarm_times.dart';
 export 'src/shifts/shift_presets.dart';
 export 'src/shifts/shift_schedule.dart';
 export 'src/shifts/shift_schedule_deduplication.dart';

@@ -12,12 +12,6 @@
 исключение.
 
 ```text
-packages/ez_data/lib/src/notifications/notification_service.dart      518
-   один класс реализует и ReminderScheduler, и ShiftAlarmScheduler
-
-packages/ez_data/lib/src/backup/backup_service.dart                   477
-   выгрузка, загрузка и потоковая запись архива
-
 lib/src/features/memory_items/state/memory_items_controller.dart      372
 packages/ez_design/lib/src/components/page_turn/page_turn_frame.dart  410
 lib/src/features/memory_items/ui/widgets/record_editor.dart           322
@@ -49,6 +43,17 @@ packages/ez_design/lib/src/components/page_turn/page_turn_painter.dart 476
 
 lib/src/features/recurrence/state/recurrence_legacy_repair.dart       488
    помеченный ремонт данных прошлых версий
+
+packages/ez_data/lib/src/notifications/notification_service.dart      495
+   один разговор с системой уведомлений. Два интерфейса, которые он
+   реализует, — это два взгляда на один и тот же плагин и одну инициализацию;
+   разделив класс, мы получим два объекта, спорящих за один плагин. Правила из
+   него вынуты: когда график будит, решает shiftAlarmTimes в домене
+
+packages/ez_data/lib/src/backup/backup_service.dart                   477
+   один формат архива, прочитанный в обе стороны. Выгрузка и загрузка знают
+   одну и ту же раскладку файлов, и разложить их по разным классам значит
+   завести две копии этого знания
 
 lib/src/features/sync/state/sync_controller_impl.dart                 399
    одна машина состояний подключения к облаку: загрузка, вход, хранилище,
