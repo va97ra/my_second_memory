@@ -1,29 +1,14 @@
-part of '../home_feed_screen.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:flutter/material.dart';
 
-class _FeedGroupDivider extends StatelessWidget {
-  const _FeedGroupDivider({required this.label});
+import 'feed_filter_button.dart';
 
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: Center(
-        child: AppLabeledDivider(
-          label: label,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-        ),
-      ),
-    );
-  }
-}
-
-/// The notebook sheet starts this far below the top of the ruled background.
-const double _sheetTopInset = 3;
-
-class _FeedHeader extends StatelessWidget {
-  const _FeedHeader({
+/// Шапка страницы ленты: закладка, период и кнопки над ними.
+class FeedHeader extends StatelessWidget {
+  const FeedHeader({
+    super.key,
     required this.title,
     required this.periodLabel,
     required this.filter,
@@ -37,13 +22,16 @@ class _FeedHeader extends StatelessWidget {
     required this.onShowHelp,
   });
 
+  /// Лист блокнота начинается на столько ниже верха разлинованного фона.
+  static const double sheetTopInset = 3;
+
   final String title;
   final String? periodLabel;
   final FeedFilter filter;
   final bool showHelp;
   final bool alignToRuling;
 
-  /// Null once the page on screen is already the current one.
+  /// Null, когда на экране уже сегодняшняя страница.
   final VoidCallback? onGoToToday;
   final ValueChanged<FeedFilter> onFilterSelected;
 
@@ -56,10 +44,11 @@ class _FeedHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
+
     return NotebookPageHeader(
       cardKey: const ValueKey('feed_header_card'),
       alignToRuling: alignToRuling,
-      sheetTopInset: _sheetTopInset,
+      sheetTopInset: sheetTopInset,
       bands: [
         NotebookHeaderBand(
           child: Row(
@@ -74,11 +63,11 @@ class _FeedHeader extends StatelessWidget {
                 )
               else
                 const SizedBox(width: notebookHeaderSlot),
-              // Balances the today button on the right.
+              // Уравновешивает кнопку «сегодня» справа.
               const SizedBox(width: notebookHeaderSlot),
               Expanded(
-                // Long section names shrink to fit rather than losing their
-                // tail to an ellipsis; short ones keep the full size.
+                // Длинное название закладки ужимается целиком, а не теряет
+                // хвост в многоточии; короткое остаётся полного размера.
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
@@ -98,7 +87,7 @@ class _FeedHeader extends StatelessWidget {
                 icon: const Icon(Icons.today_rounded, size: 22),
                 style: notebookIconButtonStyle(),
               ),
-              _FeedFilterButton(
+              FeedFilterButton(
                 selected: filter,
                 onSelected: onFilterSelected,
                 allowsRecurring: periodLabel != null,
@@ -148,67 +137,6 @@ class _FeedHeader extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _MemorySliverList extends StatelessWidget {
-  const _MemorySliverList({
-    required this.itemIds,
-    required this.showDate,
-  });
-
-  final List<String> itemIds;
-
-  /// Дата нужна только когда на странице лежит больше одного дня.
-  final bool showDate;
-
-  @override
-  Widget build(BuildContext context) {
-    if (itemIds.isEmpty) {
-      return const SliverToBoxAdapter(child: SizedBox.shrink());
-    }
-
-    return SliverList.builder(
-      itemCount: itemIds.length,
-      itemBuilder: (context, index) {
-        return _FeedMemoryCard(
-          itemId: itemIds[index],
-          showDate: showDate,
-        );
-      },
-    );
-  }
-}
-
-class _FeedMemoryCard extends ConsumerWidget {
-  const _FeedMemoryCard({
-    required this.itemId,
-    required this.showDate,
-  });
-
-  final String itemId;
-  final bool showDate;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final item = ref.watch(memoryItemByIdProvider(itemId));
-    if (item == null) return const SizedBox.shrink();
-    return MemoryItemCard(
-      item: item,
-      showDate: showDate,
-      compact: true,
-      denseFeedLayout: true,
-      margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-      onOpen: () => context.pageTurnPush(
-        '/memory/view/${Uri.encodeComponent(item.id)}',
-      ),
-      onToggleDone: () {
-        ref.read(memoryItemsControllerProvider.notifier).toggleDone(item.id);
-      },
-      onArchive: () {
-        ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
-      },
     );
   }
 }

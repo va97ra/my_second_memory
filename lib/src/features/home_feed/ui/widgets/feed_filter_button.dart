@@ -1,7 +1,12 @@
-part of '../home_feed_screen.dart';
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:flutter/material.dart';
 
-class _FeedFilterButton extends StatelessWidget {
-  const _FeedFilterButton({
+/// Фильтр ленты. Такой же квадрат, как остальные кнопки страницы.
+class FeedFilterButton extends StatelessWidget {
+  const FeedFilterButton({
+    super.key,
     required this.selected,
     required this.onSelected,
     required this.allowsRecurring,
@@ -15,22 +20,20 @@ class _FeedFilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final strings = AppStrings.of(context);
+    final colors = Theme.of(context).colorScheme;
 
-    // The same square as every other button on the page.
     return PopupMenuButton<FeedFilter>(
       key: const ValueKey('feed_filter'),
-      tooltip: strings.feedFilter,
+      tooltip: AppStrings.of(context).feedFilter,
       initialValue: selected,
       onSelected: onSelected,
       icon: const Icon(Icons.tune_rounded),
       iconSize: 22,
       style: notebookIconButtonStyle(),
-      itemBuilder: (context) {
-        return [
-          for (final filter in FeedFilter.values)
-            if (allowsRecurring || filter.recurringFrequency == null)
-              PopupMenuItem(
+      itemBuilder: (context) => [
+        for (final filter in FeedFilter.values)
+          if (allowsRecurring || filter.recurringFrequency == null)
+            PopupMenuItem(
               value: filter,
               child: Row(
                 children: [
@@ -38,16 +41,15 @@ class _FeedFilterButton extends StatelessWidget {
                     _iconFor(filter),
                     size: 19,
                     color: filter == selected
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ? colors.primary
+                        : colors.onSurfaceVariant,
                   ),
                   const SizedBox(width: 10),
                   Text(_labelFor(context, filter)),
                 ],
               ),
             ),
-        ];
-      },
+      ],
     );
   }
 
