@@ -115,12 +115,12 @@ class SyncController extends StateNotifier<SyncState> {
     _startAuthListener();
   }
 
-  Future<bool> register(String email, String password) async {
-    final remote = _requireRemote();
-    state = state.copyWith(status: SyncStatus.loading, clearError: true);
-    try {
+  Future<bool> register(String email, String password) {
+    return _attemptSignIn((remote) async {
       final result = await remote.signUp(email.trim(), password);
       if (!result.hasSession) {
+        // Учётная запись создана, но письмо ещё не подтверждено: это не
+        // ошибка, а ожидание, и экран должен показать именно его.
         state = SyncState(
           status: SyncStatus.awaitingEmailConfirmation,
           email: email.trim(),
@@ -129,10 +129,7 @@ class SyncController extends StateNotifier<SyncState> {
       }
       await _afterAuthentication();
       return true;
-    } catch (error) {
-      _setError(error);
-      return false;
-    }
+    });
   }
 
   Future<bool> resendSignupConfirmation() async {
@@ -162,23 +159,16 @@ class SyncController extends StateNotifier<SyncState> {
     }
   }
 
-  Future<bool> signIn(String email, String password) async {
-    final remote = _requireRemote();
-    state = state.copyWith(status: SyncStatus.loading, clearError: true);
-    try {
+  Future<bool> signIn(String email, String password) {
+    return _attemptSignIn((remote) async {
       await remote.signIn(email.trim(), password);
       await _afterAuthentication();
       return true;
-    } catch (error) {
-      _setError(error);
-      return false;
-    }
+    });
   }
 
-  Future<bool> signInWithGoogle() async {
-    final remote = _requireRemote();
-    state = state.copyWith(status: SyncStatus.loading, clearError: true);
-    try {
+  Future<bool> signInWithGoogle() {
+    return _attemptSignIn((remote) async {
       final launched = await remote.signInWithGoogle();
       if (!launched) {
         throw StateError('Could not open Google sign in');
@@ -186,60 +176,74 @@ class SyncController extends StateNotifier<SyncState> {
       if (remote.currentUserId != null) {
         await _afterAuthentication();
       } else {
+        // Браузер открылся, но вернулся без сессии: ждём, пока человек
+        // закончит вход, и не показываем это ошибкой.
         state = const SyncState(status: SyncStatus.signedOut);
       }
       return true;
+    });
+  }
+
+  /// Общий ход входа: пометить ожидание, выполнить шаг, свернуть любую
+  /// неудачу в состояние ошибки.
+  Future<bool> _attemptSignIn(
+    Future<bool> Function(SyncRemoteStore remote) step,
+  ) async {
+    final remote = _requireRemote();
+    state = state.copyWith(status: SyncStatus.loading, clearError: true);
+    try {
+      return await step(remote);
     } catch (error) {
       _setError(error);
       return false;
     }
   }
 
-  Future<bool> connectVault(String password) async {
-    final remote = _requireRemote();
-    final userId = remote.currentUserId;
-    if (userId == null) return false;
-    state = state.copyWith(status: SyncStatus.loading, clearError: true);
-    AppCipher? cipher;
-    try {
+  Future<bool> connectVault(String password) {
+    return _openVault((remote, hold) async {
       final profile = await remote.fetchVaultProfile();
-      String? recoveryCode;
-      if (profile == null) {
-        final created = await _vaultCrypto.create(password);
-        cipher = created.cipher;
-        recoveryCode = created.recoveryCode;
-        await remote.createVaultProfile(created.profile);
-      } else {
-        cipher = await _vaultCrypto.unlock(profile, password);
+      if (profile != null) {
+        hold(await _vaultCrypto.unlock(profile, password));
+        return null;
       }
-      await _keyStore.save(userId, cipher);
-      _setReady(cipher, recoveryCode: recoveryCode);
-      await syncNow();
-      return true;
-    } catch (error) {
-      cipher?.destroy();
-      _setError(error, needsVault: true);
-      return false;
-    }
+      final created = await _vaultCrypto.create(password);
+      hold(created.cipher);
+      await remote.createVaultProfile(created.profile);
+      return created.recoveryCode;
+    });
   }
 
-  Future<bool> connectVaultWithRecoveryCode(String recoveryCode) async {
-    final remote = _requireRemote();
-    final userId = remote.currentUserId;
-    if (userId == null) return false;
-    state = state.copyWith(status: SyncStatus.loading, clearError: true);
-    AppCipher? cipher;
-    try {
+  Future<bool> connectVaultWithRecoveryCode(String recoveryCode) {
+    return _openVault((remote, hold) async {
       final profile = await remote.fetchVaultProfile();
       if (profile == null) {
         throw const FormatException('Synchronization vault does not exist');
       }
-      cipher = await _vaultCrypto.unlockWithRecoveryCode(
-        profile,
-        recoveryCode,
-      );
-      await _keyStore.save(userId, cipher);
-      _setReady(cipher);
+      hold(await _vaultCrypto.unlockWithRecoveryCode(profile, recoveryCode));
+      return null;
+    });
+  }
+
+  /// Общий ход подключения хранилища.
+  ///
+  /// [open] сообщает готовый ключ через `hold` сразу, как только тот создан:
+  /// если следующий шаг сорвётся, ключ нужно уничтожить, а не оставить
+  /// лежать в памяти. Возвращённый код восстановления показывается один раз.
+  Future<bool> _openVault(
+    Future<String?> Function(
+      SyncRemoteStore remote,
+      void Function(AppCipher cipher) hold,
+    ) open,
+  ) async {
+    final remote = _requireRemote();
+    final userId = remote.currentUserId;
+    if (userId == null) return false;
+    state = state.copyWith(status: SyncStatus.loading, clearError: true);
+    AppCipher? cipher;
+    try {
+      final recoveryCode = await open(remote, (opened) => cipher = opened);
+      await _keyStore.save(userId, cipher!);
+      _setReady(cipher!, recoveryCode: recoveryCode);
       await syncNow();
       return true;
     } catch (error) {
