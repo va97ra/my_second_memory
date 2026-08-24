@@ -114,7 +114,8 @@ class ShiftAlarmsEditor extends ConsumerWidget {
       // нет. Тогда будильник остаётся со звуком по умолчанию.
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.of(context).soundPickerUnavailable)),
+          SnackBar(
+              content: Text(AppStrings.of(context).soundPickerUnavailable)),
         );
       }
       return;

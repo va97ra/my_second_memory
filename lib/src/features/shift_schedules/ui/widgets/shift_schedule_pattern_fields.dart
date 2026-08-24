@@ -56,9 +56,7 @@ class ShiftSchedulePatternFields extends StatelessWidget {
         TextButton.icon(
           onPressed: onToggleManual,
           icon: Icon(
-            showManualSchedule
-                ? Icons.expand_less_rounded
-                : Icons.tune_rounded,
+            showManualSchedule ? Icons.expand_less_rounded : Icons.tune_rounded,
           ),
           label: Align(
             alignment: Alignment.centerLeft,

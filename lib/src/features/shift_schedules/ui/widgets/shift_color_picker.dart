@@ -137,8 +137,10 @@ class _ShiftColorPickerState extends State<ShiftColorPicker> {
               ),
               thumbColor: color,
               onChanged: (position) => _emit(_tone.withTonePosition(position)),
-              onDecrease: () => _emit(_tone.withTonePosition(_tone.tone - 0.04)),
-              onIncrease: () => _emit(_tone.withTonePosition(_tone.tone + 0.04)),
+              onDecrease: () =>
+                  _emit(_tone.withTonePosition(_tone.tone - 0.04)),
+              onIncrease: () =>
+                  _emit(_tone.withTonePosition(_tone.tone + 0.04)),
             ),
           ],
         ),

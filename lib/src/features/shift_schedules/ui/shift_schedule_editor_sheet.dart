@@ -125,8 +125,7 @@ class _ShiftScheduleEditorSheetState
             locale: locale,
             onAdd: (vacation) =>
                 setState(() => _form = _form.withVacation(vacation)),
-            onRemove: (id) =>
-                setState(() => _form = _form.withoutVacation(id)),
+            onRemove: (id) => setState(() => _form = _form.withoutVacation(id)),
           ),
         ),
         ShiftEditorSection(
