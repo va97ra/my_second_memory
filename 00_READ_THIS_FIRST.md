@@ -2,8 +2,10 @@
 
 `Ежедневник V2` — local-first Flutter-приложение для личной памяти по датам.
 Перед изменениями также читать [`README.md`](README.md),
-[`docs/architecture.md`](docs/architecture.md) и — прежде чем трогать
-повторы — [`docs/recurrence.md`](docs/recurrence.md).
+[`docs/architecture.md`](docs/architecture.md) — там же таблица «куда класть
+новый код», [`docs/behavior.md`](docs/behavior.md) — что происходит с записью
+после действия человека, и — прежде чем трогать повторы —
+[`docs/recurrence.md`](docs/recurrence.md).
 
 ## Продуктовый смысл
 

@@ -329,6 +329,75 @@ void main() {
     expect(reminders.cancelled.where((id) => id == 'reminder').length, 3);
   });
 
+  // docs/behavior.md: восстановление возвращает напоминание, если оно ещё
+  // впереди, и не воскрешает прошедшее.
+  test('restore brings back a reminder only while it is still ahead',
+      () async {
+    final now = DateTime.now();
+    final ahead = MemoryItem(
+      id: 'ahead',
+      type: MemoryType.event,
+      title: 'Впереди',
+      memoryDate: DateTime(now.year, now.month, now.day + 1),
+      createdAt: now,
+      updatedAt: now,
+      status: MemoryStatus.archived,
+      remindAt: now.add(const Duration(days: 1)),
+    );
+    final passed = ahead.copyWith(
+      id: 'passed',
+      title: 'Позади',
+      remindAt: now.subtract(const Duration(days: 1)),
+    );
+    final reminders = _ReminderScheduler();
+    final controller = MemoryItemsController(
+      _MemoryRepository([ahead, passed]),
+      reminders,
+    );
+    await controller.load();
+
+    await controller.restore('ahead');
+    await controller.restore('passed');
+
+    expect(reminders.scheduled, contains('ahead'));
+    expect(reminders.scheduled, isNot(contains('passed')));
+    expect(
+      controller.items.every((item) => item.status == MemoryStatus.active),
+      isTrue,
+    );
+  });
+
+  // docs/behavior.md: архив хранит запись целиком, а не прячет её содержимое.
+  test('archiving keeps the record whole, media included', () async {
+    final now = DateTime.now();
+    final item = MemoryItem(
+      id: 'with-media',
+      type: MemoryType.note,
+      title: 'С фотографией',
+      body: 'С фотографией',
+      memoryDate: now,
+      createdAt: now,
+      updatedAt: now,
+      imagePaths: const ['photo.jpg'],
+      audioPath: 'voice.m4a',
+    );
+    final media = _TrackingMediaStorage();
+    final controller = MemoryItemsController(
+      _MemoryRepository([item]),
+      _ReminderScheduler(),
+      media,
+    );
+    await controller.load();
+
+    await controller.archive('with-media');
+
+    final archived = controller.items.single;
+    expect(archived.status, MemoryStatus.archived);
+    expect(archived.imagePaths, ['photo.jpg']);
+    expect(archived.audioPath, 'voice.m4a');
+    expect(media.deleted, isEmpty);
+  });
+
   test('undated note never creates a reminder', () async {
     final now = DateTime.now();
     final note = MemoryItem(
