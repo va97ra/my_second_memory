@@ -1,7 +1,6 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
-
 /// Как выглядит тема: обложка, лист и строка текста на нём.
 class ThemePreview extends StatelessWidget {
   const ThemePreview({

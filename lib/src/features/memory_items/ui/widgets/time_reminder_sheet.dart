@@ -1,28 +1,15 @@
 import 'package:ez_core/ez_core.dart';
-import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
 import '../../../../shared/ui/reminder_sound_picker.dart';
-import 'reminder_sheet_tile.dart';
-import 'reminder_toggle_tile.dart';
+import 'time_reminder_draft.dart';
+import 'time_reminder_sheet_body.dart';
 
-/// Лист выбора времени записи и напоминания.
-class TimeReminderDraft {
-  const TimeReminderDraft({
-    required this.timeMinutes,
-    required this.reminderEnabled,
-    required this.soundUri,
-    required this.soundName,
-  });
-
-  final int? timeMinutes;
-  final bool reminderEnabled;
-  final String? soundUri;
-  final String? soundName;
-}
-
+/// Лист выбора времени записи и напоминания о ней.
 class TimeReminderSheet extends StatefulWidget {
-  const TimeReminderSheet({super.key, 
+  const TimeReminderSheet({
+    super.key,
     required this.initialTimeMinutes,
     required this.initialReminderEnabled,
     required this.initialSoundUri,
@@ -61,100 +48,29 @@ class _TimeReminderSheetState extends State<TimeReminderSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final strings = AppStrings.of(context);
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(18, 0, 18, 18 + bottomInset),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              strings.timeAndReminder,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            const SizedBox(height: 14),
-            ReminderSheetTile(
-              icon: Icons.schedule_rounded,
-              accentColor: const Color(0xFF218CFF),
-              title: strings.time,
-              value: _formattedTime(strings),
-              onTap: _pickTime,
-              trailing: _timeMinutes == null
-                  ? null
-                  : IconButton(
-                      tooltip: strings.delete,
-                      onPressed: () => setState(() {
-                        _timeMinutes = null;
-                        _reminderEnabled = false;
-                        _error = null;
-                      }),
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                    ),
-            ),
-            const SizedBox(height: 5),
-            ReminderToggleTile(
-              accentColor: Theme.of(context).colorScheme.primary,
-              title: strings.soundNotification,
-              subtitle: !widget.scheduler.isSupported
-                  ? strings.androidOnlyReminder
-                  : null,
-              value: _reminderEnabled,
-              onChanged: !widget.scheduler.isSupported || _busy
-                  ? null
-                  : _toggleReminder,
-            ),
-            if (_reminderEnabled) ...[
-              const SizedBox(height: 5),
-              ReminderSheetTile(
-                icon: Icons.music_note_rounded,
-                accentColor: const Color(0xFF7C3AED),
-                title: strings.chooseSound,
-                value: _soundName ?? strings.systemAlarmSound,
-                onTap: _busy ? null : _selectSound,
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _soundUri == null || _busy
-                      ? null
-                      : () => setState(() {
-                            _soundUri = null;
-                            _soundName = null;
-                          }),
-                  child: Text(strings.useSystemSound),
-                ),
-              ),
-            ],
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _error!,
-                key: const ValueKey('memory_reminder_error'),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-              ),
-            ],
-            const SizedBox(height: 10),
-            NotebookActionButton(
-              key: const ValueKey('memory_reminder_done'),
-              onPressed: _busy ? null : _finish,
-              icon: _busy
-                  ? const SizedBox.square(
-                      dimension: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check_rounded),
-              child: Text(strings.ready),
-            ),
-          ],
-        ),
-      ),
+    return TimeReminderSheetBody(
+      timeText: _formattedTime(AppStrings.of(context)),
+      reminderEnabled: _reminderEnabled,
+      reminderSupported: widget.scheduler.isSupported,
+      soundName: _soundName,
+      hasOwnSound: _soundUri != null,
+      busy: _busy,
+      error: _error,
+      onPickTime: _pickTime,
+      onClearTime: _timeMinutes == null
+          ? null
+          : () => setState(() {
+                _timeMinutes = null;
+                _reminderEnabled = false;
+                _error = null;
+              }),
+      onToggleReminder: _toggleReminder,
+      onSelectSound: _selectSound,
+      onUseSystemSound: () => setState(() {
+        _soundUri = null;
+        _soundName = null;
+      }),
+      onDone: _finish,
     );
   }
 
@@ -244,30 +160,17 @@ class _TimeReminderSheetState extends State<TimeReminderSheet> {
   }
 
   void _finish() {
-    final minutes = _timeMinutes;
-    if (_reminderEnabled &&
-        (minutes == null ||
-            !_reminderDateTime(minutes).isAfter(DateTime.now()))) {
-      setState(() {
-        _error = AppStrings.of(context).reminderFutureRequired;
-      });
+    if (_reminderEnabled && !canRemindAt(widget.memoryDate, _timeMinutes)) {
+      setState(() => _error = AppStrings.of(context).reminderFutureRequired);
       return;
     }
     Navigator.of(context).pop(
       TimeReminderDraft(
-        timeMinutes: minutes,
+        timeMinutes: _timeMinutes,
         reminderEnabled: _reminderEnabled,
         soundUri: _soundUri,
         soundName: _soundName,
       ),
     );
   }
-
-  DateTime _reminderDateTime(int minutes) => DateTime(
-        widget.memoryDate.year,
-        widget.memoryDate.month,
-        widget.memoryDate.day,
-        minutes ~/ 60,
-        minutes % 60,
-      );
 }

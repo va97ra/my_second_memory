@@ -25,7 +25,24 @@ abstract final class ReminderSource {
   /// ставшая шаблоном серии, остаётся обычной: её напоминание согласуется
   /// вместе с остальными записями, а не с проекциями.
   static String of(MemoryItem item) =>
-      item.isGeneratedOccurrence && item.seriesId != null
-          ? recurrence
-          : memory;
+      item.isGeneratedOccurrence && item.seriesId != null ? recurrence : memory;
+}
+
+/// Момент напоминания: время суток на дне записи.
+DateTime reminderMomentOn(DateTime memoryDate, int minutes) => DateTime(
+      memoryDate.year,
+      memoryDate.month,
+      memoryDate.day,
+      minutes ~/ 60,
+      minutes % 60,
+    );
+
+/// Можно ли оставить напоминание включённым.
+///
+/// Без времени напоминать нечем, а прошедший момент не наступит: включённое
+/// напоминание в прошлом просто никогда не сработает, и человек об этом не
+/// узнает.
+bool canRemindAt(DateTime memoryDate, int? minutes, {DateTime? now}) {
+  if (minutes == null) return false;
+  return reminderMomentOn(memoryDate, minutes).isAfter(now ?? DateTime.now());
 }

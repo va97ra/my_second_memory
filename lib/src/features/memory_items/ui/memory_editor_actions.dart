@@ -23,6 +23,7 @@ import 'widgets/memory_editor_menu.dart';
 import 'widgets/multi_date_picker_sheet.dart';
 import 'widgets/recurrence_picker_sheet.dart';
 import 'widgets/subscription_term_sheet.dart';
+import 'widgets/time_reminder_draft.dart';
 import 'widgets/time_reminder_sheet.dart';
 
 /// Что происходит по нажатию в редакторе записи.

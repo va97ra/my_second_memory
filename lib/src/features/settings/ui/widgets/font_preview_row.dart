@@ -1,7 +1,6 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
-
 /// Строка выбора шрифта записей: имя и образец им набранный.
 class FontPreviewRow extends StatelessWidget {
   const FontPreviewRow({

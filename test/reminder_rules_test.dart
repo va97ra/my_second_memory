@@ -74,4 +74,22 @@ void main() {
     );
     expect(ReminderSource.of(_item()), ReminderSource.memory);
   });
+
+  group('Момент напоминания', () {
+    final day = DateTime(2026, 8, 24);
+
+    test('считается временем суток на дне записи', () {
+      expect(reminderMomentOn(day, 7 * 60 + 30), DateTime(2026, 8, 24, 7, 30));
+    });
+
+    test('без времени напоминать нечем', () {
+      expect(canRemindAt(day, null, now: DateTime(2026, 8, 24, 6)), isFalse);
+    });
+
+    test('прошедший момент не наступит', () {
+      final now = DateTime(2026, 8, 24, 9);
+      expect(canRemindAt(day, 8 * 60, now: now), isFalse);
+      expect(canRemindAt(day, 10 * 60, now: now), isTrue);
+    });
+  });
 }
