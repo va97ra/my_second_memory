@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,10 +11,15 @@ import 'package:ez_domain/ez_domain.dart';
 import '../state/calendar_month_data.dart';
 import '../state/calendar_preferences_controller.dart';
 import '../../memory_items/state/memory_items_controller.dart';
-import '../../memory_items/ui/widgets/memory_item_presentation.dart';
 import '../../recurrence/state/recurrence_controller.dart';
 import '../../../navigation/page_turn_navigation.dart';
 
+import 'widgets/holiday_bar.dart';
+import 'widgets/calendar_cell_border_painter.dart';
+import 'widgets/day_number.dart';
+import 'widgets/calendar_day_cell_layout.dart';
+import 'widgets/calendar_event_bar.dart';
+import 'widgets/shift_fill.dart';
 part 'widgets/calendar_panel_widgets.dart';
 part 'widgets/calendar_day_cell.dart';
 
