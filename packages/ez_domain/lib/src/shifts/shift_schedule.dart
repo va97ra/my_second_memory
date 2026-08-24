@@ -1,3 +1,5 @@
+import 'shift_presets.dart';
+
 class ShiftVacation {
   const ShiftVacation({
     required this.id,
@@ -118,7 +120,21 @@ class ShiftSchedule {
   DateTime get syncUpdatedAt =>
       updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
 
-  bool get supportsNextDayAlarm => workDays == 1 && restDays == 3;
+  bool get supportsNextDayAlarm =>
+      supportsNextDayAlarmFor(workDays, restDays);
+
+  /// Отпуск, который стоит показать рядом с графиком: идущий сейчас, иначе
+  /// ближайший будущий. Прошедшие не показываются — напоминать о них нечем.
+  ShiftVacation? vacationToShow(DateTime today) {
+    final day = _dateOnly(today);
+    for (final vacation in vacations) {
+      if (vacation.contains(day)) return vacation;
+    }
+    for (final vacation in vacations) {
+      if (vacation.startDate.isAfter(day)) return vacation;
+    }
+    return null;
+  }
 
   bool isWorkday(DateTime date) {
     if (!isEnabled || workDays <= 0 || restDays < 0) return false;

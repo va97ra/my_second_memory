@@ -37,6 +37,43 @@ void main() {
       expect(leapVacation.overlaps(adjacent), isFalse);
       expect(leapVacation.overlaps(overlapping), isTrue);
     });
+
+    test('the schedule shows the running vacation, else the next one', () {
+      final past = ShiftVacation(
+        id: 'past',
+        startDate: DateTime(2026, 1, 5),
+        durationDays: 5,
+      );
+      final running = ShiftVacation(
+        id: 'running',
+        startDate: DateTime(2026, 8, 20),
+        durationDays: 10,
+      );
+      final future = ShiftVacation(
+        id: 'future',
+        startDate: DateTime(2026, 12, 1),
+        durationDays: 14,
+      );
+      final schedule = ShiftSchedule(
+        id: 'plant',
+        organizationName: 'Завод',
+        colorValue: 0xFF2F7DD1,
+        startDate: DateTime(2026, 1, 1),
+        workDays: 2,
+        restDays: 2,
+        vacations: [past, running, future],
+      );
+
+      expect(schedule.vacationToShow(DateTime(2026, 8, 24))?.id, 'running');
+      expect(schedule.vacationToShow(DateTime(2026, 9, 1))?.id, 'future');
+      expect(schedule.vacationToShow(DateTime(2027, 1, 1)), isNull);
+      expect(
+        schedule.copyWith(vacations: const []).vacationToShow(
+          DateTime(2026, 8, 24),
+        ),
+        isNull,
+      );
+    });
   });
 
   group('ShiftSchedule vacations', () {

@@ -1,22 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
-import '../../../shared/ui/screen_chrome.dart';
-import 'package:ez_data/ez_data.dart';
-import '../../notifications/ui/reminder_sound_picker.dart';
 import 'package:ez_domain/ez_domain.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../shared/ui/screen_chrome.dart';
 import '../state/shift_schedules_controller.dart';
-import '../../notifications/state/notification_providers.dart';
+import 'shift_schedule_editor_sheet.dart';
+import 'widgets/shift_schedule_tile.dart';
 
-part 'widgets/shift_schedule_tile.dart';
-part 'widgets/shift_schedule_editor.dart';
-part 'widgets/shift_vacation_form_widgets.dart';
-part 'widgets/shift_schedule_control_widgets.dart';
-part 'widgets/shift_color_picker.dart';
-
+/// Список графиков смен. Редактор открывается нижним листом поверх него.
 class ShiftSchedulesScreen extends ConsumerWidget {
   const ShiftSchedulesScreen({super.key});
 
@@ -60,19 +53,17 @@ class ShiftSchedulesScreen extends ConsumerWidget {
                         icon: Icons.work_history_rounded,
                         title: strings.noShiftSchedules,
                         actionLabel: strings.addShiftSchedule,
-                        onAction: () => _openEditor(context, ref),
+                        onAction: () => _openEditor(context),
                       )
                     else
                       for (final schedule in schedules)
-                        _ShiftScheduleTile(
+                        ShiftScheduleTile(
                           schedule: schedule,
                           locale: locale,
-                          onEdit: () => _openEditor(context, ref, schedule),
-                          onToggle: () {
-                            ref
-                                .read(shiftSchedulesControllerProvider.notifier)
-                                .toggleEnabled(schedule.id);
-                          },
+                          onEdit: () => _openEditor(context, schedule),
+                          onToggle: () => ref
+                              .read(shiftSchedulesControllerProvider.notifier)
+                              .toggleEnabled(schedule.id),
                           onDelete: () =>
                               _confirmDelete(context, ref, schedule.id),
                         ),
@@ -84,26 +75,20 @@ class ShiftSchedulesScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openEditor(context, ref),
+        onPressed: () => _openEditor(context),
         icon: const Icon(Icons.add_rounded),
         label: Text(strings.addShiftSchedule),
       ),
     );
   }
 
-  Future<void> _openEditor(
-    BuildContext context,
-    WidgetRef ref, [
-    ShiftSchedule? schedule,
-  ]) async {
-    await showModalBottomSheet<void>(
+  Future<void> _openEditor(BuildContext context, [ShiftSchedule? schedule]) {
+    return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return _ShiftScheduleEditorSheet(schedule: schedule);
-      },
+      builder: (context) => ShiftScheduleEditorSheet(schedule: schedule),
     );
   }
 
@@ -115,21 +100,19 @@ class ShiftSchedulesScreen extends ConsumerWidget {
     final strings = AppStrings.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(strings.deleteShiftScheduleQuestion),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(strings.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(strings.delete),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: Text(strings.deleteShiftScheduleQuestion),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(strings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(strings.delete),
+          ),
+        ],
+      ),
     );
 
     if (confirmed ?? false) {

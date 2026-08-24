@@ -58,7 +58,10 @@ ShiftPreset? shiftPresetFor(int workDays, int restDays) {
 
 /// Сутки через трое — единственный рисунок, где смена переходит через
 /// полночь, поэтому только в нём будильник можно поставить на следующий день.
-bool supportsNextDayAlarm(int workDays, int restDays) =>
+///
+/// Правило записано здесь одно на всё приложение: [ShiftSchedule] спрашивает
+/// его же, и форма редактора тоже.
+bool supportsNextDayAlarmFor(int workDays, int restDays) =>
     workDays == 1 && restDays == 3;
 
 /// График всегда держит два будильника: на начало смены и на её конец.

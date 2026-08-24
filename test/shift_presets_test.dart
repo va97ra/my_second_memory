@@ -14,9 +14,9 @@ void main() {
   });
 
   test('only the round-the-clock pattern crosses midnight', () {
-    expect(supportsNextDayAlarm(1, 3), isTrue);
-    expect(supportsNextDayAlarm(5, 2), isFalse);
-    expect(supportsNextDayAlarm(2, 2), isFalse);
+    expect(supportsNextDayAlarmFor(1, 3), isTrue);
+    expect(supportsNextDayAlarmFor(5, 2), isFalse);
+    expect(supportsNextDayAlarmFor(2, 2), isFalse);
   });
 
   test('every preset names itself in both languages', () {
