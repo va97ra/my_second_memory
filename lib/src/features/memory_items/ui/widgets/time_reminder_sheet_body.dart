@@ -10,7 +10,7 @@ import 'time_reminder_sound_row.dart';
 class TimeReminderSheetBody extends StatelessWidget {
   const TimeReminderSheetBody({
     super.key,
-    required this.timeText,
+    required this.timeMinutes,
     required this.reminderEnabled,
     required this.reminderSupported,
     required this.soundName,
@@ -25,7 +25,8 @@ class TimeReminderSheetBody extends StatelessWidget {
     required this.onDone,
   });
 
-  final String timeText;
+  /// Время записи от полуночи, или null, если оно не задано.
+  final int? timeMinutes;
   final bool reminderEnabled;
 
   /// Звуковые напоминания есть только на Android.
@@ -73,7 +74,9 @@ class TimeReminderSheetBody extends StatelessWidget {
               icon: Icons.schedule_rounded,
               accentColor: const Color(0xFF218CFF),
               title: strings.time,
-              value: timeText,
+              value: timeMinutes == null
+                  ? strings.timeNotSet
+                  : formatMinutesOfDay(timeMinutes!),
               onTap: onPickTime,
               trailing: onClearTime == null
                   ? null

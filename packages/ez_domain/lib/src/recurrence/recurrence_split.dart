@@ -1,6 +1,6 @@
 import '../memory/memory_item.dart';
-import 'recurrence_projection_service.dart';
 import 'recurrence_series.dart';
+import 'recurrence_dates.dart';
 
 bool _templateKeepsTerm(MemoryItem template, RecurrenceFrequency frequency) =>
     keepsSubscriptionTerm(
