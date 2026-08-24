@@ -91,7 +91,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     );
   }
 
-  Widget _header(String locale, List<ShiftSchedule> schedules) => CalendarHeader(
+  Widget _header(String locale, List<ShiftSchedule> schedules) =>
+      CalendarHeader(
         visibleMonth: _visibleMonth,
         locale: locale,
         schedules: schedules,

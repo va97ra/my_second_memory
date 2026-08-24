@@ -216,3 +216,16 @@ class MemoryItem {
     );
   }
 }
+
+/// Порядок записей внутри одного дня: по времени, а при равном времени — по
+/// тому, что завели раньше.
+int compareByVisibleTime(MemoryItem a, MemoryItem b) {
+  final byTime = _visibleTimeMinutes(a).compareTo(_visibleTimeMinutes(b));
+  return byTime != 0 ? byTime : a.createdAt.compareTo(b.createdAt);
+}
+
+/// Время, по которому запись стоит в дне. У записи без времени это час её
+/// появления: иначе все такие записи слиплись бы в начале дня.
+int _visibleTimeMinutes(MemoryItem item) {
+  return item.timeMinutes ?? item.createdAt.hour * 60 + item.createdAt.minute;
+}
