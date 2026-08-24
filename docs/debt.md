@@ -24,9 +24,6 @@ packages/ez_data/lib/src/notifications/notification_service.dart      518
 packages/ez_data/lib/src/backup/backup_service.dart                   477
    выгрузка, загрузка и потоковая запись архива
 
-lib/src/features/backup/ui/backup_screen.dart                         475
-   у фичи нет state/, поэтому экран сам собирает сервис из репозиториев
-
 lib/src/features/settings/ui/settings_screen.dart                     431
 lib/src/features/memory_items/ui/memory_item_view_screen.dart         423
 lib/src/features/memory_items/state/memory_items_controller.dart      426
@@ -69,8 +66,7 @@ lib/src/features/recurrence/state/recurrence_legacy_repair.dart       488
 
 - **Семнадцать приватных классов-виджетов внутри `ui/`** — все в файлах из
   первого списка; уйдут вместе с ними.
-- **Barrel-файлов нет ни у одной из 13 фич**, поэтому снаружи импортируют
+- **Barrel-файлов нет ни у одной из 10 фич**, поэтому снаружи импортируют
   прямо во внутренности.
 - **Тесты лежат в `test/` плоской кучей** — 56 файлов, ни одного в пакетах.
   Карта требует раскладки по слоям.
-- **`backup_screen` обращается к репозиториям напрямую**, минуя `state/`.
