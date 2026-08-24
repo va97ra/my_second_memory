@@ -16,6 +16,10 @@ class RecurrenceExceptionController
 
   Future<void> load() => _loadFuture;
 
+  /// Отметки, лежащие в хранилище прямо сейчас.
+  List<RecurrenceOccurrenceException> get exceptions => state;
+
+
   Future<void> _load() async => state = await _repository.loadAll();
 
   Future<void> upsert(RecurrenceOccurrenceException exception) async {
