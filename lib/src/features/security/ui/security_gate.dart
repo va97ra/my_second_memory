@@ -1,20 +1,20 @@
-import 'dart:async';
-
+import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ez_core/ez_core.dart';
-import 'package:ez_design/ez_design.dart';
+import '../state/security_gate_controller.dart';
 import '../state/security_provider.dart';
+import 'widgets/biometric_unlock_card.dart';
+import 'widgets/enable_biometrics_card.dart';
+import 'widgets/pin_unlock_card.dart';
+import 'widgets/secure_storage_error_card.dart';
+import 'widgets/security_card.dart';
+import 'widgets/security_scaffold.dart';
+import 'widgets/setup_pin_card.dart';
 
-part 'security_gate_views.dart';
-
+/// Замок приложения: пока он не открыт, за ним ничего не показывается.
 class SecurityGate extends ConsumerStatefulWidget {
-  const SecurityGate({
-    required this.child,
-    super.key,
-  });
+  const SecurityGate({super.key, required this.child});
 
   final Widget child;
 
@@ -24,24 +24,22 @@ class SecurityGate extends ConsumerStatefulWidget {
 
 class _SecurityGateState extends ConsumerState<SecurityGate> {
   final _pinController = TextEditingController();
-  bool _isLoading = true;
-  bool _showPinFallback = false;
-  bool _biometricAttempted = false;
-  bool _biometricBusy = false;
-  bool _pinUnlockBusy = false;
-  bool _setupBusy = false;
-  bool _offerBiometrics = false;
-  String? _error;
-  String? _startupError;
+  late final SecurityGateController _gate;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _gate = SecurityGateController(
+      ref.read(securitySessionProvider.notifier),
+    )..addListener(() {
+        if (mounted) setState(() {});
+      });
+    _gate.load();
   }
 
   @override
   void dispose() {
+    _gate.dispose();
     _pinController.dispose();
     super.dispose();
   }
@@ -50,7 +48,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
   Widget build(BuildContext context) {
     final session = ref.watch(securitySessionProvider);
 
-    if (_isLoading) {
+    if (_gate.isLoading) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(key: ValueKey('gate_loading')),
@@ -58,52 +56,15 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
       );
     }
 
-    if (_startupError != null) {
-      return _SecurityScaffold(
-        child: _SecurityCard(
-          children: [
-            Icon(
-              Icons.shield_rounded,
-              size: 52,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppStrings.of(context).secureStorageStartFailed,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              AppStrings.of(context).secureStorageStartFailedSubtitle,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh_rounded),
-                label: Text(AppStrings.of(context).retry),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: SystemNavigator.pop,
-                child: Text(AppStrings.of(context).closeApp),
-              ),
-            ),
-          ],
-        ),
+    if (_gate.startupError != null) {
+      return SecurityScaffold(
+        child: SecureStorageErrorCard(onRetry: _reload),
       );
     }
 
-    if (_setupBusy) {
-      return _SecurityScaffold(
-        child: _SecurityCard(
+    if (_gate.setupBusy) {
+      return SecurityScaffold(
+        child: SecurityCard(
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 14),
@@ -113,22 +74,22 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
       );
     }
 
-    if (_offerBiometrics) {
-      return _SecurityScaffold(
-        child: _EnableBiometricsCard(
-          busy: _biometricBusy,
+    if (_gate.offerBiometrics) {
+      return SecurityScaffold(
+        child: EnableBiometricsCard(
+          busy: _gate.biometricBusy,
           onEnable: _enableInitialBiometrics,
-          onSkip: () => setState(() => _offerBiometrics = false),
+          onSkip: () => setState(() => _gate.offerBiometrics = false),
         ),
       );
     }
 
     if (!session.setupCompleted && !session.hasPin) {
-      return _SecurityScaffold(
-        child: _SetupPinCard(
+      return SecurityScaffold(
+        child: SetupPinCard(
           controller: _pinController,
-          busy: _setupBusy,
-          error: _error,
+          busy: _gate.setupBusy,
+          error: _errorText(context),
           onCreatePin: _createInitialPin,
         ),
       );
@@ -138,166 +99,76 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
       return widget.child;
     }
 
-    if (session.biometricsEnabled && !_showPinFallback) {
+    if (session.biometricsEnabled && !_gate.showPinFallback) {
       _scheduleBiometricUnlock();
-      return _SecurityScaffold(
-        child: _BiometricUnlockCard(
-          busy: _biometricBusy,
-          error: _error,
-          onRetry: _unlockWithBiometrics,
-          onShowPin: () {
-            _pinController.clear();
-            setState(() {
-              _showPinFallback = true;
-              _error = null;
-            });
-          },
+      return SecurityScaffold(
+        child: BiometricUnlockCard(
+          busy: _gate.biometricBusy,
+          error: _errorText(context),
+          onRetry: _gate.unlockWithBiometrics,
+          onShowPin: () => _switchTo(pinFallback: true),
         ),
       );
     }
 
-    return _SecurityScaffold(
-      child: _PinUnlockCard(
+    return SecurityScaffold(
+      child: PinUnlockCard(
         controller: _pinController,
-        busy: _pinUnlockBusy,
-        error: _error,
+        busy: _gate.pinUnlockBusy,
+        error: _errorText(context),
         onUnlock: _unlockWithPin,
         onBiometrics: session.biometricsEnabled
-            ? () {
-                _pinController.clear();
-                setState(() {
-                  _showPinFallback = false;
-                  _biometricAttempted = false;
-                  _error = null;
-                });
-              }
+            ? () => _switchTo(pinFallback: false)
             : null,
       ),
     );
   }
 
-  Future<void> _load() async {
+  void _switchTo({required bool pinFallback}) {
+    // Набранное стирается: чужой способ его всё равно не примет.
     _pinController.clear();
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-        _startupError = null;
-      });
-    }
-    try {
-      await ref
-          .read(securitySessionProvider.notifier)
-          .load()
-          .timeout(const Duration(seconds: 8));
-    } on Object catch (error) {
-      if (mounted) {
-        setState(() => _startupError = error.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    _gate.switchTo(pinFallback: pinFallback);
   }
 
   void _scheduleBiometricUnlock() {
-    if (_biometricAttempted || _biometricBusy) {
-      return;
-    }
-    _biometricAttempted = true;
+    if (!_gate.takeBiometricAttempt()) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _unlockWithBiometrics();
-      }
+      if (mounted) _gate.unlockWithBiometrics();
     });
   }
 
-  Future<void> _createInitialPin() async {
-    final strings = AppStrings.of(context);
-    final pin = _pinController.text.trim();
-    if (pin.isEmpty) {
-      setState(() => _error = strings.wrongPin);
-      return;
-    }
-
-    setState(() {
-      _setupBusy = true;
-      _error = null;
-    });
+  void _reload() {
     _pinController.clear();
-    await ref.read(securitySessionProvider.notifier).setPin(pin);
-    if (!mounted) {
-      return;
-    }
+    _gate.load();
+  }
 
-    if (mounted) {
-      setState(() {
-        _setupBusy = false;
-        _offerBiometrics = true;
-      });
-    }
+  void _createInitialPin() {
+    final pin = _pinController.text.trim();
+    _pinController.clear();
+    _gate.createInitialPin(pin);
+  }
+
+  void _unlockWithPin() {
+    final pin = _pinController.text.trim();
+    _pinController.clear();
+    _gate.unlockWithPin(pin);
   }
 
   Future<void> _enableInitialBiometrics() async {
-    setState(() => _biometricBusy = true);
-    final ok =
-        await ref.read(securitySessionProvider.notifier).setBiometricsEnabled(
-              true,
-            );
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _biometricBusy = false;
-      _offerBiometrics = false;
-    });
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.of(context).biometricsUnavailable)),
-      );
-    }
+    final ok = await _gate.enableInitialBiometrics();
+    if (ok || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppStrings.of(context).biometricsUnavailable)),
+    );
   }
 
-  Future<void> _unlockWithPin() async {
-    if (_pinUnlockBusy) {
-      return;
-    }
-    final pin = _pinController.text.trim();
-    _pinController.clear();
-    if (pin.isEmpty) {
-      setState(() => _error = AppStrings.of(context).wrongPin);
-      return;
-    }
-    setState(() {
-      _pinUnlockBusy = true;
-      _error = null;
-    });
-    try {
-      final ok =
-          await ref.read(securitySessionProvider.notifier).unlockWithPin(pin);
-      if (mounted) {
-        setState(() => _error = ok ? null : AppStrings.of(context).wrongPin);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _pinUnlockBusy = false);
-      }
-    }
-  }
-
-  Future<void> _unlockWithBiometrics() async {
-    setState(() {
-      _biometricBusy = true;
-      _error = null;
-    });
-    final ok =
-        await ref.read(securitySessionProvider.notifier).unlockWithBiometrics();
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _biometricBusy = false;
-      _error = ok ? null : AppStrings.of(context).biometricsUnavailable;
-    });
+  String? _errorText(BuildContext context) {
+    final strings = AppStrings.of(context);
+    return switch (_gate.problem) {
+      null => null,
+      SecurityGateProblem.wrongPin => strings.wrongPin,
+      SecurityGateProblem.biometricsUnavailable =>
+        strings.biometricsUnavailable,
+    };
   }
 }
