@@ -1,25 +1,6 @@
 import '../memory/memory_item.dart';
-import '../memory/memory_type.dart';
 import 'recurrence_projection_service.dart';
 import 'recurrence_series.dart';
-
-/// Сохраняет ли запись срок подписки при такой частоте повтора.
-///
-/// Срок существует только у ежемесячного платежа-подписки. Любое отклонение —
-/// другой вид записи, другая категория или другая частота — делает срок
-/// бессмысленным, и он должен исчезнуть, а не остаться от прошлой настройки.
-///
-/// Принимает поля по отдельности, потому что спрашивают об этом и о
-/// сохранённой записи, и о ещё не сохранённой форме редактора.
-bool keepsSubscriptionTerm({
-  required MemoryType type,
-  required String? paymentCategory,
-  required RecurrenceFrequency? frequency,
-}) {
-  return frequency == RecurrenceFrequency.monthly &&
-      type == MemoryType.payment &&
-      paymentCategory == PaymentCategory.subscription.name;
-}
 
 bool _templateKeepsTerm(MemoryItem template, RecurrenceFrequency frequency) =>
     keepsSubscriptionTerm(

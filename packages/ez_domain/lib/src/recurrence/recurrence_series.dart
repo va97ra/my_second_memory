@@ -1,4 +1,5 @@
 import '../memory/memory_item.dart';
+import '../memory/memory_type.dart';
 
 enum RecurrenceFrequency {
   monthly,
@@ -27,6 +28,24 @@ enum PaymentCategory {
       PaymentCategory.other => ru ? 'Другое' : 'Other',
     };
   }
+}
+
+/// Сохраняет ли запись срок подписки при такой частоте повтора.
+///
+/// Срок существует только у ежемесячного платежа-подписки. Любое отклонение —
+/// другой вид записи, другая категория или другая частота — делает срок
+/// бессмысленным, и он должен исчезнуть, а не остаться от прошлой настройки.
+///
+/// Принимает поля по отдельности, потому что спрашивают об этом и о
+/// сохранённой записи, и о ещё не сохранённой форме редактора.
+bool keepsSubscriptionTerm({
+  required MemoryType type,
+  required String? paymentCategory,
+  required RecurrenceFrequency? frequency,
+}) {
+  return frequency == RecurrenceFrequency.monthly &&
+      type == MemoryType.payment &&
+      paymentCategory == PaymentCategory.subscription.name;
 }
 
 class RecurrenceSeries {
@@ -70,6 +89,44 @@ class RecurrenceSeries {
     if (deletionEnd == null) return termEnd;
     if (termEnd == null) return deletionEnd;
     return deletionEnd.isBefore(termEnd) ? deletionEnd : termEnd;
+  }
+
+  /// Серия для записи, которой только что назначили повтор.
+  ///
+  /// Повторную настройку той же записи серия переживает без потерь: id,
+  /// начало и происхождение берутся у существующей серии, а не создаются
+  /// заново, иначе одна запись обзавелась бы второй серией.
+  factory RecurrenceSeries.forRecord({
+    required MemoryItem record,
+    required RecurrenceFrequency frequency,
+    required DateTime now,
+    RecurrenceSeries? existing,
+  }) {
+    final id = record.seriesId ?? 'recurrence_${record.id}';
+    final template = record.copyWith(
+      seriesId: id,
+      repeatRule: frequency.name,
+      isGeneratedOccurrence: false,
+      updatedAt: now,
+    );
+    return RecurrenceSeries(
+      id: id,
+      frequency: frequency,
+      template: template,
+      startDate: existing?.startDate ?? template.memoryDate,
+      originItemId: existing?.originItemId ?? template.id,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      endDate: existing?.endDate,
+      subscriptionEndDate: keepsSubscriptionTerm(
+        type: template.type,
+        paymentCategory: template.paymentCategory,
+        frequency: frequency,
+      )
+          ? existing?.subscriptionEndDate
+          : null,
+      historyThrough: DateTime(now.year, now.month, now.day),
+    );
   }
 
   RecurrenceSeries copyWith({

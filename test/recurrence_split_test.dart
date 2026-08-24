@@ -133,6 +133,47 @@ void main() {
     expect(dropped.replacement.subscriptionEndDate, isNull);
   });
 
+  test('setting the repeat twice keeps one series, not two', () {
+    final record = _record(paymentCategory: PaymentCategory.subscription.name);
+    final first = RecurrenceSeries.forRecord(
+      record: record.copyWith(clearSeries: true),
+      frequency: RecurrenceFrequency.monthly,
+      now: DateTime(2026, 3, 10, 12),
+    );
+
+    // Та же запись, настроенная повторно: серия остаётся прежней.
+    final again = RecurrenceSeries.forRecord(
+      record: record.copyWith(seriesId: first.id, amountMinor: 120000),
+      frequency: RecurrenceFrequency.monthly,
+      now: DateTime(2026, 3, 11, 12),
+      existing: first,
+    );
+
+    expect(again.id, first.id);
+    expect(again.startDate, first.startDate);
+    expect(again.originItemId, first.originItemId);
+    expect(again.createdAt, first.createdAt);
+    expect(again.template.amountMinor, 120000);
+  });
+
+  test('switching a subscription to yearly drops its term', () {
+    final monthly = RecurrenceSeries.forRecord(
+      record: _record(paymentCategory: PaymentCategory.subscription.name)
+          .copyWith(clearSeries: true),
+      frequency: RecurrenceFrequency.monthly,
+      now: DateTime(2026, 3, 10, 12),
+    ).copyWith(subscriptionEndDate: DateTime(2026, 9, 10));
+
+    final yearly = RecurrenceSeries.forRecord(
+      record: monthly.template,
+      frequency: RecurrenceFrequency.yearly,
+      now: DateTime(2026, 3, 11, 12),
+      existing: monthly,
+    );
+
+    expect(yearly.subscriptionEndDate, isNull);
+  });
+
   test('the term rule is the same one everywhere', () {
     expect(
       keepsSubscriptionTerm(

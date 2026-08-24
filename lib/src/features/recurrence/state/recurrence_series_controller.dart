@@ -47,30 +47,11 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
   ) async {
     await _loadFuture;
     final now = DateTime.now();
-    final id = item.seriesId ?? 'recurrence_${item.id}';
-    final linked = item.copyWith(
-      seriesId: id,
-      repeatRule: frequency.name,
-      isGeneratedOccurrence: false,
-      updatedAt: now,
-    );
-    final existing = _find(id);
-    final series = RecurrenceSeries(
-      id: id,
+    final series = RecurrenceSeries.forRecord(
+      record: item,
       frequency: frequency,
-      template: linked,
-      startDate: existing?.startDate ?? linked.memoryDate,
-      originItemId: existing?.originItemId ?? linked.id,
-      isEnabled: true,
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-      endDate: existing?.endDate,
-      subscriptionEndDate: frequency == RecurrenceFrequency.monthly &&
-              linked.type == MemoryType.payment &&
-              linked.paymentCategory == PaymentCategory.subscription.name
-          ? existing?.subscriptionEndDate
-          : null,
-      historyThrough: dateOnly(now),
+      now: now,
+      existing: _find(item.seriesId ?? 'recurrence_${item.id}'),
     );
     await _repository.upsert(series);
     state = _replace(series);
