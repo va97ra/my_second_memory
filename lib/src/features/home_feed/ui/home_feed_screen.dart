@@ -142,8 +142,7 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     // назад, а не переворачивается вперёд.
     final now = DateTime.now();
     await _turnPage(
-      forward:
-          !view.anchorDate.isAfter(DateTime(now.year, now.month, now.day)),
+      forward: !view.anchorDate.isAfter(DateTime(now.year, now.month, now.day)),
       switchContent: () => ref.read(feedViewProvider.notifier).goToToday(),
     );
   }

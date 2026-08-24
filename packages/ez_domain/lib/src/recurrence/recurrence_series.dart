@@ -77,6 +77,7 @@ class RecurrenceSeries {
 
   /// The inclusive contractual end of a finite monthly subscription.
   final DateTime? subscriptionEndDate;
+
   /// Compatibility only: this build never materializes occurrences, so nothing
   /// reads this. It is still written so that a device left on an older build
   /// does not re-materialize the whole history behind us. Remove it once no
@@ -90,6 +91,29 @@ class RecurrenceSeries {
     if (termEnd == null) return deletionEnd;
     return deletionEnd.isBefore(termEnd) ? deletionEnd : termEnd;
   }
+
+  /// Сколько месяцев осталось в сроке подписки, если считать от вхождения,
+  /// которое открыли.
+  ///
+  /// Срок принадлежит серии, а не отдельной записи, поэтому и считается здесь.
+  /// Отсчёт идёт от более поздней из двух дат — начала серии и самого
+  /// вхождения: у вхождения в середине подписки срок короче, чем у первого.
+  int? subscriptionTermMonthsFrom(DateTime occurrenceDate) {
+    final endDate = subscriptionEndDate;
+    if (endDate == null) return null;
+    final occurrence = _dateOnly(occurrenceDate);
+    final seriesStart = _dateOnly(startDate);
+    final termStart =
+        occurrence.isAfter(seriesStart) ? occurrence : seriesStart;
+    final months = (endDate.year - termStart.year) * 12 +
+        endDate.month -
+        termStart.month +
+        1;
+    return months < 1 ? 1 : months;
+  }
+
+  static DateTime _dateOnly(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
 
   /// Серия для записи, которой только что назначили повтор.
   ///

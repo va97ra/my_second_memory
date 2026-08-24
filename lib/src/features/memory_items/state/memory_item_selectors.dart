@@ -167,3 +167,24 @@ final visibleCalendarItemsProvider =
   );
   return [...persisted, ...projected];
 });
+
+/// Сколько месяцев осталось в сроке подписки у этого вхождения.
+///
+/// Срок принадлежит серии, поэтому ищется она, а не запись. Для всего, что не
+/// подписка с повтором, срока нет.
+int? subscriptionTermMonthsFor(
+  List<RecurrenceSeries> allSeries,
+  MemoryItem item,
+) {
+  if (item.type != MemoryType.payment ||
+      item.paymentCategory != PaymentCategory.subscription.name ||
+      item.seriesId == null) {
+    return null;
+  }
+  for (final series in allSeries) {
+    if (series.id == item.seriesId) {
+      return series.subscriptionTermMonthsFrom(item.memoryDate);
+    }
+  }
+  return null;
+}

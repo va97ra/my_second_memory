@@ -12,6 +12,7 @@ export 'src/feed/feed_rules.dart';
 export 'src/memory/memory_item.dart';
 export 'src/memory/reminder_rules.dart';
 export 'src/memory/memory_status.dart';
+export 'src/memory/memory_title.dart';
 export 'src/memory/memory_type.dart';
 export 'src/recurrence/recurrence_occurrence_exception.dart';
 export 'src/recurrence/recurrence_projection_service.dart';

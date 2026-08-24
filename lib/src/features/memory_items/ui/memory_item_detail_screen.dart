@@ -1,49 +1,35 @@
 import 'dart:async';
 
-import 'package:file_selector/file_selector.dart' as file_selector;
-import 'package:flutter/foundation.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 
-import 'package:ez_core/ez_core.dart';
-import 'package:ez_design/ez_design.dart';
-import '../../../shared/ui/screen_chrome.dart';
 import '../../calendar/state/calendar_preferences_controller.dart';
-import 'package:ez_domain/ez_domain.dart';
 import '../../recurrence/state/recurrence_controller.dart';
-import '../state/memory_items_controller.dart';
-import '../state/memory_item_selectors.dart';
-import '../state/memory_editor_draft.dart';
-import '../state/memory_editor_save_coordinator.dart';
 import '../state/memory_attachment_service.dart';
-import '../state/memory_editor_form.dart';
+import '../state/memory_editor_controller.dart';
+import '../state/memory_editor_fields.dart';
 import '../state/memory_editor_saver.dart';
-import 'widgets/memory_item_presentation.dart';
-import 'widgets/time_reminder_sheet.dart';
-import 'widgets/record_editor.dart';
-import 'widgets/editor_body.dart';
-import 'widgets/payment_fields.dart';
-import 'widgets/subscription_term_sheet.dart';
-import 'widgets/birthday_fields.dart';
-import 'widgets/multi_date_picker_sheet.dart';
-import '../../../navigation/page_turn_navigation.dart';
-import '../../notifications/state/notification_providers.dart';
+import '../state/memory_item_selectors.dart';
+import '../state/memory_items_controller.dart';
+import 'memory_editor_actions.dart';
+import 'widgets/editor_load_gate.dart';
+import 'widgets/memory_editor_app_bar.dart';
+import 'widgets/memory_editor_body_view.dart';
+import 'widgets/missing_record_view.dart';
 
-part 'memory_item_initialization.dart';
-part 'memory_item_editing_actions.dart';
-part 'memory_item_persistence.dart';
-part 'memory_item_deletion_navigation.dart';
-
+/// Редактор записи. Всё, что человек выбрал, живёт в [MemoryEditorController],
+/// сценарии — в [MemoryEditorActions], поля ввода — в [MemoryEditorFields];
+/// экран собирает их вместе.
 class MemoryItemDetailScreen extends ConsumerStatefulWidget {
   const MemoryItemDetailScreen({
+    super.key,
     this.itemId,
     this.initialDate,
     this.createUndated = false,
     this.newlyCreated = false,
-    super.key,
   });
 
   final String? itemId;
@@ -59,64 +45,36 @@ class MemoryItemDetailScreen extends ConsumerStatefulWidget {
 class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
-  final _bodyController = TextEditingController();
-  final _amountController = TextEditingController();
+  final _fields = MemoryEditorFields();
   final _attachments = MemoryAttachmentService();
   final _imagePicker = ImagePicker();
-
-  /// Всё, что человек выбрал в форме. Правила формы живут в модели, а не
-  /// здесь: экран только показывает их и передаёт нажатия.
-  MemoryEditorForm _form = MemoryEditorForm.blank(
-    date: DateTime.now(),
-    isUndated: false,
-  );
-
-  String? _loadedItemId;
-  bool _editFutureOccurrences = false;
-  bool _scopeRequested = false;
-  bool _refreshNewSeriesTemplate = false;
-  bool _isRecording = false;
-  bool _isSaving = false;
-  String? _saveError;
-  bool _allowPop = false;
-  bool _isLeaving = false;
-  final _saveCoordinator = MemoryEditorSaveCoordinator();
-
-  /// Метка ещё не сохранённого черновика в [_loadedItemId].
-  static const _newRecordKey = '__new__';
-
-  /// Уводит с экрана исчезнувшей записи после того, как кадр дорисован.
-  ///
-  /// Без перелистывания: анимировать нечего, а сама анимация в этот момент
-  /// может быть занята другим переходом и отменила бы уход.
-  void _leaveAfterFrame() {
-    if (_isLeaving) return;
-    _isLeaving = true;
-    _saveCoordinator.discardPending();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        context.go('/');
-      }
-    });
-  }
+  late final MemoryEditorController _controller;
 
   @override
   void initState() {
     super.initState();
-    _refreshNewSeriesTemplate = widget.newlyCreated;
-    _scopeRequested = widget.newlyCreated;
+    _controller = MemoryEditorController(
+      fields: _fields,
+      locale: () => Localizations.localeOf(context).languageCode,
+      readItem: _readItem,
+      validate: () => _formKey.currentState?.validate() != false,
+      saver: () => MemoryEditorSaver(
+        items: ref.read(memoryItemsControllerProvider.notifier),
+        series: ref.read(recurrenceSeriesControllerProvider.notifier),
+      ),
+      onCreated: _onRecordCreated,
+      newlyCreated: widget.newlyCreated,
+    )..addListener(() {
+        if (mounted) setState(() {});
+      });
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _saveCoordinator.dispose();
-    _bodyController.dispose();
-    _amountController.dispose();
+    _controller.dispose();
+    _fields.dispose();
     _attachments.dispose();
     super.dispose();
   }
@@ -126,300 +84,105 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
-      unawaited(_flushAutosave());
+      unawaited(_controller.flushAutosave());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final strings = AppStrings.of(context);
-    final loadState = ref.watch(memoryItemsLoadProvider);
-    final recurrenceLoadState = ref.watch(recurrenceLoadProvider);
     final item = _watchItem();
-    final showHints = ref.watch(appHintsProvider);
-    final needsRecurrenceForSubscriptionTerm =
-        item?.type == MemoryType.payment &&
-            item?.paymentCategory == PaymentCategory.subscription.name &&
-            item?.seriesId != null;
+    final loading = editorLoadingView(
+      context,
+      items: ref.watch(memoryItemsLoadProvider),
+      series: ref.watch(recurrenceLoadProvider),
+      needsSeries: editorNeedsSeries(item, hasItemId: widget.itemId != null),
+    );
+    if (loading != null) return loading;
 
-    if (loadState.isLoading ||
-        (((item == null && widget.itemId != null) ||
-                needsRecurrenceForSubscriptionTerm) &&
-            recurrenceLoadState.isLoading)) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(key: ValueKey('editor_loading')),
-        ),
-      );
-    }
-    if (loadState.hasError || recurrenceLoadState.hasError) {
-      return Scaffold(body: Center(child: Text(strings.loadFailed)));
-    }
+    final actions = MemoryEditorActions(
+      context: context,
+      ref: ref,
+      controller: _controller,
+      attachments: _attachments,
+      imagePicker: _imagePicker,
+    );
 
     if (item == null && widget.itemId != null) {
-      // Запись, исчезнувшую при открытом редакторе (её удалили здесь или на
-      // другом устройстве), править больше нечем: экран уходит назад сам.
-      if (_loadedItemId != null && _loadedItemId != _newRecordKey) {
-        _leaveAfterFrame();
-        return const Scaffold(body: SizedBox.shrink());
-      }
-      return Scaffold(
-        appBar: AppPageAppBar(
-          onBack: _goBack,
-          title: Text(strings.editRecord),
-        ),
-        body: Center(child: Text(strings.recordNotFound)),
-      );
+      return _missingRecord(actions);
     }
-
-    if (item == null) {
-      _initializeNew();
-    } else {
-      _initializeFrom(item);
-    }
+    _initialize(item, actions);
 
     return PopScope(
-      canPop: _allowPop,
+      canPop: _controller.allowPop,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          unawaited(_goBack());
-        }
+        if (!didPop) unawaited(actions.goBack());
       },
       child: Scaffold(
-        appBar: AppPageAppBar(
-          onBack: _goBack,
-          title: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _form.isUndated
-                    ? item == null
-                        ? strings.newNote
-                        : strings.editNote
-                    : item == null
-                        ? strings.newRecord
-                        : strings.editRecord,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              Text(
-                _saveError != null
-                    ? strings.saveFailed
-                    : _isSaving
-                        ? strings.saving
-                        : strings.saved,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: _saveError != null
-                          ? Theme.of(context).colorScheme.error
-                          : _isSaving
-                              ? const Color(0xFF9A6A32)
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-            ],
-          ),
-          actions: [
-            Tooltip(
-              message: _saveError != null
-                  ? strings.saveFailed
-                  : _isSaving
-                      ? strings.saving
-                      : strings.saved,
-              child: AnimatedContainer(
-                key: const ValueKey('memory_autosave_status'),
-                duration: const Duration(milliseconds: 220),
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: (_saveError != null
-                          ? Theme.of(context).colorScheme.error
-                          : _isSaving
-                              ? const Color(0xFFD59A48)
-                              : const Color(0xFF239B61))
-                      .withValues(alpha: 0.13),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  _saveError != null
-                      ? Icons.cloud_off_rounded
-                      : _isSaving
-                          ? Icons.sync_rounded
-                          : Icons.cloud_done_rounded,
-                  key: ValueKey(
-                    _saveError != null
-                        ? 'memory_autosave_error'
-                        : _isSaving
-                            ? 'memory_autosave_saving'
-                            : 'memory_autosave_saved',
-                  ),
-                  size: 22,
-                  color: _saveError != null
-                      ? Theme.of(context).colorScheme.error
-                      : _isSaving
-                          ? const Color(0xFFB7791F)
-                          : const Color(0xFF168653),
-                ),
-              ),
-            ),
-            if (!_form.isUndated || item != null)
-              PopupMenuButton<String>(
-                key: const ValueKey('memory_editor_menu'),
-                tooltip: _form.isUndated
-                    ? strings.delete
-                    : Localizations.localeOf(context).languageCode == 'ru'
-                        ? 'Повтор и действия'
-                        : 'Repeat and actions',
-                iconSize: 22,
-                padding: const EdgeInsets.all(9),
-                icon: Icon(
-                  _form.isUndated
-                      ? Icons.more_vert_rounded
-                      : Icons.event_repeat_rounded,
-                  color: _form.recurrenceFrequency == null
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Theme.of(context).colorScheme.primary,
-                ),
-                onSelected: (value) {
-                  if (value == 'repeat') {
-                    _openRepeatPicker();
-                  }
-                  if (value == 'duplicate' && item != null) {
-                    _duplicateToDates(item);
-                  }
-                  if (value == 'future' && item != null) {
-                    setState(() => _editFutureOccurrences = true);
-                    ref
-                        .read(recurrenceSeriesControllerProvider.notifier)
-                        .applyToFuture(item);
-                  }
-                  if (value == 'delete') {
-                    _confirmDelete(item!);
-                  }
-                },
-                itemBuilder: (context) => [
-                  if (!_form.isUndated)
-                    PopupMenuItem(
-                      value: 'repeat',
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.event_repeat_rounded),
-                        title: Text(
-                          Localizations.localeOf(context).languageCode == 'ru'
-                              ? 'Настроить повтор'
-                              : 'Set recurrence',
-                        ),
-                      ),
-                    ),
-                  if (!_form.isUndated && item != null)
-                    PopupMenuItem(
-                      value: 'duplicate',
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.content_copy_rounded),
-                        title: Text(
-                          Localizations.localeOf(context).languageCode == 'ru'
-                              ? 'Дублировать на даты'
-                              : 'Duplicate to dates',
-                        ),
-                      ),
-                    ),
-                  if (!_form.isUndated && item?.seriesId != null)
-                    PopupMenuItem(
-                      value: 'future',
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.update_rounded),
-                        title: Text(
-                          Localizations.localeOf(context).languageCode == 'ru'
-                              ? 'Применить к будущим'
-                              : 'Apply to future',
-                        ),
-                      ),
-                    ),
-                  if (item != null)
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(
-                          Icons.delete_rounded,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        title: Text(strings.delete),
-                      ),
-                    ),
-                ],
-              ),
-          ],
+        appBar: MemoryEditorAppBar(
+          controller: _controller,
+          item: item,
+          onBack: () => unawaited(actions.goBack()),
+          onAction: (action) => actions.runMenuAction(action, item),
         ),
         body: SafeArea(
           child: Form(
             key: _formKey,
-            child: EditorBody(
-              isUndated: _form.isUndated,
-              selectedType: _form.type,
-              dateText: _formattedDate(context),
-              timeText: _formattedTime(),
-              reminderEnabled: _form.remindAt != null,
-              onDateTap: _pickDate,
-              onTimeTap: _openTimeAndReminder,
-              onClearTime: _form.timeMinutes == null
-                  ? null
-                  : () {
-                      setState(() {
-                        _form = _form.copyWith(
-                          clearTime: true,
-                          clearReminder: true,
-                        );
-                      });
-                      _scheduleAutosave();
-                    },
-              onTypeChanged: (type) {
-                _changeType(type);
-                _scheduleAutosave();
-              },
-              specialFields: _form.isUndated ? null : _buildSpecialFields(),
-              showRecurrenceHint:
-                  !_form.isUndated && showHints && _form.recurrenceFrequency == null,
-              onRecurrenceHintTap: _openRepeatPicker,
-              recordEditor: RecordEditor(
-                controller: _bodyController,
-                imagePaths: _form.imagePaths,
-                audioPath: _form.audioPath,
-                audioDurationSeconds: _form.audioDurationSeconds,
-                memoryDate: _form.memoryDate,
-                isRecording: _isRecording,
-                recurrenceFrequency: _form.recurrenceFrequency,
-                onRecurrenceTap: _openRepeatPicker,
-                onPickImage: _pickImage,
-                onRemoveImage: (path) => setState(() {
-                  _form = _form.copyWith(
-                    imagePaths: [
-                      for (final image in _form.imagePaths)
-                        if (image != path) image,
-                    ],
-                  );
-                  _scheduleAutosave();
-                }),
-                onRemoveAudio: () => setState(() {
-                  _form = _form.copyWith(clearAudio: true);
-                  _scheduleAutosave();
-                }),
-                onVoicePressed: _isRecording ? _stopAndSaveVoice : _startVoice,
-                onChanged: _scheduleAutosave,
-              ),
+            child: MemoryEditorBodyView(
+              controller: _controller,
+              actions: actions,
+              bodyController: _fields.body,
+              amountController: _fields.amount,
+              item: item,
+              showHints: ref.watch(appHintsProvider),
             ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _missingRecord(MemoryEditorActions actions) {
+    // Запись, исчезнувшую при открытом редакторе (её удалили здесь или на
+    // другом устройстве), править больше нечем: экран уходит назад сам.
+    if (_controller.currentItemId != null) {
+      actions.leaveAfterFrame();
+      return const Scaffold(body: SizedBox.shrink());
+    }
+    return MissingRecordView(onBack: () => unawaited(actions.goBack()));
+  }
+
+  void _initialize(MemoryItem? item, MemoryEditorActions actions) {
+    if (item == null) {
+      _controller.initializeNew(
+        date: widget.initialDate ?? DateTime.now(),
+        isUndated: widget.createUndated,
+      );
+      return;
+    }
+
+    final loaded = _controller.initializeFrom(
+      item,
+      subscriptionTermMonths: subscriptionTermMonthsFor(
+        ref.read(recurrenceSeriesControllerProvider),
+        item,
+      ),
+    );
+    if (!loaded) return;
+
+    if (item.seriesId != null && !_controller.scopeRequested) {
+      _controller.scopeRequested = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(actions.askScope());
+      });
+    }
+  }
+
+  void _onRecordCreated(MemoryItem item) {
+    if (!mounted || widget.itemId != null) return;
+    // Записку заводят с панели, поэтому новый адрес несёт её пункт: иначе
+    // панель исчезнет в тот момент, когда автосохранение сменит адрес.
+    final panel = widget.createUndated ? '&panel=add_note' : '';
+    context.replace('/memory/item/${Uri.encodeComponent(item.id)}?new=1$panel');
   }
 
   MemoryItem? _watchItem() {
@@ -432,12 +195,5 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     return id == null ? null : ref.read(memoryItemByIdProvider(id));
   }
 
-  String? _currentItemId() {
-    return widget.itemId ??
-        (_loadedItemId == null || _loadedItemId == _newRecordKey
-            ? null
-            : _loadedItemId);
-  }
-
-  void _update(VoidCallback callback) => setState(callback);
+  String? _currentItemId() => widget.itemId ?? _controller.currentItemId;
 }

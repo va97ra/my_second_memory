@@ -36,14 +36,3 @@ Color memoryTypeColor(MemoryType type) => switch (type) {
       MemoryType.birthday => const Color(0xFFE03E8C),
       MemoryType.payment => const Color(0xFF008C85),
     };
-
-String memoryTitleFromRecord(
-  String body,
-  MemoryType type,
-  String languageCode,
-) {
-  final compact = body.replaceAll(RegExp(r'\s+'), ' ').trim();
-  if (compact.isEmpty) return type.label(languageCode);
-  if (compact.length <= 48) return compact;
-  return '${compact.substring(0, 48)}...';
-}
