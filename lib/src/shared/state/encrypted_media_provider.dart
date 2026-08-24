@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../security/state/security_provider.dart';
+import '../../features/security/state/security_provider.dart';
 import 'package:ez_data/ez_data.dart';
 
 final encryptedMediaBytesProvider =

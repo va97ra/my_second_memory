@@ -2,7 +2,7 @@ import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:ez_data/ez_data.dart';
-import '../../../notifications/ui/reminder_sound_picker.dart';
+import '../../../../shared/ui/reminder_sound_picker.dart';
 import 'reminder_sheet_tile.dart';
 import 'reminder_toggle_tile.dart';
 

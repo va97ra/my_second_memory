@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'memory_image_preview.dart';
-import 'memory_image_viewer.dart';
+import '../media/memory_image_preview.dart';
+import '../media/memory_image_viewer.dart';
 
 /// Превью первой фотографии записи. Остальные считаются числом в углу.
 class MemoryCardImageThumbnail extends StatelessWidget {

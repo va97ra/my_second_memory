@@ -2,7 +2,7 @@ import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
-import '../../../memory_items/ui/widgets/memory_item_presentation.dart';
+import 'memory_item_presentation.dart';
 import 'memory_card_action_rail.dart';
 import 'memory_card_content.dart';
 import 'memory_card_dense_action_rail.dart';

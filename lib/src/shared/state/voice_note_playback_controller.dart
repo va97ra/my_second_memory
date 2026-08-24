@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
 import 'package:ez_data/ez_data.dart';
-import '../../security/state/security_provider.dart';
+import '../../features/security/state/security_provider.dart';
 
 final voiceNotePlaybackProvider = Provider<VoiceNotePlaybackController>((ref) {
   final controller = VoiceNotePlaybackController(

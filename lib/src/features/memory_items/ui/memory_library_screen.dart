@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../../home_feed/ui/widgets/memory_item_card.dart';
+import '../../../shared/ui/memory_card/memory_item_card.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../state/memory_items_controller.dart';
 import '../../recurrence/state/recurrence_controller.dart';

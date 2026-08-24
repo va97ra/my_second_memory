@@ -16,7 +16,7 @@ import '../platform/windows/windows_tray_frame.dart';
 import 'theme/app_content_font_controller.dart';
 import 'theme/app_theme_controller.dart';
 import 'locale/app_locale_controller.dart';
-import '../features/notifications/state/notification_providers.dart';
+import '../shared/state/notification_providers.dart';
 
 class EzhednevnikV2App extends ConsumerStatefulWidget {
   const EzhednevnikV2App({super.key});

@@ -8,7 +8,7 @@ import 'recurrence_exception_controller.dart';
 import 'recurrence_series_controller.dart';
 import '../../sync/state/sync_mutation_observer_provider.dart';
 import '../../../app/local_storage_scope_provider.dart';
-import '../../notifications/state/notification_providers.dart';
+import '../../../shared/state/notification_providers.dart';
 
 final plainRecurrenceRepositoryProvider = Provider<RecurrenceRepository>((ref) {
   return ref.watch(localStorageScopeProvider).recurrenceRepository;

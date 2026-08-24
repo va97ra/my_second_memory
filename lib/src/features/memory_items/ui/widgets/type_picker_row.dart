@@ -1,6 +1,6 @@
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
-import 'memory_item_presentation.dart';
+import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
 import 'package:ez_design/ez_design.dart';
 
 /// Выбор вида записи.

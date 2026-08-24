@@ -13,7 +13,7 @@ import 'package:ezhednevnik_v2/src/navigation/app_router.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
-import 'package:ezhednevnik_v2/src/features/home_feed/ui/widgets/memory_item_card.dart';
+import 'package:ezhednevnik_v2/src/shared/ui/memory_card/memory_item_card.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/holiday_detail_screen.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';

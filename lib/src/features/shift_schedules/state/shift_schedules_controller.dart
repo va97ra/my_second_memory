@@ -7,7 +7,7 @@ import '../../security/state/security_provider.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../../sync/state/sync_mutation_observer_provider.dart';
 import '../../../app/local_storage_scope_provider.dart';
-import '../../notifications/state/notification_providers.dart';
+import '../../../shared/state/notification_providers.dart';
 
 final shiftScheduleRepositoryProvider =
     Provider<ShiftScheduleRepository>((ref) {

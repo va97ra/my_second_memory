@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../media/state/encrypted_media_provider.dart';
+import '../../state/encrypted_media_provider.dart';
 
 class MemoryImagePreview extends ConsumerWidget {
   const MemoryImagePreview({

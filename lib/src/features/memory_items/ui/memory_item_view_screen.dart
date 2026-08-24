@@ -6,14 +6,14 @@ import 'package:intl/intl.dart';
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../../home_feed/ui/widgets/memory_image_preview.dart';
-import '../../home_feed/ui/widgets/memory_image_viewer.dart';
-import '../../voice_notes/ui/widgets/voice_note_player.dart';
+import '../../../shared/ui/media/memory_image_preview.dart';
+import '../../../shared/ui/media/memory_image_viewer.dart';
+import '../../../shared/ui/media/voice_note_player.dart';
 import '../state/memory_items_controller.dart';
 import '../state/memory_item_selectors.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../../recurrence/state/recurrence_controller.dart';
-import 'widgets/memory_item_presentation.dart';
+import '../../../shared/ui/memory_card/memory_item_presentation.dart';
 import '../../../navigation/page_turn_navigation.dart';
 
 class MemoryItemViewScreen extends ConsumerStatefulWidget {

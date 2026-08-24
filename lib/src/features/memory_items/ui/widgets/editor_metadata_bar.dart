@@ -1,7 +1,7 @@
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
-import 'memory_item_presentation.dart';
+import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
 import 'metadata_action.dart';
 import 'metadata_divider.dart';
 import 'type_picker_row.dart';

@@ -4,7 +4,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../memory_items/ui/widgets/memory_item_presentation.dart';
+import 'memory_item_presentation.dart';
 
 /// Левая полоса карточки: вид записи, её дата и время.
 class MemoryCardTypeRail extends StatelessWidget {

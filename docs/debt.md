@@ -69,10 +69,6 @@ lib/src/features/recurrence/state/recurrence_legacy_repair.dart       488
 
 - **Семнадцать приватных классов-виджетов внутри `ui/`** — все в файлах из
   первого списка; уйдут вместе с ними.
-- **Шестнадцать импортов чужого `ui/` между фичами.** Шесть виджетов лежат
-  каждый внутри своей фичи, а нужны нескольким: `memory_item_card`,
-  `memory_image_preview`, `memory_image_viewer`, `voice_note_player`,
-  `reminder_sound_picker`, `memory_item_presentation`. Их место — общее.
 - **Barrel-файлов нет ни у одной из 13 фич**, поэтому снаружи импортируют
   прямо во внутренности.
 - **Тесты лежат в `test/` плоской кучей** — 56 файлов, ни одного в пакетах.

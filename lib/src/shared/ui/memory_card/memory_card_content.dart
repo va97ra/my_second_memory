@@ -2,8 +2,8 @@ import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
-import '../../../memory_items/ui/widgets/memory_item_presentation.dart';
-import '../../../voice_notes/ui/widgets/voice_note_player.dart';
+import 'memory_item_presentation.dart';
+import '../media/voice_note_player.dart';
 import 'memory_card_image_thumbnail.dart';
 import 'memory_card_labels.dart';
 import 'memory_card_ruled_background.dart';

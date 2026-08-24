@@ -7,7 +7,7 @@ import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../state/calendar_preferences_controller.dart';
-import '../../home_feed/ui/widgets/memory_item_card.dart';
+import '../../../shared/ui/memory_card/memory_item_card.dart';
 import '../../memory_items/state/memory_items_controller.dart';
 import '../../memory_items/state/memory_item_selectors.dart';
 import '../../recurrence/state/recurrence_controller.dart';

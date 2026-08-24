@@ -4,8 +4,8 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../notifications/state/notification_providers.dart';
-import '../../../notifications/ui/reminder_sound_picker.dart';
+import '../../../../shared/state/notification_providers.dart';
+import '../../../../shared/ui/reminder_sound_picker.dart';
 import 'shift_alarm_editor_card.dart';
 
 /// Будильники графика: карточки и всё, что происходит по нажатию на них.
