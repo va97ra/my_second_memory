@@ -77,8 +77,15 @@ void registerMemoryFlowWidgetTests() {
     final textSize =
         tester.getSize(find.byKey(const ValueKey('record_editor_text')));
 
-    expect(panelSize.height, greaterThan(290));
-    expect(textSize.height, greaterThan(120));
+    // Экран открыт внутри оболочки, поэтому нижняя панель забирает свою
+    // полосу. Поле записи всё равно должно занимать почти всю страницу.
+    expect(panelSize.height, greaterThan(280));
+    // На низком экране (здесь 560 px) нижняя панель забирает свою полосу, и
+    // поле ввода становится заметно меньше прежнего: три строки вместо
+    // четырёх с половиной. Это цена за то, что панель остаётся под рукой на
+    // экране записи; если она окажется слишком высокой, панель нужно прятать
+    // при открытой клавиатуре, а не отбирать её у экрана целиком.
+    expect(textSize.height, greaterThan(88));
     expect(find.byKey(const ValueKey('record_editor_images')), findsOneWidget);
     expect(find.byIcon(Icons.photo_camera_rounded), findsOneWidget);
     expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
@@ -160,7 +167,8 @@ void registerMemoryFlowWidgetTests() {
       tester
           .getSize(find.byKey(const ValueKey('memory_readonly_panel')))
           .height,
-      greaterThan(590),
+      // Панель на месте, поэтому запас на шесть пикселей меньше прежнего.
+      greaterThan(580),
     );
     expect(
         find.byKey(const ValueKey('memory_readonly_content')), findsOneWidget);

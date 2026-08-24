@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
-import '../../../app/app_shell.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../accounts/state/accounts_controller.dart';
 import '../../recurrence/state/recurrence_controller.dart';
@@ -33,122 +32,117 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     final strings = AppStrings.of(context);
     final session = ref.watch(securitySessionProvider);
 
-    return AppShell(
-      activeDestinationId: 'settings',
-      child: Scaffold(
-        appBar: AppPageAppBar(
-          fallbackLocation: '/settings',
-          title: Text(strings.pinSecurity),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                    color: Theme.of(context).colorScheme.outlineVariant),
-                boxShadow: notebookSurfaceShadow(
-                  context,
-                  NotebookSurfaceDepth.panel,
-                ).isNotEmpty
-                    ? notebookSurfaceShadow(
-                        context,
-                        NotebookSurfaceDepth.panel,
-                      )
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.035),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: SizedBox(
-                        height: 74,
-                        child: Icon(
-                          Icons.verified_user_rounded,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 34,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _StatusRow(
-                      icon: Icons.lock_rounded,
-                      title: strings.pinStatus,
-                      value:
-                          session.hasPin ? strings.enabled : strings.disabled,
-                      isEnabled: session.hasPin,
-                    ),
-                    const SizedBox(height: 8),
-                    _StatusRow(
-                      icon: Icons.fingerprint_rounded,
-                      title: strings.biometrics,
-                      value: session.biometricsEnabled
-                          ? strings.enabled
-                          : strings.disabled,
-                      isEnabled: session.biometricsEnabled,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _pinController,
-                      keyboardType: TextInputType.number,
-                      obscureText: true,
-                      maxLength: 8,
-                      decoration: const InputDecoration(labelText: 'PIN'),
-                    ),
-                    FilledButton.icon(
-                      onPressed: _savePin,
-                      icon: const Icon(Icons.lock_rounded),
-                      label: Text(
-                        session.hasPin ? strings.changePin : strings.enablePin,
-                      ),
-                    ),
-                    if (session.hasPin) ...[
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        onPressed: _disablePin,
-                        icon: const Icon(Icons.lock_open_rounded),
-                        label: Text(strings.disablePin),
+    return Scaffold(
+      appBar: AppPageAppBar(
+        fallbackLocation: '/settings',
+        title: Text(strings.pinSecurity),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant),
+              boxShadow: notebookSurfaceShadow(
+                context,
+                NotebookSurfaceDepth.panel,
+              ).isNotEmpty
+                  ? notebookSurfaceShadow(
+                      context,
+                      NotebookSurfaceDepth.panel,
+                    )
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.035),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
                       ),
                     ],
-                    const SizedBox(height: 14),
-                    SwitchListTile(
-                      value: session.biometricsEnabled,
-                      onChanged: session.hasPin ? _setBiometricsEnabled : null,
-                      contentPadding: EdgeInsets.zero,
-                      secondary: const Icon(Icons.fingerprint_rounded),
-                      title: Text(strings.biometrics),
-                      subtitle: Text(
-                        session.hasPin
-                            ? strings.biometricsSubtitle
-                            : strings.biometricsNeedsPin,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: SizedBox(
+                      height: 74,
+                      child: Icon(
+                        Icons.verified_user_rounded,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 34,
                       ),
                     ),
-                    if (_message != null) ...[
-                      const SizedBox(height: 16),
-                      Text(_message!),
-                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _StatusRow(
+                    icon: Icons.lock_rounded,
+                    title: strings.pinStatus,
+                    value: session.hasPin ? strings.enabled : strings.disabled,
+                    isEnabled: session.hasPin,
+                  ),
+                  const SizedBox(height: 8),
+                  _StatusRow(
+                    icon: Icons.fingerprint_rounded,
+                    title: strings.biometrics,
+                    value: session.biometricsEnabled
+                        ? strings.enabled
+                        : strings.disabled,
+                    isEnabled: session.biometricsEnabled,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _pinController,
+                    keyboardType: TextInputType.number,
+                    obscureText: true,
+                    maxLength: 8,
+                    decoration: const InputDecoration(labelText: 'PIN'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: _savePin,
+                    icon: const Icon(Icons.lock_rounded),
+                    label: Text(
+                      session.hasPin ? strings.changePin : strings.enablePin,
+                    ),
+                  ),
+                  if (session.hasPin) ...[
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: _disablePin,
+                      icon: const Icon(Icons.lock_open_rounded),
+                      label: Text(strings.disablePin),
+                    ),
                   ],
-                ),
+                  const SizedBox(height: 14),
+                  SwitchListTile(
+                    value: session.biometricsEnabled,
+                    onChanged: session.hasPin ? _setBiometricsEnabled : null,
+                    contentPadding: EdgeInsets.zero,
+                    secondary: const Icon(Icons.fingerprint_rounded),
+                    title: Text(strings.biometrics),
+                    subtitle: Text(
+                      session.hasPin
+                          ? strings.biometricsSubtitle
+                          : strings.biometricsNeedsPin,
+                    ),
+                  ),
+                  if (_message != null) ...[
+                    const SizedBox(height: 16),
+                    Text(_message!),
+                  ],
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

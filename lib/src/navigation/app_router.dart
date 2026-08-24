@@ -15,7 +15,8 @@ import '../features/settings/ui/settings_screen.dart';
 import '../features/sync/ui/sync_screen.dart';
 import '../features/shift_schedules/ui/shift_schedules_screen.dart';
 import '../app/app_shell.dart';
-import '../navigation/page_turn_transition.dart';
+import 'page_turn_transition.dart';
+import 'shell_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -78,33 +79,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/memory',
-        pageBuilder: (context, state) => pageTurnPage(
+        pageBuilder: (context, state) => shellPage(
           context: context,
           state: state,
+          panel: 'settings',
           backFallback: '/settings',
           child: const MemoryLibraryScreen(),
         ),
       ),
       GoRoute(
         path: '/memory/item/:id',
-        pageBuilder: (context, state) {
-          final editor = MemoryItemDetailScreen(
+        pageBuilder: (context, state) => shellPage(
+          context: context,
+          state: state,
+          panel: recordPanelOf(state),
+          interceptBack: false,
+          child: MemoryItemDetailScreen(
             itemId: state.pathParameters['id'] ?? '',
             newlyCreated: state.uri.queryParameters['new'] == '1',
-          );
-          // Экран, открытый с нижней панели, сохраняет её и после того, как
-          // черновик превратился в запись и адрес сменился: для человека это
-          // тот же экран, с которого он не уходил.
-          final panel = state.uri.queryParameters['panel'];
-          return pageTurnPage(
-            context: context,
-            state: state,
-            interceptBack: false,
-            child: panel == null
-                ? editor
-                : AppShell(activeDestinationId: panel, child: editor),
-          );
-        },
+          ),
+        ),
       ),
       GoRoute(
         path: '/memory/new',
@@ -113,9 +107,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final date = rawDate == null
               ? DateTime.now()
               : DateTime.tryParse(rawDate) ?? DateTime.now();
-          return pageTurnPage(
+          return shellPage(
             context: context,
             state: state,
+            panel: 'calendar',
             interceptBack: false,
             child: MemoryItemDetailScreen(
               initialDate: DateTime(date.year, date.month, date.day),
@@ -125,24 +120,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/memory/note/new',
-        pageBuilder: (context, state) => pageTurnPage(
+        pageBuilder: (context, state) => shellPage(
           context: context,
           state: state,
+          panel: 'add_note',
           interceptBack: false,
-          // Записку заводят с панели, поэтому панель остаётся на месте:
-          // экран открывается внутри оболочки, а не поверх неё.
-          child: const AppShell(
-            activeDestinationId: 'add_note',
-            child: MemoryItemDetailScreen(createUndated: true),
-          ),
+          child: const MemoryItemDetailScreen(createUndated: true),
         ),
       ),
       GoRoute(
         path: '/memory/view/:id',
         pageBuilder: (context, state) {
-          return pageTurnPage(
+          return shellPage(
             context: context,
             state: state,
+            panel: recordPanelOf(state),
             backFallback: '/',
             child: MemoryItemViewScreen(
               itemId: state.pathParameters['id'] ?? '',
@@ -157,9 +149,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final date = rawDate == null
               ? DateTime.now()
               : DateTime.tryParse(rawDate) ?? DateTime.now();
-          return pageTurnPage(
+          return shellPage(
             context: context,
             state: state,
+            panel: 'calendar',
             backFallback: '/calendar',
             child: CalendarDayScreen(
               date: DateTime(date.year, date.month, date.day),
@@ -174,9 +167,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final date = rawDate == null
               ? DateTime.now()
               : DateTime.tryParse(rawDate) ?? DateTime.now();
-          return pageTurnPage(
+          return shellPage(
             context: context,
             state: state,
+            panel: 'calendar',
             backFallback: _calendarDayLocation(date),
             child: HolidayDetailScreen(
               date: DateTime(date.year, date.month, date.day),
@@ -186,36 +180,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/settings/shifts',
-        pageBuilder: (context, state) => pageTurnPage(
+        pageBuilder: (context, state) => shellPage(
           context: context,
           state: state,
+          panel: 'settings',
           backFallback: '/settings',
           child: const ShiftSchedulesScreen(),
         ),
       ),
       GoRoute(
         path: '/settings/backup',
-        pageBuilder: (context, state) => pageTurnPage(
+        pageBuilder: (context, state) => shellPage(
           context: context,
           state: state,
+          panel: 'settings',
           backFallback: '/settings',
           child: const BackupScreen(),
         ),
       ),
       GoRoute(
         path: '/settings/sync',
-        pageBuilder: (context, state) => pageTurnPage(
+        pageBuilder: (context, state) => shellPage(
           context: context,
           state: state,
+          panel: 'settings',
           backFallback: '/settings',
           child: const SyncScreen(),
         ),
       ),
       GoRoute(
         path: '/security',
-        pageBuilder: (context, state) => pageTurnPage(
+        pageBuilder: (context, state) => shellPage(
           context: context,
           state: state,
+          panel: 'settings',
           backFallback: '/settings',
           child: const SecurityScreen(),
         ),

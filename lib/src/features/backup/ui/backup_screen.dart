@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:ez_core/ez_core.dart';
-import '../../../app/app_shell.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../accounts/state/accounts_controller.dart';
 import '../../memory_items/state/memory_items_controller.dart';
@@ -27,55 +26,52 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
 
-    return AppShell(
-      activeDestinationId: 'settings',
-      child: Scaffold(
-        appBar: AppPageAppBar(
-          fallbackLocation: '/settings',
-          title: Text(strings.backup),
-        ),
-        body: WarmGradientBackground(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-            children: [
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 680),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _BackupHint(text: strings.backupDownloadsHint),
-                          const SizedBox(height: 10),
-                          _BackupActionButton(
-                            icon: Icons.cloud_upload_rounded,
-                            color: Theme.of(context).colorScheme.primary,
-                            title: strings.exportBackup,
-                            onPressed: _isBusy ? null : _exportBackup,
-                          ),
-                          const SizedBox(height: 10),
-                          _BackupActionButton(
-                            icon: Icons.restore_page_rounded,
-                            color: const Color(0xFF16A34A),
-                            title: strings.importBackup,
-                            onPressed: _isBusy ? null : _confirmImportBackup,
-                          ),
-                        ],
-                      ),
+    return Scaffold(
+      appBar: AppPageAppBar(
+        fallbackLocation: '/settings',
+        title: Text(strings.backup),
+      ),
+      body: WarmGradientBackground(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 680),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _BackupHint(text: strings.backupDownloadsHint),
+                        const SizedBox(height: 10),
+                        _BackupActionButton(
+                          icon: Icons.cloud_upload_rounded,
+                          color: Theme.of(context).colorScheme.primary,
+                          title: strings.exportBackup,
+                          onPressed: _isBusy ? null : _exportBackup,
+                        ),
+                        const SizedBox(height: 10),
+                        _BackupActionButton(
+                          icon: Icons.restore_page_rounded,
+                          color: const Color(0xFF16A34A),
+                          title: strings.importBackup,
+                          onPressed: _isBusy ? null : _confirmImportBackup,
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
