@@ -151,13 +151,21 @@ class MemoryEditorForm {
   /// перестаёт быть ежемесячным, срок теряет смысл и должен быть стёрт в
   /// серии, а не остаться там от прошлой настройки.
   MemoryEditorForm withRecurrence(RecurrenceFrequency? next) {
-    final wasSubscription = type == MemoryType.payment &&
-        paymentCategory == PaymentCategory.subscription;
+    final keptTerm = keepsSubscriptionTerm(
+      type: type,
+      paymentCategory: paymentCategory.name,
+      frequency: recurrenceFrequency,
+    );
+    final keepsTerm = keepsSubscriptionTerm(
+      type: type,
+      paymentCategory: paymentCategory.name,
+      frequency: next,
+    );
     var form = copyWith(
       recurrenceFrequency: next,
       clearRecurrence: next == null,
     );
-    if (wasSubscription && next != RecurrenceFrequency.monthly) {
+    if (keptTerm && !keepsTerm) {
       form = form.copyWith(
         clearSubscriptionTerm: true,
         subscriptionTermDirty: true,

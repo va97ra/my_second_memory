@@ -195,77 +195,37 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     final current = _find(currentId);
     if (current == null) return null;
     final now = DateTime.now();
+    // Срез считается по исходной дате вхождения: перенесённое вхождение видно
+    // на новой дате, но серия делится по той, откуда оно родом.
     final cutoff = _sourceDateForItem(edited, occurrenceDate);
-    final replacementStart = dateOnly(edited.memoryDate);
+    final split = splitSeriesForFutureEdit(
+      current: current,
+      edited: edited,
+      cutoff: cutoff,
+      now: now,
+    );
 
-    // Re-saving the same "this and future" edit must not split again. Autosave
-    // fires on every pause in typing, and every split used to mint a new series
-    // id, so one record could end up owning a whole chain of series.
-    if (current.originItemId == edited.id &&
-        dateKey(current.startDate) == dateKey(cutoff)) {
-      final linked = edited.copyWith(
-        seriesId: current.id,
-        repeatRule: current.frequency.name,
-        isGeneratedOccurrence: false,
-        updatedAt: now,
-      );
-      final keepsTerm = current.frequency == RecurrenceFrequency.monthly &&
-          linked.type == MemoryType.payment &&
-          linked.paymentCategory == PaymentCategory.subscription.name;
-      final updated = current.copyWith(
-        template: linked,
-        startDate: replacementStart,
-        subscriptionEndDate: keepsTerm ? current.subscriptionEndDate : null,
-        clearSubscriptionEndDate: !keepsTerm,
-        updatedAt: now,
-      );
-      await _repository.upsert(updated);
-      state = _replace(updated);
+    if (!split.splits) {
+      await _repository.upsert(split.replacement);
+      state = _replace(split.replacement);
       _sync?.recurrenceSeriesChanged();
-      await _retireOriginRow(updated);
+      await _retireOriginRow(split.replacement);
       unawaited(_reconcileRecurringReminders());
-      return updated;
+      return split.replacement;
     }
 
-    final ended = current.copyWith(
-      endDate: cutoff.subtract(const Duration(days: 1)),
-      updatedAt: now,
-    );
-    final newId =
-        '${current.id}_${dateKey(cutoff)}_${now.microsecondsSinceEpoch}';
-    final linked = edited.copyWith(
-      seriesId: newId,
-      repeatRule: current.frequency.name,
-      isGeneratedOccurrence: false,
-      updatedAt: now,
-    );
-    final replacement = RecurrenceSeries(
-      id: newId,
-      frequency: current.frequency,
-      template: linked,
-      startDate: replacementStart,
-      originItemId: linked.id,
-      createdAt: now,
-      updatedAt: now,
-      endDate: current.endDate,
-      subscriptionEndDate: current.frequency == RecurrenceFrequency.monthly &&
-              linked.type == MemoryType.payment &&
-              linked.paymentCategory == PaymentCategory.subscription.name
-          ? current.subscriptionEndDate
-          : null,
-      historyThrough: dateOnly(now),
-    );
-    await _repository.upsertAll([ended, replacement]);
-    state = [..._replace(ended), replacement];
+    await _repository.upsertAll([split.ended!, split.replacement]);
+    state = [..._replace(split.ended!), split.replacement];
     _sync?.recurrenceSeriesChanged();
-    await _retireOriginRow(replacement);
-    if (_exceptions.state.any(
-      (exception) => exception.id == recurrenceExceptionId(currentId, cutoff),
-    )) {
+    await _retireOriginRow(split.replacement);
+    // Переопределение на дате среза принадлежало прежней серии; новая серия
+    // начинается с самой правки, и старая отметка только спорила бы с ней.
+    final cutoffMarker = recurrenceExceptionId(currentId, cutoff);
+    if (_exceptions.exceptions.any((item) => item.id == cutoffMarker)) {
       await _exceptions.delete(currentId, cutoff);
     }
     unawaited(_reconcileRecurringReminders());
-    return replacement;
+    return split.replacement;
   }
 
   Future<void> saveOccurrenceOverride(
