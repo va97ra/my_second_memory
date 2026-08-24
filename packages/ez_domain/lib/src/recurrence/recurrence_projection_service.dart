@@ -382,8 +382,14 @@ DateTime safeDate(int year, int month, int day) {
 DateTime dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
 
+/// Дата одним числом вида 20260824: по нему сравнивают и раскладывают дни,
+/// не заводя объектов.
 int dateKey(DateTime value) =>
     value.year * 10000 + value.month * 100 + value.day;
+
+/// Дата обратно из ключа.
+DateTime dateFromKey(int key) =>
+    DateTime(key ~/ 10000, (key ~/ 100) % 100, key % 100);
 
 DateTime latestDate(DateTime left, DateTime right) =>
     left.isAfter(right) ? left : right;

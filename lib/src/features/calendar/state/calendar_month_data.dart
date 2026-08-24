@@ -30,7 +30,7 @@ class CalendarMonthData {
     final itemsByDay = <int, List<MemoryItem>>{};
     for (final item in items) {
       itemsByDay
-          .putIfAbsent(calendarDateKey(item.memoryDate), () => [])
+          .putIfAbsent(dateKey(item.memoryDate), () => [])
           .add(item);
     }
     final shiftsByDay = <int, List<ShiftSchedule>>{};
@@ -39,14 +39,14 @@ class CalendarMonthData {
         for (final schedule in shiftSchedules)
           if (schedule.isWorkday(day)) schedule,
       ];
-      if (matches.isNotEmpty) shiftsByDay[calendarDateKey(day)] = matches;
+      if (matches.isNotEmpty) shiftsByDay[dateKey(day)] = matches;
     }
     final holidaysByDay = <int, List<HolidayOccurrence>>{};
     if (showHolidays) {
       for (final holiday
           in resolvedHolidayService.holidaysForRange(days.first, days.last)) {
         holidaysByDay
-            .putIfAbsent(calendarDateKey(holiday.date), () => [])
+            .putIfAbsent(dateKey(holiday.date), () => [])
             .add(holiday);
       }
     }
@@ -59,7 +59,7 @@ class CalendarMonthData {
         : items;
     for (final item in reminderItems) {
       if (item.remindAt != null && !item.isDone && !item.isArchived) {
-        alarmDays.add(calendarDateKey(item.remindAt!));
+        alarmDays.add(dateKey(item.remindAt!));
       }
     }
     for (final schedule in shiftSchedules) {
@@ -71,11 +71,11 @@ class CalendarMonthData {
           schedule.supportsNextDayAlarm;
       for (final day in days) {
         if (firstAlarmEnabled && schedule.isWorkday(day)) {
-          alarmDays.add(calendarDateKey(day));
+          alarmDays.add(dateKey(day));
         }
         if (secondAlarmEnabled &&
             schedule.isWorkday(day.subtract(const Duration(days: 1)))) {
-          alarmDays.add(calendarDateKey(day));
+          alarmDays.add(dateKey(day));
         }
       }
     }
@@ -125,9 +125,6 @@ List<DateTime> calendarDaysForMonth(DateTime month) {
 List<String> calendarWeekdayLabels(String locale) => locale == 'ru'
     ? const ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
     : const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-int calendarDateKey(DateTime date) =>
-    date.year * 10000 + date.month * 100 + date.day;
 
 String calendarDateStringKey(DateTime date) {
   final month = date.month.toString().padLeft(2, '0');

@@ -24,14 +24,14 @@ class MemoryItemsIndex {
       byId[item.id] = item;
       if (item.isArchived) archived.add(item);
       if (item.remindAt != null && !item.isDone && !item.isArchived) {
-        activeReminderDays.add(memoryItemDateKey(item.remindAt!));
+        activeReminderDays.add(dateKey(item.remindAt!));
       }
       if (item.isUndated) {
         if (!item.isArchived) undatedNotes.add(item);
         continue;
       }
       byDate
-          .putIfAbsent(memoryItemDateKey(item.memoryDate), () => [])
+          .putIfAbsent(dateKey(item.memoryDate), () => [])
           .add(item);
     }
 
@@ -87,7 +87,7 @@ final memoryItemsForDayProvider =
     Provider.family<List<MemoryItem>, DateTime>((ref, date) {
   final day = DateTime(date.year, date.month, date.day);
   final persisted =
-      ref.watch(memoryItemsByDateProvider)[memoryItemDateKey(day)] ?? const [];
+      ref.watch(memoryItemsByDateProvider)[dateKey(day)] ?? const [];
   final projected = ref.watch(
     recurrenceItemsForRangeProvider(RecurrenceRange(day, day)),
   );
@@ -97,9 +97,6 @@ final memoryItemsForDayProvider =
 Map<int, List<MemoryItem>> indexMemoryItemsByDate(List<MemoryItem> items) {
   return MemoryItemsIndex.build(items).byDate;
 }
-
-int memoryItemDateKey(DateTime date) =>
-    date.year * 10000 + date.month * 100 + date.day;
 
 /// Everything the archive shows. A recurring occurrence is archived by writing
 /// an override, not by keeping a row, so the markers have to be read too or
@@ -158,7 +155,7 @@ final visibleCalendarItemsProvider =
   for (var day = gridStart;
       day.isBefore(gridEnd);
       day = day.add(const Duration(days: 1))) {
-    persisted.addAll(itemsByDate[memoryItemDateKey(day)] ?? const []);
+    persisted.addAll(itemsByDate[dateKey(day)] ?? const []);
   }
   final projected = ref.watch(
     recurrenceItemsForRangeProvider(

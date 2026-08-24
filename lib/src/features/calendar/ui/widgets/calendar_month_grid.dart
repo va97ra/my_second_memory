@@ -60,7 +60,7 @@ class CalendarMonthGrid extends StatelessWidget {
   /// другой странице календаря.
   Widget _cell(DateTime day) {
     final isInVisibleMonth = day.month == visibleMonth.month;
-    final key = calendarDateKey(day);
+    final key = dateKey(day);
 
     return CalendarDayCell(
       key: ValueKey('calendar_day_${calendarDateStringKey(day)}'),

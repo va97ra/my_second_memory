@@ -212,7 +212,7 @@ final feedLayoutProvider = Provider<FeedLayout>((ref) {
   for (var day = start;
       !day.isAfter(end);
       day = DateTime(day.year, day.month, day.day + 1)) {
-    persisted.addAll(itemsByDate[memoryItemDateKey(day)] ?? const []);
+    persisted.addAll(itemsByDate[dateKey(day)] ?? const []);
   }
   // Проекция уже пропускает даты, у которых есть сохранённая запись, поэтому
   // два источника не спорят между собой.

@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'russian_plural.dart';
 import 'package:flutter/services.dart';
 
 class AppStrings {
@@ -35,13 +36,7 @@ class AppStrings {
   String get yesterday => isRu ? 'Вчера' : 'Yesterday';
   String recordsCount(int count) {
     if (!isRu) return count == 1 ? '1 record' : '$count records';
-    final mod10 = count % 10;
-    final mod100 = count % 100;
-    if (mod10 == 1 && mod100 != 11) return '$count запись';
-    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-      return '$count записи';
-    }
-    return '$count записей';
+    return '$count ${russianPlural(count, 'запись', 'записи', 'записей')}';
   }
 
   String get previousMonth => isRu ? 'Предыдущий месяц' : 'Previous month';

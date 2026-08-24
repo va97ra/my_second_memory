@@ -27,14 +27,14 @@ void main() {
     ]);
 
     expect(
-      index[memoryItemDateKey(firstDate)]?.map((entry) => entry.id),
+      index[dateKey(firstDate)]?.map((entry) => entry.id),
       ['first', 'same-day'],
     );
-    expect(index[memoryItemDateKey(secondDate)]?.single.id, 'second');
+    expect(index[dateKey(secondDate)]?.single.id, 'second');
     expect(index.values.expand((items) => items).map((entry) => entry.id),
         isNot(contains('undated')));
     expect(
-      () => index[memoryItemDateKey(firstDate)]!.clear(),
+      () => index[dateKey(firstDate)]!.clear(),
       throwsUnsupportedError,
     );
   });
@@ -70,7 +70,7 @@ void main() {
     expect(() => index.byId.clear(), throwsUnsupportedError);
     expect(() => index.undatedNotes.clear(), throwsUnsupportedError);
     expect(index.activeReminderDays, {
-      memoryItemDateKey(reminder.remindAt!),
+      dateKey(reminder.remindAt!),
     });
   });
 

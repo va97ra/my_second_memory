@@ -136,31 +136,3 @@ class SubscriptionTermSheetState extends State<SubscriptionTermSheet> {
     );
   }
 }
-
-String subscriptionTermLabel(int? totalMonths, String locale) {
-  if (totalMonths == null) return locale == 'ru' ? 'Без срока' : 'No end date';
-  final years = totalMonths ~/ 12;
-  final months = totalMonths % 12;
-  if (locale != 'ru') {
-    final parts = <String>[];
-    if (years > 0) parts.add('$years ${years == 1 ? 'year' : 'years'}');
-    if (months > 0) parts.add('$months ${months == 1 ? 'month' : 'months'}');
-    return parts.join(' ');
-  }
-  final parts = <String>[];
-  if (years > 0) parts.add('$years ${_ruCount(years, 'год', 'года', 'лет')}');
-  if (months > 0) {
-    parts.add('$months ${_ruCount(months, 'месяц', 'месяца', 'месяцев')}');
-  }
-  return parts.join(' ');
-}
-
-String _ruCount(int value, String one, String few, String many) {
-  final mod100 = value % 100;
-  if (mod100 >= 11 && mod100 <= 14) return many;
-  return switch (value % 10) {
-    1 => one,
-    2 || 3 || 4 => few,
-    _ => many,
-  };
-}

@@ -1,5 +1,8 @@
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import 'multi_date_cell.dart';
 
 /// Выбор нескольких дат сразу — для дублирования записи.
 class MultiDatePickerSheet extends StatefulWidget {
@@ -93,37 +96,14 @@ class MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
                     final day = index - offset + 1;
                     if (day < 1 || day > days) return const SizedBox.shrink();
                     final date = DateTime(_month.year, _month.month, day);
-                    final key = _dateKeyForPicker(date);
+                    final key = dateKey(date);
                     final selected = _selected.contains(key);
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(8),
+                    return MultiDateCell(
+                      day: day,
+                      selected: selected,
                       onTap: () => setState(() {
                         if (!_selected.add(key)) _selected.remove(key);
                       }),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.surfaceContainer,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: selected
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.outlineVariant,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '$day',
-                            style: TextStyle(
-                              color: selected
-                                  ? Theme.of(context).colorScheme.onPrimary
-                                  : Theme.of(context).colorScheme.onSurface,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
                     );
                   },
                 ),
@@ -135,13 +115,9 @@ class MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
                   onPressed: _selected.isEmpty
                       ? null
                       : () {
-                          final dates = _selected.map((key) {
-                            final year = key ~/ 10000;
-                            final month = (key ~/ 100) % 100;
-                            return DateTime(year, month, key % 100);
-                          }).toList()
-                            ..sort();
-                          Navigator.of(context).pop(dates);
+                          Navigator.of(context).pop(
+                            _selected.map(dateFromKey).toList()..sort(),
+                          );
                         },
                   icon: const Icon(Icons.copy_all_rounded),
                   label: Text(
@@ -162,6 +138,3 @@ class MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
     setState(() => _month = DateTime(_month.year, _month.month + offset));
   }
 }
-
-int _dateKeyForPicker(DateTime value) =>
-    value.year * 10000 + value.month * 100 + value.day;

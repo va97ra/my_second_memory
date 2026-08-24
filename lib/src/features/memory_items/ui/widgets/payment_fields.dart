@@ -1,10 +1,11 @@
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
-import 'subscription_term_sheet.dart';
+import 'subscription_term_label.dart';
 
 /// Поля платежа: сумма, категория и срок подписки.
 class PaymentFields extends StatelessWidget {
-  const PaymentFields({super.key, 
+  const PaymentFields({
+    super.key,
     required this.amountController,
     required this.category,
     required this.locale,

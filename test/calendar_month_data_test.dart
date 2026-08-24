@@ -69,11 +69,11 @@ void main() {
       shiftSchedules: [schedule],
     );
 
-    expect(data.alarmDays, contains(calendarDateKey(DateTime(2026, 7, 9))));
-    expect(data.alarmDays, contains(calendarDateKey(DateTime(2026, 7, 10))));
-    expect(data.alarmDays, contains(calendarDateKey(DateTime(2026, 7, 11))));
+    expect(data.alarmDays, contains(dateKey(DateTime(2026, 7, 9))));
+    expect(data.alarmDays, contains(dateKey(DateTime(2026, 7, 10))));
+    expect(data.alarmDays, contains(dateKey(DateTime(2026, 7, 11))));
     expect(
-      data.holidaysByDay[calendarDateKey(DateTime(2026, 7, 8))],
+      data.holidaysByDay[dateKey(DateTime(2026, 7, 8))],
       isNotEmpty,
     );
   });
