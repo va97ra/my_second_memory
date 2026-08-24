@@ -2,7 +2,10 @@ name: ezhednevnik_v2
 description: Local-first mobile memory app with dated items, voice notes, reminders, and a smart feed.
 publish_to: "none"
 
-version: 1.0.8+9
+# В RuStore опубликовано 1.0.6(7); здесь готовится следующая версия.
+# Не поднимать, пока эта не выложена: до публикации меняется она сама, а не
+# номер за ней.
+version: 1.0.7+8
 
 # Модули приложения. Границы между слоями держит сборка:
 # чего нет в dependencies пакета, то он импортировать не может.
