@@ -10,6 +10,7 @@ export 'src/calendar/holiday_calendar_service.dart';
 export 'src/calendar/holiday_occurrence.dart';
 export 'src/feed/feed_rules.dart';
 export 'src/memory/memory_item.dart';
+export 'src/memory/reminder_rules.dart';
 export 'src/memory/memory_status.dart';
 export 'src/memory/memory_type.dart';
 export 'src/recurrence/recurrence_occurrence_exception.dart';

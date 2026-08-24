@@ -238,7 +238,7 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     );
     final recurring = item.isGeneratedOccurrence && item.seriesId != null;
     final payload = jsonEncode({
-      'source': recurring ? 'recurrence_reminder' : 'memory_reminder',
+      'source': ReminderSource.of(item),
       'itemId': item.id,
       if (recurring) 'seriesId': item.seriesId,
       if (recurring)
@@ -273,71 +273,46 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
   }
 
   @override
-  Future<void> reconcile(List<MemoryItem> items) async {
-    if (!isSupported) {
-      return;
-    }
-    await initialize();
-    final desired = {
-      for (final item in items)
-        if (item.status == MemoryStatus.active &&
-            item.remindAt?.isAfter(DateTime.now()) == true)
-          stableNotificationId(item.id),
-    };
-    final pending = await _plugin.pendingNotificationRequests();
-    final pendingMemoryIds = <int>{};
-    for (final notification in pending) {
-      final data = decodeReminderPayload(notification.payload);
-      if (data?['source'] == 'memory_reminder') {
-        if (!desired.contains(notification.id)) {
-          await _plugin.cancel(notification.id);
-        } else {
-          pendingMemoryIds.add(notification.id);
-        }
-      }
-    }
-    var scheduled = 0;
-    for (final item in items) {
-      if (item.status == MemoryStatus.active &&
-          item.remindAt?.isAfter(DateTime.now()) == true &&
-          !pendingMemoryIds.contains(stableNotificationId(item.id))) {
-        await schedule(item);
-        if (++scheduled % 8 == 0) {
-          await Future<void>.delayed(Duration.zero);
-        }
-      }
-    }
-  }
+  Future<void> reconcile(List<MemoryItem> items) =>
+      _reconcileSource(items, ReminderSource.memory);
 
   @override
-  Future<void> reconcileRecurring(List<MemoryItem> items) async {
+  Future<void> reconcileRecurring(List<MemoryItem> items) =>
+      _reconcileSource(items, ReminderSource.recurrence);
+
+  /// Приводит запланированные напоминания одного источника в соответствие со
+  /// списком: лишние снимает, недостающие ставит.
+  ///
+  /// Чужой источник не трогается: обычные записи и вхождения повторов
+  /// согласуются отдельно и не должны отменять напоминания друг друга.
+  Future<void> _reconcileSource(List<MemoryItem> items, String source) async {
     if (!isSupported) return;
     await initialize();
-    final desired = {
+
+    final wanted = {
       for (final item in items)
-        if (item.status == MemoryStatus.active &&
-            item.remindAt?.isAfter(DateTime.now()) == true)
-          stableNotificationId(item.id),
+        if (wantsReminder(item)) stableNotificationId(item.id),
     };
-    final pending = await _plugin.pendingNotificationRequests();
-    final existing = <int>{};
-    for (final notification in pending) {
-      final data = decodeReminderPayload(notification.payload);
-      if (data?['source'] != 'recurrence_reminder') continue;
-      if (!desired.contains(notification.id)) {
-        await _plugin.cancel(notification.id);
+    final alive = <int>{};
+    for (final notification in await _plugin.pendingNotificationRequests()) {
+      final payload = decodeReminderPayload(notification.payload);
+      if (payload?['source'] != source) continue;
+      if (wanted.contains(notification.id)) {
+        alive.add(notification.id);
       } else {
-        existing.add(notification.id);
+        await _plugin.cancel(notification.id);
       }
     }
+
     var scheduled = 0;
     for (final item in items) {
-      if (item.status != MemoryStatus.active ||
-          item.remindAt?.isAfter(DateTime.now()) != true ||
-          existing.contains(stableNotificationId(item.id))) {
+      if (!wantsReminder(item) ||
+          alive.contains(stableNotificationId(item.id))) {
         continue;
       }
       await schedule(item);
+      // Планирование ходит на платформу. Без пауз длинный список подвешивает
+      // интерфейс, поэтому каждые восемь напоминаний уступаем кадр.
       if (++scheduled % 8 == 0) {
         await Future<void>.delayed(Duration.zero);
       }
