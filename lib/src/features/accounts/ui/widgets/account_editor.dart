@@ -1,9 +1,12 @@
-import 'package:flutter/material.dart';
-import 'account_text_field.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../state/account_form.dart';
 import '../../state/accounts_controller.dart';
+import 'account_editor_fields.dart';
+import 'account_editor_header.dart';
 
 /// Лист создания и правки аккаунта.
 class AccountEditor extends StatefulWidget {
@@ -29,14 +32,13 @@ class _AccountEditorState extends State<AccountEditor> {
   void initState() {
     super.initState();
     final account = widget.account;
-    if (account != null) {
-      _service.text = account.serviceName;
-      _login.text = account.login;
-      _password.text = account.password;
-      _email.text = account.email;
-      _website.text = account.website;
-      _note.text = account.note;
-    }
+    if (account == null) return;
+    _service.text = account.serviceName;
+    _login.text = account.login;
+    _password.text = account.password;
+    _email.text = account.email;
+    _website.text = account.website;
+    _note.text = account.note;
   }
 
   @override
@@ -53,112 +55,39 @@ class _AccountEditorState extends State<AccountEditor> {
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.86,
       child: AnimatedPadding(
         duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 14 + bottomInset),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          14 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
         child: Column(
           children: [
-            Row(
-              children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: SizedBox(
-                    width: 42,
-                    height: 42,
-                    child: Icon(
-                      Icons.vpn_key_rounded,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    widget.account == null
-                        ? strings.addAccount
-                        : strings.editAccount,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ],
+            AccountEditorHeader(
+              title: widget.account == null
+                  ? strings.addAccount
+                  : strings.editAccount,
             ),
             const SizedBox(height: 14),
             Expanded(
               child: SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                child: Column(
-                  children: [
-                    AccountTextField(
-                      controller: _service,
-                      label: strings.serviceName,
-                      icon: Icons.apps_rounded,
-                      textInputAction: TextInputAction.next,
-                    ),
-                    AccountTextField(
-                      controller: _login,
-                      label: strings.login,
-                      icon: Icons.person_rounded,
-                      textInputAction: TextInputAction.next,
-                    ),
-                    AccountTextField(
-                      controller: _email,
-                      label: strings.email,
-                      icon: Icons.alternate_email_rounded,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                    ),
-                    AccountTextField(
-                      controller: _password,
-                      label: strings.password,
-                      icon: Icons.lock_rounded,
-                      obscureText: !_showPassword,
-                      textInputAction: TextInputAction.next,
-                      suffixIcon: IconButton(
-                        tooltip: strings.password,
-                        onPressed: () =>
-                            setState(() => _showPassword = !_showPassword),
-                        icon: Icon(
-                          _showPassword
-                              ? Icons.visibility_off_rounded
-                              : Icons.visibility_rounded,
-                        ),
-                      ),
-                    ),
-                    AccountTextField(
-                      controller: _website,
-                      label: strings.website,
-                      icon: Icons.language_rounded,
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.next,
-                    ),
-                    AccountTextField(
-                      controller: _note,
-                      label: strings.note,
-                      icon: Icons.sticky_note_2_rounded,
-                      minLines: 4,
-                      maxLines: 6,
-                      keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
-                    ),
-                  ],
+                child: AccountEditorFields(
+                  service: _service,
+                  login: _login,
+                  email: _email,
+                  password: _password,
+                  website: _website,
+                  note: _note,
+                  showPassword: _showPassword,
+                  onTogglePassword: () =>
+                      setState(() => _showPassword = !_showPassword),
                 ),
               ),
             ),
@@ -179,29 +108,17 @@ class _AccountEditorState extends State<AccountEditor> {
   }
 
   Future<void> _save() async {
-    final now = DateTime.now();
     final existing = widget.account;
-    final account = existing == null
-        ? AccountItem(
-            id: now.microsecondsSinceEpoch.toString(),
-            serviceName: _service.text.trim(),
-            login: _login.text.trim(),
-            password: _password.text,
-            email: _email.text.trim(),
-            website: _website.text.trim(),
-            note: _note.text.trim(),
-            createdAt: now,
-            updatedAt: now,
-          )
-        : existing.copyWith(
-            serviceName: _service.text.trim(),
-            login: _login.text.trim(),
-            password: _password.text,
-            email: _email.text.trim(),
-            website: _website.text.trim(),
-            note: _note.text.trim(),
-            updatedAt: now,
-          );
+    final account = accountFromForm(
+      existing: existing,
+      serviceName: _service.text,
+      login: _login.text,
+      password: _password.text,
+      email: _email.text,
+      website: _website.text,
+      note: _note.text,
+      now: DateTime.now(),
+    );
 
     final controller = widget.ref.read(accountsControllerProvider.notifier);
     if (existing == null) {
@@ -209,9 +126,6 @@ class _AccountEditorState extends State<AccountEditor> {
     } else {
       await controller.update(account);
     }
-
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+    if (mounted) Navigator.of(context).pop();
   }
 }

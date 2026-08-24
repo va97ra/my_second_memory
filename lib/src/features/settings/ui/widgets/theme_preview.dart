@@ -1,6 +1,9 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
+import 'theme_preview_bar.dart';
+import 'theme_preview_paper.dart';
+
 /// Как выглядит тема: обложка, лист и строка текста на нём.
 class ThemePreview extends StatelessWidget {
   const ThemePreview({
@@ -71,86 +74,33 @@ class ThemePreview extends StatelessWidget {
                     padding: const EdgeInsets.all(7),
                     child: Column(
                       children: [
-                        Container(
+                        ThemePreviewPaper(
+                          color: colors.last,
+                          texture: panelTexture,
+                          ink: ink,
                           height: 15,
-                          decoration: BoxDecoration(
+                          bordered: false,
+                        ),
+                        const SizedBox(height: 6),
+                        Expanded(
+                          child: ThemePreviewPaper(
                             color: colors.last,
-                            image: DecorationImage(
-                              image: AssetImage(panelTexture),
-                              fit: BoxFit.cover,
-                              opacity: 0.42,
-                            ),
-                            borderRadius: BorderRadius.circular(4),
+                            texture: panelTexture,
+                            ink: ink,
                           ),
                         ),
+                        const SizedBox(height: 6),
+                        const ThemePreviewBar(),
                         const SizedBox(height: 6),
                         Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: colors.last,
-                              image: DecorationImage(
-                                image: AssetImage(panelTexture),
-                                fit: BoxFit.cover,
-                                opacity: 0.42,
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                  color: ink.withValues(alpha: 0.25)),
-                            ),
+                          child: ThemePreviewPaper(
+                            color: colors.last,
+                            texture: panelTexture,
+                            ink: ink,
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Container(
-                          height: 16,
-                          decoration: BoxDecoration(
-                            // Terracotta belongs to both notebooks.
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFC97655),
-                                Color(0xFFC2492E),
-                                Color(0xFF8E3520),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: colors.last,
-                              image: DecorationImage(
-                                image: AssetImage(panelTexture),
-                                fit: BoxFit.cover,
-                                opacity: 0.42,
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                  color: ink.withValues(alpha: 0.25)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          height: 16,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFC97655),
-                                Color(0xFFC2492E),
-                                Color(0xFF8E3520),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x66000000),
-                                blurRadius: 2,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                        ),
+                        const ThemePreviewBar(raised: true),
                       ],
                     ),
                   ),
