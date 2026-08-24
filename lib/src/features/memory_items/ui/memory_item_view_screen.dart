@@ -1,26 +1,21 @@
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
-import 'package:ez_core/ez_core.dart';
-import 'package:ez_design/ez_design.dart';
-import '../../../shared/ui/screen_chrome.dart';
-import '../../../shared/ui/media/memory_image_preview.dart';
-import '../../../shared/ui/media/memory_image_viewer.dart';
-import '../../../shared/ui/media/voice_note_player.dart';
-import '../state/memory_items_controller.dart';
-import '../state/memory_item_selectors.dart';
-import 'package:ez_domain/ez_domain.dart';
-import '../../recurrence/state/recurrence_controller.dart';
-import '../../../shared/ui/memory_card/memory_item_presentation.dart';
+import '../../../navigation/leave_after_frame.dart' as navigation;
 import '../../../navigation/page_turn_navigation.dart';
+import '../../../shared/ui/screen_chrome.dart';
+import '../../recurrence/state/recurrence_controller.dart';
+import '../state/memory_item_selectors.dart';
+import '../state/memory_items_controller.dart';
+import 'widgets/editor_load_gate.dart';
+import 'widgets/memory_view_sheet.dart';
 
+/// Безопасный просмотр записи: её видно целиком, но случайно не правится.
 class MemoryItemViewScreen extends ConsumerStatefulWidget {
-  const MemoryItemViewScreen({
-    required this.itemId,
-    super.key,
-  });
+  const MemoryItemViewScreen({super.key, required this.itemId});
 
   final String itemId;
 
@@ -41,58 +36,23 @@ class _MemoryItemViewScreenState extends ConsumerState<MemoryItemViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final itemId = widget.itemId;
     final strings = AppStrings.of(context);
-    final loadState = ref.watch(memoryItemsLoadProvider);
-    final recurrenceLoadState = ref.watch(recurrenceLoadProvider);
-    final item = ref.watch(memoryItemByIdProvider(itemId));
+    final item = ref.watch(memoryItemByIdProvider(widget.itemId));
+    final loading = editorLoadingView(
+      context,
+      items: ref.watch(memoryItemsLoadProvider),
+      series: ref.watch(recurrenceLoadProvider),
+      needsSeries: item == null,
+    );
+    if (loading != null) return loading;
 
-    if (loadState.isLoading ||
-        (item == null && recurrenceLoadState.isLoading)) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(key: ValueKey('view_loading')),
-        ),
-      );
-    }
-    if (loadState.hasError || recurrenceLoadState.hasError) {
-      return Scaffold(body: Center(child: Text(strings.loadFailed)));
-    }
-
-    if (item == null) {
-      if (_wasShown) {
-        _leave(context);
-        return const Scaffold(body: SizedBox.shrink());
-      }
-      // Сюда попадают только по несуществующему адресу — например, из старого
-      // уведомления. Тут сообщение уместно.
-      return Scaffold(
-        appBar: AppPageAppBar(
-          onBack: () => _goBack(context),
-          title: Text(strings.recordNotFound),
-        ),
-        body: Center(child: Text(strings.recordNotFound)),
-      );
-    }
+    if (item == null) return _missingRecord(strings);
     _wasShown = true;
-
-    final locale = Localizations.localeOf(context).languageCode;
-    final notebook = NotebookVisuals.maybeOf(context);
-    final textures = AppSurfaceTextures.maybeOf(context);
-    final palette = AppSurfacePalette.of(context);
-    final typeColor = memoryTypeColor(item.type);
-    final text = item.body.trim().isNotEmpty ? item.body.trim() : item.title;
-    final timeText =
-        item.timeMinutes == null ? null : formatMinutesOfDay(item.timeMinutes!);
 
     return Scaffold(
       appBar: AppPageAppBar(
-        onBack: () => _goBack(context),
-        title: Text(
-          item.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        onBack: _goBack,
+        title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
           IconButton(
             tooltip: item.isUndated ? strings.editNote : strings.editRecord,
@@ -103,321 +63,34 @@ class _MemoryItemViewScreenState extends ConsumerState<MemoryItemViewScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          key: const ValueKey('memory_readonly_view'),
-          builder: (context, constraints) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 720),
-                  child: SizedBox(
-                    key: const ValueKey('memory_readonly_panel'),
-                    width: double.infinity,
-                    height: constraints.maxHeight - 18,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: textures == null
-                            ? notebook?.paper ??
-                                Theme.of(context)
-                                    .colorScheme
-                                    .surface
-                                    .withValues(alpha: 0.97)
-                            : null,
-                        gradient:
-                            textures == null ? null : palette.surfaceGradient(),
-                        image: notebook != null
-                            ? DecorationImage(
-                                image: AssetImage(notebook.paperAsset),
-                                fit: BoxFit.cover,
-                                opacity: 0.62,
-                              )
-                            : textures == null
-                                ? null
-                                : DecorationImage(
-                                    image: AssetImage(textures.surfaceAsset),
-                                    fit: BoxFit.cover,
-                                    opacity: textures.surfaceOpacity,
-                                    filterQuality: FilterQuality.low,
-                                  ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color:
-                                Theme.of(context).colorScheme.outlineVariant),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                const Color(0xFF6B4F35).withValues(alpha: 0.09),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 9),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: typeColor.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(
-                                    memoryTypeIcon(item.type),
-                                    color: typeColor,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    item.isUndated
-                                        ? strings.noteCard
-                                        : item.type.label(locale),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: typeColor,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                  ),
-                                ),
-                                if (!item.isUndated)
-                                  Text(
-                                    DateFormat('d MMM y', locale)
-                                        .format(item.memoryDate),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelMedium
-                                        ?.copyWith(
-                                          color: const Color(0xFF6B5B47),
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                  ),
-                                if (!item.isUndated && timeText != null) ...[
-                                  const SizedBox(width: 8),
-                                  DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      color: typeColor.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 7,
-                                        vertical: 4,
-                                      ),
-                                      child: Text(
-                                        timeText,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelMedium
-                                            ?.copyWith(
-                                              color: typeColor,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const Divider(),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              key: const ValueKey('memory_readonly_content'),
-                              padding:
-                                  const EdgeInsets.fromLTRB(14, 12, 14, 18),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (item.imagePaths.isNotEmpty) ...[
-                                    _ReadonlyImageGrid(paths: item.imagePaths),
-                                  ],
-                                  if (item.audioPath != null) ...[
-                                    if (item.imagePaths.isNotEmpty)
-                                      const SizedBox(height: 12),
-                                    VoiceNotePlayer(
-                                      path: item.audioPath!,
-                                      recordedAt: item.memoryDate,
-                                      durationSeconds:
-                                          item.audioDurationSeconds,
-                                    ),
-                                  ],
-                                  if (text.isNotEmpty) ...[
-                                    if (item.imagePaths.isNotEmpty ||
-                                        item.audioPath != null)
-                                      const SizedBox(height: 12),
-                                    Text(
-                                      text,
-                                      style: AppContentTypography.of(context)
-                                          .apply(
-                                        Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge
-                                            ?.copyWith(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface,
-                                              height: 1.36,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                        manropeWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                  if (item.type == MemoryType.payment &&
-                                      item.amountMinor != null) ...[
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      '${NumberFormat.decimalPattern('ru').format(item.amountMinor! ~/ 100)} ₽',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            color: typeColor,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                    ),
-                                  ],
-                                  if (item.type == MemoryType.birthday &&
-                                      item.birthYear != null) ...[
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      locale == 'ru'
-                                          ? '${item.memoryDate.year - item.birthYear!} лет'
-                                          : '${item.memoryDate.year - item.birthYear!} years',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
+      body: SafeArea(child: MemoryViewSheet(item: item)),
     );
   }
 
-  /// Уводит с экрана исчезнувшей записи после того, как кадр дорисован:
-  /// менять маршрут прямо во время построения нельзя.
-  ///
-  /// Уходит без перелистывания. Страницу, которой больше нет, не показывают
-  /// уезжающей, а главное — перелистывание в этот момент уже занято возвратом
-  /// из редактора, и второй переход был бы отменён вместе с самим уходом.
-  void _leave(BuildContext context) {
-    if (_isLeaving) return;
-    _isLeaving = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        context.go('/');
+  Widget _missingRecord(AppStrings strings) {
+    if (_wasShown) {
+      if (!_isLeaving) {
+        _isLeaving = true;
+        navigation.leaveAfterFrame(context);
       }
-    });
+      return const Scaffold(body: SizedBox.shrink());
+    }
+    // Сюда попадают только по несуществующему адресу — например, из старого
+    // уведомления. Тут сообщение уместно.
+    return Scaffold(
+      appBar: AppPageAppBar(
+        onBack: _goBack,
+        title: Text(strings.recordNotFound),
+      ),
+      body: Center(child: Text(strings.recordNotFound)),
+    );
   }
 
-  void _goBack(BuildContext context) {
+  void _goBack() {
     if (context.canPop()) {
       context.pageTurnPop();
       return;
     }
-    context.pageTurnGo(
-      '/',
-      direction: PageTurnDirection.backward,
-    );
-  }
-}
-
-class _ReadonlyImageGrid extends StatelessWidget {
-  const _ReadonlyImageGrid({required this.paths});
-
-  final List<String> paths;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth < memoryAttachmentPreviewMaxWidth
-            ? constraints.maxWidth
-            : memoryAttachmentPreviewMaxWidth;
-
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final path in paths)
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: maxWidth,
-                  maxHeight: memoryAttachmentPreviewHeight,
-                ),
-                child: _ReadonlyImage(path: path, cacheWidth: 720),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _ReadonlyImage extends StatelessWidget {
-  const _ReadonlyImage({required this.path, required this.cacheWidth});
-
-  final String path;
-  final int cacheWidth;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: ValueKey('readonly_image_$path'),
-        onTap: () => openMemoryImageViewer(context, path),
-        borderRadius: BorderRadius.circular(8),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: MemoryImagePreview(
-              path: path,
-              fit: BoxFit.contain,
-              cacheWidth: cacheWidth,
-            ),
-          ),
-        ),
-      ),
-    );
+    context.pageTurnGo('/', direction: PageTurnDirection.backward);
   }
 }

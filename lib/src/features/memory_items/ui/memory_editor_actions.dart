@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../navigation/leave_after_frame.dart' as navigation;
 import '../../../navigation/page_turn_navigation.dart';
 import '../../../shared/state/notification_providers.dart';
 import '../../recurrence/state/recurrence_controller.dart';
@@ -280,22 +281,13 @@ class MemoryEditorActions {
     await context.pageTurnGo('/', direction: PageTurnDirection.backward);
   }
 
-  /// Уводит с экрана исчезнувшей записи после того, как кадр дорисован.
-  ///
-  /// Без перелистывания: анимировать нечего, а сама анимация в этот момент
-  /// может быть занята другим переходом и отменила бы уход.
+  /// Уводит с экрана исчезнувшей записи. Отложенное сохранение при этом
+  /// отменяется: сохранять уже нечего и некуда.
   void leaveAfterFrame() {
     if (controller.isLeaving) return;
     controller.isLeaving = true;
     controller.discardPendingSave();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!context.mounted) return;
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        context.go('/');
-      }
-    });
+    navigation.leaveAfterFrame(context);
   }
 
   DateTime _dateTimeFor(DateTime date, int minutes) =>
