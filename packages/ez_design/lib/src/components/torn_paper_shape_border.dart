@@ -1,9 +1,11 @@
-part of 'memory_item_card.dart';
+import 'dart:ui' as ui;
 
-/// A sheet torn out of the notebook: the left edge is ragged, the other three
-/// are clean factory cuts.
-class _TornPaperShapeBorder extends ShapeBorder {
-  const _TornPaperShapeBorder({
+import 'package:flutter/material.dart';
+
+/// Лист, вырванный из блокнота: левый край рваный, три остальных — ровные
+/// фабричные обрезы.
+class TornPaperShapeBorder extends ShapeBorder {
+  const TornPaperShapeBorder({
     required this.variant,
     this.side = BorderSide.none,
   });
@@ -11,12 +13,12 @@ class _TornPaperShapeBorder extends ShapeBorder {
   final int variant;
   final BorderSide side;
 
-  /// How deep the tear may bite into the card.
+  /// Насколько глубоко разрыв может войти в карточку.
   static const tearDepth = 9.0;
   static const _cornerRadius = 3.0;
 
-  /// Bite of the tear along the height, as a fraction of [tearDepth]. Values
-  /// drift rather than alternate: a tear runs for a while before it turns.
+  /// Сколько разрыв откусывает по высоте, долей от [tearDepth]. Значения
+  /// плывут, а не чередуются: разрыв идёт какое-то время, прежде чем свернуть.
   static const _profiles = <List<double>>[
     [
       0.22, 0.30, 0.18, 0.26, 0.48, 0.62, 0.54, 0.38, 0.30, //
@@ -36,6 +38,17 @@ class _TornPaperShapeBorder extends ShapeBorder {
     ],
   ];
 
+  /// Разрыв, всегда один и тот же для одного и того же ключа: карточка не
+  /// должна менять свой край при каждой перерисовке.
+  static int stableVariant(String key) {
+    var hash = 0x811C9DC5;
+    for (final unit in key.codeUnits) {
+      hash ^= unit;
+      hash = (hash * 0x01000193) & 0x7FFFFFFF;
+    }
+    return hash % _profiles.length;
+  }
+
   @override
   EdgeInsetsGeometry get dimensions => EdgeInsets.fromLTRB(
         tearDepth,
@@ -46,10 +59,7 @@ class _TornPaperShapeBorder extends ShapeBorder {
 
   @override
   ShapeBorder scale(double t) {
-    return _TornPaperShapeBorder(
-      variant: variant,
-      side: side.scale(t),
-    );
+    return TornPaperShapeBorder(variant: variant, side: side.scale(t));
   }
 
   @override
@@ -74,7 +84,8 @@ class _TornPaperShapeBorder extends ShapeBorder {
     final inner = rect.deflate(side.width / 2);
     canvas.drawPath(_cleanEdgePath(inner), side.toPaint());
 
-    // A tear carries no drawn outline; it shows as light caught on raw fibres.
+    // У разрыва нет нарисованного контура: он виден как свет, пойманный
+    // необрезанными волокнами бумаги.
     final fibres = Path();
     _appendTornEdge(fibres, inner, startSubpath: true);
     canvas.drawPath(
@@ -87,8 +98,7 @@ class _TornPaperShapeBorder extends ShapeBorder {
     );
   }
 
-  /// Top, right and bottom, from the torn top-left corner to the torn
-  /// bottom-left one.
+  /// Верх, правая сторона и низ — от рваного верхнего угла до нижнего.
   Path _cleanEdgePath(Rect rect) {
     final profile = _profiles[variant % _profiles.length];
     return Path()
@@ -110,7 +120,7 @@ class _TornPaperShapeBorder extends ShapeBorder {
       ..lineTo(rect.left + profile.last * tearDepth, rect.bottom);
   }
 
-  /// The ragged left edge, walked from the bottom back up to the top.
+  /// Рваный левый край, пройденный снизу вверх.
   void _appendTornEdge(Path path, Rect rect, {required bool startSubpath}) {
     final profile = _profiles[variant % _profiles.length];
     final steps = profile.length - 1;
@@ -124,13 +134,4 @@ class _TornPaperShapeBorder extends ShapeBorder {
       }
     }
   }
-}
-
-int _stablePaperVariant(String id) {
-  var hash = 0x811C9DC5;
-  for (final unit in id.codeUnits) {
-    hash ^= unit;
-    hash = (hash * 0x01000193) & 0x7FFFFFFF;
-  }
-  return hash % _TornPaperShapeBorder._profiles.length;
 }
