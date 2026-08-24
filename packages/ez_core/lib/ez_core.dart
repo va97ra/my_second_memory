@@ -6,4 +6,5 @@
 library;
 
 export 'src/async/sequential_task_queue.dart';
+export 'src/format/clock_format.dart';
 export 'src/localization/app_strings.dart';

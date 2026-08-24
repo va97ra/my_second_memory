@@ -3,7 +3,6 @@ import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:ez_data/ez_data.dart';
 import '../../../notifications/ui/reminder_sound_picker.dart';
-import 'memory_item_presentation.dart';
 import 'reminder_sheet_tile.dart';
 import 'reminder_toggle_tile.dart';
 
@@ -164,7 +163,7 @@ class _TimeReminderSheetState extends State<TimeReminderSheet> {
     if (minutes == null) {
       return strings.timeNotSet;
     }
-    return formatMemoryTime(minutes);
+    return formatMinutesOfDay(minutes);
   }
 
   Future<bool> _pickTime() async {

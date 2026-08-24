@@ -1,3 +1,4 @@
+import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import '../../../memory_items/ui/widgets/memory_item_presentation.dart';
@@ -46,7 +47,7 @@ class CalendarEventBar extends StatelessWidget {
     if (minutes == null) {
       return null;
     }
-    return formatMemoryTime(minutes);
+    return formatMinutesOfDay(minutes);
   }
 
   String _recordTitle(MemoryItem item, String locale) {

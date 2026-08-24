@@ -37,13 +37,6 @@ Color memoryTypeColor(MemoryType type) => switch (type) {
       MemoryType.payment => const Color(0xFF008C85),
     };
 
-String formatMemoryTime(int minutes) {
-  final hours = minutes ~/ 60;
-  final mins = minutes % 60;
-  return '${hours.toString().padLeft(2, '0')}:'
-      '${mins.toString().padLeft(2, '0')}';
-}
-
 String memoryTitleFromRecord(
   String body,
   MemoryType type,

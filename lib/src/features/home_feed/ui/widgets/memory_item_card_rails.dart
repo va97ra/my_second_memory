@@ -26,7 +26,7 @@ class _TypeRail extends StatelessWidget {
     final tearInset = notebook == null ? 0.0 : _TornPaperShapeBorder.tearDepth;
     final time = item.timeMinutes == null
         ? DateFormat.Hm(locale).format(item.createdAt)
-        : formatMemoryTime(item.timeMinutes!);
+        : formatMinutesOfDay(item.timeMinutes!);
 
     return NotebookLeatherSurface(
       color: color,

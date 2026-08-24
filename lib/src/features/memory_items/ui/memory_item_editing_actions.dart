@@ -213,7 +213,7 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
     if (minutes == null) {
       return null;
     }
-    return formatMemoryTime(minutes);
+    return formatMinutesOfDay(minutes);
   }
 
   Future<void> _openTimeAndReminder() async {

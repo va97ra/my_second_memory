@@ -83,7 +83,7 @@ class _MemoryItemViewScreenState extends ConsumerState<MemoryItemViewScreen> {
     final typeColor = memoryTypeColor(item.type);
     final text = item.body.trim().isNotEmpty ? item.body.trim() : item.title;
     final timeText =
-        item.timeMinutes == null ? null : formatMemoryTime(item.timeMinutes!);
+        item.timeMinutes == null ? null : formatMinutesOfDay(item.timeMinutes!);
 
     return Scaffold(
       appBar: AppPageAppBar(
