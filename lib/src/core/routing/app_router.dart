@@ -11,12 +11,10 @@ import '../../features/memory_items/ui/memory_item_detail_screen.dart';
 import '../../features/memory_items/ui/memory_library_screen.dart';
 import '../../features/memory_items/ui/memory_item_view_screen.dart';
 import '../../features/security/ui/security_screen.dart';
-import '../../features/recurrence/domain/recurrence_series.dart';
-import '../../features/recurrence/ui/recurring_overview_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
 import '../../features/sync/ui/sync_screen.dart';
 import '../../features/shift_schedules/ui/shift_schedules_screen.dart';
-import '../../shared/ui/app_shell.dart';
+import '../../app/app_shell.dart';
 import '../../shared/ui/page_turn_transition.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -79,20 +77,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
-        path: '/recurring/:frequency',
-        pageBuilder: (context, state) {
-          final frequency = state.pathParameters['frequency'] == 'yearly'
-              ? RecurrenceFrequency.yearly
-              : RecurrenceFrequency.monthly;
-          return pageTurnPage(
-            context: context,
-            state: state,
-            backFallback: '/',
-            child: RecurringOverviewScreen(frequency: frequency),
-          );
-        },
-      ),
-      GoRoute(
         path: '/memory',
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
@@ -138,7 +122,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           interceptBack: false,
-          child: const MemoryItemDetailScreen(createUndated: true),
+          // Записку заводят с панели, поэтому панель остаётся на месте:
+          // экран открывается внутри оболочки, а не поверх неё.
+          child: const AppShell(
+            activeDestinationId: 'add_note',
+            child: MemoryItemDetailScreen(createUndated: true),
+          ),
         ),
       ),
       GoRoute(
