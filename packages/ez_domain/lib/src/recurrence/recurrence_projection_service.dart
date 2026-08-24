@@ -390,3 +390,30 @@ DateTime latestDate(DateTime left, DateTime right) =>
 
 DateTime earliestDate(DateTime left, DateTime right) =>
     left.isBefore(right) ? left : right;
+
+/// Даты повторов начиная со следующей после [reference] и до горизонта.
+///
+/// [after] сдвигает начало: так продолжают ряд с даты, на которой он был
+/// прерван. Первый день самой серии в ряд не входит — на нём стоит сама
+/// запись, а не её повтор.
+List<DateTime> recurrenceDates(
+  RecurrenceSeries series,
+  DateTime reference, {
+  DateTime? after,
+}) {
+  final requestedStart = after == null
+      ? dateOnly(reference)
+      : dateOnly(after).add(const Duration(days: 1));
+  final start = latestDate(
+    requestedStart,
+    dateOnly(series.startDate).add(const Duration(days: 1)),
+  );
+  return recurrenceDatesInRange(
+    series,
+    start,
+    recurrenceHorizon(reference),
+  );
+}
+
+DateTime recurrenceHorizon(DateTime reference) =>
+    safeDate(reference.year + 2, reference.month, reference.day);

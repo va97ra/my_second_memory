@@ -503,25 +503,3 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
   Future<void> retireOriginRow(RecurrenceSeries series) =>
       _retireOriginRow(series);
 }
-
-List<DateTime> recurrenceDates(
-  RecurrenceSeries series,
-  DateTime reference, {
-  DateTime? after,
-}) {
-  final requestedStart = after == null
-      ? dateOnly(reference)
-      : dateOnly(after).add(const Duration(days: 1));
-  final start = latestDate(
-    requestedStart,
-    dateOnly(series.startDate).add(const Duration(days: 1)),
-  );
-  return recurrenceDatesInRange(
-    series,
-    start,
-    recurrenceHorizon(reference),
-  );
-}
-
-DateTime recurrenceHorizon(DateTime reference) =>
-    safeDate(reference.year + 2, reference.month, reference.day);

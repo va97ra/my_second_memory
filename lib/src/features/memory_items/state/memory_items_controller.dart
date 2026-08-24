@@ -9,6 +9,8 @@ import 'package:ez_domain/ez_domain.dart';
 import '../../sync/state/sync_mutation_observer_provider.dart';
 import '../../../app/local_storage_scope_provider.dart';
 import '../../../shared/state/notification_providers.dart';
+import 'memory_media_cleanup.dart';
+import 'memory_reminders.dart';
 
 final plainMemoryRepositoryProvider = Provider<MemoryRepository>((ref) {
   return ref.watch(localStorageScopeProvider).memoryRepository;
@@ -48,16 +50,18 @@ final memoryItemsLoadProvider = FutureProvider<void>((ref) {
 class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   MemoryItemsController(
     this._repository, [
-    this._reminders,
-    this._mediaStorage,
+    ReminderScheduler? reminders,
+    MediaStorage? mediaStorage,
     this._sync,
-  ]) : super(const []) {
+  ])  : _reminders = MemoryReminders(reminders),
+        _media = MemoryMediaCleanup(mediaStorage),
+        super(const []) {
     _loadFuture = _load();
   }
 
   final MemoryRepository _repository;
-  final ReminderScheduler? _reminders;
-  final MediaStorage? _mediaStorage;
+  final MemoryReminders _reminders;
+  final MemoryMediaCleanup _media;
   final SyncMutationObserver? _sync;
   late final Future<void> _loadFuture;
   final _writes = SequentialTaskQueue();
@@ -67,7 +71,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   Future<void> _load() async {
     final items = await _repository.loadAll();
     state = _sort(items);
-    unawaited(_safeReconcile());
+    unawaited(_reminders.reconcile(state));
   }
 
   /// Записи, лежащие в хранилище прямо сейчас.
@@ -81,7 +85,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     state = _sort([...state, item]);
     await _writes.add(() => _repository.upsert(item));
     _sync?.memoryChanged();
-    if (_hasFutureReminder(item)) unawaited(_safeSchedule(item));
+    if (hasFutureReminder(item)) unawaited(_reminders.schedule(item));
   }
 
   Future<void> addAll(List<MemoryItem> items) async {
@@ -94,7 +98,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     state = _sort(itemsById.values.toList());
     await _writes.add(() => _repository.upsertAll(items));
     _sync?.memoryChanged();
-    unawaited(_safeScheduleAll(items));
+    unawaited(_reminders.scheduleAll(items));
   }
 
   Future<void> update(MemoryItem item) async {
@@ -107,12 +111,16 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     await _writes.add(() => _repository.upsert(item));
     _sync?.memoryChanged();
     if (previous != null) {
-      await _cleanupRemovedMedia(previous, item);
+      await _media.afterUpdate(
+        previous: previous,
+        current: item,
+        allItems: state,
+      );
     }
-    if (_hasFutureReminder(item)) {
-      unawaited(_safeSchedule(item));
+    if (hasFutureReminder(item)) {
+      unawaited(_reminders.schedule(item));
     } else if (previous?.remindAt != null) {
-      unawaited(_safeCancel(item.id));
+      unawaited(_reminders.cancel(item.id));
     }
   }
 
@@ -131,7 +139,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
       await _writes.add(() => _repository.upsert(archived));
       _sync?.memoryChanged();
     }
-    unawaited(_safeCancel(id));
+    unawaited(_reminders.cancel(id));
   }
 
   Future<void> restore(String id) async {
@@ -148,7 +156,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     if (restored != null) {
       await _writes.add(() => _repository.upsert(restored));
       _sync?.memoryChanged();
-      if (_hasFutureReminder(restored)) unawaited(_safeSchedule(restored));
+      if (hasFutureReminder(restored)) unawaited(_reminders.schedule(restored));
     }
   }
 
@@ -171,9 +179,9 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
       _sync?.memoryChanged();
     }
     if (updated == null || updated.status != MemoryStatus.active) {
-      unawaited(_safeCancel(id));
+      unawaited(_reminders.cancel(id));
     } else {
-      unawaited(_safeSchedule(updated));
+      unawaited(_reminders.schedule(updated));
     }
   }
 
@@ -191,9 +199,9 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     ];
     await _writes.add(() => _repository.delete(id));
     if (removed != null) {
-      await _deleteUnusedMedia(_mediaPaths(removed));
+      await _media.deleteUnused(mediaPathsOf(removed), allItems: state);
     }
-    unawaited(_safeCancel(id));
+    unawaited(_reminders.cancel(id));
   }
 
   /// Removes a row whose content another representation has taken over.
@@ -268,8 +276,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
           before == null || current.updatedAt.isAfter(before.updatedAt);
       if (!changedDuringSync) continue;
       final incoming = mergedById[current.id];
-      if (incoming == null ||
-          !incoming.updatedAt.isAfter(current.updatedAt)) {
+      if (incoming == null || !incoming.updatedAt.isAfter(current.updatedAt)) {
         mergedById[current.id] = current;
       }
     }
@@ -292,7 +299,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   Future<void> _persistReplacement(List<MemoryItem> items) async {
     state = _sort(items);
     await _writes.add(() => _repository.replaceAll(state));
-    unawaited(_safeReconcile());
+    unawaited(_reminders.reconcile(state));
   }
 
   /// Removes legacy generated rows after their user edits have been migrated
@@ -316,68 +323,10 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     ]);
     await _writes.add(() => _repository.replaceAll(state));
     for (final id in removedIds) {
-      unawaited(_safeCancel(id));
+      unawaited(_reminders.cancel(id));
     }
-    unawaited(_safeReconcile());
+    unawaited(_reminders.reconcile(state));
   }
-
-  Future<void> _safeSchedule(MemoryItem item) async {
-    try {
-      await _reminders?.schedule(item);
-    } catch (_) {
-      // Saving the record must not fail if Android rejects a notification.
-    }
-  }
-
-  Future<void> _safeScheduleAll(Iterable<MemoryItem> items) async {
-    var scheduled = 0;
-    for (final item in items.where(_hasFutureReminder)) {
-      await _safeSchedule(item);
-      if (++scheduled % 8 == 0) {
-        await Future<void>.delayed(Duration.zero);
-      }
-    }
-  }
-
-  Future<void> _safeCancel(String id) async {
-    try {
-      await _reminders?.cancel(id);
-    } catch (_) {
-      // Local data remains authoritative when notification cleanup fails.
-    }
-  }
-
-  Future<void> _safeReconcile() async {
-    try {
-      await _reminders?.reconcile(state);
-    } catch (_) {
-      // A later app launch or edit will retry notification reconciliation.
-    }
-  }
-
-  Future<void> _cleanupRemovedMedia(
-    MemoryItem previous,
-    MemoryItem current,
-  ) async {
-    final removed = _mediaPaths(previous)..removeAll(_mediaPaths(current));
-    await _deleteUnusedMedia(removed);
-  }
-
-  Future<void> _deleteUnusedMedia(Iterable<String> paths) async {
-    try {
-      await _mediaStorage?.deleteOwnedFiles(
-        paths,
-        usedPaths: {for (final item in state) ..._mediaPaths(item)},
-      );
-    } catch (_) {
-      // A later maintenance pass can retry orphan cleanup.
-    }
-  }
-
-  Set<String> _mediaPaths(MemoryItem item) => {
-        ...item.imagePaths,
-        if (item.audioPath != null) item.audioPath!,
-      };
 
   MemoryItem? _findById(String id) {
     for (final item in state) {
@@ -420,7 +369,3 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
       left.month == right.month &&
       left.day == right.day;
 }
-
-bool _hasFutureReminder(MemoryItem item) =>
-    item.status == MemoryStatus.active &&
-    item.remindAt?.isAfter(DateTime.now()) == true;

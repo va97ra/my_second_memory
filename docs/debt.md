@@ -12,16 +12,13 @@
 исключение.
 
 ```text
-lib/src/features/recurrence/state/recurrence_series_controller.dart   527
-   жизнь серии и сквозной пересчёт напоминаний в одном классе
-
 packages/ez_data/lib/src/notifications/notification_service.dart      518
    один класс реализует и ReminderScheduler, и ShiftAlarmScheduler
 
 packages/ez_data/lib/src/backup/backup_service.dart                   477
    выгрузка, загрузка и потоковая запись архива
 
-lib/src/features/memory_items/state/memory_items_controller.dart      426
+lib/src/features/memory_items/state/memory_items_controller.dart      372
 packages/ez_design/lib/src/components/page_turn/page_turn_frame.dart  410
 lib/src/features/memory_items/ui/widgets/record_editor.dart           322
 lib/src/features/memory_items/state/memory_editor_form.dart           306
@@ -60,6 +57,13 @@ lib/src/features/sync/state/sync_controller_impl.dart                 399
    планировщик и сам прогон живут отдельно, — а фазы машины делят между собой
    одно состояние и время жизни ключа, и растащить их значит размазать это
    состояние по трём объектам
+
+lib/src/features/recurrence/state/recurrence_series_controller.dart   505
+   один инвариант серии, описанный в recurrence.md: настройки серии и правка
+   отдельного вхождения держат его вместе. Напоминания, уборка медиа и правила
+   дат из него уже вынуты; разложить оставшееся по двум объектам значит
+   разложить по двум объектам сам инвариант, а именно так и выросли три
+   дефекта повторов
 ```
 
 ## Прочее
