@@ -6,6 +6,7 @@ import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_exceptio
 import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_series_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ez_data/ez_data_io.dart';
 
 void main() {
   test('PIN user: deleting one subscription occurrence persists the marker',

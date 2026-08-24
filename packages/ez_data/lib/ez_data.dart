@@ -6,6 +6,10 @@
 ///
 /// Реализации под конкретную платформу (`*_io.dart`, `*_web.dart`) наружу не
 /// торчат: их подключают условные экспорты внутри пакета.
+///
+/// Всё, что требует SQLite и `dart:ffi`, вынесено в отдельный вход
+/// `package:ez_data/ez_data_io.dart`. В вебе такого нет, и один общий вход
+/// сломал бы сборку под веб самим фактом импорта.
 library;
 
 export 'src/accounts/account_repository.dart';
@@ -15,14 +19,10 @@ export 'src/backup/backup_file_saver.dart';
 export 'src/backup/backup_media_store.dart';
 export 'src/backup/backup_service.dart';
 export 'src/backup/streaming_backup.dart';
-export 'src/database/app_database.dart';
-export 'src/database/drift_secure_entity_backend.dart';
-export 'src/database/memory_tables.dart';
 export 'src/media/media_storage.dart';
 export 'src/memory/encrypted_memory_repository.dart';
 export 'src/memory/local_memory_repository.dart';
 export 'src/memory/memory_repository.dart';
-export 'src/memory/sqlite_memory_repository.dart';
 export 'src/notifications/notification_service.dart';
 export 'src/recurrence/encrypted_recurrence_exception_repository.dart';
 export 'src/recurrence/encrypted_recurrence_repository.dart';
@@ -30,8 +30,6 @@ export 'src/recurrence/local_recurrence_exception_repository.dart';
 export 'src/recurrence/local_recurrence_repository.dart';
 export 'src/recurrence/recurrence_exception_repository.dart';
 export 'src/recurrence/recurrence_repository.dart';
-export 'src/recurrence/sqlite_recurrence_exception_repository.dart';
-export 'src/recurrence/sqlite_recurrence_repository.dart';
 export 'src/security/app_cipher.dart';
 export 'src/security/encrypted_json_store.dart';
 export 'src/security/secure_entity_backend.dart';

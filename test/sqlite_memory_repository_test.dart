@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ez_data/ez_data_io.dart';
 
 void main() {
   test('empty sqlite database returns empty records', () async {
