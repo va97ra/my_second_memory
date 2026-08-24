@@ -9,40 +9,15 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
       return;
     }
 
-    final now = DateTime.now();
-    final snapshot = MemoryEditorDraft(
-      type: _type,
+    final snapshot = _form.toDraft(
       title: memoryTitleFromRecord(
         _bodyController.text,
-        _type,
+        _form.type,
         Localizations.localeOf(context).languageCode,
       ),
       body: _bodyController.text.trim(),
-      timeMinutes: _timeMinutes,
-      remindAt: _remindAt,
-      reminderSoundUri: _reminderSoundUri,
-      reminderSoundName: _reminderSoundName,
-      memoryDate: DateTime(
-        _memoryDate.year,
-        _memoryDate.month,
-        _memoryDate.day,
-      ),
-      status: _status,
-      audioPath: _audioPath,
-      audioDurationSeconds: _audioDurationSeconds,
-      imagePaths: List.unmodifiable(_imagePaths),
-      savedAt: now,
-      repeatRule: _recurrenceFrequency?.name,
       amountMinor: _parseAmountMinor(_amountController.text),
-      paymentCategory:
-          _type == MemoryType.payment ? _paymentCategory.name : null,
-      subscriptionTermMonths: _type == MemoryType.payment &&
-              _paymentCategory == PaymentCategory.subscription
-          ? _subscriptionTermMonths
-          : null,
-      subscriptionTermDirty: _subscriptionTermDirty,
-      birthYear: _type == MemoryType.birthday ? _birthYear : null,
-      isUndated: _isUndated,
+      savedAt: DateTime.now(),
     );
     final revision = _saveCoordinator.beginSave();
     if (mounted) {
@@ -62,18 +37,10 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
       }
       _update(() {
         _isSaving = false;
-        final currentCategory =
-            _type == MemoryType.payment ? _paymentCategory.name : null;
-        final currentTerm = _type == MemoryType.payment &&
-                _paymentCategory == PaymentCategory.subscription
-            ? _subscriptionTermMonths
-            : null;
-        if (snapshot.subscriptionTermDirty &&
-            snapshot.type == _type &&
-            snapshot.repeatRule == _recurrenceFrequency?.name &&
-            snapshot.paymentCategory == currentCategory &&
-            snapshot.subscriptionTermMonths == currentTerm) {
-          _subscriptionTermDirty = false;
+        // Отметку «срок трогали» снимаем только если с начала сохранения
+        // ничего из того, что попало в серию, не изменилось снова.
+        if (_savedTermMatchesForm(snapshot)) {
+          _form = _form.copyWith(subscriptionTermDirty: false);
         }
       });
       if (showMessage) {
@@ -92,6 +59,20 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
     }
   }
 
+  bool _savedTermMatchesForm(MemoryEditorDraft snapshot) {
+    if (!snapshot.subscriptionTermDirty) return false;
+    final current = _form.toDraft(
+      title: snapshot.title,
+      body: snapshot.body,
+      amountMinor: snapshot.amountMinor,
+      savedAt: snapshot.savedAt,
+    );
+    return snapshot.type == current.type &&
+        snapshot.repeatRule == current.repeatRule &&
+        snapshot.paymentCategory == current.paymentCategory &&
+        snapshot.subscriptionTermMonths == current.subscriptionTermMonths;
+  }
+
   Future<void> _persistSnapshot(MemoryEditorDraft snapshot) async {
     final outcome = await MemoryEditorSaver(
       items: ref.read(memoryItemsControllerProvider.notifier),
@@ -101,7 +82,7 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
       existing: _readItem(),
       refreshSeriesTemplate: _refreshNewSeriesTemplate,
       editFutureOccurrences: _editFutureOccurrences,
-      originalOccurrenceDate: _originalOccurrenceDate,
+      originalOccurrenceDate: _form.originalOccurrenceDate,
     );
 
     if (!outcome.created) return;
@@ -119,9 +100,8 @@ extension _MemoryItemPersistence on _MemoryItemDetailScreenState {
 
   bool _hasContent() {
     return _bodyController.text.trim().isNotEmpty ||
-        _imagePaths.isNotEmpty ||
-        _audioPath != null ||
-        (_type == MemoryType.payment &&
+        _form.hasAttachments ||
+        (_form.type == MemoryType.payment &&
             _parseAmountMinor(_amountController.text) != null);
   }
 

@@ -7,39 +7,11 @@ extension _MemoryItemInitialization on _MemoryItemDetailScreenState {
     }
     _loadedItemId = item.id;
     _bodyController.text = item.body;
-    _memoryDate = item.memoryDate;
-    _originalOccurrenceDate = item.seriesId == null ? null : item.memoryDate;
-    _timeMinutes = item.timeMinutes;
-    _remindAt = item.remindAt;
-    _reminderSoundUri = item.reminderSoundUri;
-    _reminderSoundName = item.reminderSoundName;
-    _status = item.status;
-    _isUndated = item.isUndated;
-    _type =
-        editableMemoryTypes.contains(item.type) ? item.type : MemoryType.note;
-    _audioPath = item.audioPath;
-    _audioDurationSeconds = item.audioDurationSeconds;
-    _imagePaths
-      ..clear()
-      ..addAll(item.imagePaths);
-    _recurrenceFrequency = switch (item.repeatRule) {
-      'monthly' => RecurrenceFrequency.monthly,
-      'yearly' => RecurrenceFrequency.yearly,
-      _ => null,
-    };
-    _amountController.text = item.amountMinor == null
-        ? ''
-        : (item.amountMinor! / 100).toStringAsFixed(2).replaceFirst('.00', '');
-    _paymentCategory = PaymentCategory.other;
-    for (final category in PaymentCategory.values) {
-      if (category.name == item.paymentCategory) {
-        _paymentCategory = category;
-        break;
-      }
-    }
-    _subscriptionTermMonths = _readSubscriptionTermMonths(item);
-    _subscriptionTermDirty = false;
-    _birthYear = item.birthYear;
+    _amountController.text = _formatAmount(item.amountMinor);
+    _form = MemoryEditorForm.fromItem(
+      item,
+      subscriptionTermMonths: _readSubscriptionTermMonths(item),
+    );
     if (item.seriesId != null && !_scopeRequested) {
       _scopeRequested = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => _askEditScope());
@@ -50,56 +22,29 @@ extension _MemoryItemInitialization on _MemoryItemDetailScreenState {
     if (_loadedItemId == _MemoryItemDetailScreenState._newRecordKey) {
       return;
     }
-    final date = widget.initialDate ?? DateTime.now();
     _loadedItemId = _MemoryItemDetailScreenState._newRecordKey;
     _bodyController.clear();
-    _memoryDate = DateTime(date.year, date.month, date.day);
-    _originalOccurrenceDate = null;
-    _timeMinutes = null;
-    _remindAt = null;
-    _reminderSoundUri = null;
-    _reminderSoundName = null;
-    _status = MemoryStatus.active;
-    _isUndated = widget.createUndated;
-    _type = MemoryType.note;
-    _audioPath = null;
-    _audioDurationSeconds = null;
-    _imagePaths.clear();
-    _recurrenceFrequency = null;
     _amountController.clear();
-    _paymentCategory = PaymentCategory.other;
-    _subscriptionTermMonths = null;
-    _subscriptionTermDirty = false;
-    _birthYear = null;
+    _form = MemoryEditorForm.blank(
+      date: widget.initialDate ?? DateTime.now(),
+      isUndated: widget.createUndated,
+    );
   }
 
   void _changeType(MemoryType type) {
-    final wasPayment = _type == MemoryType.payment;
-    _update(() {
-      _type = type;
-      if (type == MemoryType.birthday) {
-        _recurrenceFrequency = RecurrenceFrequency.yearly;
-        _timeMinutes ??= 9 * 60;
-        _remindAt = _dateTimeFor(_memoryDate, _timeMinutes!)
-            .subtract(const Duration(days: 1));
-      } else if (type == MemoryType.payment) {
-        _recurrenceFrequency = RecurrenceFrequency.monthly;
-        _timeMinutes ??= 9 * 60;
-        _remindAt = _dateTimeFor(_memoryDate, _timeMinutes!)
-            .subtract(const Duration(days: 3));
-      }
-      if (type != MemoryType.payment) {
-        _subscriptionTermMonths = null;
-      }
-      if (wasPayment != (type == MemoryType.payment)) {
-        _subscriptionTermDirty = true;
-      }
-    });
+    _update(() => _form = _form.withType(type));
   }
 
+  String _formatAmount(int? amountMinor) {
+    if (amountMinor == null) return '';
+    return (amountMinor / 100).toStringAsFixed(2).replaceFirst('.00', '');
+  }
+
+  /// Сколько месяцев осталось в сроке подписки, считая от вхождения, которое
+  /// открыли. Срок принадлежит серии, поэтому читается из неё, а не из записи.
   int? _readSubscriptionTermMonths(MemoryItem item) {
     if (item.type != MemoryType.payment ||
-        _paymentCategory != PaymentCategory.subscription ||
+        item.paymentCategory != PaymentCategory.subscription.name ||
         item.seriesId == null) {
       return null;
     }
@@ -133,44 +78,36 @@ extension _MemoryItemInitialization on _MemoryItemDetailScreenState {
 
   Widget? _buildSpecialFields() {
     final locale = Localizations.localeOf(context).languageCode;
-    if (_type == MemoryType.payment) {
+    if (_form.type == MemoryType.payment) {
       final item = _readItem();
       final canEditSubscriptionTerm =
-          _recurrenceFrequency == RecurrenceFrequency.monthly &&
+          _form.recurrenceFrequency == RecurrenceFrequency.monthly &&
               (item?.seriesId == null ||
                   _editFutureOccurrences ||
                   _refreshNewSeriesTemplate);
       return PaymentFields(
         amountController: _amountController,
-        category: _paymentCategory,
+        category: _form.paymentCategory,
         locale: locale,
         onCategoryChanged: (category) {
-          _update(() {
-            if (_paymentCategory != category) {
-              _subscriptionTermDirty = true;
-            }
-            _paymentCategory = category;
-            if (category != PaymentCategory.subscription) {
-              _subscriptionTermMonths = null;
-            }
-          });
+          _update(() => _form = _form.withPaymentCategory(category));
           _scheduleAutosave();
         },
         onChanged: _scheduleAutosave,
-        subscriptionTermMonths: _subscriptionTermMonths,
+        subscriptionTermMonths: _form.subscriptionTermMonths,
         onSubscriptionTermTap:
             canEditSubscriptionTerm ? _pickSubscriptionTerm : null,
       );
     }
-    if (_type == MemoryType.birthday) {
+    if (_form.type == MemoryType.birthday) {
       return BirthdayFields(
-        birthYear: _birthYear,
+        birthYear: _form.birthYear,
         locale: locale,
         onTap: _pickBirthYear,
-        onClear: _birthYear == null
+        onClear: _form.birthYear == null
             ? null
             : () {
-                _update(() => _birthYear = null);
+                _update(() => _form = _form.copyWith(clearBirthYear: true));
                 _scheduleAutosave();
               },
       );

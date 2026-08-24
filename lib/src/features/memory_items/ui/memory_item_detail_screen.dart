@@ -19,6 +19,7 @@ import '../state/memory_item_selectors.dart';
 import '../state/memory_editor_draft.dart';
 import '../state/memory_editor_save_coordinator.dart';
 import '../state/memory_attachment_service.dart';
+import '../state/memory_editor_form.dart';
 import '../state/memory_editor_saver.dart';
 import 'widgets/memory_item_presentation.dart';
 import 'widgets/time_reminder_sheet.dart';
@@ -62,30 +63,20 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
   final _amountController = TextEditingController();
   final _attachments = MemoryAttachmentService();
   final _imagePicker = ImagePicker();
-  final _imagePaths = <String>[];
+
+  /// Всё, что человек выбрал в форме. Правила формы живут в модели, а не
+  /// здесь: экран только показывает их и передаёт нажатия.
+  MemoryEditorForm _form = MemoryEditorForm.blank(
+    date: DateTime.now(),
+    isUndated: false,
+  );
 
   String? _loadedItemId;
-  DateTime _memoryDate = DateTime.now();
-  DateTime? _originalOccurrenceDate;
-  int? _timeMinutes;
-  DateTime? _remindAt;
-  String? _reminderSoundUri;
-  String? _reminderSoundName;
-  MemoryStatus _status = MemoryStatus.active;
-  MemoryType _type = MemoryType.note;
-  String? _audioPath;
-  int? _audioDurationSeconds;
-  RecurrenceFrequency? _recurrenceFrequency;
-  PaymentCategory _paymentCategory = PaymentCategory.other;
-  int? _subscriptionTermMonths;
-  bool _subscriptionTermDirty = false;
-  int? _birthYear;
   bool _editFutureOccurrences = false;
   bool _scopeRequested = false;
   bool _refreshNewSeriesTemplate = false;
   bool _isRecording = false;
   bool _isSaving = false;
-  bool _isUndated = false;
   String? _saveError;
   bool _allowPop = false;
   bool _isLeaving = false;
@@ -202,7 +193,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _isUndated
+                _form.isUndated
                     ? item == null
                         ? strings.newNote
                         : strings.editNote
@@ -277,10 +268,10 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                 ),
               ),
             ),
-            if (!_isUndated || item != null)
+            if (!_form.isUndated || item != null)
               PopupMenuButton<String>(
                 key: const ValueKey('memory_editor_menu'),
-                tooltip: _isUndated
+                tooltip: _form.isUndated
                     ? strings.delete
                     : Localizations.localeOf(context).languageCode == 'ru'
                         ? 'Повтор и действия'
@@ -288,10 +279,10 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                 iconSize: 22,
                 padding: const EdgeInsets.all(9),
                 icon: Icon(
-                  _isUndated
+                  _form.isUndated
                       ? Icons.more_vert_rounded
                       : Icons.event_repeat_rounded,
-                  color: _recurrenceFrequency == null
+                  color: _form.recurrenceFrequency == null
                       ? Theme.of(context).colorScheme.onSurface
                       : Theme.of(context).colorScheme.primary,
                 ),
@@ -313,7 +304,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                   }
                 },
                 itemBuilder: (context) => [
-                  if (!_isUndated)
+                  if (!_form.isUndated)
                     PopupMenuItem(
                       value: 'repeat',
                       child: ListTile(
@@ -326,7 +317,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                         ),
                       ),
                     ),
-                  if (!_isUndated && item != null)
+                  if (!_form.isUndated && item != null)
                     PopupMenuItem(
                       value: 'duplicate',
                       child: ListTile(
@@ -339,7 +330,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                         ),
                       ),
                     ),
-                  if (!_isUndated && item?.seriesId != null)
+                  if (!_form.isUndated && item?.seriesId != null)
                     PopupMenuItem(
                       value: 'future',
                       child: ListTile(
@@ -372,19 +363,21 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
           child: Form(
             key: _formKey,
             child: EditorBody(
-              isUndated: _isUndated,
-              selectedType: _type,
+              isUndated: _form.isUndated,
+              selectedType: _form.type,
               dateText: _formattedDate(context),
               timeText: _formattedTime(),
-              reminderEnabled: _remindAt != null,
+              reminderEnabled: _form.remindAt != null,
               onDateTap: _pickDate,
               onTimeTap: _openTimeAndReminder,
-              onClearTime: _timeMinutes == null
+              onClearTime: _form.timeMinutes == null
                   ? null
                   : () {
                       setState(() {
-                        _timeMinutes = null;
-                        _remindAt = null;
+                        _form = _form.copyWith(
+                          clearTime: true,
+                          clearReminder: true,
+                        );
                       });
                       _scheduleAutosave();
                     },
@@ -392,27 +385,31 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
                 _changeType(type);
                 _scheduleAutosave();
               },
-              specialFields: _isUndated ? null : _buildSpecialFields(),
+              specialFields: _form.isUndated ? null : _buildSpecialFields(),
               showRecurrenceHint:
-                  !_isUndated && showHints && _recurrenceFrequency == null,
+                  !_form.isUndated && showHints && _form.recurrenceFrequency == null,
               onRecurrenceHintTap: _openRepeatPicker,
               recordEditor: RecordEditor(
                 controller: _bodyController,
-                imagePaths: _imagePaths,
-                audioPath: _audioPath,
-                audioDurationSeconds: _audioDurationSeconds,
-                memoryDate: _memoryDate,
+                imagePaths: _form.imagePaths,
+                audioPath: _form.audioPath,
+                audioDurationSeconds: _form.audioDurationSeconds,
+                memoryDate: _form.memoryDate,
                 isRecording: _isRecording,
-                recurrenceFrequency: _recurrenceFrequency,
+                recurrenceFrequency: _form.recurrenceFrequency,
                 onRecurrenceTap: _openRepeatPicker,
                 onPickImage: _pickImage,
                 onRemoveImage: (path) => setState(() {
-                  _imagePaths.remove(path);
+                  _form = _form.copyWith(
+                    imagePaths: [
+                      for (final image in _form.imagePaths)
+                        if (image != path) image,
+                    ],
+                  );
                   _scheduleAutosave();
                 }),
                 onRemoveAudio: () => setState(() {
-                  _audioPath = null;
-                  _audioDurationSeconds = null;
+                  _form = _form.copyWith(clearAudio: true);
                   _scheduleAutosave();
                 }),
                 onVoicePressed: _isRecording ? _stopAndSaveVoice : _startVoice,

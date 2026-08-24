@@ -3,7 +3,7 @@ part of 'memory_item_detail_screen.dart';
 extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
   Future<void> _pickBirthYear() async {
     final controller = TextEditingController(
-      text: _birthYear?.toString() ?? '',
+      text: _form.birthYear?.toString() ?? '',
     );
     final value = await showDialog<int>(
       context: context,
@@ -41,7 +41,7 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
     );
     controller.dispose();
     if (value == null || !mounted) return;
-    _update(() => _birthYear = value);
+    _update(() => _form = _form.copyWith(birthYear: value));
     _scheduleAutosave();
   }
 
@@ -51,13 +51,16 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) => SubscriptionTermSheet(
-        initialMonths: _subscriptionTermMonths,
+        initialMonths: _form.subscriptionTermMonths,
       ),
     );
     if (selected == null || !mounted) return;
     _update(() {
-      _subscriptionTermMonths = selected == 0 ? null : selected;
-      _subscriptionTermDirty = true;
+      _form = _form.copyWith(
+        subscriptionTermMonths: selected == 0 ? null : selected,
+        clearSubscriptionTerm: selected == 0,
+        subscriptionTermDirty: true,
+      );
     });
     _scheduleAutosave();
   }
@@ -75,7 +78,7 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
               ListTile(
                 leading: const Icon(Icons.event_busy_rounded),
                 title: Text(locale == 'ru' ? 'Не повторять' : 'Do not repeat'),
-                trailing: _recurrenceFrequency == null
+                trailing: _form.recurrenceFrequency == null
                     ? const Icon(Icons.check_rounded)
                     : null,
                 onTap: () => Navigator.of(context).pop('none'),
@@ -86,7 +89,7 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
                       ? Icons.sync_rounded
                       : Icons.event_repeat_rounded),
                   title: Text(frequency.label(locale)),
-                  trailing: _recurrenceFrequency == frequency
+                  trailing: _form.recurrenceFrequency == frequency
                       ? const Icon(Icons.check_rounded)
                       : null,
                   onTap: () => Navigator.of(context).pop(frequency.name),
@@ -99,29 +102,16 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
     if (selected == null || !mounted) return;
     final item = _readItem();
     if (selected == 'none') {
-      _update(() {
-        _recurrenceFrequency = null;
-        if (_type == MemoryType.payment &&
-            _paymentCategory == PaymentCategory.subscription) {
-          _subscriptionTermMonths = null;
-          _subscriptionTermDirty = true;
-        }
-      });
+      _update(() => _form = _form.withRecurrence(null));
       if (item != null && item.seriesId != null) {
         await ref
             .read(recurrenceSeriesControllerProvider.notifier)
             .clearFrequency(item);
       }
     } else {
-      _update(() {
-        _recurrenceFrequency = RecurrenceFrequency.values.byName(selected);
-        if (_recurrenceFrequency != RecurrenceFrequency.monthly &&
-            _type == MemoryType.payment &&
-            _paymentCategory == PaymentCategory.subscription) {
-          _subscriptionTermMonths = null;
-          _subscriptionTermDirty = true;
-        }
-      });
+      _update(() => _form = _form.withRecurrence(
+            RecurrenceFrequency.values.byName(selected),
+          ));
     }
     _scheduleAutosave();
   }
@@ -188,7 +178,7 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
   Future<void> _pickDate() async {
     final date = await showDatePicker(
       context: context,
-      initialDate: _memoryDate,
+      initialDate: _form.memoryDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
@@ -196,22 +186,30 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
       return;
     }
     _update(() {
-      _memoryDate = DateTime(date.year, date.month, date.day);
-      if (_remindAt != null && _timeMinutes != null) {
-        final nextReminder = _dateTimeFor(_memoryDate, _timeMinutes!);
-        _remindAt = nextReminder.isAfter(DateTime.now()) ? nextReminder : null;
+      final memoryDate = DateTime(date.year, date.month, date.day);
+      // Напоминание привязано ко дню записи: переехала запись — переезжает и
+      // оно, а если новое время уже прошло, напоминать не о чем.
+      DateTime? remindAt = _form.remindAt;
+      if (_form.remindAt != null && _form.timeMinutes != null) {
+        final next = _dateTimeFor(memoryDate, _form.timeMinutes!);
+        remindAt = next.isAfter(DateTime.now()) ? next : null;
       }
+      _form = _form.copyWith(
+        memoryDate: memoryDate,
+        remindAt: remindAt,
+        clearReminder: remindAt == null,
+      );
     });
     _scheduleAutosave();
   }
 
   String _formattedDate(BuildContext context) {
     return DateFormat('d MMM y', Localizations.localeOf(context).languageCode)
-        .format(_memoryDate);
+        .format(_form.memoryDate);
   }
 
   String? _formattedTime() {
-    final minutes = _timeMinutes;
+    final minutes = _form.timeMinutes;
     if (minutes == null) {
       return null;
     }
@@ -225,11 +223,11 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (context) => TimeReminderSheet(
-        initialTimeMinutes: _timeMinutes,
-        initialReminderEnabled: _remindAt != null,
-        initialSoundUri: _reminderSoundUri,
-        initialSoundName: _reminderSoundName,
-        memoryDate: _memoryDate,
+        initialTimeMinutes: _form.timeMinutes,
+        initialReminderEnabled: _form.remindAt != null,
+        initialSoundUri: _form.reminderSoundUri,
+        initialSoundName: _form.reminderSoundName,
+        memoryDate: _form.memoryDate,
         scheduler: ref.read(notificationServiceProvider),
       ),
     );
@@ -237,12 +235,18 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
       return;
     }
     _update(() {
-      _timeMinutes = result.timeMinutes;
-      _remindAt = result.reminderEnabled && result.timeMinutes != null
-          ? _dateTimeFor(_memoryDate, result.timeMinutes!)
+      final remindAt = result.reminderEnabled && result.timeMinutes != null
+          ? _dateTimeFor(_form.memoryDate, result.timeMinutes!)
           : null;
-      _reminderSoundUri = result.soundUri;
-      _reminderSoundName = result.soundName;
+      _form = _form.copyWith(
+        timeMinutes: result.timeMinutes,
+        clearTime: result.timeMinutes == null,
+        remindAt: remindAt,
+        clearReminder: remindAt == null,
+        reminderSoundUri: result.soundUri,
+        reminderSoundName: result.soundName,
+        clearReminderSound: result.soundUri == null,
+      );
     });
     _scheduleAutosave();
   }
@@ -259,7 +263,9 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
     final file = kIsWeb ? await _pickImageForWeb() : await _pickImageForIo();
     if (file == null) return;
     final stored = await _attachments.importImage(file);
-    _update(() => _imagePaths.add(stored));
+    _update(() => _form = _form.copyWith(
+          imagePaths: [..._form.imagePaths, stored],
+        ));
     _scheduleAutosave();
   }
 
@@ -310,8 +316,10 @@ extension _MemoryItemEditingActions on _MemoryItemDetailScreenState {
     _update(() {
       _isRecording = false;
       if (recording != null) {
-        _audioPath = recording.path;
-        _audioDurationSeconds = recording.durationSeconds;
+        _form = _form.copyWith(
+          audioPath: recording.path,
+          audioDurationSeconds: recording.durationSeconds,
+        );
       }
     });
     _scheduleAutosave();
