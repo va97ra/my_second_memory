@@ -30,20 +30,25 @@ class HolidayBar extends StatelessWidget {
             const Icon(Icons.celebration_rounded, size: 8, color: _thread),
             const SizedBox(width: 2.5),
             Flexible(
-              child: Text(
-                locale == 'ru' ? 'Праздник' : 'Holiday',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontFamily: 'Manrope',
-                  color: Colors.white,
-                  fontSize: 7.2,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.2,
-                  height: 1,
-                  shadows: [
-                    Shadow(color: Colors.black54, offset: Offset(0, 0.6)),
-                  ],
+              // Слово сжимается, но не обрезается: «Праз…» на ленте не
+              // говорит ничего. В узкой ячейке и при крупном шрифте
+              // системы места хватает не всегда.
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  locale == 'ru' ? 'Праздник' : 'Holiday',
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    color: Colors.white,
+                    fontSize: 7.2,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.2,
+                    height: 1,
+                    shadows: [
+                      Shadow(color: Colors.black54, offset: Offset(0, 0.6)),
+                    ],
+                  ),
                 ),
               ),
             ),
