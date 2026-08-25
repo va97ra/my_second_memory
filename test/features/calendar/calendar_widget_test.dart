@@ -1,6 +1,22 @@
-part of '../widget_test.dart';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ezhednevnik_v2/src/app/app.dart';
+import 'package:ezhednevnik_v2/src/navigation/app_router.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
+import 'package:ez_design/ez_design.dart';
+import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import '../../support/widget_test_harness.dart';
 
-void registerCalendarWidgetTests() {
+void main() {
+  useTestEnvironment();
+
   for (final scale in [1.0, 1.3, 2.0]) {
     testWidgets('calendar header holds its bands at ${scale}x text',
         (tester) async {
@@ -13,10 +29,10 @@ void registerCalendarWidgetTests() {
         testProviderScope(
           overrides: [
             securityServiceProvider
-                .overrideWithValue(_UnlockedSecurityService()),
-            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+                .overrideWithValue(UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
             shiftScheduleRepositoryProvider.overrideWithValue(
-              _FakeShiftScheduleRepository([
+              FakeShiftScheduleRepository([
                 ShiftSchedule(
                   id: 'factory',
                   organizationName: 'СВ Консалтинг',
@@ -54,10 +70,10 @@ void registerCalendarWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository([
+            FakeShiftScheduleRepository([
               ShiftSchedule(
                 id: 'factory',
                 organizationName: 'Завод',
@@ -104,10 +120,10 @@ void registerCalendarWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_EmptyMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(EmptyMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -134,17 +150,17 @@ void registerCalendarWidgetTests() {
     await tester.binding.setSurfaceSize(const Size(800, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final repository = _FeedMemoryRepository();
+    final repository = FeedMemoryRepository();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -256,10 +272,10 @@ void registerCalendarWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_EmptyMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(EmptyMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -349,14 +365,14 @@ void registerCalendarWidgetTests() {
       LocalRecurrenceExceptionRepository.storageKey: '[]',
     });
     addTearDown(() => SharedPreferences.setMockInitialValues({}));
-    final repository = _EmptyMemoryRepository()..savedItems = [origin];
+    final repository = EmptyMemoryRepository()..savedItems = [origin];
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -420,10 +436,10 @@ void registerCalendarWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -479,10 +495,10 @@ void registerCalendarWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -539,17 +555,17 @@ void registerCalendarWidgetTests() {
     await tester.binding.setSurfaceSize(const Size(800, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final repository = _FeedMemoryRepository();
+    final repository = FeedMemoryRepository();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -576,10 +592,10 @@ void registerCalendarWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -631,16 +647,16 @@ void registerCalendarWidgetTests() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    final repository = _FeedMemoryRepository();
+    final repository = FeedMemoryRepository();
     final now = DateTime.now();
 
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),

@@ -1,4 +1,31 @@
-part of '../widget_test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ezhednevnik_v2/src/app/local_storage_scope_provider.dart';
+
+/// Общая обстановка виджет-тестов: форматы дат и пустые настройки.
+///
+/// Без обращения к SharedPreferences в тестовой среде загрузка повторов
+/// повисает, и экраны, которые её дожидаются, показывают вечный индикатор
+/// вместо содержимого.
+void useTestEnvironment() {
+  setUpAll(() async {
+    await initializeDateFormatting('en');
+    await initializeDateFormatting('ru');
+  });
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+}
+
+const pixelImageDataUrl =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
+    'AAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 /// The app opens on the calendar, so a test that wants another tab says so.
 /// Tapping by key rather than by label keeps this unambiguous: the open
@@ -15,7 +42,7 @@ Widget testProviderScope({
   return ProviderScope(
     overrides: [
       localStorageScopeFactoryProvider.overrideWithValue(
-        _TestLocalStorageScope.new,
+        TestLocalStorageScope.new,
       ),
       ...overrides,
     ],
@@ -23,7 +50,7 @@ Widget testProviderScope({
   );
 }
 
-class _TestLocalStorageScope implements LocalStorageScope {
+class TestLocalStorageScope implements LocalStorageScope {
   @override
   final memoryRepository = const LocalMemoryRepository();
 
@@ -41,7 +68,7 @@ class _TestLocalStorageScope implements LocalStorageScope {
   Future<void> close() async {}
 }
 
-class _UnlockedSecurityService extends SecurityService {
+class UnlockedSecurityService extends SecurityService {
   @override
   Future<bool> setupCompleted() async => true;
 
@@ -49,68 +76,7 @@ class _UnlockedSecurityService extends SecurityService {
   Future<bool> hasPin() async => false;
 }
 
-class _FreshSecurityService extends SecurityService {
-  @override
-  Future<bool> setupCompleted() async => false;
-
-  @override
-  Future<bool> hasPin() async => false;
-}
-
-class _BiometricFailsSecurityService extends SecurityService {
-  @override
-  Future<bool> setupCompleted() async => true;
-
-  @override
-  Future<bool> hasPin() async => true;
-
-  @override
-  Future<bool> biometricsEnabled() async => true;
-
-  @override
-  Future<AppCipher?> unlockWithBiometrics() async => null;
-}
-
-class _PinRejectingSecurityService extends SecurityService {
-  @override
-  Future<bool> setupCompleted() async => true;
-
-  @override
-  Future<bool> hasPin() async => true;
-
-  @override
-  Future<bool> biometricsEnabled() async => false;
-
-  @override
-  Future<AppCipher?> unlockWithPin(String pin) async => null;
-}
-
-class _CountingPinSecurityService extends SecurityService {
-  final unlockCompleter = Completer<AppCipher?>();
-  int unlockAttempts = 0;
-
-  @override
-  Future<bool> setupCompleted() async => true;
-
-  @override
-  Future<bool> hasPin() async => true;
-
-  @override
-  Future<bool> biometricsEnabled() async => false;
-
-  @override
-  Future<AppCipher?> unlockWithPin(String pin) {
-    unlockAttempts++;
-    return unlockCompleter.future;
-  }
-}
-
-class _HangingSecurityService extends SecurityService {
-  @override
-  Future<bool> hasPin() => Completer<bool>().future;
-}
-
-abstract class _TestMemoryRepository implements MemoryRepository {
+abstract class TestMemoryRepository implements MemoryRepository {
   @override
   Future<void> upsert(MemoryItem item) async {
     final items = await loadAll();
@@ -140,7 +106,7 @@ abstract class _TestMemoryRepository implements MemoryRepository {
   Future<void> close() async {}
 }
 
-class _EmptyMemoryRepository extends _TestMemoryRepository {
+class EmptyMemoryRepository extends TestMemoryRepository {
   List<MemoryItem> savedItems = const [];
 
   @override
@@ -152,8 +118,8 @@ class _EmptyMemoryRepository extends _TestMemoryRepository {
   }
 }
 
-class _FeedMemoryRepository extends _TestMemoryRepository {
-  _FeedMemoryRepository();
+class FeedMemoryRepository extends TestMemoryRepository {
+  FeedMemoryRepository();
 
   List<MemoryItem> savedItems = const [];
 
@@ -237,135 +203,8 @@ class _FeedMemoryRepository extends _TestMemoryRepository {
   }
 }
 
-class _TodayOnlyMemoryRepository extends _TestMemoryRepository {
-  List<MemoryItem> savedItems = const [];
-
-  @override
-  Future<List<MemoryItem>> loadAll() async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    return [
-      MemoryItem(
-        id: 'today-only',
-        type: MemoryType.note,
-        title: '',
-        body: 'Только сегодня',
-        memoryDate: today,
-        createdAt: now,
-        updatedAt: now,
-      ),
-    ];
-  }
-
-  @override
-  Future<void> replaceAll(List<MemoryItem> items) async {
-    savedItems = items;
-  }
-}
-
-class _FutureFeedMemoryRepository extends _TestMemoryRepository {
-  @override
-  Future<List<MemoryItem>> loadAll() async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    return [
-      MemoryItem(
-        id: 'future-feed-undated',
-        type: MemoryType.note,
-        title: 'Постоянная записка',
-        memoryDate: today,
-        createdAt: now,
-        updatedAt: now,
-        isUndated: true,
-      ),
-      for (var offset = 1; offset <= 10; offset++)
-        MemoryItem(
-          id: 'future-$offset',
-          type: MemoryType.note,
-          title: 'Будущая запись $offset',
-          memoryDate: today.add(Duration(days: offset)),
-          createdAt: now,
-          updatedAt: now,
-        ),
-      MemoryItem(
-        id: 'today-focus',
-        type: MemoryType.note,
-        title: 'Фокус сегодня',
-        memoryDate: today,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      MemoryItem(
-        id: 'monthly-informer',
-        type: MemoryType.payment,
-        title: 'Ежемесячный информер',
-        memoryDate: today,
-        createdAt: now,
-        updatedAt: now,
-        repeatRule: RecurrenceFrequency.monthly.name,
-        seriesId: 'monthly-series',
-      ),
-      MemoryItem(
-        id: 'yearly-informer',
-        type: MemoryType.birthday,
-        title: 'Ежегодный информер',
-        memoryDate: today,
-        createdAt: now,
-        updatedAt: now,
-        repeatRule: RecurrenceFrequency.yearly.name,
-        seriesId: 'yearly-series',
-      ),
-      MemoryItem(
-        id: 'past-after-focus',
-        type: MemoryType.note,
-        title: 'Прошлая запись',
-        memoryDate: today.subtract(const Duration(days: 1)),
-        createdAt: now,
-        updatedAt: now,
-      ),
-    ];
-  }
-
-  @override
-  Future<void> replaceAll(List<MemoryItem> items) async {}
-}
-
-class _RichEditorMemoryRepository extends _TestMemoryRepository {
-  List<MemoryItem> savedItems = const [];
-
-  @override
-  Future<List<MemoryItem>> loadAll() async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    return [
-      MemoryItem(
-        id: 'rich-editor',
-        type: MemoryType.note,
-        title: 'Длинная запись',
-        body: List.filled(18, 'Длинная строка записи для проверки прокрутки')
-            .join('\n'),
-        memoryDate: today,
-        createdAt: now,
-        updatedAt: now,
-        imagePaths: const [
-          _pixelImageDataUrl,
-          _pixelImageDataUrl,
-          _pixelImageDataUrl,
-        ],
-      ),
-    ];
-  }
-
-  @override
-  Future<void> replaceAll(List<MemoryItem> items) async {
-    savedItems = items;
-  }
-}
-
-class _FakeShiftScheduleRepository implements ShiftScheduleRepository {
-  _FakeShiftScheduleRepository([this.initialSchedules = const []]);
+class FakeShiftScheduleRepository implements ShiftScheduleRepository {
+  FakeShiftScheduleRepository([this.initialSchedules = const []]);
 
   final List<ShiftSchedule> initialSchedules;
   List<ShiftSchedule> savedSchedules = const [];
@@ -379,100 +218,4 @@ class _FakeShiftScheduleRepository implements ShiftScheduleRepository {
   Future<void> saveSchedules(List<ShiftSchedule> schedules) async {
     savedSchedules = schedules;
   }
-}
-
-/// Репозиторий записей с заранее заданным содержимым.
-class _FixedMemoryRepository extends _TestMemoryRepository {
-  _FixedMemoryRepository(this._items);
-
-  final List<MemoryItem> _items;
-  List<MemoryItem> saved = const [];
-
-  @override
-  Future<List<MemoryItem>> loadAll() async => _items;
-
-  @override
-  Future<void> replaceAll(List<MemoryItem> items) async {
-    saved = items;
-  }
-}
-
-/// Серии, заданные тестом.
-class _FixedRecurrenceRepository implements RecurrenceRepository {
-  _FixedRecurrenceRepository(this._series);
-
-  final List<RecurrenceSeries> _series;
-
-  @override
-  Future<List<RecurrenceSeries>> loadAll() async => _series;
-
-  @override
-  Future<void> upsert(RecurrenceSeries series) async {}
-
-  @override
-  Future<void> upsertAll(List<RecurrenceSeries> series) async {}
-
-  @override
-  Future<void> delete(String id) async {}
-
-  @override
-  Future<void> replaceAll(List<RecurrenceSeries> series) async {}
-
-  @override
-  Future<void> close() async {}
-}
-
-/// Запоминает переопределения вхождений, которые записал экран.
-class _RecordingExceptionRepository implements RecurrenceExceptionRepository {
-  final List<RecurrenceOccurrenceException> saved = [];
-
-  @override
-  Future<List<RecurrenceOccurrenceException>> loadAll() async => saved;
-
-  @override
-  Future<void> upsert(RecurrenceOccurrenceException exception) async {
-    saved.add(exception);
-  }
-
-  @override
-  Future<void> upsertAll(
-    List<RecurrenceOccurrenceException> exceptions,
-  ) async {
-    saved.addAll(exceptions);
-  }
-
-  @override
-  Future<RecurrenceOccurrenceException> skip(
-    String seriesId,
-    DateTime occurrenceDate,
-  ) async {
-    final exception = RecurrenceOccurrenceException(
-      id: recurrenceExceptionId(seriesId, occurrenceDate),
-      seriesId: seriesId,
-      occurrenceDate: occurrenceDate,
-      kind: RecurrenceOccurrenceExceptionKind.skipped,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-    saved.add(exception);
-    return exception;
-  }
-
-  @override
-  Future<void> delete(String seriesId, DateTime occurrenceDate) async {}
-
-  @override
-  Future<void> deleteSeries(String seriesId) async {}
-
-  @override
-  Future<void> replaceAll(
-    List<RecurrenceOccurrenceException> exceptions,
-  ) async {
-    saved
-      ..clear()
-      ..addAll(exceptions);
-  }
-
-  @override
-  Future<void> close() async {}
 }

@@ -1,12 +1,21 @@
-part of '../widget_test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:ezhednevnik_v2/src/app/app.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
+import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import '../../support/widget_test_harness.dart';
 
-void registerCalendarShiftWidgetTests() {
+void main() {
+  useTestEnvironment();
+
   testWidgets('calendar shows shift colors and opens selected day',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final memoryRepository = _FeedMemoryRepository();
+    final memoryRepository = FeedMemoryRepository();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final dayKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-'
@@ -15,7 +24,7 @@ void registerCalendarShiftWidgetTests() {
     final secondWorkDayKey =
         '${secondWorkDay.year}-${secondWorkDay.month.toString().padLeft(2, '0')}-'
         '${secondWorkDay.day.toString().padLeft(2, '0')}';
-    final shiftRepository = _FakeShiftScheduleRepository([
+    final shiftRepository = FakeShiftScheduleRepository([
       ShiftSchedule(
         id: 'factory',
         organizationName: 'Завод',
@@ -44,7 +53,7 @@ void registerCalendarShiftWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(memoryRepository),
           shiftScheduleRepositoryProvider.overrideWithValue(shiftRepository),
         ],

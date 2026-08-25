@@ -1,14 +1,24 @@
-part of '../widget_test.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:ezhednevnik_v2/src/app/app.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
+import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import '../../support/widget_test_harness.dart';
 
-void registerSecurityWidgetTests() {
+void main() {
+  useTestEnvironment();
+
   testWidgets('first launch requires pin setup', (tester) async {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
           securityServiceProvider.overrideWithValue(_FreshSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -51,9 +61,9 @@ void registerSecurityWidgetTests() {
           securityServiceProvider.overrideWithValue(
             _BiometricFailsSecurityService(),
           ),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -118,4 +128,65 @@ void registerSecurityWidgetTests() {
     security.unlockCompleter.complete(null);
     await tester.pumpAndSettle();
   });
+}
+
+class _FreshSecurityService extends SecurityService {
+  @override
+  Future<bool> setupCompleted() async => false;
+
+  @override
+  Future<bool> hasPin() async => false;
+}
+
+class _BiometricFailsSecurityService extends SecurityService {
+  @override
+  Future<bool> setupCompleted() async => true;
+
+  @override
+  Future<bool> hasPin() async => true;
+
+  @override
+  Future<bool> biometricsEnabled() async => true;
+
+  @override
+  Future<AppCipher?> unlockWithBiometrics() async => null;
+}
+
+class _PinRejectingSecurityService extends SecurityService {
+  @override
+  Future<bool> setupCompleted() async => true;
+
+  @override
+  Future<bool> hasPin() async => true;
+
+  @override
+  Future<bool> biometricsEnabled() async => false;
+
+  @override
+  Future<AppCipher?> unlockWithPin(String pin) async => null;
+}
+
+class _CountingPinSecurityService extends SecurityService {
+  final unlockCompleter = Completer<AppCipher?>();
+  int unlockAttempts = 0;
+
+  @override
+  Future<bool> setupCompleted() async => true;
+
+  @override
+  Future<bool> hasPin() async => true;
+
+  @override
+  Future<bool> biometricsEnabled() async => false;
+
+  @override
+  Future<AppCipher?> unlockWithPin(String pin) {
+    unlockAttempts++;
+    return unlockCompleter.future;
+  }
+}
+
+class _HangingSecurityService extends SecurityService {
+  @override
+  Future<bool> hasPin() => Completer<bool>().future;
 }

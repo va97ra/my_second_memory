@@ -1,6 +1,12 @@
-part of '../widget_test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ezhednevnik_v2/src/shared/ui/memory_card/memory_item_card.dart';
+import '../support/widget_test_harness.dart';
 
-void registerMemoryCardWidgetTests() {
+void main() {
+  useTestEnvironment();
+
   testWidgets('three-column card fits text photo and voice on a phone',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 640));
@@ -13,7 +19,7 @@ void registerMemoryCardWidgetTests() {
       body: 'Запись с фотографией и голосом',
       audioPath: 'voice.m4a',
       audioDurationSeconds: 42,
-      imagePaths: const [_pixelImageDataUrl],
+      imagePaths: const [pixelImageDataUrl],
       memoryDate: DateTime(2026, 7, 10),
       createdAt: now,
       updatedAt: now,

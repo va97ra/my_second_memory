@@ -1,6 +1,22 @@
-part of '../widget_test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
+import 'package:ezhednevnik_v2/src/app/app.dart';
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
+import 'package:ezhednevnik_v2/src/shared/ui/memory_card/memory_item_card.dart';
+import 'package:ez_design/ez_design.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/ui/holiday_detail_screen.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/recurrence.dart';
+import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import '../../support/widget_test_harness.dart';
 
-void registerHomeFeedWidgetTests() {
+void main() {
+  useTestEnvironment();
+
   testWidgets('empty day feed shows only the notebook sheet', (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -8,10 +24,10 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_EmptyMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(EmptyMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -29,15 +45,15 @@ void registerHomeFeedWidgetTests() {
     await tester.binding.setSurfaceSize(const Size(800, 1300));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final repository = _FeedMemoryRepository();
+    final repository = FeedMemoryRepository();
 
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -109,10 +125,10 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -143,10 +159,10 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -180,10 +196,10 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -209,10 +225,10 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -242,10 +258,10 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -270,12 +286,12 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(
             _FutureFeedMemoryRepository(),
           ),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -337,15 +353,15 @@ void registerHomeFeedWidgetTests() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    final repository = _FeedMemoryRepository();
+    final repository = FeedMemoryRepository();
 
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -384,15 +400,15 @@ void registerHomeFeedWidgetTests() {
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    final repository = _FeedMemoryRepository();
+    final repository = FeedMemoryRepository();
 
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -434,12 +450,12 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(
             _TodayOnlyMemoryRepository(),
           ),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -485,15 +501,15 @@ void registerHomeFeedWidgetTests() {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final repository = _FeedMemoryRepository();
+    final repository = FeedMemoryRepository();
 
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -588,10 +604,10 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -630,7 +646,7 @@ void registerHomeFeedWidgetTests() {
                 memoryDate: now,
                 createdAt: now,
                 updatedAt: now,
-                imagePaths: const [_pixelImageDataUrl],
+                imagePaths: const [pixelImageDataUrl],
                 audioPath: 'voice-test.m4a',
                 audioDurationSeconds: 15,
               ),
@@ -654,7 +670,7 @@ void registerHomeFeedWidgetTests() {
       152,
     );
     expect(
-      find.byKey(const ValueKey('feed_image_$_pixelImageDataUrl')),
+      find.byKey(const ValueKey('feed_image_$pixelImageDataUrl')),
       findsNothing,
     );
     expect(find.byIcon(Icons.play_arrow_rounded), findsNothing);
@@ -670,10 +686,10 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -723,11 +739,11 @@ void registerHomeFeedWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider
               .overrideWithValue(_FixedMemoryRepository([origin])),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
           recurrenceRepositoryProvider.overrideWithValue(
             _FixedRecurrenceRepository([
@@ -767,4 +783,194 @@ void registerHomeFeedWidgetTests() {
     expect(exceptions.saved, hasLength(1));
     expect(exceptions.saved.single.item?.isDone, isTrue);
   });
+}
+
+class _TodayOnlyMemoryRepository extends TestMemoryRepository {
+  List<MemoryItem> savedItems = const [];
+
+  @override
+  Future<List<MemoryItem>> loadAll() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    return [
+      MemoryItem(
+        id: 'today-only',
+        type: MemoryType.note,
+        title: '',
+        body: 'Только сегодня',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+  }
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {
+    savedItems = items;
+  }
+}
+
+class _FutureFeedMemoryRepository extends TestMemoryRepository {
+  @override
+  Future<List<MemoryItem>> loadAll() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return [
+      MemoryItem(
+        id: 'future-feed-undated',
+        type: MemoryType.note,
+        title: 'Постоянная записка',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+        isUndated: true,
+      ),
+      for (var offset = 1; offset <= 10; offset++)
+        MemoryItem(
+          id: 'future-$offset',
+          type: MemoryType.note,
+          title: 'Будущая запись $offset',
+          memoryDate: today.add(Duration(days: offset)),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      MemoryItem(
+        id: 'today-focus',
+        type: MemoryType.note,
+        title: 'Фокус сегодня',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      MemoryItem(
+        id: 'monthly-informer',
+        type: MemoryType.payment,
+        title: 'Ежемесячный информер',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+        repeatRule: RecurrenceFrequency.monthly.name,
+        seriesId: 'monthly-series',
+      ),
+      MemoryItem(
+        id: 'yearly-informer',
+        type: MemoryType.birthday,
+        title: 'Ежегодный информер',
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+        repeatRule: RecurrenceFrequency.yearly.name,
+        seriesId: 'yearly-series',
+      ),
+      MemoryItem(
+        id: 'past-after-focus',
+        type: MemoryType.note,
+        title: 'Прошлая запись',
+        memoryDate: today.subtract(const Duration(days: 1)),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+  }
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {}
+}
+
+/// Репозиторий записей с заранее заданным содержимым.
+class _FixedMemoryRepository extends TestMemoryRepository {
+  _FixedMemoryRepository(this._items);
+
+  final List<MemoryItem> _items;
+  List<MemoryItem> saved = const [];
+
+  @override
+  Future<List<MemoryItem>> loadAll() async => _items;
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {
+    saved = items;
+  }
+}
+
+/// Серии, заданные тестом.
+class _FixedRecurrenceRepository implements RecurrenceRepository {
+  _FixedRecurrenceRepository(this._series);
+
+  final List<RecurrenceSeries> _series;
+
+  @override
+  Future<List<RecurrenceSeries>> loadAll() async => _series;
+
+  @override
+  Future<void> upsert(RecurrenceSeries series) async {}
+
+  @override
+  Future<void> upsertAll(List<RecurrenceSeries> series) async {}
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<void> replaceAll(List<RecurrenceSeries> series) async {}
+
+  @override
+  Future<void> close() async {}
+}
+
+/// Запоминает переопределения вхождений, которые записал экран.
+class _RecordingExceptionRepository implements RecurrenceExceptionRepository {
+  final List<RecurrenceOccurrenceException> saved = [];
+
+  @override
+  Future<List<RecurrenceOccurrenceException>> loadAll() async => saved;
+
+  @override
+  Future<void> upsert(RecurrenceOccurrenceException exception) async {
+    saved.add(exception);
+  }
+
+  @override
+  Future<void> upsertAll(
+    List<RecurrenceOccurrenceException> exceptions,
+  ) async {
+    saved.addAll(exceptions);
+  }
+
+  @override
+  Future<RecurrenceOccurrenceException> skip(
+    String seriesId,
+    DateTime occurrenceDate,
+  ) async {
+    final exception = RecurrenceOccurrenceException(
+      id: recurrenceExceptionId(seriesId, occurrenceDate),
+      seriesId: seriesId,
+      occurrenceDate: occurrenceDate,
+      kind: RecurrenceOccurrenceExceptionKind.skipped,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+    saved.add(exception);
+    return exception;
+  }
+
+  @override
+  Future<void> delete(String seriesId, DateTime occurrenceDate) async {}
+
+  @override
+  Future<void> deleteSeries(String seriesId) async {}
+
+  @override
+  Future<void> replaceAll(
+    List<RecurrenceOccurrenceException> exceptions,
+  ) async {
+    saved
+      ..clear()
+      ..addAll(exceptions);
+  }
+
+  @override
+  Future<void> close() async {}
 }

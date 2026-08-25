@@ -1,6 +1,15 @@
-part of '../widget_test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:ezhednevnik_v2/src/app/app.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
+import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import '../../support/widget_test_harness.dart';
 
-void registerMemoryFlowWidgetTests() {
+void main() {
+  useTestEnvironment();
+
   testWidgets('accounts tab opens accounts without requiring pin',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
@@ -9,10 +18,10 @@ void registerMemoryFlowWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -50,10 +59,10 @@ void registerMemoryFlowWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -105,10 +114,10 @@ void registerMemoryFlowWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -147,10 +156,10 @@ void registerMemoryFlowWidgetTests() {
     await tester.pumpWidget(
       testProviderScope(
         overrides: [
-          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
           memoryRepositoryProvider.overrideWithValue(repository),
           shiftScheduleRepositoryProvider.overrideWithValue(
-            _FakeShiftScheduleRepository(),
+            FakeShiftScheduleRepository(),
           ),
         ],
         child: const EzhednevnikV2App(),
@@ -173,7 +182,7 @@ void registerMemoryFlowWidgetTests() {
     expect(
         find.byKey(const ValueKey('memory_readonly_content')), findsOneWidget);
     final image =
-        find.byKey(const ValueKey('readonly_image_$_pixelImageDataUrl')).first;
+        find.byKey(const ValueKey('readonly_image_$pixelImageDataUrl')).first;
     await tester.ensureVisible(image);
     await tester.pumpAndSettle();
     await tester.tap(image);
@@ -188,4 +197,37 @@ void registerMemoryFlowWidgetTests() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('memory_image_viewer')), findsNothing);
   });
+}
+
+class _RichEditorMemoryRepository extends TestMemoryRepository {
+  List<MemoryItem> savedItems = const [];
+
+  @override
+  Future<List<MemoryItem>> loadAll() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    return [
+      MemoryItem(
+        id: 'rich-editor',
+        type: MemoryType.note,
+        title: 'Длинная запись',
+        body: List.filled(18, 'Длинная строка записи для проверки прокрутки')
+            .join('\n'),
+        memoryDate: today,
+        createdAt: now,
+        updatedAt: now,
+        imagePaths: const [
+          pixelImageDataUrl,
+          pixelImageDataUrl,
+          pixelImageDataUrl,
+        ],
+      ),
+    ];
+  }
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {
+    savedItems = items;
+  }
 }

@@ -1,6 +1,16 @@
-part of '../widget_test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:ezhednevnik_v2/src/app/app.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
+import 'package:ez_design/ez_design.dart';
+import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
+import '../support/widget_test_harness.dart';
 
-void registerResponsiveWidgetTests() {
+void main() {
+  useTestEnvironment();
+
   for (final width in [320.0, 360.0, 600.0, 840.0]) {
     testWidgets('dense feed adapts at ${width.toInt()} px', (tester) async {
       await tester.binding.setSurfaceSize(Size(width, 900));
@@ -12,10 +22,10 @@ void registerResponsiveWidgetTests() {
         testProviderScope(
           overrides: [
             securityServiceProvider
-                .overrideWithValue(_UnlockedSecurityService()),
-            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+                .overrideWithValue(UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
             shiftScheduleRepositoryProvider.overrideWithValue(
-              _FakeShiftScheduleRepository(),
+              FakeShiftScheduleRepository(),
             ),
           ],
           child: const EzhednevnikV2App(),
@@ -60,10 +70,10 @@ void registerResponsiveWidgetTests() {
         testProviderScope(
           overrides: [
             securityServiceProvider
-                .overrideWithValue(_UnlockedSecurityService()),
-            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+                .overrideWithValue(UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
             shiftScheduleRepositoryProvider.overrideWithValue(
-              _FakeShiftScheduleRepository(),
+              FakeShiftScheduleRepository(),
             ),
           ],
           child: const EzhednevnikV2App(),
@@ -104,10 +114,10 @@ void registerResponsiveWidgetTests() {
         testProviderScope(
           overrides: [
             securityServiceProvider
-                .overrideWithValue(_UnlockedSecurityService()),
-            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+                .overrideWithValue(UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
             shiftScheduleRepositoryProvider.overrideWithValue(
-              _FakeShiftScheduleRepository(),
+              FakeShiftScheduleRepository(),
             ),
             appThemeControllerProvider.overrideWith(
               (ref) => AppThemeController(
@@ -144,10 +154,10 @@ void registerResponsiveWidgetTests() {
         testProviderScope(
           overrides: [
             securityServiceProvider
-                .overrideWithValue(_UnlockedSecurityService()),
-            memoryRepositoryProvider.overrideWithValue(_FeedMemoryRepository()),
+                .overrideWithValue(UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
             shiftScheduleRepositoryProvider.overrideWithValue(
-              _FakeShiftScheduleRepository(),
+              FakeShiftScheduleRepository(),
             ),
           ],
           child: const EzhednevnikV2App(),
