@@ -13,6 +13,7 @@ release/*.txt
 release/*.pem
 release/**/*.png
 release/**
+windows/release/
 RuStore Release/
 kiwihug-qv05FvdE26k-unsplash.jpg
 signing/
