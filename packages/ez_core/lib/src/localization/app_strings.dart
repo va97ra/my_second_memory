@@ -320,6 +320,8 @@ class AppStrings {
       isRu ? 'Будильник $number' : 'Alarm $number';
   String get nextDayShiftAlarm =>
       isRu ? 'Будильник 2 · после смены' : 'Alarm 2 · after shift';
+  /// Время будильника, который звонит на следующий день после смены.
+  String nextDayAlarmAt(String time) => isRu ? '+1 д. $time' : '+1 d. $time';
   String get shiftAlarm => isRu ? 'Будильник смены' : 'Shift alarm';
   String get systemMelody => isRu ? 'Системная мелодия' : 'System melody';
   String get chooseAudioFile =>

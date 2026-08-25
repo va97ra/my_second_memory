@@ -21,7 +21,7 @@ class ShiftScheduleTileDetails extends StatelessWidget {
     final strings = AppStrings.of(context);
     final colors = Theme.of(context).colorScheme;
     final dateText = DateFormat.yMMMd(locale).format(schedule.startDate);
-    final alarms = _alarmLabels();
+    final alarms = _alarmLabels(strings);
     final vacation = schedule.vacationToShow(DateTime.now());
 
     return Column(
@@ -67,14 +67,14 @@ class ShiftScheduleTileDetails extends StatelessWidget {
 
   /// Времена включённых будильников. Второй показывается только там, где
   /// смена переходит через полночь.
-  List<String> _alarmLabels() {
+  List<String> _alarmLabels(AppStrings strings) {
     final labels = <String>[];
     for (var index = 0; index < schedule.alarms.length; index++) {
       final alarm = schedule.alarms[index];
       if (!alarm.isEnabled) continue;
       if (index > 0 && !schedule.supportsNextDayAlarm) continue;
       final time = formatMinutesOfDay(alarm.timeMinutes);
-      labels.add(index == 1 ? '+1 д. $time' : time);
+      labels.add(index == 1 ? strings.nextDayAlarmAt(time) : time);
     }
     return labels;
   }
