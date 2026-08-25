@@ -15,7 +15,7 @@
 packages/ez_domain/lib/src/calendar/holiday_fixed_table.dart          757
    таблица праздников
 
-packages/ez_core/lib/src/localization/app_strings.dart                402
+packages/ez_core/lib/src/localization/app_strings.dart                404
    строки интерфейса
 
 packages/ez_design/lib/src/themes/app_theme.dart                      406

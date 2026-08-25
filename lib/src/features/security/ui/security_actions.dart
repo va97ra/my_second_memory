@@ -2,10 +2,7 @@ import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../accounts/accounts.dart';
-import '../../memory_items/memory_items.dart';
-import '../../recurrence/recurrence.dart';
-import '../../shift_schedules/shift_schedules.dart';
+import '../state/protected_data_reload.dart';
 import '../state/security_provider.dart';
 import 'widgets/current_pin_dialog.dart';
 
@@ -38,7 +35,7 @@ class SecurityActions {
     if (newCipher != null) {
       await migration.encryptPlainData(cipher: newCipher, snapshot: snapshot);
     }
-    _reloadProtectedData();
+    reloadProtectedData(ref);
     return context.mounted ? AppStrings.of(context).pinSaved : null;
   }
 
@@ -63,7 +60,7 @@ class SecurityActions {
       cipher.destroy();
     }
     await ref.read(securitySessionProvider.notifier).clearPinSession();
-    _reloadProtectedData();
+    reloadProtectedData(ref);
     return strings.pinDisabled;
   }
 
@@ -95,18 +92,5 @@ class SecurityActions {
     if (!context.mounted) return null;
     final strings = AppStrings.of(context);
     return ok ? strings.saved : strings.biometricsUnavailable;
-  }
-
-  void _reloadProtectedData() {
-    ref.invalidate(memoryRepositoryProvider);
-    ref.invalidate(memoryItemsControllerProvider);
-    ref.invalidate(shiftScheduleRepositoryProvider);
-    ref.invalidate(shiftSchedulesControllerProvider);
-    ref.invalidate(accountRepositoryProvider);
-    ref.invalidate(accountsControllerProvider);
-    ref.invalidate(recurrenceRepositoryProvider);
-    ref.invalidate(recurrenceExceptionRepositoryProvider);
-    ref.invalidate(recurrenceExceptionControllerProvider);
-    ref.invalidate(recurrenceSeriesControllerProvider);
   }
 }
