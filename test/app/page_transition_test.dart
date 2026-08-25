@@ -4,7 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:ez_design/ez_design.dart';
+import 'package:ez_domain/ez_domain.dart';
+import 'package:ezhednevnik_v2/src/app/app.dart';
+import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
+import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
 import 'package:ezhednevnik_v2/src/navigation/page_turn_transition.dart';
+
+import '../support/widget_test_harness.dart';
 
 void main() {
   testWidgets('disposing a moving sheet completes the turn safely',
@@ -190,19 +197,60 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 30));
 
-      final transition = tester.widget<FadeTransition>(
+      // Обёртка у страницы одна на всю жизнь, меняется её прозрачность.
+      final transition = tester.widget<Opacity>(
         find
             .ancestor(
               of: find.text('next page'),
-              matching: find.byType(FadeTransition),
+              matching: find.byKey(const ValueKey('app_route_transition')),
             )
             .first,
       );
-      expect(transition.opacity.value, greaterThan(0));
+      expect(transition.opacity, greaterThan(0));
 
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('next page'), findsOneWidget);
       expect(find.text('first page'), findsNothing);
     });
   }
+  testWidgets('a pushed page keeps its state when a menu opens over it',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      testProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
+          shiftScheduleRepositoryProvider
+              .overrideWithValue(FakeShiftScheduleRepository()),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Настройки'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Архив памяти'));
+    await tester.pumpAndSettle();
+
+    final filter = find.byKey(const ValueKey('feed_filter'));
+    final before = tester.renderObject(filter);
+    await tester.tap(filter);
+    await tester.pumpAndSettle();
+
+    // Страница не пересобралась: тот же самый RenderBox кнопки. Пока она
+    // пересобиралась, Flutter терял закэшированное положение кнопки и ставил
+    // меню в левый верхний угол — с первого открытия и до второго.
+    expect(identical(tester.renderObject(filter), before), isTrue);
+
+    final button = tester.getRect(filter);
+    final item = tester.getRect(
+      find.widgetWithText(PopupMenuItem<FeedFilter>, 'Задача'),
+    );
+    expect(item.right, closeTo(button.right, 1));
+    expect(item.left, lessThan(button.left));
+  });
+
 }
