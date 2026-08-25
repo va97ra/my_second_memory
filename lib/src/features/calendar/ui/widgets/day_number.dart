@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 
 /// Число месяца в ячейке дня.
 ///
-/// Сегодняшнее число крупнее прочих и обведено красным кольцом. Заливки у него
-/// нет: в день открытия сегодня — ещё и выбранный день, и акцентная заливка
-/// съедала бы его собственную примету. Чёрной рамки вокруг ячейки оказалось
-/// мало — среди цветных дней она теряется, поэтому примета стоит на самом
-/// числе, куда смотрят в первую очередь.
+/// Все числа одного размера. Сегодняшнее — крупнее и обведено красным по
+/// контуру: рамка вокруг него спорила с рамкой ячейки и с шапкой графика, а
+/// обводка по самой цифре видна на любом фоне и ничего не занимает.
 class DayNumber extends StatelessWidget {
   const DayNumber({
     super.key,
@@ -16,8 +14,12 @@ class DayNumber extends StatelessWidget {
     required this.color,
   });
 
-  /// Кольцо вокруг сегодняшнего числа.
+  /// Обводка сегодняшнего числа.
   static const todayRing = Color(0xFFD32020);
+
+  /// Размер обычного числа и сегодняшнего.
+  static const fontSize = 12.5;
+  static const todayFontSize = 17.0;
 
   final int day;
   final bool isToday;
@@ -31,26 +33,16 @@ class DayNumber extends StatelessWidget {
       '$day',
       style: TextStyle(
         color: isSelected && !isToday ? colors.onPrimary : color,
-        fontSize: isToday ? 17 : 12.5,
+        fontSize: isToday ? todayFontSize : fontSize,
         fontWeight: isSelected || isToday ? FontWeight.w900 : FontWeight.w800,
         height: 1,
+        // Обводка собрана тенями по четырём сторонам: у текста нет способа
+        // нарисовать контур и заливку одним проходом.
+        shadows: isToday ? _ring : null,
       ),
     );
 
-    if (isToday) {
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border.all(color: todayRing, width: 2),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-          child: content,
-        ),
-      );
-    }
-
-    if (!isSelected) return content;
+    if (isToday || !isSelected) return content;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -63,4 +55,15 @@ class DayNumber extends StatelessWidget {
       ),
     );
   }
+
+  static const _ring = <Shadow>[
+    Shadow(color: todayRing, offset: Offset(-1.4, 0)),
+    Shadow(color: todayRing, offset: Offset(1.4, 0)),
+    Shadow(color: todayRing, offset: Offset(0, -1.4)),
+    Shadow(color: todayRing, offset: Offset(0, 1.4)),
+    Shadow(color: todayRing, offset: Offset(-1, -1)),
+    Shadow(color: todayRing, offset: Offset(1, -1)),
+    Shadow(color: todayRing, offset: Offset(-1, 1)),
+    Shadow(color: todayRing, offset: Offset(1, 1)),
+  ];
 }

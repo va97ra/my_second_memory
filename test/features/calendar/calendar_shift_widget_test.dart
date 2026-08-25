@@ -82,20 +82,44 @@ void main() {
     final todayNumber = tester.widget<Text>(
       find.descendant(of: cell, matching: find.text('${today.day}')),
     );
-    expect(todayNumber.style?.fontSize, 17);
-    // И красным кольцом на самом числе: чёрной рамки вокруг ячейки среди
-    // цветных дней не видно.
-    final ring = tester.widget<DecoratedBox>(
-      find
-          .ancestor(
-            of: find.text('${today.day}'),
-            matching: find.byType(DecoratedBox),
-          )
-          .first,
-    );
+    expect(todayNumber.style?.fontSize, DayNumber.todayFontSize);
+    // И красной обводкой по самой цифре: рамка вокруг числа спорила бы с
+    // рамкой ячейки и с шапкой графика, а чёрной рамки ячейки среди цветных
+    // дней не видно.
     expect(
-      ((ring.decoration as BoxDecoration).border! as Border).top.color,
-      DayNumber.todayRing,
+      todayNumber.style?.shadows?.map((shadow) => shadow.color).toSet(),
+      {DayNumber.todayRing},
+    );
+    // Обычное число остаётся обычного размера.
+    final plainSize = tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
+            matching: find.text('${secondWorkDay.day}'),
+          ),
+        )
+        .style
+        ?.fontSize;
+    expect(plainSize, DayNumber.fontSize);
+    // И целиком помещается на шапке.
+    final plainOnHeader = tester.getRect(
+      find.descendant(
+        of: find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
+        matching: find.text('${secondWorkDay.day}'),
+      ),
+    );
+    final secondHeader = tester.getRect(
+      find.descendant(
+        of: find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
+        matching: find.byType(ColoredBox),
+      ).first,
+    );
+    expect(plainOnHeader.top, greaterThanOrEqualTo(secondHeader.top));
+    // Коробка текста на пару пикселей выше своего кегля — за счёт выносных
+    // элементов. Важно, что число сидит на шапке, а не свисает с неё.
+    expect(
+      plainOnHeader.bottom - secondHeader.bottom,
+      lessThan(plainOnHeader.height / 4),
     );
     expect(
       find.descendant(
@@ -129,14 +153,17 @@ void main() {
     // схлопнуться в ноль и остаться невидимой, а высота — сойтись.
     expect(header.width, segment.width);
 
-    // Число и будильник стоят на шапке, а не под ней.
+    // Число и будильник стоят на шапке, а не под ней. Сегодняшнее число
+    // крупнее обычного и нижним краем выходит за шапку — это и есть его
+    // примета, поэтому проверяется, что оно на шапке начинается.
     final numberRect = tester.getRect(find.text('${today.day}'));
     final alarm = tester.getRect(
       find.descendant(of: cell, matching: find.byIcon(Icons.alarm_rounded)),
     );
-    expect(numberRect.bottom, lessThanOrEqualTo(header.bottom));
+    expect(numberRect.top, greaterThanOrEqualTo(header.top));
+    expect(numberRect.top, lessThan(header.bottom));
     expect(alarm.top, greaterThanOrEqualTo(header.top));
-    expect(alarm.bottom, lessThanOrEqualTo(header.bottom));
+    expect(alarm.bottom - header.bottom, lessThan(alarm.height / 4));
 
     // Будильник ушёл в правый угол: он правее числа и лежит в правой трети
     // ячейки. Точное расстояние до края не проверяется — правее него может

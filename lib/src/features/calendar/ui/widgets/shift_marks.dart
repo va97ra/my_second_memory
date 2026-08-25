@@ -19,9 +19,10 @@ class ShiftMarks extends StatelessWidget {
     required this.date,
   });
 
-  /// Высота шапки: на ней стоят число, будильник и отметка архива, поэтому
-  /// она ровно такая, чтобы их накрыть.
-  static const headerHeight = 21.0;
+  /// Высота шапки. Держится вровень с праздничной лентой у нижнего края —
+  /// две полосы одной толщины читаются как рамка листа, а не как два разных
+  /// украшения. Число на шапке стоит обычного размера.
+  static const headerHeight = 15.0;
 
   final List<ShiftSchedule> schedules;
   final DateTime date;
