@@ -62,6 +62,8 @@ void main() {
           .isArchived,
       isTrue,
     );
-    expect(find.text('План на сегодня'), findsOneWidget);
+    // Из архива запись видна только в архиве: с экрана дня она уходит и
+    // возвращается лишь восстановлением.
+    expect(find.text('План на сегодня'), findsNothing);
   });
 }

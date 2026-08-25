@@ -225,8 +225,9 @@ void main() {
 
     expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
     expect(find.text('План на сегодня'), findsOneWidget);
-    expect(find.text('Архивная запись'), findsOneWidget);
-    expect(find.text('Архив'), findsOneWidget);
+    // Архивная запись на экране дня не показывается: её место — архив, до
+    // тех пор пока её не восстановят.
+    expect(find.text('Архивная запись'), findsNothing);
     expect(find.text('Добавить запись'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('calendar_day_add_record')),

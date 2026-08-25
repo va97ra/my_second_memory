@@ -4,7 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  MemoryItem item(String id, DateTime date, {bool isUndated = false}) {
+  MemoryItem item(
+    String id,
+    DateTime date, {
+    bool isUndated = false,
+    bool isArchived = false,
+  }) {
     return MemoryItem(
       id: id,
       type: MemoryType.note,
@@ -13,6 +18,7 @@ void main() {
       createdAt: date,
       updatedAt: date,
       isUndated: isUndated,
+      status: isArchived ? MemoryStatus.archived : MemoryStatus.active,
     );
   }
 
@@ -107,4 +113,26 @@ void main() {
     expect(container.read(memoryItemByIdProvider('first')), same(first));
     expect(notifications, 1);
   });
+  test('an archived record leaves the calendar until it is restored', () {
+    final date = DateTime(2026, 8, 18, 9);
+    final index = MemoryItemsIndex.build([
+      item('active', date),
+      item('archived', date, isArchived: true),
+      item('archived-note', date, isUndated: true, isArchived: true),
+    ]);
+
+    // Ни в сетке месяца, ни на экране дня — они читают byDate.
+    expect(
+      index.byDate[dateKey(date)]?.map((entry) => entry.id),
+      ['active'],
+    );
+    // И не в записках.
+    expect(index.undatedNotes, isEmpty);
+    // Зато в архиве — обе, иначе восстанавливать будет нечего.
+    expect(
+      index.archived.map((entry) => entry.id).toSet(),
+      {'archived', 'archived-note'},
+    );
+  });
+
 }

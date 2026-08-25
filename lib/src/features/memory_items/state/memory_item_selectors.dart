@@ -22,17 +22,21 @@ class MemoryItemsIndex {
 
     for (final item in items) {
       byId[item.id] = item;
-      if (item.isArchived) archived.add(item);
-      if (item.remindAt != null && !item.isDone && !item.isArchived) {
+      if (item.isArchived) {
+        // Архив прячет запись отовсюду, кроме самого архива, и до тех пор,
+        // пока её не восстановят: ни в сетке месяца, ни на экране дня, ни в
+        // записках, ни в напоминаниях её быть не должно.
+        archived.add(item);
+        continue;
+      }
+      if (item.remindAt != null && !item.isDone) {
         activeReminderDays.add(dateKey(item.remindAt!));
       }
       if (item.isUndated) {
-        if (!item.isArchived) undatedNotes.add(item);
+        undatedNotes.add(item);
         continue;
       }
-      byDate
-          .putIfAbsent(dateKey(item.memoryDate), () => [])
-          .add(item);
+      byDate.putIfAbsent(dateKey(item.memoryDate), () => []).add(item);
     }
 
     undatedNotes.sort((left, right) {
