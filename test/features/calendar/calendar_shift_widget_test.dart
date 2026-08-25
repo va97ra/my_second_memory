@@ -34,6 +34,7 @@ void main() {
         startDate: today,
         workDays: 5,
         restDays: 2,
+        alarms: const [ShiftAlarm(timeMinutes: 420, isEnabled: true)],
         vacations: [
           ShiftVacation(
             id: 'factory-vacation',
@@ -117,16 +118,63 @@ void main() {
       tester.widget<ColoredBox>(factoryFill).color,
       const Color(0xFF2563EB),
     );
-    // Цвет графика занимает полосу по верхней кромке, а не всю ячейку:
+    // Цвет графика занимает шапку по верхней кромке, а не всю ячейку:
     // залитый целиком день пестрит и спорит с записями.
-    final stripe = tester.getRect(factoryFill);
+    final header = tester.getRect(factoryFill);
     final segment = tester.getRect(factorySegment);
-    expect(stripe.height, ShiftMarks.stripeHeight);
-    expect(stripe.top, segment.top);
-    expect(stripe.height, lessThan(segment.height / 3));
-    // По ширине полоса идёт во всю долю графика. Без этой проверки она может
+    expect(header.height, ShiftMarks.headerHeight);
+    expect(header.top, segment.top);
+    expect(header.height, lessThan(segment.height / 3));
+    // По ширине шапка идёт во всю долю графика. Без этой проверки она может
     // схлопнуться в ноль и остаться невидимой, а высота — сойтись.
-    expect(stripe.width, segment.width);
+    expect(header.width, segment.width);
+
+    // Число и будильник стоят на шапке, а не под ней.
+    final numberRect = tester.getRect(find.text('${today.day}'));
+    final alarm = tester.getRect(
+      find.descendant(of: cell, matching: find.byIcon(Icons.alarm_rounded)),
+    );
+    expect(numberRect.bottom, lessThanOrEqualTo(header.bottom));
+    expect(alarm.top, greaterThanOrEqualTo(header.top));
+    expect(alarm.bottom, lessThanOrEqualTo(header.bottom));
+
+    // Будильник ушёл в правый угол: он правее числа и лежит в правой трети
+    // ячейки. Точное расстояние до края не проверяется — правее него может
+    // стоять отметка архива.
+    final cellRect = tester.getRect(cell);
+    expect(alarm.left, greaterThan(numberRect.right));
+    expect(alarm.left, greaterThan(cellRect.left + cellRect.width * 2 / 3));
+
+    // Число со сменой стоит на том же уровне, что и в дне без смены.
+    Finder? plainNumber;
+    for (var offset = 1; offset <= 8 && plainNumber == null; offset++) {
+      final day = today.add(Duration(days: offset));
+      if (day.month != today.month) break;
+      final key = '${day.year}-${day.month.toString().padLeft(2, '0')}-'
+          '${day.day.toString().padLeft(2, '0')}';
+      final plainCell = find.byKey(ValueKey('calendar_day_$key'));
+      final marks = find.descendant(
+        of: plainCell,
+        matching: find.byKey(ValueKey('shift_marks_$key')),
+      );
+      if (marks.evaluate().isEmpty) {
+        plainNumber = find.descendant(
+          of: plainCell,
+          matching: find.text('${day.day}'),
+        );
+      }
+    }
+    expect(plainNumber, isNotNull, reason: 'нужен день без смены');
+    // Сравнивается обычный день со сменой, а не сегодня: у сегодняшнего числа
+    // свой размер и кольцо.
+    final shiftNumber = find.descendant(
+      of: find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
+      matching: find.text('${secondWorkDay.day}'),
+    );
+    expect(
+      tester.getRect(plainNumber!).top,
+      closeTo(tester.getRect(shiftNumber).top, 0.5),
+    );
     expect(
       find.descendant(
         of: factorySegment,

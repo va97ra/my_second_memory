@@ -44,15 +44,16 @@ class CalendarDayHeaderRow extends StatelessWidget {
               ),
             ),
           ),
+          const Spacer(),
+          // Будильник и архив жмутся к правому углу: слева место числа.
           if (hasAlarm) ...[
-            const SizedBox(width: 2),
             Icon(
               Icons.alarm_rounded,
               size: 12.5,
               color: isSelected && !isToday ? colors.onPrimary : foreground,
             ),
+            const SizedBox(width: 2),
           ],
-          const Spacer(),
           if (items.any((item) => item.isArchived))
             SizedBox(
               width: 9,
@@ -60,9 +61,7 @@ class CalendarDayHeaderRow extends StatelessWidget {
               child: FittedBox(
                 child: Icon(
                   Icons.archive_rounded,
-                  color: colors.onSurfaceVariant.withValues(
-                    alpha: isInVisibleMonth ? 0.8 : 0.35,
-                  ),
+                  color: foreground.withValues(alpha: 0.8),
                 ),
               ),
             ),

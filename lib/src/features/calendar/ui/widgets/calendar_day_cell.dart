@@ -32,6 +32,10 @@ class CalendarDayCell extends StatelessWidget {
   final bool hasAlarm;
   final VoidCallback onTap;
 
+  /// Скругление ячейки. Одно на все три места, где оно нужно: нажатие,
+  /// заливка и рисованная рамка соседнего месяца.
+  static const cornerRadius = 4.0;
+
   @override
   Widget build(BuildContext context) {
     // Ячейка — тоже отдельный листок: она держит светлую схему на тёмном
@@ -42,22 +46,28 @@ class CalendarDayCell extends StatelessWidget {
   Widget _buildCell(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final palette = AppSurfacePalette.of(context);
-    final foreground = isInVisibleMonth
-        ? colors.onSurface
-        : colors.onSurface.withValues(alpha: 0.38);
+    // Число, будильник и отметка архива стоят на шапке графика, а цвет ей
+    // задаёт человек: чернила выбираются по её светлоте, иначе на светлом
+    // графике белое число пропадает.
+    final foreground = !isInVisibleMonth
+        ? colors.onSurface.withValues(alpha: 0.38)
+        : shiftSchedules.isEmpty
+            ? colors.onSurface
+            : readableInkOn(Color(shiftSchedules.first.colorValue));
     // Обычный день соседнего месяца обходится нарисованной рамкой: она дешевле
     // и не спорит с рамками выбранного дня и сегодня.
     final usesGradientBorder =
         isInVisibleMonth && !isSelected && !isToday && items.isEmpty;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(cornerRadius),
       onTap: onTap,
       child: CustomPaint(
         foregroundPainter: usesGradientBorder
             ? CalendarCellBorderPainter(
                 borderStart: palette.borderStart,
                 borderEnd: palette.borderEnd,
+                cornerRadius: cornerRadius,
               )
             : null,
         child: AnimatedContainer(
@@ -97,7 +107,7 @@ class CalendarDayCell extends StatelessWidget {
           : isInVisibleMonth
               ? palette.surfaceGradient(base: _cellColor(palette))
               : null,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(cornerRadius),
       border: Border.all(
         color: isToday
             ? Colors.black

@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import '../../state/calendar_month_data.dart';
 import 'vacation_ribbon.dart';
 
-/// Приметы смены в ячейке дня: полоса цвета сверху и лента отпуска.
+/// Приметы смены в ячейке дня: цветная шапка и лента отпуска под ней.
 ///
-/// Цвет занимает только полосу, а не всю ячейку: залитый целиком день спорит
+/// Цвет занимает только шапку, а не всю ячейку: залитый целиком день спорит
 /// с записями и с бумагой, и месяц от этого пестрит. День остаётся листом, а
-/// график виден по кромке.
+/// график читается по верхней полосе, на которой и стоит число.
 ///
 /// Когда графиков несколько, ячейка делится на равные доли по числу графиков —
-/// и полоса, и лента отпуска живут каждая в своей доле.
+/// и шапка, и лента отпуска живут каждая в своей доле.
 class ShiftMarks extends StatelessWidget {
   const ShiftMarks({
     super.key,
@@ -19,8 +19,9 @@ class ShiftMarks extends StatelessWidget {
     required this.date,
   });
 
-  /// Высота полосы. Больше — и она начинает спорить с числом дня.
-  static const stripeHeight = 6.0;
+  /// Высота шапки: на ней стоят число, будильник и отметка архива, поэтому
+  /// она ровно такая, чтобы их накрыть.
+  static const headerHeight = 21.0;
 
   final List<ShiftSchedule> schedules;
   final DateTime date;
@@ -35,19 +36,21 @@ class ShiftMarks extends StatelessWidget {
               key: ValueKey('shift_segment_${schedule.id}'),
               fit: StackFit.expand,
               children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: stripeHeight,
-                  child: ColoredBox(color: Color(schedule.colorValue)),
-                ),
+                // Лента отпуска идёт первой: шапка ложится поверх неё, иначе
+                // лента перечёркивала бы цвет графика у самой кромки.
                 if (schedule.isVacationWorkday(date))
                   VacationRibbon(
                     key: ValueKey(
                       'vacation_ribbon_${schedule.id}_${calendarDateStringKey(date)}',
                     ),
                   ),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: headerHeight,
+                  child: ColoredBox(color: Color(schedule.colorValue)),
+                ),
               ],
             ),
           ),

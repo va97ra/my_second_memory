@@ -62,7 +62,9 @@ class CalendarDayCellBody extends StatelessWidget {
                 ),
               ),
             Padding(
-              // Снизу отступа нет: праздничная лента ложится вплотную к краю.
+              // Число стоит на одном уровне во всех ячейках, со сменой и без:
+              // в дне со сменой оно ложится на её шапку. Снизу отступа нет —
+              // праздничная лента идёт вплотную к краю.
               padding: const EdgeInsets.only(top: 3),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

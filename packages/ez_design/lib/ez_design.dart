@@ -34,3 +34,4 @@ export 'src/themes/notebook/notebook_visuals.dart';
 export 'src/themes/surface_palette.dart';
 export 'src/themes/surface_textures.dart';
 export 'src/tokens/content_typography.dart';
+export 'src/tokens/readable_ink.dart';
