@@ -209,8 +209,6 @@ class AppStrings {
   String get archive => isRu ? 'Архив' : 'Archive';
   String get archiveRecord => isRu ? 'Скрыть в архив' : 'Archive record';
   String get restoreToFeed => isRu ? 'Вернуть в ленту' : 'Restore to feed';
-  String get emptyArchive =>
-      isRu ? 'В архиве пока ничего нет' : 'Archive is empty';
   String get settings => isRu ? 'Настройки' : 'Settings';
   String get title => isRu ? 'Название' : 'Title';
   String get recordType => isRu ? 'Тип записи' : 'Record type';

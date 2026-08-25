@@ -173,7 +173,9 @@ void main() {
     expect(find.text('Архив памяти'), findsWidgets);
     expect(find.text('Архивная запись'), findsOneWidget);
     expect(find.text('План на сегодня'), findsNothing);
-
+    // Фильтр стоит кнопкой в шапке, как в ленте, а не рядом чипов под ней.
+    expect(find.byKey(const ValueKey('feed_filter')), findsOneWidget);
+    expect(find.byType(FilterChip), findsNothing);
     await tester.tap(find.byTooltip('Вернуть в ленту'));
     await tester.pumpAndSettle();
 

@@ -41,6 +41,28 @@ enum FeedFilter {
         FeedFilter.recurringYearly => RecurrenceFrequency.yearly,
         _ => null,
       };
+
+  /// Вид записи, который отбирает фильтр, или null, если фильтр отбирает не по
+  /// виду. Отсюда берут и подпись, и значок: список видов один на всех.
+  MemoryType? get memoryType => switch (this) {
+        FeedFilter.task => MemoryType.task,
+        FeedFilter.note => MemoryType.note,
+        FeedFilter.event => MemoryType.event,
+        FeedFilter.goal => MemoryType.goal,
+        FeedFilter.project => MemoryType.project,
+        FeedFilter.purchase => MemoryType.purchase,
+        FeedFilter.document => MemoryType.document,
+        FeedFilter.place => MemoryType.place,
+        FeedFilter.birthday => MemoryType.birthday,
+        FeedFilter.payment => MemoryType.payment,
+        _ => null,
+      };
+
+  /// Фильтры по виду записи — те, что уместны везде, где есть записи.
+  static List<FeedFilter> get byMemoryType => [
+        for (final filter in FeedFilter.values)
+          if (filter.memoryType != null) filter,
+      ];
 }
 
 List<MemoryItem> smartFeedForDay(List<MemoryItem> items, DateTime date) {

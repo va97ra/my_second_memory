@@ -3,7 +3,7 @@ import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
-import 'feed_filter_button.dart';
+import '../../../../shared/ui/memory_filter_button.dart';
 
 /// Шапка страницы ленты: закладка, период и кнопки над ними.
 class FeedHeader extends StatelessWidget {
@@ -87,10 +87,16 @@ class FeedHeader extends StatelessWidget {
                 icon: const Icon(Icons.today_rounded, size: 22),
                 style: notebookIconButtonStyle(),
               ),
-              FeedFilterButton(
+              MemoryFilterButton(
                 selected: filter,
                 onSelected: onFilterSelected,
-                allowsRecurring: periodLabel != null,
+                // Записки не повторяются: на их закладке фильтров повтора
+                // нет.
+                filters: [
+                  for (final filter in FeedFilter.values)
+                    if (periodLabel != null || filter.recurringFrequency == null)
+                      filter,
+                ],
               ),
             ],
           ),
