@@ -166,12 +166,24 @@ features/memory_items/state/
 ## Тесты
 
 ```text
-test/recurrence_projection_service_test.dart    проекция и разрешение id
-test/recurrence_series_controller_test.dart     операции серии
-test/recurrence_occurrence_deletion_test.dart   удаление вхождения
-test/recurrence_stale_tombstone_test.dart       устаревшие tombstones
-test/recurrence_series_split_test.dart          "эта и будущие"
-test/recurrence_clear_frequency_test.dart       снятие повтора
-test/encrypted_recurrence_deletion_test.dart    удаление при включённом PIN
-test/archived_memory_items_test.dart            архив и восстановление
+test/domain/recurrence_projection_service_test.dart   проекция и разрешение id
+test/domain/recurrence_series_test.dart               правила серии
+test/domain/recurrence_split_test.dart                границы "эта и будущие"
+
+test/features/recurrence/
+  recurrence_origin_override_test.dart      правка исходного вхождения
+  recurrence_moved_occurrence_test.dart     перенесённое вхождение
+  recurrence_tombstone_test.dart            удаление переживает перезагрузку
+  recurrence_subscription_term_test.dart    срок подписки
+  recurrence_legacy_template_repair_test.dart   ремонт шаблонов прошлых версий
+  recurrence_legacy_name_repair_test.dart       ремонт названий прошлых версий
+  recurrence_occurrence_deletion_test.dart  удаление вхождения
+  recurrence_occurrence_state_test.dart     состояние вхождения
+  recurrence_stale_tombstone_test.dart      устаревшие tombstones
+  recurrence_series_split_test.dart         "эта и будущие"
+  recurrence_clear_frequency_test.dart      снятие повтора
+  encrypted_recurrence_deletion_test.dart   удаление при включённом PIN
+
+test/features/memory_items/archived_memory_items_test.dart  архив и восстановление
+test/features/home_feed/feed_recurring_test.dart            повторы в ленте
 ```
