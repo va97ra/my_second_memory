@@ -29,3 +29,7 @@ ios/.symlinks/
 .vscode/
 .tools/
 supabase/.temp/
+
+# мусор Проводника Windows
+desktop.ini
+Thumbs.db

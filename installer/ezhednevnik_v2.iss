@@ -1,7 +1,7 @@
 #ifndef AppVersion
-  ; Держится на 1.0.7, пока обновление не выложено. Значение можно передать
-  ; снаружи: ISCC /DAppVersion=1.0.8
-  #define AppVersion "1.0.7"
+  ; Держится на 1.0.8, пока обновление не выложено в RuStore. Значение
+  ; можно передать снаружи: ISCC /DAppVersion=1.0.9
+  #define AppVersion "1.0.8"
 #endif
 
 #define AppName "Ежедневник V2"
