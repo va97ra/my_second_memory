@@ -13,8 +13,9 @@
 
 ```text
 packages/ez_domain/lib/src/calendar/holiday_fixed_table.dart          659
-packages/ez_domain/lib/src/calendar/holiday_observance_table.dart     449
-   таблицы праздников: официальные и международные дни
+packages/ez_domain/lib/src/calendar/holiday_observance_table.dart     457
+packages/ez_domain/lib/src/calendar/holiday_russian_table.dart        994
+   таблицы праздников: официальные, международные дни и праздники России
 
 packages/ez_core/lib/src/localization/app_strings.dart                404
    строки интерфейса

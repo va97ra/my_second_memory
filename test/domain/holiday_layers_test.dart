@@ -52,4 +52,40 @@ void main() {
       expect(date.day, holiday.day, reason: holiday.id);
     }
   });
+  test('the day the user asked about is no longer empty', () {
+    final service = HolidayCalendarService();
+    final day = service.holidaysForDate(
+      DateTime(2026, 8, 25),
+      withObservances: true,
+    );
+
+    expect(day, isNotEmpty);
+    expect(
+      day.map((holiday) => holiday.id),
+      contains('obs_kiss_and_make_up'),
+    );
+    // И всё же ленты в сетке месяца этот день не получает.
+    expect(service.holidaysForDate(DateTime(2026, 8, 25)), isEmpty);
+  });
+
+  test('russian days carry a title and no invented english name', () {
+    for (final holiday in russianDayHolidays) {
+      expect(holiday.titleRu, isNotEmpty, reason: holiday.id);
+      expect(holiday.titleEn, holiday.titleRu, reason: holiday.id);
+      expect(holiday.month, inInclusiveRange(1, 12), reason: holiday.id);
+      expect(holiday.day, inInclusiveRange(1, 31), reason: holiday.id);
+      expect(holiday.occurrence(2026).isOfficial, isFalse, reason: holiday.id);
+    }
+  });
+
+  test('no identifier is used twice across the three tables', () {
+    final ids = [
+      ...fixedHolidays.map((holiday) => holiday.id),
+      ...observanceHolidays.map((holiday) => holiday.id),
+      ...russianDayHolidays.map((holiday) => holiday.id),
+    ];
+
+    expect(ids.toSet().length, ids.length);
+  });
+
 }

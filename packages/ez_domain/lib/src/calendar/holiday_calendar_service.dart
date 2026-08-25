@@ -2,12 +2,14 @@ import 'holiday_fixed_table.dart';
 import 'holiday_movable_table.dart';
 import 'holiday_observance_table.dart';
 import 'holiday_occurrence.dart';
+import 'holiday_russian_table.dart';
 
 /// Праздники года, посчитанные один раз.
 ///
-/// Слоя два: официальные праздники и международные дни. Второй спрашивают
-/// только там, где человек попросил его показывать, поэтому оба разложены по
-/// своим кэшам — иначе каждый `build` пересобирал бы список заново.
+/// Слоя два: те, кому положена лента в сетке месяца, и все остальные —
+/// международные дни и праздники России из общего списка. Второй слой
+/// спрашивают только там, где человек попросил его показывать, поэтому оба
+/// разложены по своим кэшам: иначе каждый `build` пересобирал бы список.
 class HolidayCalendarService {
   final Map<int, List<HolidayOccurrence>> _yearCache = {};
   final Map<int, List<HolidayOccurrence>> _officialByDate = {};
@@ -66,6 +68,7 @@ class HolidayCalendarService {
     return [
       ...fixedHolidays.map((definition) => definition.occurrence(year)),
       ...observanceHolidays.map((definition) => definition.occurrence(year)),
+      ...russianDayHolidays.map((definition) => definition.occurrence(year)),
       ...movableHolidays(year, orthodoxEaster(year)),
     ];
   }

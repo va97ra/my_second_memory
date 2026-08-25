@@ -102,6 +102,9 @@ class HolidayDetailScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
+                      // У праздников из общего списка описания нет: пустой
+                      // абзац оставил бы под названием дыру.
+                      if (holiday.description(locale).isNotEmpty) ...[
                       const SizedBox(height: 14),
                       Text(
                         holiday.description(locale),
@@ -111,6 +114,7 @@ class HolidayDetailScreen extends ConsumerWidget {
                               height: 1.55,
                             ),
                       ),
+                      ],
                     ],
                   ),
                 ),

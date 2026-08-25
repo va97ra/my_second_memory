@@ -86,6 +86,23 @@ class FixedHoliday {
         shortEn = 'A Russian memorial date.',
         category = HolidayCategory.stateAndMemorial;
 
+  /// Праздник России из общего списка: название одно на оба языка.
+  ///
+  /// Придумывать «Дню работника прокуратуры» английское имя — выдумка, а
+  /// описания у таких дней нет: экран дня обходится названием и категорией.
+  const FixedHoliday.russianDay(
+    this.id,
+    this.month,
+    this.day,
+    String title,
+  )   : titleRu = title,
+        titleEn = title,
+        shortRu = 'Праздник России.',
+        shortEn = 'A Russian observance.',
+        descriptionRu = '',
+        descriptionEn = '',
+        category = HolidayCategory.russianDay;
+
   final String id;
   final int month;
   final int day;

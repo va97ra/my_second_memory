@@ -271,6 +271,14 @@ const observanceHolidays = <FixedHoliday>[
       'Неофициальный, но повсеместно отмечаемый кошачий праздник.',
       'An unofficial but widely kept celebration of cats.'),
   FixedHoliday.observance(
+      'obs_kiss_and_make_up',
+      8,
+      25,
+      'День «Поцелуемся и помиримся»',
+      'Kiss and Make Up Day',
+      'Неофициальный день, придуманный как повод помириться с теми, с кем в ссоре.',
+      'An unofficial day meant as a reason to make peace with those you have fallen out with.'),
+  FixedHoliday.observance(
       'obs_youth',
       8,
       12,
