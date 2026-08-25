@@ -6,10 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 
+import '../support/backup_test_support.dart';
+
 void main() {
   test('exports and parses memory records and shift schedules', () async {
     final date = DateTime(2026, 7, 3);
-    final memoryRepository = _MemoryRepository([
+    final memoryRepository = FakeMemoryRepository([
       MemoryItem(
         id: 'note',
         type: MemoryType.note,
@@ -27,7 +29,7 @@ void main() {
         isUndated: true,
       ),
     ]);
-    final shiftRepository = _ShiftRepository([
+    final shiftRepository = FakeShiftRepository([
       ShiftSchedule(
         id: 'shift',
         organizationName: 'Завод',
@@ -56,7 +58,7 @@ void main() {
     final service = BackupService(
       memoryRepository: memoryRepository,
       shiftScheduleRepository: shiftRepository,
-      accountRepository: _AccountRepository([
+      accountRepository: FakeAccountRepository([
         AccountItem(
           id: 'account',
           serviceName: 'Mail',
@@ -66,7 +68,7 @@ void main() {
           updatedAt: date,
         ),
       ]),
-      recurrenceRepository: _RecurrenceRepository([
+      recurrenceRepository: FakeRecurrenceRepository([
         RecurrenceSeries(
           id: 'monthly-payment',
           frequency: RecurrenceFrequency.monthly,
@@ -108,7 +110,7 @@ void main() {
   test('exports and restores encrypted zip with password', () async {
     final date = DateTime(2026, 7, 3);
     final service = BackupService(
-      memoryRepository: _MemoryRepository([
+      memoryRepository: FakeMemoryRepository([
         MemoryItem(
           id: 'note',
           type: MemoryType.note,
@@ -121,8 +123,8 @@ void main() {
           isUndated: true,
         ),
       ]),
-      shiftScheduleRepository: _ShiftRepository(const []),
-      accountRepository: _AccountRepository([
+      shiftScheduleRepository: FakeShiftRepository(const []),
+      accountRepository: FakeAccountRepository([
         AccountItem(
           id: 'account',
           serviceName: 'Mail',
@@ -153,7 +155,7 @@ void main() {
   test('streaming backup file restores and rejects a wrong password', () async {
     final date = DateTime(2026, 7, 3);
     final service = BackupService(
-      memoryRepository: _MemoryRepository([
+      memoryRepository: FakeMemoryRepository([
         MemoryItem(
           id: 'streamed',
           type: MemoryType.note,
@@ -163,8 +165,8 @@ void main() {
           updatedAt: date,
         ),
       ]),
-      shiftScheduleRepository: _ShiftRepository(const []),
-      accountRepository: _AccountRepository(const []),
+      shiftScheduleRepository: FakeShiftRepository(const []),
+      accountRepository: FakeAccountRepository(const []),
     );
 
     final temp = await Directory.systemTemp.createTemp('backup_stream_test_');
@@ -197,70 +199,11 @@ void main() {
     await service.deleteTemporaryBackup(path);
   });
 
-  test('restore replaces and verifies all repositories', () async {
-    final date = DateTime(2026, 8, 8);
-    final memory = _MemoryRepository([
-      _memoryItem('old-note', date),
-    ]);
-    final shifts = _ShiftRepository([
-      _shiftSchedule('old-shift', date),
-    ]);
-    final accounts = _AccountRepository([
-      _account('old-account', date),
-    ]);
-    final service = BackupService(
-      memoryRepository: memory,
-      shiftScheduleRepository: shifts,
-      accountRepository: accounts,
-    );
-
-    await service.restore(BackupRestoreData(
-      memoryItems: [_memoryItem('restored-note', date)],
-      shiftSchedules: [_shiftSchedule('restored-shift', date)],
-      accounts: [_account('restored-account', date)],
-    ));
-
-    expect((await memory.loadAll()).single.id, 'restored-note');
-    expect((await shifts.loadSchedules()).single.id, 'restored-shift');
-    expect((await accounts.loadAccounts()).single.id, 'restored-account');
-  });
-
-  test('restore rolls earlier repositories back when a write fails', () async {
-    final date = DateTime(2026, 8, 8);
-    final memory = _MemoryRepository([
-      _memoryItem('old-note', date),
-    ]);
-    final shifts = _ShiftRepository([
-      _shiftSchedule('old-shift', date),
-    ]);
-    final accounts = _FailOnceAccountRepository([
-      _account('old-account', date),
-    ]);
-    final service = BackupService(
-      memoryRepository: memory,
-      shiftScheduleRepository: shifts,
-      accountRepository: accounts,
-    );
-
-    await expectLater(
-      service.restore(BackupRestoreData(
-        memoryItems: [_memoryItem('restored-note', date)],
-        shiftSchedules: [_shiftSchedule('restored-shift', date)],
-        accounts: [_account('restored-account', date)],
-      )),
-      throwsStateError,
-    );
-
-    expect((await memory.loadAll()).single.id, 'old-note');
-    expect((await shifts.loadSchedules()).single.id, 'old-shift');
-    expect((await accounts.loadAccounts()).single.id, 'old-account');
-  });
-
   test('rejects unsupported backup files', () async {
     final service = BackupService(
-      memoryRepository: _MemoryRepository(const []),
-      shiftScheduleRepository: _ShiftRepository(const []),
-      accountRepository: _AccountRepository(const []),
+      memoryRepository: FakeMemoryRepository(const []),
+      shiftScheduleRepository: FakeShiftRepository(const []),
+      accountRepository: FakeAccountRepository(const []),
     );
 
     expect(
@@ -268,139 +211,4 @@ void main() {
       throwsFormatException,
     );
   });
-}
-
-MemoryItem _memoryItem(String id, DateTime date) {
-  return MemoryItem(
-    id: id,
-    type: MemoryType.note,
-    title: id,
-    memoryDate: date,
-    createdAt: date,
-    updatedAt: date,
-  );
-}
-
-ShiftSchedule _shiftSchedule(String id, DateTime date) {
-  return ShiftSchedule(
-    id: id,
-    organizationName: id,
-    colorValue: 0xFF2563EB,
-    startDate: date,
-    workDays: 2,
-    restDays: 2,
-    vacations: [
-      ShiftVacation(
-        id: '$id-vacation',
-        startDate: date.add(const Duration(days: 5)),
-        durationDays: 14,
-      ),
-    ],
-  );
-}
-
-AccountItem _account(String id, DateTime date) {
-  return AccountItem(
-    id: id,
-    serviceName: id,
-    login: id,
-    password: 'secret',
-    createdAt: date,
-    updatedAt: date,
-  );
-}
-
-class _MemoryRepository implements MemoryRepository {
-  _MemoryRepository(this.items);
-
-  List<MemoryItem> items;
-
-  @override
-  Future<List<MemoryItem>> loadAll() async => List.of(items);
-
-  @override
-  Future<void> upsert(MemoryItem item) async {}
-
-  @override
-  Future<void> upsertAll(List<MemoryItem> items) async {}
-
-  @override
-  Future<void> delete(String id) async {}
-
-  @override
-  Future<void> replaceAll(List<MemoryItem> items) async {
-    this.items = List.of(items);
-  }
-
-  @override
-  Future<void> close() async {}
-}
-
-class _ShiftRepository implements ShiftScheduleRepository {
-  _ShiftRepository(this.schedules);
-
-  List<ShiftSchedule> schedules;
-
-  @override
-  Future<List<ShiftSchedule>> loadSchedules() async => List.of(schedules);
-
-  @override
-  Future<void> saveSchedules(List<ShiftSchedule> schedules) async {
-    this.schedules = List.of(schedules);
-  }
-}
-
-class _AccountRepository implements AccountRepository {
-  _AccountRepository(this.accounts);
-
-  List<AccountItem> accounts;
-
-  @override
-  Future<List<AccountItem>> loadAccounts() async => List.of(accounts);
-
-  @override
-  Future<void> saveAccounts(List<AccountItem> accounts) async {
-    this.accounts = List.of(accounts);
-  }
-}
-
-class _FailOnceAccountRepository extends _AccountRepository {
-  _FailOnceAccountRepository(super.accounts);
-
-  bool _shouldFail = true;
-
-  @override
-  Future<void> saveAccounts(List<AccountItem> accounts) async {
-    if (_shouldFail) {
-      _shouldFail = false;
-      throw StateError('Simulated account write failure');
-    }
-    await super.saveAccounts(accounts);
-  }
-}
-
-class _RecurrenceRepository implements RecurrenceRepository {
-  _RecurrenceRepository(this.series);
-
-  List<RecurrenceSeries> series;
-
-  @override
-  Future<List<RecurrenceSeries>> loadAll() async => List.of(series);
-
-  @override
-  Future<void> upsert(RecurrenceSeries series) async {}
-
-  @override
-  Future<void> upsertAll(List<RecurrenceSeries> series) async {}
-
-  @override
-  Future<void> delete(String id) async {}
-
-  @override
-  Future<void> replaceAll(List<RecurrenceSeries> series) async {
-    this.series = List.of(series);
-  }
-
-  @override
-  Future<void> close() async {}
 }

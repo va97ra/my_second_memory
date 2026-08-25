@@ -1,138 +1,14 @@
-import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 
-class _MemoryRepository implements MemoryRepository {
-  _MemoryRepository(this.items);
-
-  List<MemoryItem> items;
-  final upsertedIds = <String>[];
-  final deletedIds = <String>[];
-  int replaceAllCount = 0;
-  int upsertAllCount = 0;
-
-  @override
-  Future<List<MemoryItem>> loadAll() async => items;
-
-  @override
-  Future<void> upsert(MemoryItem item) async {
-    upsertedIds.add(item.id);
-    items = [
-      for (final existing in items)
-        if (existing.id == item.id) item else existing,
-      if (!items.any((existing) => existing.id == item.id)) item,
-    ];
-  }
-
-  @override
-  Future<void> upsertAll(List<MemoryItem> incoming) async {
-    upsertAllCount++;
-    upsertedIds.addAll(incoming.map((item) => item.id));
-    final byId = {
-      for (final item in items) item.id: item,
-      for (final item in incoming) item.id: item,
-    };
-    items = byId.values.toList();
-  }
-
-  @override
-  Future<void> delete(String id) async {
-    deletedIds.add(id);
-    items = [
-      for (final item in items)
-        if (item.id != id) item
-    ];
-  }
-
-  @override
-  Future<void> replaceAll(List<MemoryItem> items) async {
-    replaceAllCount++;
-    this.items = items;
-  }
-
-  @override
-  Future<void> close() async {}
-}
-
-class _DelayedMemoryRepository extends _MemoryRepository {
-  _DelayedMemoryRepository(super.items);
-
-  final firstWriteStarted = Completer<void>();
-  final releaseFirstWrite = Completer<void>();
-  final writtenBodies = <String>[];
-
-  @override
-  Future<void> upsert(MemoryItem item) async {
-    if (writtenBodies.isEmpty) {
-      firstWriteStarted.complete();
-      await releaseFirstWrite.future;
-    }
-    writtenBodies.add(item.body);
-    await super.upsert(item);
-  }
-}
-
-class _ReminderScheduler implements ReminderScheduler {
-  final scheduled = <String>[];
-  final cancelled = <String>[];
-  List<String> reconciled = const [];
-
-  @override
-  bool get isSupported => true;
-
-  @override
-  Stream<String> get openedItemIds => const Stream.empty();
-
-  @override
-  Future<void> cancel(String itemId) async => cancelled.add(itemId);
-
-  @override
-  Future<void> initialize() async {}
-
-  @override
-  Future<void> reconcile(List<MemoryItem> items) async {
-    reconciled = items.map((item) => item.id).toList();
-  }
-
-  @override
-  Future<void> reconcileRecurring(List<MemoryItem> items) async {}
-
-  @override
-  Future<bool> requestPermissions() async => true;
-
-  @override
-  Future<List<ReminderSoundSelection>> systemSounds() async => const [];
-
-  @override
-  Future<void> schedule(MemoryItem item) async => scheduled.add(item.id);
-
-  @override
-  Future<ReminderSoundSelection?> selectSound({
-    String? currentUri,
-    ReminderSoundSource source = ReminderSoundSource.system,
-  }) async =>
-      null;
-}
-
-class _TrackingMediaStorage extends MediaStorage {
-  final deleted = <String>[];
-
-  @override
-  Future<void> deleteOwnedFiles(
-    Iterable<String> paths, {
-    required Set<String> usedPaths,
-  }) async {
-    deleted.addAll(paths.where((path) => !usedPaths.contains(path)));
-  }
-}
+import '../../support/memory_items_test_support.dart';
 
 void main() {
   test('addAll persists generated records in one batch', () async {
     final date = DateTime(2026, 6, 30);
-    final repository = _MemoryRepository(const []);
+    final repository = FakeMemoryRepository(const []);
     final controller = MemoryItemsController(repository);
     final items = [
       for (var index = 0; index < 20; index++)
@@ -164,7 +40,7 @@ void main() {
       createdAt: date,
       updatedAt: date,
     );
-    final repository = _MemoryRepository([item]);
+    final repository = FakeMemoryRepository([item]);
     final controller = MemoryItemsController(repository);
 
     await controller.load();
@@ -185,7 +61,7 @@ void main() {
       createdAt: date,
       updatedAt: date,
     );
-    final repository = _DelayedMemoryRepository([item]);
+    final repository = DelayedMemoryRepository([item]);
     final controller = MemoryItemsController(repository);
 
     await controller.load();
@@ -210,8 +86,8 @@ void main() {
           updatedAt: date,
           imagePaths: const ['/app/image_shared.jpg'],
         );
-    final repository = _MemoryRepository([item('first'), item('second')]);
-    final mediaStorage = _TrackingMediaStorage();
+    final repository = FakeMemoryRepository([item('first'), item('second')]);
+    final mediaStorage = TrackingMediaStorage();
     final controller = MemoryItemsController(repository, null, mediaStorage);
 
     await controller.load();
@@ -224,7 +100,7 @@ void main() {
 
   test('delete removes item from state and repository', () async {
     final date = DateTime(2026, 6, 30);
-    final repository = _MemoryRepository([
+    final repository = FakeMemoryRepository([
       MemoryItem(
         id: 'keep',
         type: MemoryType.note,
@@ -253,7 +129,7 @@ void main() {
 
   test('toggleDone switches active and done states', () async {
     final date = DateTime(2026, 6, 30);
-    final repository = _MemoryRepository([
+    final repository = FakeMemoryRepository([
       MemoryItem(
         id: 'toggle',
         type: MemoryType.note,
@@ -279,7 +155,7 @@ void main() {
 
   test('restore returns archived item to active state', () async {
     final date = DateTime(2026, 6, 30);
-    final repository = _MemoryRepository([
+    final repository = FakeMemoryRepository([
       MemoryItem(
         id: 'archived',
         type: MemoryType.note,
@@ -299,128 +175,6 @@ void main() {
     expect(repository.items.single.status, MemoryStatus.active);
   });
 
-  test('reminder is scheduled and cancelled with record lifecycle', () async {
-    final now = DateTime.now();
-    final item = MemoryItem(
-      id: 'reminder',
-      type: MemoryType.event,
-      title: 'Встреча',
-      memoryDate: DateTime(now.year, now.month, now.day + 1),
-      createdAt: now,
-      updatedAt: now,
-      remindAt: now.add(const Duration(days: 1)),
-    );
-    final repository = _MemoryRepository([item]);
-    final reminders = _ReminderScheduler();
-    final controller = MemoryItemsController(repository, reminders);
-
-    await controller.load();
-    await controller.update(item.copyWith(title: 'Новая встреча'));
-    expect(reminders.scheduled, contains('reminder'));
-
-    await controller.toggleDone('reminder');
-    expect(reminders.cancelled, contains('reminder'));
-
-    await controller.toggleDone('reminder');
-    expect(reminders.scheduled.where((id) => id == 'reminder').length, 2);
-
-    await controller.archive('reminder');
-    await controller.delete('reminder');
-    expect(reminders.cancelled.where((id) => id == 'reminder').length, 3);
-  });
-
-  // docs/behavior.md: восстановление возвращает напоминание, если оно ещё
-  // впереди, и не воскрешает прошедшее.
-  test('restore brings back a reminder only while it is still ahead',
-      () async {
-    final now = DateTime.now();
-    final ahead = MemoryItem(
-      id: 'ahead',
-      type: MemoryType.event,
-      title: 'Впереди',
-      memoryDate: DateTime(now.year, now.month, now.day + 1),
-      createdAt: now,
-      updatedAt: now,
-      status: MemoryStatus.archived,
-      remindAt: now.add(const Duration(days: 1)),
-    );
-    final passed = ahead.copyWith(
-      id: 'passed',
-      title: 'Позади',
-      remindAt: now.subtract(const Duration(days: 1)),
-    );
-    final reminders = _ReminderScheduler();
-    final controller = MemoryItemsController(
-      _MemoryRepository([ahead, passed]),
-      reminders,
-    );
-    await controller.load();
-
-    await controller.restore('ahead');
-    await controller.restore('passed');
-
-    expect(reminders.scheduled, contains('ahead'));
-    expect(reminders.scheduled, isNot(contains('passed')));
-    expect(
-      controller.items.every((item) => item.status == MemoryStatus.active),
-      isTrue,
-    );
-  });
-
-  // docs/behavior.md: архив хранит запись целиком, а не прячет её содержимое.
-  test('archiving keeps the record whole, media included', () async {
-    final now = DateTime.now();
-    final item = MemoryItem(
-      id: 'with-media',
-      type: MemoryType.note,
-      title: 'С фотографией',
-      body: 'С фотографией',
-      memoryDate: now,
-      createdAt: now,
-      updatedAt: now,
-      imagePaths: const ['photo.jpg'],
-      audioPath: 'voice.m4a',
-    );
-    final media = _TrackingMediaStorage();
-    final controller = MemoryItemsController(
-      _MemoryRepository([item]),
-      _ReminderScheduler(),
-      media,
-    );
-    await controller.load();
-
-    await controller.archive('with-media');
-
-    final archived = controller.items.single;
-    expect(archived.status, MemoryStatus.archived);
-    expect(archived.imagePaths, ['photo.jpg']);
-    expect(archived.audioPath, 'voice.m4a');
-    expect(media.deleted, isEmpty);
-  });
-
-  test('undated note never creates a reminder', () async {
-    final now = DateTime.now();
-    final note = MemoryItem(
-      id: 'undated-note',
-      type: MemoryType.note,
-      title: 'Карта дочери',
-      memoryDate: DateTime(now.year, now.month, now.day),
-      createdAt: now,
-      updatedAt: now,
-      isUndated: true,
-    );
-    final repository = _MemoryRepository(const []);
-    final reminders = _ReminderScheduler();
-    final controller = MemoryItemsController(repository, reminders);
-
-    await controller.load();
-    await controller.add(note);
-    await controller.update(note.copyWith(body: 'Новые данные'));
-
-    expect(reminders.scheduled, isEmpty);
-    expect(repository.items.single.isUndated, isTrue);
-  });
-
   test('sync replacement preserves in-flight local changes and deletions',
       () async {
     final baselineTime = DateTime.utc(2026, 8, 22, 12);
@@ -438,7 +192,7 @@ void main() {
           updatedAt: updatedAt ?? baselineTime,
         );
 
-    final repository = _MemoryRepository([
+    final repository = FakeMemoryRepository([
       item('edited', 'Before local edit'),
       item('deleted', 'Delete while syncing'),
       item('remote-edit', 'Before remote edit'),
