@@ -5,6 +5,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/shift_marks.dart';
 import '../../support/widget_test_harness.dart';
 
 void main() {
@@ -83,7 +84,7 @@ void main() {
     expect(
       find.descendant(
         of: cell,
-        matching: find.byKey(ValueKey('shift_fill_$dayKey')),
+        matching: find.byKey(ValueKey('shift_marks_$dayKey')),
       ),
       findsOneWidget,
     );
@@ -101,6 +102,16 @@ void main() {
       tester.widget<ColoredBox>(factoryFill).color,
       const Color(0xFF2563EB),
     );
+    // Цвет графика занимает полосу по верхней кромке, а не всю ячейку:
+    // залитый целиком день пестрит и спорит с записями.
+    final stripe = tester.getRect(factoryFill);
+    final segment = tester.getRect(factorySegment);
+    expect(stripe.height, ShiftMarks.stripeHeight);
+    expect(stripe.top, segment.top);
+    expect(stripe.height, lessThan(segment.height / 3));
+    // По ширине полоса идёт во всю долю графика. Без этой проверки она может
+    // схлопнуться в ноль и остаться невидимой, а высота — сойтись.
+    expect(stripe.width, segment.width);
     expect(
       find.descendant(
         of: factorySegment,
@@ -121,7 +132,7 @@ void main() {
     expect(
       find.descendant(
         of: secondWorkCell,
-        matching: find.byKey(ValueKey('shift_fill_$secondWorkDayKey')),
+        matching: find.byKey(ValueKey('shift_marks_$secondWorkDayKey')),
       ),
       findsOneWidget,
     );

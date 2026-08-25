@@ -88,8 +88,6 @@ class CalendarDayCell extends StatelessWidget {
     ColorScheme colors,
     AppSurfacePalette palette,
   ) {
-    final hasShift = shiftSchedules.isNotEmpty && isInVisibleMonth;
-
     return BoxDecoration(
       // Сегодняшний день заливкой не отмечается — только чёрной обводкой и
       // крупным числом. Иначе он тонет: в день открытия он же и выбранный, и
@@ -97,9 +95,7 @@ class CalendarDayCell extends StatelessWidget {
       gradient: isSelected && !isToday
           ? palette.accentGradient
           : isInVisibleMonth
-              ? palette.surfaceGradient(
-                  base: _cellColor(colors, palette, hasShift),
-                )
+              ? palette.surfaceGradient(base: _cellColor(palette))
               : null,
       borderRadius: BorderRadius.circular(8),
       border: Border.all(
@@ -127,7 +123,6 @@ class CalendarDayCell extends StatelessWidget {
           color: (isToday ? Colors.black : colors.onSurface)
               .withValues(alpha: isToday ? 0.28 : 0.16),
           blurRadius: isToday ? 8 : 14,
-          spreadRadius: isToday ? 0 : 0,
           offset: Offset(0, isToday ? 2 : 7),
         ),
       ];
@@ -136,14 +131,9 @@ class CalendarDayCell extends StatelessWidget {
     return notebookSurfaceShadow(context, NotebookSurfaceDepth.tile);
   }
 
-  Color _cellColor(
-    ColorScheme colors,
-    AppSurfacePalette palette,
-    bool hasShift,
-  ) {
-    if (hasShift) return colors.surface;
-    // Заливка одна и та же независимо от того, есть ли в дне записи: их
-    // наличие показывает рамка, а не фон.
+  /// Заливка одна и та же и для дня с записями, и для дня со сменой: записи
+  /// показывает рамка, смену — полоса сверху, а бумага под ними одна.
+  Color _cellColor(AppSurfacePalette palette) {
     return isInVisibleMonth ? palette.calendarTile : Colors.transparent;
   }
 }

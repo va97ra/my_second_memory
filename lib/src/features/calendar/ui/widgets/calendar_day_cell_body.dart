@@ -6,7 +6,7 @@ import 'calendar_day_cell_layout.dart';
 import 'calendar_day_header_row.dart';
 import 'calendar_event_bar.dart';
 import 'holiday_bar.dart';
-import 'shift_fill.dart';
+import 'shift_marks.dart';
 
 /// Содержимое ячейки дня: смена под ним, число сверху и записи под числом.
 ///
@@ -54,13 +54,11 @@ class CalendarDayCellBody extends StatelessWidget {
           children: [
             if (hasShift)
               Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: ShiftFill(
-                    key: ValueKey('shift_fill_${calendarDateStringKey(date)}'),
-                    schedules: shiftSchedules,
-                    date: date,
-                  ),
+                // Скругление ячейке обрезает сама ячейка — второй раз не надо.
+                child: ShiftMarks(
+                  key: ValueKey('shift_marks_${calendarDateStringKey(date)}'),
+                  schedules: shiftSchedules,
+                  date: date,
                 ),
               ),
             Padding(
