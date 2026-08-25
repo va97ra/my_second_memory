@@ -5,6 +5,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/day_number.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/shift_marks.dart';
 import '../../support/widget_test_harness.dart';
 
@@ -81,6 +82,20 @@ void main() {
       find.descendant(of: cell, matching: find.text('${today.day}')),
     );
     expect(todayNumber.style?.fontSize, 17);
+    // И красным кольцом на самом числе: чёрной рамки вокруг ячейки среди
+    // цветных дней не видно.
+    final ring = tester.widget<DecoratedBox>(
+      find
+          .ancestor(
+            of: find.text('${today.day}'),
+            matching: find.byType(DecoratedBox),
+          )
+          .first,
+    );
+    expect(
+      ((ring.decoration as BoxDecoration).border! as Border).top.color,
+      DayNumber.todayRing,
+    );
     expect(
       find.descendant(
         of: cell,
