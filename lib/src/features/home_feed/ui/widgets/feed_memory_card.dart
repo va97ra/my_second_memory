@@ -33,12 +33,8 @@ class FeedMemoryCard extends ConsumerWidget {
       onOpen: () => context.pageTurnPush(
         '/memory/view/${Uri.encodeComponent(item.id)}',
       ),
-      onToggleDone: () {
-        ref.read(memoryItemsControllerProvider.notifier).toggleDone(item.id);
-      },
-      onArchive: () {
-        ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
-      },
+      onToggleDone: () => toggleMemoryDone(ref, item),
+      onArchive: () => archiveMemory(ref, item),
     );
   }
 }

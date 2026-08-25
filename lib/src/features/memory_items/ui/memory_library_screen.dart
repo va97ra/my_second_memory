@@ -89,8 +89,11 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
                     );
                   },
                   onRestore: () {
-                    // A recurring occurrence has no row to restore; its
-                    // state lives in the series override.
+                    // Здесь вопрос шире, чем в ленте и в дне: там спрашивают,
+                    // есть ли у вхождения своя строка, а тут — принадлежит ли
+                    // оно серии вообще. Возврат через серию заодно убирает
+                    // старую материализованную строку, если она осталась от
+                    // прошлых версий.
                     if (item.seriesId != null) {
                       ref
                           .read(recurrenceSeriesControllerProvider.notifier)

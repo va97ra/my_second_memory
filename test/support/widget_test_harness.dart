@@ -380,3 +380,99 @@ class _FakeShiftScheduleRepository implements ShiftScheduleRepository {
     savedSchedules = schedules;
   }
 }
+
+/// Репозиторий записей с заранее заданным содержимым.
+class _FixedMemoryRepository extends _TestMemoryRepository {
+  _FixedMemoryRepository(this._items);
+
+  final List<MemoryItem> _items;
+  List<MemoryItem> saved = const [];
+
+  @override
+  Future<List<MemoryItem>> loadAll() async => _items;
+
+  @override
+  Future<void> replaceAll(List<MemoryItem> items) async {
+    saved = items;
+  }
+}
+
+/// Серии, заданные тестом.
+class _FixedRecurrenceRepository implements RecurrenceRepository {
+  _FixedRecurrenceRepository(this._series);
+
+  final List<RecurrenceSeries> _series;
+
+  @override
+  Future<List<RecurrenceSeries>> loadAll() async => _series;
+
+  @override
+  Future<void> upsert(RecurrenceSeries series) async {}
+
+  @override
+  Future<void> upsertAll(List<RecurrenceSeries> series) async {}
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<void> replaceAll(List<RecurrenceSeries> series) async {}
+
+  @override
+  Future<void> close() async {}
+}
+
+/// Запоминает переопределения вхождений, которые записал экран.
+class _RecordingExceptionRepository implements RecurrenceExceptionRepository {
+  final List<RecurrenceOccurrenceException> saved = [];
+
+  @override
+  Future<List<RecurrenceOccurrenceException>> loadAll() async => saved;
+
+  @override
+  Future<void> upsert(RecurrenceOccurrenceException exception) async {
+    saved.add(exception);
+  }
+
+  @override
+  Future<void> upsertAll(
+    List<RecurrenceOccurrenceException> exceptions,
+  ) async {
+    saved.addAll(exceptions);
+  }
+
+  @override
+  Future<RecurrenceOccurrenceException> skip(
+    String seriesId,
+    DateTime occurrenceDate,
+  ) async {
+    final exception = RecurrenceOccurrenceException(
+      id: recurrenceExceptionId(seriesId, occurrenceDate),
+      seriesId: seriesId,
+      occurrenceDate: occurrenceDate,
+      kind: RecurrenceOccurrenceExceptionKind.skipped,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+    saved.add(exception);
+    return exception;
+  }
+
+  @override
+  Future<void> delete(String seriesId, DateTime occurrenceDate) async {}
+
+  @override
+  Future<void> deleteSeries(String seriesId) async {}
+
+  @override
+  Future<void> replaceAll(
+    List<RecurrenceOccurrenceException> exceptions,
+  ) async {
+    saved
+      ..clear()
+      ..addAll(exceptions);
+  }
+
+  @override
+  Future<void> close() async {}
+}

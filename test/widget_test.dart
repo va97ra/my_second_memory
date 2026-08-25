@@ -16,6 +16,7 @@ import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_cont
 import 'package:ezhednevnik_v2/src/shared/ui/memory_card/memory_item_card.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/holiday_detail_screen.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/recurrence.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
 import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';

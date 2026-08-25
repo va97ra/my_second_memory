@@ -699,4 +699,72 @@ void registerHomeFeedWidgetTests() {
     expect(find.text('Проект'), findsWidgets);
     expect(find.text('План на сегодня'), findsNothing);
   });
+
+  testWidgets('feed marks a projected occurrence done through its series',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = DateTime(today.year, today.month - 1, today.day);
+    final origin = MemoryItem(
+      id: 'origin',
+      type: MemoryType.payment,
+      title: 'Подписка',
+      memoryDate: start,
+      createdAt: start,
+      updatedAt: start,
+      repeatRule: RecurrenceFrequency.monthly.name,
+      seriesId: 'series',
+    );
+    final exceptions = _RecordingExceptionRepository();
+
+    await tester.pumpWidget(
+      testProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(_UnlockedSecurityService()),
+          memoryRepositoryProvider
+              .overrideWithValue(_FixedMemoryRepository([origin])),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            _FakeShiftScheduleRepository(),
+          ),
+          recurrenceRepositoryProvider.overrideWithValue(
+            _FixedRecurrenceRepository([
+              RecurrenceSeries(
+                id: 'series',
+                frequency: RecurrenceFrequency.monthly,
+                template: origin,
+                startDate: start,
+                originItemId: origin.id,
+                createdAt: start,
+                updatedAt: start,
+              ),
+            ]),
+          ),
+          recurrenceExceptionRepositoryProvider.overrideWithValue(exceptions),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await openTab(tester, 'feed');
+
+    // Сегодняшнее вхождение спроецировано: сохранённой строки у него нет.
+    expect(find.text('Подписка'), findsOneWidget);
+    final done = find.byWidgetPredicate(
+      (widget) =>
+          widget.key is ValueKey<String> &&
+          (widget.key! as ValueKey<String>)
+              .value
+              .startsWith('memory_card_done_'),
+    );
+    await tester.tap(done);
+    await tester.pumpAndSettle();
+
+    // Отметка вхождения живёт в серии, а не в строке записей.
+    expect(exceptions.saved, hasLength(1));
+    expect(exceptions.saved.single.item?.isDone, isTrue);
+  });
 }
