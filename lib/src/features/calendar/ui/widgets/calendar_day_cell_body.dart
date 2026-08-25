@@ -64,7 +64,8 @@ class CalendarDayCellBody extends StatelessWidget {
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
+              // Снизу отступа нет: праздничная лента ложится вплотную к краю.
+              padding: const EdgeInsets.only(top: 3),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -92,7 +93,8 @@ class CalendarDayCellBody extends StatelessWidget {
                     if (layout.showsHoliday) ...[
                       const Spacer(),
                       HolidayBar(locale: locale, isMuted: !isInVisibleMonth),
-                    ],
+                    ] else
+                      const SizedBox(height: 3),
                   ],
                 ],
               ),

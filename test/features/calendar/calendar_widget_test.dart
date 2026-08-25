@@ -183,8 +183,20 @@ void main() {
     final barRect = tester.getRect(
       find.byKey(const ValueKey('calendar_event_bar_today-plan')),
     );
-    expect(barRect.left - cellRect.left, closeTo(2.5, 0.1));
-    expect(cellRect.right - barRect.right, closeTo(2.5, 0.1));
+    // Полоса записи упирается в обводку ячейки, какой бы толщины та ни была.
+    final cellDecoration = tester
+        .widget<AnimatedContainer>(
+          find
+              .descendant(
+                of: find.byKey(ValueKey('calendar_day_$todayKey')),
+                matching: find.byType(AnimatedContainer),
+              )
+              .first,
+        )
+        .decoration! as BoxDecoration;
+    final cellBorder = (cellDecoration.border! as Border).top.width;
+    expect(barRect.left - cellRect.left, closeTo(cellBorder, 0.1));
+    expect(cellRect.right - barRect.right, closeTo(cellBorder, 0.1));
     expect(
       tester.widget<Text>(find.text('09:30 План на сегодня')).style?.fontSize,
       7.5,

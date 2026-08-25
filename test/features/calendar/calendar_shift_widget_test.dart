@@ -70,8 +70,16 @@ void main() {
       find.descendant(of: cell, matching: find.byType(AnimatedContainer)).first,
     );
     final todayDecoration = todayContainer.decoration! as BoxDecoration;
-    expect(todayDecoration.border!.top.width, 2.5);
+    // Сегодня отмечено чёрной обводкой, а не заливкой: в день открытия он же и
+    // выбранный, и акцентная заливка съедала бы его собственную примету.
+    expect(todayDecoration.border!.top.width, 3);
+    expect((todayDecoration.border! as Border).top.color, Colors.black);
     expect(todayDecoration.boxShadow, isNotEmpty);
+    // И крупным числом: другой приметы внутри ячейки у него нет.
+    final todayNumber = tester.widget<Text>(
+      find.descendant(of: cell, matching: find.text('${today.day}')),
+    );
+    expect(todayNumber.style?.fontSize, 17);
     expect(
       find.descendant(
         of: cell,

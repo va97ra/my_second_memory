@@ -49,7 +49,7 @@ class CalendarDayHeaderRow extends StatelessWidget {
             Icon(
               Icons.alarm_rounded,
               size: 12.5,
-              color: isSelected || isToday ? colors.onPrimary : foreground,
+              color: isSelected && !isToday ? colors.onPrimary : foreground,
             ),
           ],
           const Spacer(),

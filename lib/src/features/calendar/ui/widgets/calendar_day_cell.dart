@@ -62,6 +62,9 @@ class CalendarDayCell extends StatelessWidget {
             : null,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
+          // Обрезает праздничную ленту по скруглению ячейки: она лежит
+          // вплотную к нижнему краю и без этого вылезла бы за углы.
+          clipBehavior: Clip.antiAlias,
           decoration: _decoration(context, colors, palette),
           child: CalendarDayCellBody(
             date: date,
@@ -88,7 +91,10 @@ class CalendarDayCell extends StatelessWidget {
     final hasShift = shiftSchedules.isNotEmpty && isInVisibleMonth;
 
     return BoxDecoration(
-      gradient: isSelected
+      // Сегодняшний день заливкой не отмечается — только чёрной обводкой и
+      // крупным числом. Иначе он тонет: в день открытия он же и выбранный, и
+      // акцентная заливка съедала его собственную примету.
+      gradient: isSelected && !isToday
           ? palette.accentGradient
           : isInVisibleMonth
               ? palette.surfaceGradient(
@@ -98,14 +104,14 @@ class CalendarDayCell extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       border: Border.all(
         color: isToday
-            ? colors.primary
+            ? Colors.black
             : isSelected
                 ? colors.onSurface
                 : items.isNotEmpty && isInVisibleMonth
                     ? colors.outline
                     : Colors.transparent,
         width: isToday
-            ? 2.5
+            ? 3
             : isSelected
                 ? 2
                 : 1,
@@ -118,10 +124,10 @@ class CalendarDayCell extends StatelessWidget {
     if (isSelected || isToday) {
       return [
         BoxShadow(
-          color: (isToday ? colors.primary : colors.onSurface)
-              .withValues(alpha: isToday ? 0.34 : 0.16),
-          blurRadius: isToday ? 10 : 14,
-          spreadRadius: isToday ? 1 : 0,
+          color: (isToday ? Colors.black : colors.onSurface)
+              .withValues(alpha: isToday ? 0.28 : 0.16),
+          blurRadius: isToday ? 8 : 14,
+          spreadRadius: isToday ? 0 : 0,
           offset: Offset(0, isToday ? 2 : 7),
         ),
       ];
@@ -136,12 +142,6 @@ class CalendarDayCell extends StatelessWidget {
     bool hasShift,
   ) {
     if (hasShift) return colors.surface;
-    if (isToday) {
-      return Color.alphaBlend(
-        colors.primary.withValues(alpha: 0.16),
-        palette.calendarTile,
-      );
-    }
     // Заливка одна и та же независимо от того, есть ли в дне записи: их
     // наличие показывает рамка, а не фон.
     return isInVisibleMonth ? palette.calendarTile : Colors.transparent;
