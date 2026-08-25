@@ -85,10 +85,6 @@ class AppStrings {
   String get syncSignIn => isRu ? 'Войти' : 'Sign in';
   String get syncContinueWithGoogle =>
       isRu ? 'Продолжить с Google' : 'Continue with Google';
-  String get syncOrWithEmail => isRu ? 'или email' : 'or email';
-  String get syncCreateAccount => isRu ? 'Создать аккаунт' : 'Create account';
-  String get syncAccountPassword =>
-      isRu ? 'Пароль аккаунта' : 'Account password';
   String get syncVaultPassword =>
       isRu ? 'Пароль синхронизации' : 'Synchronization password';
   String get syncVaultPasswordHint => isRu
@@ -104,17 +100,6 @@ class AppStrings {
       isRu ? 'Синхронизация включена' : 'Synchronization enabled';
   String get syncInProgress => isRu ? 'Синхронизация…' : 'Synchronizing…';
   String get syncNever => isRu ? 'Ещё не выполнялась' : 'Not synchronized yet';
-  String get syncCheckEmail => isRu
-      ? 'Подтвердите адрес по ссылке в письме, затем войдите.'
-      : 'Confirm the address using the email link, then sign in.';
-  String get syncCheckEmailHint => isRu
-      ? 'Проверьте также папку «Спам». После подтверждения ссылка вернёт вас в приложение.'
-      : 'Also check Spam. After confirmation, the link will return you to the app.';
-  String get syncResendEmail =>
-      isRu ? 'Отправить письмо ещё раз' : 'Send the email again';
-  String get syncEmailResent => isRu
-      ? 'Письмо отправлено повторно.'
-      : 'The confirmation email was sent again.';
   String get syncNewVault => isRu
       ? 'Создайте пароль синхронизации. Он может отличаться от PIN.'
       : 'Create a synchronization password. It may differ from your PIN.';

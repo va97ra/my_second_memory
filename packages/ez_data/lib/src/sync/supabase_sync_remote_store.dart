@@ -20,33 +20,6 @@ class SupabaseSyncRemoteStore implements SyncRemoteStore {
   String? get currentUserEmail => _client.auth.currentUser?.email;
 
   @override
-  Future<SyncAuthResult> signUp(String email, String password) async {
-    final response = await _client.auth.signUp(
-      email: email,
-      password: password,
-      emailRedirectTo: kIsWeb ? null : oauthRedirectUrl,
-    );
-    return SyncAuthResult(
-      hasSession: response.session != null,
-      emailConfirmation: response.session == null,
-    );
-  }
-
-  @override
-  Future<void> resendSignupConfirmation(String email) async {
-    await _client.auth.resend(
-      type: OtpType.signup,
-      email: email,
-      emailRedirectTo: kIsWeb ? null : oauthRedirectUrl,
-    );
-  }
-
-  @override
-  Future<void> signIn(String email, String password) async {
-    await _client.auth.signInWithPassword(email: email, password: password);
-  }
-
-  @override
   Future<bool> signInWithGoogle() {
     return _client.auth.signInWithOAuth(
       OAuthProvider.google,

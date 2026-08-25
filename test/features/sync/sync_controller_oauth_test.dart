@@ -39,33 +39,6 @@ void main() {
     expect(controller.state.vaultExists, isFalse);
   });
 
-  test('email confirmation can be resent without leaving confirmation screen',
-      () async {
-    final remote = _OAuthRemoteStore();
-    final controller = SyncController(
-      remote: remote,
-      keyStore: _EmptyKeyStore(),
-      tombstones: const SyncTombstoneStore(),
-      data: SyncDataSources(
-        readMemoryItems: () async => <MemoryItem>[],
-        replaceMemoryItems: (_) async {},
-      ),
-    );
-    addTearDown(() {
-      controller.dispose();
-      remote.dispose();
-    });
-
-    await controller.load();
-    expect(await controller.register('test@example.com', 'password'), isFalse);
-    expect(controller.state.status, SyncStatus.awaitingEmailConfirmation);
-
-    expect(await controller.resendSignupConfirmation(), isTrue);
-    expect(remote.resendConfirmationCalls, 1);
-    expect(controller.state.status, SyncStatus.awaitingEmailConfirmation);
-    expect(controller.state.confirmationResent, isTrue);
-  });
-
   test('encrypted records wait for PIN unlock before synchronization',
       () async {
     SharedPreferences.setMockInitialValues({});
@@ -235,8 +208,6 @@ class _RecordingTombstoneStore extends SyncTombstoneStore {
 class _OAuthRemoteStore implements SyncRemoteStore {
   final _authChanges = StreamController<void>.broadcast();
   String? _userId;
-  int resendConfirmationCalls = 0;
-
   @override
   String? get currentUserEmail => _userId == null ? null : 'test@example.com';
 
@@ -269,20 +240,7 @@ class _OAuthRemoteStore implements SyncRemoteStore {
   Future<void> createVaultProfile(SyncVaultProfile profile) async {}
 
   @override
-  Future<void> signIn(String email, String password) async {}
-
-  @override
   Future<void> signOut() async => _userId = null;
-
-  @override
-  Future<SyncAuthResult> signUp(String email, String password) async {
-    return const SyncAuthResult(hasSession: false, emailConfirmation: true);
-  }
-
-  @override
-  Future<void> resendSignupConfirmation(String email) async {
-    resendConfirmationCalls++;
-  }
 
   @override
   Stream<void> watchChanges() => const Stream.empty();

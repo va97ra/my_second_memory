@@ -1,11 +1,8 @@
 /// Что не так с тем, что набрали на экране синхронизации.
 ///
-/// Правила отделены от экрана, потому что от них зависит, уйдёт ли пароль в
-/// облако: проверять их запуском экрана — плохая идея.
+/// Правила отделены от экрана, потому что от них зависит, уйдёт ли пароль
+/// хранилища в облако: проверять их запуском экрана — плохая идея.
 enum SyncFormProblem {
-  /// Не похоже на email или пароль короче шести знаков.
-  badCredentials,
-
   /// Пароль хранилища короче восьми знаков.
   shortVaultPassword,
 
@@ -14,16 +11,6 @@ enum SyncFormProblem {
 
   /// Код восстановления не набран.
   emptyRecoveryCode,
-}
-
-SyncFormProblem? validateSyncAccount({
-  required String email,
-  required String password,
-}) {
-  if (!email.contains('@') || password.length < 6) {
-    return SyncFormProblem.badCredentials;
-  }
-  return null;
 }
 
 SyncFormProblem? validateSyncVault({

@@ -72,58 +72,6 @@ class SyncController extends StateNotifier<SyncState> {
     _startAuthListener();
   }
 
-  Future<bool> register(String email, String password) {
-    return _attemptSignIn((remote) async {
-      final result = await remote.signUp(email.trim(), password);
-      if (!result.hasSession) {
-        // Учётная запись создана, но письмо ещё не подтверждено: это не
-        // ошибка, а ожидание, и экран должен показать именно его.
-        state = SyncState(
-          status: SyncStatus.awaitingEmailConfirmation,
-          email: email.trim(),
-        );
-        return false;
-      }
-      await _afterAuthentication();
-      return true;
-    });
-  }
-
-  Future<bool> resendSignupConfirmation() async {
-    final remote = _requireRemote();
-    final email = state.email;
-    if (email == null || email.isEmpty) return false;
-    state = state.copyWith(
-      status: SyncStatus.resendingEmailConfirmation,
-      confirmationResent: false,
-      clearError: true,
-    );
-    try {
-      await remote.resendSignupConfirmation(email);
-      state = state.copyWith(
-        status: SyncStatus.awaitingEmailConfirmation,
-        confirmationResent: true,
-        clearError: true,
-      );
-      return true;
-    } catch (error) {
-      state = state.copyWith(
-        status: SyncStatus.awaitingEmailConfirmation,
-        confirmationResent: false,
-        error: error.toString(),
-      );
-      return false;
-    }
-  }
-
-  Future<bool> signIn(String email, String password) {
-    return _attemptSignIn((remote) async {
-      await remote.signIn(email.trim(), password);
-      await _afterAuthentication();
-      return true;
-    });
-  }
-
   Future<bool> signInWithGoogle() {
     return _attemptSignIn((remote) async {
       final launched = await remote.signInWithGoogle();
@@ -208,11 +156,6 @@ class SyncController extends StateNotifier<SyncState> {
       _setError(error, needsVault: true);
       return false;
     }
-  }
-
-  void returnToSignIn() {
-    if (_remote?.currentUserId != null) return;
-    state = const SyncState(status: SyncStatus.signedOut);
   }
 
   Future<void> syncNow() {

@@ -26,14 +26,6 @@ class SyncVaultProfile {
   final String keyVerifier;
 }
 
-class SyncAuthResult {
-  const SyncAuthResult(
-      {required this.hasSession, this.emailConfirmation = false});
-
-  final bool hasSession;
-  final bool emailConfirmation;
-}
-
 class SyncRemoteEntity {
   const SyncRemoteEntity({
     required this.kind,

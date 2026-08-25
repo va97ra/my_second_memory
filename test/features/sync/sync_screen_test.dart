@@ -89,53 +89,6 @@ void main() {
     expect(controller.googleSignInCalls, 1);
   });
 
-  testWidgets('email confirmation actions stay reachable on a narrow phone',
-      (tester) async {
-    tester.view.physicalSize = const Size(320, 720);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final controller = _TestSyncController(
-      initialState: const SyncState(
-        status: SyncStatus.awaitingEmailConfirmation,
-        email: 'test@example.com',
-      ),
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          syncControllerProvider.overrideWith((ref) => controller),
-        ],
-        child: MaterialApp(
-          locale: const Locale('ru'),
-          supportedLocales: const [Locale('ru'), Locale('en')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: const TextScaler.linear(1.3),
-            ),
-            child: child!,
-          ),
-          home: const SyncScreen(),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('test@example.com'), findsOneWidget);
-    final resend = find.text('Отправить письмо ещё раз');
-    await tester.ensureVisible(resend);
-    await tester.tap(resend);
-    await tester.pump();
-    expect(controller.resendConfirmationCalls, 1);
-    expect(tester.takeException(), isNull);
-  });
-
   testWidgets('connected account exposes a working sign out action',
       (tester) async {
     final controller = _TestSyncController(
@@ -188,18 +141,11 @@ class _TestSyncController extends SyncController {
   }
 
   int googleSignInCalls = 0;
-  int resendConfirmationCalls = 0;
   int signOutCalls = 0;
 
   @override
   Future<bool> signInWithGoogle() async {
     googleSignInCalls++;
-    return true;
-  }
-
-  @override
-  Future<bool> resendSignupConfirmation() async {
-    resendConfirmationCalls++;
     return true;
   }
 

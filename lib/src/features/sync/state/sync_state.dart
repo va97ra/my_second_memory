@@ -5,8 +5,6 @@ enum SyncStatus {
   unconfigured,
   loading,
   signedOut,
-  awaitingEmailConfirmation,
-  resendingEmailConfirmation,
   needsVault,
   ready,
   syncing,
@@ -21,7 +19,6 @@ class SyncState {
     this.lastSyncedAt,
     this.lastResult,
     this.error,
-    this.confirmationResent = false,
     this.recoveryCode,
     this.cipher,
   });
@@ -34,7 +31,6 @@ class SyncState {
   final DateTime? lastSyncedAt;
   final SyncRunResult? lastResult;
   final String? error;
-  final bool confirmationResent;
   final String? recoveryCode;
   final AppCipher? cipher;
 
@@ -48,7 +44,6 @@ class SyncState {
     SyncRunResult? lastResult,
     String? error,
     bool clearError = false,
-    bool? confirmationResent,
     String? recoveryCode,
     bool clearRecoveryCode = false,
     AppCipher? cipher,
@@ -61,7 +56,6 @@ class SyncState {
       lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
       lastResult: lastResult ?? this.lastResult,
       error: clearError ? null : error ?? this.error,
-      confirmationResent: confirmationResent ?? this.confirmationResent,
       recoveryCode:
           clearRecoveryCode ? null : recoveryCode ?? this.recoveryCode,
       cipher: clearCipher ? null : cipher ?? this.cipher,

@@ -9,7 +9,6 @@ import '../state/sync_form_rules.dart';
 import 'sync_form_messages.dart';
 import 'widgets/sync_account_form.dart';
 import 'widgets/sync_connected_card.dart';
-import 'widgets/sync_email_confirmation_card.dart';
 import 'widgets/sync_recovery_code_card.dart';
 import 'widgets/sync_unconfigured_card.dart';
 import 'widgets/sync_vault_form.dart';
@@ -23,20 +22,14 @@ class SyncScreen extends ConsumerStatefulWidget {
 }
 
 class _SyncScreenState extends ConsumerState<SyncScreen> {
-  final _email = TextEditingController();
-  final _accountPassword = TextEditingController();
   final _vaultPassword = TextEditingController();
   final _vaultConfirmation = TextEditingController();
-  bool _registerMode = false;
-  bool _obscureAccountPassword = true;
   bool _obscureVaultPassword = true;
   bool _recoveryMode = false;
   SyncFormProblem? _problem;
 
   @override
   void dispose() {
-    _email.dispose();
-    _accountPassword.dispose();
     _vaultPassword.dispose();
     _vaultConfirmation.dispose();
     super.dispose();
@@ -79,21 +72,6 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
       return const SyncUnconfiguredCard();
     }
 
-    if (state.status == SyncStatus.awaitingEmailConfirmation ||
-        state.status == SyncStatus.resendingEmailConfirmation) {
-      return SyncEmailConfirmationCard(
-        email: state.email,
-        resending: state.status == SyncStatus.resendingEmailConfirmation,
-        resent: state.confirmationResent,
-        errorText: _errorText(strings, state),
-        onResend: controller.resendSignupConfirmation,
-        onBackToSignIn: () {
-          controller.returnToSignIn();
-          setState(() => _registerMode = false);
-        },
-      );
-    }
-
     if (state.status == SyncStatus.needsVault) {
       return SyncVaultForm(
         passwordController: _vaultPassword,
@@ -118,20 +96,8 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
     if (state.isConnected) return _connected(strings, state, controller);
 
     return SyncAccountForm(
-      emailController: _email,
-      passwordController: _accountPassword,
       busy: busy,
-      registerMode: _registerMode,
-      obscurePassword: _obscureAccountPassword,
       errorText: _errorText(strings, state),
-      onToggleObscure: () => setState(
-        () => _obscureAccountPassword = !_obscureAccountPassword,
-      ),
-      onToggleMode: () => setState(() {
-        _registerMode = !_registerMode;
-        _problem = null;
-      }),
-      onSubmit: _submitAccount,
       onGoogle: controller.signInWithGoogle,
     );
   }
@@ -160,22 +126,6 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
         SyncRecoveryCodeCard(code: code),
       ],
     );
-  }
-
-  Future<void> _submitAccount() async {
-    final problem = validateSyncAccount(
-      email: _email.text.trim(),
-      password: _accountPassword.text,
-    );
-    setState(() => _problem = problem);
-    if (problem != null) return;
-
-    final controller = ref.read(syncControllerProvider.notifier);
-    if (_registerMode) {
-      await controller.register(_email.text.trim(), _accountPassword.text);
-    } else {
-      await controller.signIn(_email.text.trim(), _accountPassword.text);
-    }
   }
 
   Future<void> _connectVault(SyncState state) async {

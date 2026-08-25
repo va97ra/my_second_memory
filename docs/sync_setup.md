@@ -9,10 +9,13 @@ payloads, timestamps, deletion markers, and opaque entity identifiers.
 2. Run `supabase/migrations/202608180001_encrypted_sync.sql` in the SQL editor.
    Existing projects created with the first migration must also run
    `supabase/migrations/202608180002_sync_accounts_and_shifts.sql`.
-3. In Authentication, enable email/password sign-in. Decide whether email
-   confirmation is required before distributing the app.
-4. Enable the Google provider with a Google OAuth Web client. Its authorized
-   redirect URI must be the Supabase callback URL shown in the provider form.
+3. In Authentication, enable the Google provider with a Google OAuth Web
+   client. Its authorized redirect URI must be the Supabase callback URL shown
+   in the provider form. Google is the only way into the cloud: the app has no
+   email or password sign-in.
+4. Turn on account linking by verified email address. Accounts created by
+   email before the app dropped that sign-in keep their data only if a Google
+   sign-in with the same address resolves to the same user.
 5. Add the following Supabase Auth redirect URL:
 
 ```text
@@ -36,12 +39,6 @@ application.
 Android registers the callback only for the `sync` flavor. The Windows runner
 forwards callback launches to the existing tray process, and the Inno Setup
 installer registers the custom URI scheme for the current user.
-
-For public email/password registration, configure a custom SMTP provider in
-Authentication > Emails > SMTP Settings. Supabase's built-in mailer is only
-suited to testing, accepts a restricted set of recipient addresses, and has a
-very low send limit. Signup and resend requests use the app callback URL so a
-confirmation link returns to the Sync app.
 
 ## Android distributions
 

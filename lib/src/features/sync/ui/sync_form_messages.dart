@@ -15,9 +15,6 @@ String? syncErrorText(
 
 String _problemText(AppStrings strings, SyncFormProblem problem) {
   return switch (problem) {
-    SyncFormProblem.badCredentials => strings.isRu
-        ? 'Проверьте email и пароль (минимум 6 символов).'
-        : 'Check the email and password (at least 6 characters).',
     SyncFormProblem.shortVaultPassword => strings.isRu
         ? 'Используйте не менее 8 символов.'
         : 'Use at least 8 characters.',

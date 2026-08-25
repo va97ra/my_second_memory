@@ -104,20 +104,10 @@ class SyncRemote implements SyncRemoteStore {
   Future<SyncVaultProfile?> fetchVaultProfile() async => null;
 
   @override
-  Future<void> resendSignupConfirmation(String email) async {}
-
-  @override
-  Future<void> signIn(String email, String password) async {}
-
-  @override
   Future<bool> signInWithGoogle() async => true;
 
   @override
   Future<void> signOut() async {}
-
-  @override
-  Future<SyncAuthResult> signUp(String email, String password) async =>
-      const SyncAuthResult(hasSession: true);
 
   @override
   Stream<void> watchAuthenticatedSession() => const Stream.empty();

@@ -17,7 +17,7 @@ packages/ez_domain/lib/src/calendar/holiday_observance_table.dart     457
 packages/ez_domain/lib/src/calendar/holiday_russian_table.dart        994
    таблицы праздников: официальные, международные дни и праздники России
 
-packages/ez_core/lib/src/localization/app_strings.dart                404
+packages/ez_core/lib/src/localization/app_strings.dart                389
    строки интерфейса
 
 packages/ez_design/lib/src/themes/app_theme.dart                      406
@@ -36,7 +36,7 @@ packages/ez_design/lib/src/components/page_turn/page_turn_frame.dart   297
 lib/src/features/recurrence/state/recurrence_legacy_repair.dart       488
    помеченный ремонт данных прошлых версий
 
-lib/src/features/sync/state/sync_controller_impl.dart                 399
+lib/src/features/sync/state/sync_controller_impl.dart                 342
    одна машина состояний подключения к облаку: загрузка, вход, хранилище,
    прогон. Всё остальное из неё вынуто — набор синхронизируемых данных,
    планировщик и сам прогон живут отдельно, — а фазы машины делят между собой
@@ -68,9 +68,6 @@ packages/ez_data/lib/src/backup/backup_service.dart                   477
    одну и ту же раскладку файлов, и разложить их по разным классам значит
    завести две копии этого знания
 
-lib/src/features/sync/ui/sync_screen.dart                             205
-   пять состояний облака, каждое своим виджетом; сам экран только выбирает,
-   какое показать
 
 lib/src/features/memory_items/ui/widgets/time_reminder_sheet.dart     168
    одна форма: время, напоминание и звук. Разметка вынесена в свой виджет,
