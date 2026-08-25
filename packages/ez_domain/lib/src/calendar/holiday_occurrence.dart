@@ -21,6 +21,12 @@ class HolidayOccurrence {
   final String descriptionEn;
   final HolidayCategory category;
 
+  /// Официальный праздник: государственный, воинский, профессиональный,
+  /// церковный или народный. Только такому положена лента в сетке месяца —
+  /// международных и неофициальных дней слишком много, и лента, зажжённая
+  /// почти каждый день, перестала бы что-либо значить.
+  bool get isOfficial => category != HolidayCategory.observance;
+
   String title(String locale) => locale == 'ru' ? titleRu : titleEn;
   String shortDescription(String locale) => locale == 'ru' ? shortRu : shortEn;
   String description(String locale) =>
@@ -33,7 +39,8 @@ enum HolidayCategory {
   military,
   professional,
   orthodox,
-  folk;
+  folk,
+  observance;
 
   String label(String locale) {
     final isRu = locale == 'ru';
@@ -48,6 +55,8 @@ enum HolidayCategory {
       HolidayCategory.orthodox =>
         isRu ? 'Православный праздник' : 'Orthodox feast',
       HolidayCategory.folk => isRu ? 'Народная традиция' : 'Folk tradition',
+      HolidayCategory.observance =>
+        isRu ? 'Международный день' : 'International observance',
     };
   }
 }

@@ -10,6 +10,7 @@ import '../../../../platform/windows/windows_startup_controller.dart';
 import '../../../calendar/calendar.dart';
 import 'content_font_picker_sheet.dart';
 import 'settings_section.dart';
+import 'settings_switch_tile.dart';
 import 'settings_tile.dart';
 import 'theme_picker_sheet.dart';
 import 'windows_startup_tile.dart';
@@ -64,27 +65,31 @@ class AppSettingsSection extends ConsumerWidget {
           trailing: const Icon(Icons.chevron_right_rounded),
           onTap: () => _pickFont(context, ref, contentFont, isRu),
         ),
-        SettingsTile(
+        SettingsSwitchTile(
           icon: Icons.tips_and_updates_rounded,
           title: isRu ? 'Показывать подсказки' : 'Show hints',
           subtitle: isRu
               ? 'Подсказки для новых пользователей'
               : 'Hints for new users',
-          trailing: Switch(
-            value: ref.watch(appHintsProvider),
-            onChanged: ref.read(appHintsProvider.notifier).setEnabled,
-          ),
+          setting: appHintsProvider,
         ),
-        SettingsTile(
+        SettingsSwitchTile(
           icon: Icons.celebration_rounded,
           title: isRu ? 'Показывать праздники' : 'Show holidays',
           subtitle: isRu
               ? 'Праздники в календаре и экране дня'
               : 'Holidays in the calendar and day view',
-          trailing: Switch(
-            value: ref.watch(appHolidaysProvider),
-            onChanged: ref.read(appHolidaysProvider.notifier).setEnabled,
-          ),
+          setting: appHolidaysProvider,
+        ),
+        SettingsSwitchTile(
+          icon: Icons.public_rounded,
+          title: isRu ? 'Международные дни' : 'International observances',
+          subtitle: isRu
+              ? 'Только на экране дня: в сетке месяца их не отмечают'
+              : 'On the day view only: the month grid does not mark them',
+          setting: appObservancesProvider,
+          // Без праздников этот слой некуда показывать: он лежит поверх них.
+          enabled: ref.watch(appHolidaysProvider),
         ),
         if (windowsPlatform.isSupported)
           WindowsStartupTile(

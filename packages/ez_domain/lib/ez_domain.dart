@@ -7,6 +7,8 @@ library;
 
 export 'src/accounts/account_item.dart';
 export 'src/calendar/holiday_calendar_service.dart';
+export 'src/calendar/holiday_definition.dart';
+export 'src/calendar/holiday_observance_table.dart';
 export 'src/calendar/holiday_occurrence.dart';
 export 'src/feed/feed_rules.dart';
 export 'src/memory/memory_item.dart';

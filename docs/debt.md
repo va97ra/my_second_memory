@@ -12,8 +12,9 @@
 [`architecture.md`](architecture.md), раздел «Размерные потолки».
 
 ```text
-packages/ez_domain/lib/src/calendar/holiday_fixed_table.dart          757
-   таблица праздников
+packages/ez_domain/lib/src/calendar/holiday_fixed_table.dart          659
+packages/ez_domain/lib/src/calendar/holiday_observance_table.dart     449
+   таблицы праздников: официальные и международные дни
 
 packages/ez_core/lib/src/localization/app_strings.dart                404
    строки интерфейса

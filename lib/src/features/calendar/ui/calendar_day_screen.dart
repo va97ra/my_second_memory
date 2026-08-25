@@ -8,7 +8,6 @@ import '../../../navigation/page_turn_navigation.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../memory_items/memory_items.dart';
 import '../../shift_schedules/shift_schedules.dart';
-import '../state/calendar_preferences_controller.dart';
 import '../state/holiday_providers.dart';
 import 'widgets/add_record_bar.dart';
 import 'widgets/day_records_list.dart';
@@ -31,9 +30,7 @@ class CalendarDayScreen extends ConsumerWidget {
         .watch(shiftSchedulesControllerProvider)
         .where((schedule) => schedule.isWorkday(date))
         .toList();
-    final holidays = ref.watch(appHolidaysProvider)
-        ? ref.watch(holidayCalendarServiceProvider).holidaysForDate(date)
-        : const <HolidayOccurrence>[];
+    final holidays = ref.watch(holidaysForDayProvider(date));
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

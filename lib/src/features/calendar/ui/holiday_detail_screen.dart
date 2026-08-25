@@ -4,8 +4,6 @@ import 'package:intl/intl.dart';
 
 import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import 'package:ez_domain/ez_domain.dart';
-import '../state/calendar_preferences_controller.dart';
 import '../state/holiday_providers.dart';
 
 class HolidayDetailScreen extends ConsumerWidget {
@@ -17,9 +15,7 @@ class HolidayDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = Localizations.localeOf(context).languageCode;
     final isRu = locale == 'ru';
-    final holidays = ref.watch(appHolidaysProvider)
-        ? ref.watch(holidayCalendarServiceProvider).holidaysForDate(date)
-        : const <HolidayOccurrence>[];
+    final holidays = ref.watch(holidaysForDayProvider(date));
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppPageAppBar(
