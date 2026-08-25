@@ -125,11 +125,25 @@ flutter test <затронутые тесты>
 Перед завершением крупной задачи:
 
 ```powershell
+flutter clean
 flutter test
 flutter build web --release
 flutter build windows --release
 flutter build apk --release --flavor simple
 flutter build apk --release --flavor sync
+```
+
+`flutter clean` здесь не перестраховка. Gradle умеет считать свою задачу
+актуальной и собрать APK со старым скомпилированным Dart: файлы свежие, время
+сборки свежее, а внутри код прошлой версии. Так уже уехала сборка, в которой
+не было ни одной из дневных правок.
+
+Готовый артефакт проверяется по содержимому, а не по времени файла. Строку,
+которой раньше не было, ищут внутри `lib/arm64-v8a/libapp.so` — Dart хранит
+кириллицу в UTF-16:
+
+```powershell
+python -c "import io;d=io.open('libapp.so','rb').read();print('Новая строка'.encode('utf-16-le') in d)"
 ```
 
 Рефакторить небольшими этапами: сначала сохранить поведение тестами, затем
