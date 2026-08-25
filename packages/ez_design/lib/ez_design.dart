@@ -16,11 +16,13 @@ export 'src/components/notebook_icon_button.dart';
 export 'src/components/notebook_page_header.dart';
 export 'src/components/notebook_pressable.dart';
 export 'src/components/page_swipe_area.dart';
+export 'src/components/page_turn/page_turn_branch_navigation_scope.dart';
+export 'src/components/page_turn/page_turn_coordinator.dart';
 export 'src/components/page_turn/page_turn_frame.dart';
-export 'src/components/torn_paper_shape_border.dart';
-export 'src/components/warm_gradient_background.dart';
 export 'src/components/page_turn/page_turn_geometry.dart'
     show PageTurnGeometry, PageTurnGeometryPoint;
+export 'src/components/torn_paper_shape_border.dart';
+export 'src/components/warm_gradient_background.dart';
 export 'src/themes/app_theme.dart';
 export 'src/themes/app_theme_style.dart';
 export 'src/themes/notebook/notebook_assets.dart';

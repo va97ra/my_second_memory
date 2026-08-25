@@ -6,42 +6,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import 'opaque_snapshot.dart';
+import 'page_turn_coordinator.dart';
+import 'paper_texture_cache.dart';
 import 'page_turn_painter.dart';
 
 enum PageTurnDirection { forward, backward }
-
-class PageTurnCoordinator extends ChangeNotifier {
-  Object? _owner;
-
-  bool get isBusy => _owner != null;
-
-  bool tryAcquire(Object owner) {
-    if (_owner != null) return false;
-    _owner = owner;
-    notifyListeners();
-    return true;
-  }
-
-  void release(Object owner) {
-    if (!identical(_owner, owner)) return;
-    _owner = null;
-    notifyListeners();
-  }
-}
-
-class PageTurnCoordinatorScope extends InheritedNotifier<PageTurnCoordinator> {
-  const PageTurnCoordinatorScope({
-    required PageTurnCoordinator coordinator,
-    required super.child,
-    super.key,
-  }) : super(notifier: coordinator);
-
-  static PageTurnCoordinator? maybeOf(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<PageTurnCoordinatorScope>()
-        ?.notifier;
-  }
-}
 
 /// Captures a complete, opaque page and animates it as a sheet bound at the
 /// left edge. The child remains live underneath the frozen sheet.
@@ -70,9 +40,7 @@ class PageTurnFrameState extends State<PageTurnFrame>
 
   ui.Image? _sourceSnapshot;
   ui.Image? _targetSnapshot;
-  ui.Image? _paperTexture;
-  Future<ui.Image?>? _paperTextureLoad;
-  String? _paperTextureAsset;
+  final PaperTextureCache _paperTexture = PaperTextureCache();
   PageTurnDirection _direction = PageTurnDirection.forward;
   PagePaperStyle? _paperStyle;
   bool _isTurning = false;
@@ -94,12 +62,8 @@ class PageTurnFrameState extends State<PageTurnFrame>
   void didChangeDependencies() {
     super.didChangeDependencies();
     final asset = PagePaperStyle.of(context).textureAsset;
-    if (asset == _paperTextureAsset) return;
-    _paperTexture?.dispose();
-    _paperTexture = null;
-    _paperTextureLoad = null;
-    _paperTextureAsset = asset;
-    if (asset != null) unawaited(_loadPaperTexture(asset));
+    if (!_paperTexture.changeAsset(asset)) return;
+    if (asset != null) unawaited(_paperTexture.load(context, asset));
   }
 
   @override
@@ -108,7 +72,7 @@ class PageTurnFrameState extends State<PageTurnFrame>
     _controller.dispose();
     _sourceSnapshot?.dispose();
     _targetSnapshot?.dispose();
-    _paperTexture?.dispose();
+    _paperTexture.dispose();
     super.dispose();
   }
 
@@ -147,7 +111,7 @@ class PageTurnFrameState extends State<PageTurnFrame>
     }
 
     final paperStyle = PagePaperStyle.of(context);
-    unawaited(_loadPaperTexture(paperStyle.textureAsset));
+    unawaited(_paperTexture.load(context, paperStyle.textureAsset));
     _disposeTurnSnapshots();
     setState(() {
       _sourceSnapshot = source;
@@ -214,46 +178,6 @@ class PageTurnFrameState extends State<PageTurnFrame>
     } catch (_) {
       return null;
     }
-  }
-
-  Future<ui.Image?> _loadPaperTexture(String? asset) {
-    if (asset == null) return SynchronousFuture(null);
-    if (_paperTexture != null && _paperTextureAsset == asset) {
-      return SynchronousFuture(_paperTexture);
-    }
-    if (_paperTextureLoad != null && _paperTextureAsset == asset) {
-      return _paperTextureLoad!;
-    }
-
-    _paperTextureAsset = asset;
-    final completer = Completer<ui.Image?>();
-    final stream = AssetImage(asset).resolve(
-      createLocalImageConfiguration(context),
-    );
-    late ImageStreamListener listener;
-    listener = ImageStreamListener(
-      (info, _) {
-        stream.removeListener(listener);
-        final image = info.image.clone();
-        if (!mounted || _paperTextureAsset != asset) {
-          image.dispose();
-          if (!completer.isCompleted) completer.complete(null);
-          return;
-        }
-        _paperTexture?.dispose();
-        _paperTexture = image;
-        if (!completer.isCompleted) completer.complete(image);
-      },
-      onError: (_, __) {
-        stream.removeListener(listener);
-        if (!completer.isCompleted) completer.complete(null);
-      },
-    );
-    stream.addListener(listener);
-    _paperTextureLoad = completer.future.whenComplete(() {
-      if (_paperTextureAsset == asset) _paperTextureLoad = null;
-    });
-    return _paperTextureLoad!;
   }
 
   void _finishTurn() {
@@ -323,13 +247,13 @@ class PageTurnFrameState extends State<PageTurnFrame>
       return Stack(
         fit: StackFit.expand,
         children: [
-          _OpaqueSnapshot(image: source, fallback: style.frontFallback),
+          OpaqueSnapshot(image: source, fallback: style.frontFallback),
           if (!_preparingBackward && target != null)
             CustomPaint(
               key: const ValueKey('app_page_turn_overlay'),
               painter: PageTurnPainter(
                 image: target,
-                paperTexture: _paperTexture,
+                paperTexture: _paperTexture.image,
                 animation: _controller,
                 reverseProgress: true,
                 paperStyle: style,
@@ -343,7 +267,7 @@ class PageTurnFrameState extends State<PageTurnFrame>
       key: const ValueKey('app_page_turn_overlay'),
       painter: PageTurnPainter(
         image: source,
-        paperTexture: _paperTexture,
+        paperTexture: _paperTexture.image,
         animation: _controller,
         paperStyle: style,
       ),
@@ -351,25 +275,7 @@ class PageTurnFrameState extends State<PageTurnFrame>
   }
 }
 
-class _OpaqueSnapshot extends StatelessWidget {
-  const _OpaqueSnapshot({required this.image, required this.fallback});
-
-  final ui.Image image;
-  final Color fallback;
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: fallback,
-      child: RawImage(
-        image: image,
-        fit: BoxFit.fill,
-        filterQuality: FilterQuality.medium,
-      ),
-    );
-  }
-}
-
+/// Доступ к рамке перелистывания для тех, кто под ней.
 class PageTurnNavigationScope extends InheritedWidget {
   const PageTurnNavigationScope({
     required this.frameState,
@@ -388,23 +294,4 @@ class PageTurnNavigationScope extends InheritedWidget {
   @override
   bool updateShouldNotify(PageTurnNavigationScope oldWidget) =>
       oldWidget.frameState != frameState;
-}
-
-class PageTurnBranchNavigationScope extends InheritedWidget {
-  const PageTurnBranchNavigationScope({
-    required this.onGo,
-    required super.child,
-    super.key,
-  });
-
-  final Future<bool> Function(String location) onGo;
-
-  static PageTurnBranchNavigationScope? maybeOf(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<PageTurnBranchNavigationScope>();
-  }
-
-  @override
-  bool updateShouldNotify(PageTurnBranchNavigationScope oldWidget) =>
-      oldWidget.onGo != onGo;
 }

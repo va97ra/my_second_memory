@@ -25,6 +25,12 @@ packages/ez_design/lib/src/themes/notebook/notebook_theme.dart        404
 packages/ez_design/lib/src/components/page_turn/page_turn_painter.dart 476
    один painter и его геометрия
 
+packages/ez_design/lib/src/components/page_turn/page_turn_frame.dart   297
+   одна машина состояний переворота: занять очередь, снять страницу,
+   проиграть, отпустить. Её шаги делят между собой снимки и время жизни
+   анимации. Загрузка текстуры бумаги, непрозрачный снимок, очередь и оба
+   InheritedWidget из неё вынуты
+
 lib/src/features/recurrence/state/recurrence_legacy_repair.dart       488
    помеченный ремонт данных прошлых версий
 
@@ -67,15 +73,6 @@ lib/src/features/sync/ui/sync_screen.dart                             205
 lib/src/features/memory_items/ui/widgets/time_reminder_sheet.dart     168
    одна форма: время, напоминание и звук. Разметка вынесена в свой виджет,
    осталось состояние и три обращения к системе
-```
-
-## Ещё не разобрано
-
-```text
-packages/ez_design/lib/src/components/page_turn/page_turn_frame.dart  410
-   рамка перелистывания: и состояние анимации, и снимки страниц, и жест.
-   Похоже на настоящую смесь, но проверить её нечем, кроме запуска на
-   устройстве
 ```
 
 ## Прочее
