@@ -3,7 +3,8 @@ enum SyncEntityKind {
   shiftSchedule('shift_schedule'),
   account('account'),
   recurrenceSeries('recurrence_series'),
-  recurrenceException('recurrence_exception');
+  recurrenceException('recurrence_exception'),
+  financeEntry('finance_entry');
 
   const SyncEntityKind(this.storageName);
 

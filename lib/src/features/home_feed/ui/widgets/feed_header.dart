@@ -13,7 +13,6 @@ class FeedHeader extends StatelessWidget {
     required this.periodLabel,
     required this.filter,
     required this.showHelp,
-    required this.alignToRuling,
     required this.onGoToToday,
     required this.onFilterSelected,
     required this.onPickDate,
@@ -22,14 +21,10 @@ class FeedHeader extends StatelessWidget {
     required this.onShowHelp,
   });
 
-  /// Лист блокнота начинается на столько ниже верха разлинованного фона.
-  static const double sheetTopInset = 3;
-
   final String title;
   final String? periodLabel;
   final FeedFilter filter;
   final bool showHelp;
-  final bool alignToRuling;
 
   /// Null, когда на экране уже сегодняшняя страница.
   final VoidCallback? onGoToToday;
@@ -47,8 +42,6 @@ class FeedHeader extends StatelessWidget {
 
     return NotebookPageHeader(
       cardKey: const ValueKey('feed_header_card'),
-      alignToRuling: alignToRuling,
-      sheetTopInset: sheetTopInset,
       bands: [
         NotebookHeaderBand(
           child: Row(

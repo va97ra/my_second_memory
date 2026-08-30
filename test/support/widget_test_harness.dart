@@ -62,6 +62,9 @@ class TestLocalStorageScope implements LocalStorageScope {
       const LocalRecurrenceExceptionRepository();
 
   @override
+  final financeRepository = const LocalFinanceRepository();
+
+  @override
   SecureEntityBackend? get secureEntityBackend => null;
 
   @override

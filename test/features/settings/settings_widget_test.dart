@@ -32,7 +32,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Настройки'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Графики смен'));
+    final shiftSchedules = find.text('Графики смен');
+    await tester.ensureVisible(shiftSchedules);
+    await tester.pumpAndSettle();
+    await tester.tap(shiftSchedules);
     await tester.pumpAndSettle();
 
     expect(find.text('Графики смен'), findsWidgets);
@@ -213,7 +216,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Настройки'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Резервная копия'));
+    final backup = find.text('Резервная копия');
+    await tester.ensureVisible(backup);
+    await tester.pumpAndSettle();
+    await tester.tap(backup);
     await tester.pumpAndSettle();
 
     expect(find.text('Сохранить резервную копию'), findsOneWidget);

@@ -6,9 +6,9 @@ payloads, timestamps, deletion markers, and opaque entity identifiers.
 ## Supabase project
 
 1. Create a Supabase project.
-2. Run `supabase/migrations/202608180001_encrypted_sync.sql` in the SQL editor.
-   Existing projects created with the first migration must also run
-   `supabase/migrations/202608180002_sync_accounts_and_shifts.sql`.
+2. Run every SQL file from `supabase/migrations` in filename order. Existing
+   projects must also apply newly added migrations; the finance migration is
+   what allows encrypted `finance_entry` rows and their deletion tombstones.
 3. In Authentication, enable the Google provider with a Google OAuth Web
    client. Its authorized redirect URI must be the Supabase callback URL shown
    in the provider form. Google is the only way into the cloud: the app has no
@@ -40,24 +40,16 @@ Android registers the callback only for the `sync` flavor. The Windows runner
 forwards callback launches to the existing tray process, and the Inno Setup
 installer registers the custom URI scheme for the current user.
 
-## Android distributions
+## Android distribution
 
-Android has two independently installable distributions:
-
-- `simple` — `com.va97ra.ezhednevnikv2.simple`, without cloud synchronization;
-- `sync` — `com.va97ra.ezhednevnikv2`, with encrypted synchronization and the
-  application ID used by the main RuStore edition.
-
-The normal Android default is `simple`. Release artifacts can be built with:
+RuStore uses the `sync` flavor (`com.va97ra.ezhednevnikv2`) with encrypted
+synchronization. The former `simple` edition is no longer a release target.
+Release artifacts are built with:
 
 ```powershell
-flutter build apk --release --flavor simple
 flutter build apk --release --flavor sync
 flutter build appbundle --release --flavor sync
 ```
-
-Because the package identifiers differ, Android keeps separate local app data
-for the two distributions and allows them to be installed side by side.
 
 ## Security model
 

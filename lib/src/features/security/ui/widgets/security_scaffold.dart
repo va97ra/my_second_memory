@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Экран, закрывающий приложение до разблокировки.
@@ -14,31 +15,19 @@ class SecurityScaffold extends StatefulWidget {
 }
 
 class _SecurityScaffoldState extends State<SecurityScaffold> {
-  late final OverlayEntry _entry = OverlayEntry(builder: _buildScaffold);
-
-  @override
-  void didUpdateWidget(covariant SecurityScaffold oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _entry.markNeedsBuild();
-  }
-
-  @override
-  void dispose() {
-    if (_entry.mounted) {
-      _entry.remove();
-    }
-    super.dispose();
-  }
-
   Widget _buildScaffold(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 390),
-              child: widget.child,
+    // Замок стоит выше оболочки, а бумагу рисует она. Здесь фон свой, иначе
+    // экран с PIN остался бы на пустом цвете темы.
+    return AppBackground(
+      child: Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 390),
+                child: widget.child,
+              ),
             ),
           ),
         ),
@@ -48,6 +37,6 @@ class _SecurityScaffoldState extends State<SecurityScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return Overlay(initialEntries: [_entry]);
+    return OverlayHost(child: Builder(builder: _buildScaffold));
   }
 }

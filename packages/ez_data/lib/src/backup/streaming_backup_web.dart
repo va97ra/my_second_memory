@@ -11,6 +11,7 @@ Future<String?> createStreamingBackup({
   required List<AccountItem> accounts,
   required List<RecurrenceSeries> recurrenceSeries,
   required List<RecurrenceOccurrenceException> recurrenceExceptions,
+  required List<FinanceEntry> financeEntries,
   String? temporaryRoot,
 }) async =>
     null;

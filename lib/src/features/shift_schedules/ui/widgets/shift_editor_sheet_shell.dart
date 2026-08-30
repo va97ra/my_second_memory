@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Оболочка нижнего листа редактора: поднимается над клавиатурой, не выше
@@ -9,8 +10,7 @@ class ShiftEditorSheetShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+    return KeyboardInsetPadding(
       child: Align(
         alignment: Alignment.bottomCenter,
         child: ConstrainedBox(

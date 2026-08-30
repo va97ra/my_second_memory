@@ -6,8 +6,12 @@
 library;
 
 export 'src/components/empty_state.dart';
+export 'src/components/keyboard_inset_padding.dart';
 export 'src/components/labeled_divider.dart';
 export 'src/components/nav_bar/app_nav_bar.dart';
+export 'src/components/nav_bar/app_navigation_panel.dart';
+export 'src/components/nav_bar/app_navigation_items.dart';
+export 'src/components/nav_bar/app_tool_bar.dart';
 export 'src/components/nav_bar/nav_bar_item.dart';
 export 'src/components/nav_bar/nav_bar_metrics.dart';
 export 'src/components/nav_bar/nav_bar_style.dart';
@@ -15,8 +19,8 @@ export 'src/components/notebook_action_button.dart';
 export 'src/components/notebook_icon_button.dart';
 export 'src/components/notebook_page_header.dart';
 export 'src/components/notebook_pressable.dart';
+export 'src/components/overlay_host.dart';
 export 'src/components/page_swipe_area.dart';
-export 'src/components/page_turn/page_turn_branch_navigation_scope.dart';
 export 'src/components/page_turn/page_turn_coordinator.dart';
 export 'src/components/page_turn/page_turn_frame.dart';
 export 'src/components/page_turn/page_turn_geometry.dart'

@@ -45,6 +45,91 @@ class AppStrings {
   String get dayBeforeYesterdaySection =>
       isRu ? 'Это было позавчера' : 'This was two days ago';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
+  String get calculator => isRu ? 'Калькулятор' : 'Calculator';
+  String get toolPlaceholder => '?';
+  String get calculatorStandard => isRu ? 'Обычный' : 'Standard';
+  String get calculatorScientific => isRu ? 'Инженерный' : 'Scientific';
+  String get calculatorCopyResult =>
+      isRu ? 'Копировать результат' : 'Copy result';
+  String get calculatorIncomplete => '';
+  String calculatorError(String code) => switch (code) {
+        'divisionByZero' => isRu ? 'Деление на ноль' : 'Cannot divide by zero',
+        'domain' => isRu ? 'Недопустимое значение' : 'Invalid value',
+        'factorialTooLarge' =>
+          isRu ? 'Слишком большой факториал' : 'Factorial is too large',
+        _ => isRu ? 'Ошибка в выражении' : 'Invalid expression',
+      };
+  String get finance => isRu ? 'Финансы' : 'Finances';
+  String get incomeAndExpenses =>
+      isRu ? 'Доходы и расходы' : 'Income and expenses';
+  String get income => isRu ? 'Доход' : 'Income';
+  String get expenses => isRu ? 'Расходы' : 'Expenses';
+  String get expense => isRu ? 'Расход' : 'Expense';
+  String get balance => isRu ? 'Остаток' : 'Balance';
+  String get currency => isRu ? 'Валюта' : 'Currency';
+  String get amount => isRu ? 'Сумма' : 'Amount';
+  String get category => isRu ? 'Категория' : 'Category';
+  String get financeDescription => isRu ? 'Описание' : 'Description';
+  String get operationDate => isRu ? 'Дата операции' : 'Operation date';
+  String get editOperation => isRu ? 'Изменить операцию' : 'Edit operation';
+  String get addIncome => isRu ? 'Добавить доход' : 'Add income';
+  String get addExpense => isRu ? 'Добавить расход' : 'Add expense';
+  String get noFinanceEntries =>
+      isRu ? 'За этот месяц операций нет' : 'No operations this month';
+  String get deleteOperationQuestion =>
+      isRu ? 'Удалить эту операцию?' : 'Delete this operation?';
+  List<String> get defaultIncomeCategories => isRu
+      ? const [
+          'Зарплата',
+          'Аванс',
+          'Подработка',
+          'Начальный остаток',
+          'Подарок',
+          'Возврат',
+          'Продажа',
+          'Проценты',
+          'Другое'
+        ]
+      : const [
+          'Salary',
+          'Advance',
+          'Side job',
+          'Opening balance',
+          'Gift',
+          'Refund',
+          'Sale',
+          'Interest',
+          'Other'
+        ];
+  List<String> get defaultExpenseCategories => isRu
+      ? const [
+          'Продукты',
+          'Жильё',
+          'Транспорт',
+          'Здоровье',
+          'Связь и интернет',
+          'Одежда',
+          'Образование',
+          'Развлечения',
+          'Подписки',
+          'Подарки',
+          'Налоги',
+          'Другое'
+        ]
+      : const [
+          'Groceries',
+          'Housing',
+          'Transport',
+          'Health',
+          'Phone and internet',
+          'Clothing',
+          'Education',
+          'Entertainment',
+          'Subscriptions',
+          'Gifts',
+          'Taxes',
+          'Other'
+        ];
   String get calendarTapHint => isRu
       ? 'Нажмите на число, чтобы открыть день. Свайп вбок — месяц, вверх или вниз — год.'
       : 'Tap a date to open the day. Swipe sideways for months, up or down for years.';
@@ -303,6 +388,7 @@ class AppStrings {
       isRu ? 'Будильник $number' : 'Alarm $number';
   String get nextDayShiftAlarm =>
       isRu ? 'Будильник 2 · после смены' : 'Alarm 2 · after shift';
+
   /// Время будильника, который звонит на следующий день после смены.
   String nextDayAlarmAt(String time) => isRu ? '+1 д. $time' : '+1 d. $time';
   String get shiftAlarm => isRu ? 'Будильник смены' : 'Shift alarm';

@@ -45,7 +45,11 @@ class NotebookLeatherSurface extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: notebook == null ? color : null,
+        // The opaque fallback belongs to the same paint layer as the asset.
+        // Keeping it in a separate widget lets the compositor expose whatever
+        // sits under the texture for one frame while the image layer is being
+        // reallocated (most visibly during shell navigation).
+        color: color,
         image: DecorationImage(
           image: AssetImage(
             notebook == null ? textures!.accentAsset : notebook.leatherAsset,

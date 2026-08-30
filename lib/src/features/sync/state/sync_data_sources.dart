@@ -26,6 +26,10 @@ class SyncDataSources {
       List<RecurrenceOccurrenceException>,
       List<RecurrenceOccurrenceException>,
     )? mergeRecurrenceExceptions,
+    Future<List<FinanceEntry>> Function()? readFinanceEntries,
+    Future<void> Function(List<FinanceEntry>)? replaceFinanceEntries,
+    Future<void> Function(List<FinanceEntry>, List<FinanceEntry>)?
+        mergeFinanceEntries,
   })  :
         // Слияние знает, с чем сравнивать, а замена — нет. Там, где слияния не
         // дали, приходящее просто заменяет то, что лежало.
@@ -45,7 +49,11 @@ class SyncDataSources {
             ((items, _) =>
                 (replaceRecurrenceExceptions ?? _ignoreRecurrenceExceptions)(
                   items,
-                ));
+                )),
+        readFinanceEntries = readFinanceEntries ?? _noFinanceEntries,
+        mergeFinanceEntries = mergeFinanceEntries ??
+            ((entries, _) =>
+                (replaceFinanceEntries ?? _ignoreFinanceEntries)(entries));
 
   final Future<List<MemoryItem>> Function() readMemoryItems;
   final Future<void> Function(List<MemoryItem>, List<MemoryItem>)
@@ -63,6 +71,9 @@ class SyncDataSources {
     List<RecurrenceOccurrenceException>,
     List<RecurrenceOccurrenceException>,
   ) mergeRecurrenceExceptions;
+  final Future<List<FinanceEntry>> Function() readFinanceEntries;
+  final Future<void> Function(List<FinanceEntry>, List<FinanceEntry>)
+      mergeFinanceEntries;
 }
 
 Future<List<ShiftSchedule>> _noShiftSchedules() async => const [];
@@ -83,3 +94,7 @@ Future<List<RecurrenceOccurrenceException>> _noRecurrenceExceptions() async =>
 Future<void> _ignoreRecurrenceExceptions(
   List<RecurrenceOccurrenceException> _,
 ) async {}
+
+Future<List<FinanceEntry>> _noFinanceEntries() async => const [];
+
+Future<void> _ignoreFinanceEntries(List<FinanceEntry> _) async {}

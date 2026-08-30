@@ -138,12 +138,6 @@ extension PageTurnNavigationBuildContext on BuildContext {
     Object? extra,
     PageTurnDirection direction = PageTurnDirection.forward,
   }) async {
-    final branchScope = PageTurnBranchNavigationScope.maybeOf(this);
-    if (extra == null && branchScope != null) {
-      final handled = await branchScope.onGo(location);
-      if (handled) return;
-    }
-
     final backController = _PageTurnBackMarker.maybeOf(this);
     await backController?.prepareForRouteReplacement();
     if (!mounted) return;

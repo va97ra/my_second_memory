@@ -27,6 +27,7 @@ class SyncRunner {
     final accounts = await data.readAccounts();
     final recurrenceSeries = await data.readRecurrenceSeries();
     final recurrenceExceptions = await data.readRecurrenceExceptions();
+    final financeEntries = await data.readFinanceEntries();
 
     return AppSyncEngine(
       remote: remote,
@@ -45,6 +46,9 @@ class SyncRunner {
       recurrenceExceptions: recurrenceExceptions,
       replaceRecurrenceExceptions: (items) =>
           data.mergeRecurrenceExceptions(items, recurrenceExceptions),
+      financeEntries: financeEntries,
+      replaceFinanceEntries: (entries) =>
+          data.mergeFinanceEntries(entries, financeEntries),
     );
   }
 }

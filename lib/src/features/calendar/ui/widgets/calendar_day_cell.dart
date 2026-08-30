@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'calendar_cell_border_painter.dart';
 import 'calendar_day_cell_body.dart';
+import 'calendar_day_cell_surface.dart';
 
 /// Ячейка дня в сетке месяца: её фон, рамка и содержимое.
 class CalendarDayCell extends StatelessWidget {
@@ -54,10 +55,10 @@ class CalendarDayCell extends StatelessWidget {
         : shiftSchedules.isEmpty
             ? colors.onSurface
             : readableInkOn(Color(shiftSchedules.first.colorValue));
-    // Обычный день соседнего месяца обходится нарисованной рамкой: она дешевле
-    // и не спорит с рамками выбранного дня и сегодня.
-    final usesGradientBorder =
-        isInVisibleMonth && !isSelected && !isToday && items.isEmpty;
+    // Обычный день обходится нарисованной рамкой: она дешевле и не спорит с
+    // рамкой выбранного дня. Сегодня — такой же обычный день: его примета
+    // теперь заливка, а не собственная обводка.
+    final usesGradientBorder = isInVisibleMonth && !isSelected && items.isEmpty;
 
     return InkWell(
       borderRadius: BorderRadius.circular(cornerRadius),
@@ -75,7 +76,12 @@ class CalendarDayCell extends StatelessWidget {
           // Обрезает праздничную ленту по скруглению ячейки: она лежит
           // вплотную к нижнему краю и без этого вылезла бы за углы.
           clipBehavior: Clip.antiAlias,
-          decoration: _decoration(context, colors, palette),
+          decoration: CalendarDayCellSurface(
+            isInVisibleMonth: isInVisibleMonth,
+            isSelected: isSelected,
+            isToday: isToday,
+            hasItems: items.isNotEmpty,
+          ).decoration(context, colors, palette),
           child: CalendarDayCellBody(
             date: date,
             locale: locale,
@@ -91,59 +97,5 @@ class CalendarDayCell extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  BoxDecoration _decoration(
-    BuildContext context,
-    ColorScheme colors,
-    AppSurfacePalette palette,
-  ) {
-    return BoxDecoration(
-      // Сегодняшний день заливкой не отмечается — только чёрной обводкой и
-      // крупным числом. Иначе он тонет: в день открытия он же и выбранный, и
-      // акцентная заливка съедала его собственную примету.
-      gradient: isSelected && !isToday
-          ? palette.accentGradient
-          : isInVisibleMonth
-              ? palette.surfaceGradient(base: _cellColor(palette))
-              : null,
-      borderRadius: BorderRadius.circular(cornerRadius),
-      border: Border.all(
-        color: isToday
-            ? Colors.black
-            : isSelected
-                ? colors.onSurface
-                : items.isNotEmpty && isInVisibleMonth
-                    ? colors.outline
-                    : Colors.transparent,
-        width: isToday
-            ? 3
-            : isSelected
-                ? 2
-                : 1,
-      ),
-      boxShadow: _shadow(context, colors),
-    );
-  }
-
-  List<BoxShadow>? _shadow(BuildContext context, ColorScheme colors) {
-    if (isSelected || isToday) {
-      return [
-        BoxShadow(
-          color: (isToday ? Colors.black : colors.onSurface)
-              .withValues(alpha: isToday ? 0.28 : 0.16),
-          blurRadius: isToday ? 8 : 14,
-          offset: Offset(0, isToday ? 2 : 7),
-        ),
-      ];
-    }
-    if (NotebookVisuals.maybeOf(context) == null) return null;
-    return notebookSurfaceShadow(context, NotebookSurfaceDepth.tile);
-  }
-
-  /// Заливка одна и та же и для дня с записями, и для дня со сменой: записи
-  /// показывает рамка, смену — полоса сверху, а бумага под ними одна.
-  Color _cellColor(AppSurfacePalette palette) {
-    return isInVisibleMonth ? palette.calendarTile : Colors.transparent;
   }
 }

@@ -5,6 +5,7 @@ import '../../accounts/accounts.dart';
 import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
 import '../../shift_schedules/shift_schedules.dart';
+import '../../finance/finance.dart';
 
 /// Резервная копия собирается из тех же репозиториев, с которыми работает
 /// приложение, поэтому она видит ровно те данные, что человек видит на экране.
@@ -16,6 +17,7 @@ final backupServiceProvider = Provider<BackupService>((ref) {
     recurrenceRepository: ref.watch(recurrenceRepositoryProvider),
     recurrenceExceptionRepository:
         ref.watch(recurrenceExceptionRepositoryProvider),
+    financeRepository: ref.watch(financeRepositoryProvider),
   );
 });
 
@@ -31,4 +33,5 @@ void reloadRestoredData(WidgetRef ref) {
   ref.invalidate(recurrenceExceptionControllerProvider);
   ref.invalidate(recurrenceSeriesControllerProvider);
   ref.invalidate(recurrenceLoadProvider);
+  ref.invalidate(financeControllerProvider);
 }

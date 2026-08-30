@@ -36,6 +36,9 @@ class _CountingLocalStorageScope implements LocalStorageScope {
       const LocalRecurrenceExceptionRepository();
 
   @override
+  final FinanceRepository financeRepository = const LocalFinanceRepository();
+
+  @override
   SecureEntityBackend? get secureEntityBackend => null;
 
   @override

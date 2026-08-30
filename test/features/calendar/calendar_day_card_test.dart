@@ -31,7 +31,9 @@ void main() {
 
     await tester.pumpAndSettle();
     await openTab(tester, 'calendar');
-    await tester.tap(find.text('${now.day}').first);
+    final dayKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+    await tester.tap(find.byKey(ValueKey('calendar_day_$dayKey')));
     await tester.pumpAndSettle();
 
     expect(

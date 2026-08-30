@@ -6,6 +6,8 @@ import '../recurrence/recurrence_exception_repository.dart';
 import '../recurrence/recurrence_repository.dart';
 import '../security/secure_entity_backend.dart';
 import 'local_storage_scope.dart';
+import '../finance/finance_repository.dart';
+import '../finance/local_finance_repository.dart';
 
 LocalStorageScope createLocalStorageScope() => WebLocalStorageScope();
 
@@ -20,6 +22,9 @@ class WebLocalStorageScope implements LocalStorageScope {
   @override
   final RecurrenceExceptionRepository recurrenceExceptionRepository =
       const LocalRecurrenceExceptionRepository();
+
+  @override
+  final FinanceRepository financeRepository = const LocalFinanceRepository();
 
   @override
   SecureEntityBackend? get secureEntityBackend => null;

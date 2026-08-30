@@ -42,6 +42,19 @@ AccountItem account(String id, DateTime date) {
   );
 }
 
+FinanceEntry financeEntry(String id, DateTime date, {String currency = 'RUB'}) {
+  return FinanceEntry(
+    id: id,
+    kind: FinanceEntryKind.expense,
+    amount: '125.50',
+    currencyCode: currency,
+    category: 'Продукты',
+    occurredOn: date,
+    createdAt: date,
+    updatedAt: date,
+  );
+}
+
 class FakeMemoryRepository implements MemoryRepository {
   FakeMemoryRepository(this.items);
 
@@ -108,6 +121,35 @@ class FailOnceAccountRepository extends FakeAccountRepository {
       throw StateError('Simulated account write failure');
     }
     await super.saveAccounts(accounts);
+  }
+}
+
+class FakeFinanceRepository implements FinanceRepository {
+  FakeFinanceRepository(this.entries);
+
+  List<FinanceEntry> entries;
+
+  @override
+  Future<List<FinanceEntry>> loadAll() async => List.of(entries);
+
+  @override
+  Future<void> replaceAll(List<FinanceEntry> entries) async {
+    this.entries = List.of(entries);
+  }
+}
+
+class FailOnceFinanceRepository extends FakeFinanceRepository {
+  FailOnceFinanceRepository(super.entries);
+
+  bool _shouldFail = true;
+
+  @override
+  Future<void> replaceAll(List<FinanceEntry> entries) async {
+    if (_shouldFail) {
+      _shouldFail = false;
+      throw StateError('Simulated finance write failure');
+    }
+    await super.replaceAll(entries);
   }
 }
 

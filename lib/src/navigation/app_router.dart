@@ -10,18 +10,16 @@ import '../features/security/security.dart';
 import '../features/settings/settings.dart';
 import '../features/sync/sync.dart';
 import '../features/shift_schedules/shift_schedules.dart';
-import '../app/app_shell.dart';
+import '../features/calculator/calculator.dart';
+import '../features/finance/finance.dart';
 import 'page_turn_transition.dart';
-import 'shell_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/calendar',
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) {
-          return AppShell(navigationShell: navigationShell);
-        },
+        builder: (context, state, navigationShell) => navigationShell,
         branches: [
           StatefulShellBranch(
             routes: [
@@ -74,21 +72,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
-        path: '/memory',
-        pageBuilder: (context, state) => shellPage(
+        path: '/tools/calculator',
+        pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
-          panel: 'settings',
+          child: const CalculatorScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/tools/finance',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          child: const FinanceScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/memory',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
           backFallback: '/settings',
           child: const MemoryLibraryScreen(),
         ),
       ),
       GoRoute(
         path: '/memory/item/:id',
-        pageBuilder: (context, state) => shellPage(
+        pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
-          panel: recordPanelOf(state),
           interceptBack: false,
           child: MemoryItemDetailScreen(
             itemId: state.pathParameters['id'] ?? '',
@@ -103,10 +115,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final date = rawDate == null
               ? DateTime.now()
               : DateTime.tryParse(rawDate) ?? DateTime.now();
-          return shellPage(
+          return pageTurnPage(
             context: context,
             state: state,
-            panel: 'calendar',
             interceptBack: false,
             child: MemoryItemDetailScreen(
               initialDate: DateTime(date.year, date.month, date.day),
@@ -116,10 +127,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/memory/note/new',
-        pageBuilder: (context, state) => shellPage(
+        pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
-          panel: 'add_note',
           interceptBack: false,
           child: const MemoryItemDetailScreen(createUndated: true),
         ),
@@ -127,10 +137,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/memory/view/:id',
         pageBuilder: (context, state) {
-          return shellPage(
+          return pageTurnPage(
             context: context,
             state: state,
-            panel: recordPanelOf(state),
             backFallback: '/',
             child: MemoryItemViewScreen(
               itemId: state.pathParameters['id'] ?? '',
@@ -145,10 +154,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final date = rawDate == null
               ? DateTime.now()
               : DateTime.tryParse(rawDate) ?? DateTime.now();
-          return shellPage(
+          return pageTurnPage(
             context: context,
             state: state,
-            panel: 'calendar',
             backFallback: '/calendar',
             child: CalendarDayScreen(
               date: DateTime(date.year, date.month, date.day),
@@ -163,10 +171,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final date = rawDate == null
               ? DateTime.now()
               : DateTime.tryParse(rawDate) ?? DateTime.now();
-          return shellPage(
+          return pageTurnPage(
             context: context,
             state: state,
-            panel: 'calendar',
             backFallback: _calendarDayLocation(date),
             child: HolidayDetailScreen(
               date: DateTime(date.year, date.month, date.day),
@@ -176,40 +183,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/settings/shifts',
-        pageBuilder: (context, state) => shellPage(
+        pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
-          panel: 'settings',
           backFallback: '/settings',
           child: const ShiftSchedulesScreen(),
         ),
       ),
       GoRoute(
         path: '/settings/backup',
-        pageBuilder: (context, state) => shellPage(
+        pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
-          panel: 'settings',
           backFallback: '/settings',
           child: const BackupScreen(),
         ),
       ),
       GoRoute(
         path: '/settings/sync',
-        pageBuilder: (context, state) => shellPage(
+        pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
-          panel: 'settings',
           backFallback: '/settings',
           child: const SyncScreen(),
         ),
       ),
       GoRoute(
         path: '/security',
-        pageBuilder: (context, state) => shellPage(
+        pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
-          panel: 'settings',
           backFallback: '/settings',
           child: const SecurityScreen(),
         ),

@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 ///
 /// Ветка — вкладка оболочки, которая помнит своё состояние между переходами.
 /// Маршрут — экран, открытый поверх текущей вкладки.
-enum NavTarget { branch, route }
+enum NavTarget { branch, route, placeholder }
 
 /// Пункт нижней панели вместе с его назначением.
 ///
@@ -31,6 +31,14 @@ class AppDestination {
   })  : target = NavTarget.route,
         branchIndex = -1;
 
+  const AppDestination.placeholder({
+    required this.id,
+    required this.icon,
+    required this.label,
+  })  : target = NavTarget.placeholder,
+        location = '',
+        branchIndex = -1;
+
   /// Стабильный ключ пункта. По нему строится ключ кнопки в панели.
   final String id;
   final IconData icon;
@@ -44,6 +52,12 @@ class AppDestination {
   final int branchIndex;
 
   bool get isBranch => target == NavTarget.branch;
+  bool get isEnabled => target != NavTarget.placeholder;
 
-  NavBarItem get barItem => NavBarItem(id: id, icon: icon, label: label);
+  NavBarItem get barItem => NavBarItem(
+        id: id,
+        icon: icon,
+        label: label,
+        enabled: isEnabled,
+      );
 }

@@ -4,7 +4,7 @@
 кода — она исчезает и отсюда; если появилась новая, её сюда дописывают в том
 же коммите, а не «потом».
 
-Проверено 25 августа 2026.
+Проверено 30 августа 2026.
 
 ## Сверх потолка осознанно
 
@@ -17,7 +17,7 @@ packages/ez_domain/lib/src/calendar/holiday_observance_table.dart     457
 packages/ez_domain/lib/src/calendar/holiday_russian_table.dart        994
    таблицы праздников: официальные, международные дни и праздники России
 
-packages/ez_core/lib/src/localization/app_strings.dart                389
+packages/ez_core/lib/src/localization/app_strings.dart                476
    строки интерфейса
 
 packages/ez_design/lib/src/themes/app_theme.dart                      406
@@ -30,7 +30,7 @@ packages/ez_design/lib/src/components/page_turn/page_turn_painter.dart 476
 packages/ez_design/lib/src/components/page_turn/page_turn_frame.dart   297
    одна машина состояний переворота: занять очередь, снять страницу,
    проиграть, отпустить. Её шаги делят между собой снимки и время жизни
-   анимации. Загрузка текстуры бумаги, непрозрачный снимок, очередь и оба
+   анимации. Загрузка текстуры бумаги, непрозрачный снимок и очередь со своим
    InheritedWidget из неё вынуты
 
 lib/src/features/recurrence/state/recurrence_legacy_repair.dart       488
@@ -63,7 +63,7 @@ packages/ez_data/lib/src/notifications/notification_service.dart      495
    класс, мы получим два объекта, спорящих за один плагин. Правила из него
    вынуты: когда график будит, решает shiftAlarmTimes в домене
 
-packages/ez_data/lib/src/backup/backup_service.dart                   477
+packages/ez_data/lib/src/backup/backup_service.dart                   509
    один формат архива, прочитанный в обе стороны. Выгрузка и загрузка знают
    одну и ту же раскладку файлов, и разложить их по разным классам значит
    завести две копии этого знания

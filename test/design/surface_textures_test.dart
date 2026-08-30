@@ -90,6 +90,31 @@ void main() {
     expect(lines.lineHeight, notebookPageLineHeight);
   });
 
+  testWidgets('notebook leather keeps its opaque fallback in the texture layer',
+      (tester) async {
+    const fallback = Color(0xFF31271F);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildNotebookTheme(),
+        home: const NotebookLeatherSurface(
+          color: fallback,
+          child: SizedBox(width: 200, height: 120),
+        ),
+      ),
+    );
+
+    final texturedDecoration = tester
+        .widgetList<DecoratedBox>(find.byType(DecoratedBox))
+        .map((box) => box.decoration)
+        .whereType<BoxDecoration>()
+        .singleWhere((decoration) => decoration.image != null);
+
+    // Цвет и изображение обязаны принадлежать одному слою. Если цвет лежит
+    // отдельным виджетом ниже, при перевыделении текстурного слоя композитор
+    // на кадр показывает навигационный градиент под панелью.
+    expect(texturedDecoration.color, fallback);
+  });
+
   testWidgets('dark paper surfaces paint ruled lines when requested',
       (tester) async {
     await tester.pumpWidget(

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'app_navigation_panel.dart';
+import 'app_navigation_items.dart';
 import 'nav_bar_item.dart';
 import 'nav_bar_metrics.dart';
-import 'nav_bar_style.dart';
 
 /// Нижняя панель приложения.
 ///
@@ -19,36 +20,26 @@ class AppNavBar extends StatelessWidget {
 
   final List<NavBarItem> items;
 
-  /// Индекс подсвеченной кнопки в [items].
-  final int selectedIndex;
+  /// Индекс подсвеченной кнопки в [items], либо null у верхнего инструмента.
+  final int? selectedIndex;
 
   /// Вызывается с индексом нажатой кнопки.
   final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final style = NavBarStyle.of(context);
-    return DecoratedBox(
-      decoration: style.decoration,
-      child: style.wrap(
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: NavBarMetrics.padding,
-            child: NavigationBar(
-              height: NavBarMetrics.height,
-              selectedIndex: selectedIndex.clamp(0, items.length - 1),
-              onDestinationSelected: onSelected,
-              destinations: [
-                for (final item in items)
-                  NavigationDestination(
-                    key: ValueKey('bottom_${item.id}'),
-                    icon: Icon(item.icon),
-                    selectedIcon: Icon(item.icon),
-                    label: item.label,
-                  ),
-              ],
-            ),
+    return AppNavigationPanel(
+      edge: NavigationPanelEdge.bottom,
+      child: Padding(
+        padding: NavBarMetrics.padding,
+        child: SizedBox(
+          height: NavBarMetrics.height,
+          child: AppNavigationItems(
+            items: items,
+            selectedIndex: selectedIndex?.clamp(0, items.length - 1),
+            onSelected: onSelected,
+            keyPrefix: 'bottom',
+            compact: false,
           ),
         ),
       ),

@@ -1,4 +1,3 @@
-
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 
@@ -19,6 +18,8 @@ Future<SyncRunResult> sync({
   List<RecurrenceOccurrenceException> recurrenceExceptions = const [],
   Future<void> Function(List<RecurrenceOccurrenceException>)?
       replaceRecurrenceExceptions,
+  List<FinanceEntry> financeEntries = const [],
+  Future<void> Function(List<FinanceEntry>)? replaceFinanceEntries,
 }) {
   return AppSyncEngine(
     remote: remote,
@@ -35,6 +36,8 @@ Future<SyncRunResult> sync({
     replaceRecurrenceSeries: replaceRecurrenceSeries ?? (_) async {},
     recurrenceExceptions: recurrenceExceptions,
     replaceRecurrenceExceptions: replaceRecurrenceExceptions ?? (_) async {},
+    financeEntries: financeEntries,
+    replaceFinanceEntries: replaceFinanceEntries ?? (_) async {},
   );
 }
 

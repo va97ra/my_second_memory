@@ -73,7 +73,9 @@ void main() {
     await openTab(tester, 'calendar');
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    await tester.tap(find.text('${today.day}').first);
+    final dayKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-'
+        '${today.day.toString().padLeft(2, '0')}';
+    await tester.tap(find.byKey(ValueKey('calendar_day_$dayKey')));
     await tester.pumpAndSettle();
     final chatText = find.text('Длинная запись').first;
     await tester.ensureVisible(chatText);
@@ -86,14 +88,11 @@ void main() {
     final textSize =
         tester.getSize(find.byKey(const ValueKey('record_editor_text')));
 
-    // Экран открыт внутри оболочки, поэтому нижняя панель забирает свою
-    // полосу. Поле записи всё равно должно занимать почти всю страницу.
-    expect(panelSize.height, greaterThan(280));
-    // На низком экране (здесь 560 px) нижняя панель забирает свою полосу, и
-    // поле ввода становится заметно меньше прежнего: три строки вместо
-    // четырёх с половиной. Это цена за то, что панель остаётся под рукой на
-    // экране записи; если она окажется слишком высокой, панель нужно прятать
-    // при открытой клавиатуре, а не отбирать её у экрана целиком.
+    // Экран открыт внутри оболочки, поэтому обе панели остаются на месте.
+    // Даже на высоте 560 px лист записи сохраняет полезную рабочую область.
+    expect(panelSize.height, greaterThan(230));
+    // Поле ввода остаётся не меньше трёх строк; на ещё более низком экране
+    // редактор переключается в свой компактный режим.
     expect(textSize.height, greaterThan(88));
     expect(find.byKey(const ValueKey('record_editor_images')), findsOneWidget);
     expect(find.byIcon(Icons.photo_camera_rounded), findsOneWidget);
@@ -105,6 +104,43 @@ void main() {
     expect(find.text('Звуковое уведомление'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('memory_reminder_done')));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('note editor uses the full space above the keyboard',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(430, 900));
+    tester.view.viewInsets = FakeViewPadding(
+      bottom: 360 * tester.view.devicePixelRatio,
+    );
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.pumpWidget(
+      testProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(EmptyMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            FakeShiftScheduleRepository(),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
+    await tester.pumpAndSettle();
+
+    final panel = tester.getRect(
+      find.byKey(const ValueKey('record_editor_panel')),
+    );
+    final field = tester.getRect(
+      find.byKey(const ValueKey('record_editor_text')),
+    );
+
+    expect(panel.height, greaterThan(300));
+    expect(field.height, greaterThan(210));
+    expect(panel.bottom, lessThanOrEqualTo(900 - 360));
   });
 
   testWidgets('deleting a record leaves no empty page behind', (tester) async {
@@ -176,8 +212,8 @@ void main() {
       tester
           .getSize(find.byKey(const ValueKey('memory_readonly_panel')))
           .height,
-      // Панель на месте, поэтому запас на шесть пикселей меньше прежнего.
-      greaterThan(580),
+      // Обе панели оболочки остаются видимыми и на вложенной странице.
+      greaterThan(530),
     );
     expect(
         find.byKey(const ValueKey('memory_readonly_content')), findsOneWidget);

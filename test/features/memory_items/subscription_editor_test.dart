@@ -67,11 +67,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('subscription_term_years')));
+    // Лист живёт между панелями, и длинная форма в него не влезает целиком:
+    // до полей срока прокручиваются — и человек, и тест.
+    final years = find.byKey(const ValueKey('subscription_term_years'));
+    await tester.ensureVisible(years);
+    await tester.pumpAndSettle();
+    await tester.tap(years);
     await tester.pumpAndSettle();
     await tester.tap(find.text('1').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('subscription_term_months')));
+    final months = find.byKey(const ValueKey('subscription_term_months'));
+    await tester.ensureVisible(months);
+    await tester.pumpAndSettle();
+    await tester.tap(months);
     await tester.pumpAndSettle();
     await tester.tap(find.text('2').last);
     await tester.pumpAndSettle();

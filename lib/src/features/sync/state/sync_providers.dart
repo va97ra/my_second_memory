@@ -6,6 +6,7 @@ import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
 import '../../security/security.dart';
 import '../../shift_schedules/shift_schedules.dart';
+import '../../finance/finance.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'sync_controller_impl.dart';
@@ -96,6 +97,15 @@ final syncControllerProvider =
             .read(recurrenceSeriesControllerProvider.notifier)
             .reconcileOriginOverrides();
       },
+      readFinanceEntries: () async {
+        await ref.read(financeControllerProvider.notifier).load();
+        return ref.read(financeControllerProvider);
+      },
+      replaceFinanceEntries: (entries) =>
+          ref.read(financeControllerProvider.notifier).replaceAll(entries),
+      mergeFinanceEntries: (entries, baseline) => ref
+          .read(financeControllerProvider.notifier)
+          .replaceAllFromSync(entries, baseline: baseline),
     ),
   );
 });
@@ -186,6 +196,20 @@ class _RiverpodSyncMutationObserver implements SyncMutationObserver {
   Future<void> recurrenceExceptionDeleted(String id, DateTime deletedAt) {
     return ref.read(syncControllerProvider.notifier).recordDeletion(
           SyncEntityKind.recurrenceException,
+          id,
+          deletedAt,
+        );
+  }
+
+  @override
+  void financeEntriesChanged() {
+    ref.read(syncControllerProvider.notifier).schedule();
+  }
+
+  @override
+  Future<void> financeEntryDeleted(String id, DateTime deletedAt) {
+    return ref.read(syncControllerProvider.notifier).recordDeletion(
+          SyncEntityKind.financeEntry,
           id,
           deletedAt,
         );

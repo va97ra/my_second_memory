@@ -16,7 +16,6 @@ class FeedPage extends StatelessWidget {
     required this.layout,
     required this.loadState,
     required this.showHelp,
-    required this.alignToRuling,
     required this.onGoToToday,
     required this.onFilterSelected,
     required this.onMovePeriod,
@@ -28,7 +27,6 @@ class FeedPage extends StatelessWidget {
   final FeedLayout layout;
   final AsyncValue<void> loadState;
   final bool showHelp;
-  final bool alignToRuling;
   final VoidCallback? onGoToToday;
   final ValueChanged<FeedFilter> onFilterSelected;
   final ValueChanged<int> onMovePeriod;
@@ -46,7 +44,6 @@ class FeedPage extends StatelessWidget {
           periodLabel: feedPeriodLabel(context, view),
           filter: view.filter,
           showHelp: showHelp,
-          alignToRuling: alignToRuling,
           onGoToToday: onGoToToday,
           onFilterSelected: onFilterSelected,
           onPickDate: dated ? onPickDate : null,

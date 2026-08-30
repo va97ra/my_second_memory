@@ -73,11 +73,22 @@ void main() {
       find.descendant(of: cell, matching: find.byType(AnimatedContainer)).first,
     );
     final todayDecoration = todayContainer.decoration! as BoxDecoration;
-    // Сегодня отмечено чёрной обводкой, а не заливкой: в день открытия он же и
-    // выбранный, и акцентная заливка съедала бы его собственную примету.
-    expect(todayDecoration.border!.top.width, 3);
-    expect((todayDecoration.border! as Border).top.color, Colors.black);
-    expect(todayDecoration.boxShadow, isNotEmpty);
+    // Сегодня отмечено серой тенью на бумаге, а не собственной обводкой:
+    // чёрная рамка спорила с рамками соседей и терялась среди них.
+    expect((todayDecoration.border! as Border).top.color, isNot(Colors.black));
+    final plainContainer = tester.widget<AnimatedContainer>(
+      find
+          .descendant(
+            of: find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
+            matching: find.byType(AnimatedContainer),
+          )
+          .first,
+    );
+    final plainDecoration = plainContainer.decoration! as BoxDecoration;
+    expect(
+      todayDecoration.gradient!.colors.first.computeLuminance(),
+      lessThan(plainDecoration.gradient!.colors.first.computeLuminance()),
+    );
     // И крупным числом: другой приметы внутри ячейки у него нет.
     final todayNumber = tester.widget<Text>(
       find.descendant(of: cell, matching: find.text('${today.day}')),
@@ -109,10 +120,12 @@ void main() {
       ),
     );
     final secondHeader = tester.getRect(
-      find.descendant(
-        of: find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
-        matching: find.byType(ColoredBox),
-      ).first,
+      find
+          .descendant(
+            of: find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
+            matching: find.byType(ColoredBox),
+          )
+          .first,
     );
     expect(plainOnHeader.top, greaterThanOrEqualTo(secondHeader.top));
     // Коробка текста на пару пикселей выше своего кегля — за счёт выносных
@@ -156,7 +169,9 @@ void main() {
     // Число и будильник стоят на шапке, а не под ней. Сегодняшнее число
     // крупнее обычного и нижним краем выходит за шапку — это и есть его
     // примета, поэтому проверяется, что оно на шапке начинается.
-    final numberRect = tester.getRect(find.text('${today.day}'));
+    final numberRect = tester.getRect(
+      find.descendant(of: cell, matching: find.text('${today.day}')),
+    );
     final alarm = tester.getRect(
       find.descendant(of: cell, matching: find.byIcon(Icons.alarm_rounded)),
     );
@@ -174,21 +189,26 @@ void main() {
 
     // Число со сменой стоит на том же уровне, что и в дне без смены.
     Finder? plainNumber;
-    for (var offset = 1; offset <= 8 && plainNumber == null; offset++) {
-      final day = today.add(Duration(days: offset));
-      if (day.month != today.month) break;
-      final key = '${day.year}-${day.month.toString().padLeft(2, '0')}-'
-          '${day.day.toString().padLeft(2, '0')}';
-      final plainCell = find.byKey(ValueKey('calendar_day_$key'));
-      final marks = find.descendant(
-        of: plainCell,
-        matching: find.byKey(ValueKey('shift_marks_$key')),
-      );
-      if (marks.evaluate().isEmpty) {
-        plainNumber = find.descendant(
+    Finder? plainCellFinder;
+    for (var distance = 1; distance <= 31 && plainNumber == null; distance++) {
+      for (final direction in const [-1, 1]) {
+        final day = today.add(Duration(days: distance * direction));
+        if (day.month != today.month) continue;
+        final key = '${day.year}-${day.month.toString().padLeft(2, '0')}-'
+            '${day.day.toString().padLeft(2, '0')}';
+        final plainCell = find.byKey(ValueKey('calendar_day_$key'));
+        final marks = find.descendant(
           of: plainCell,
-          matching: find.text('${day.day}'),
+          matching: find.byKey(ValueKey('shift_marks_$key')),
         );
+        if (marks.evaluate().isEmpty) {
+          plainCellFinder = plainCell;
+          plainNumber = find.descendant(
+            of: plainCell,
+            matching: find.text('${day.day}'),
+          );
+          break;
+        }
       }
     }
     expect(plainNumber, isNotNull, reason: 'нужен день без смены');
@@ -199,8 +219,16 @@ void main() {
       matching: find.text('${secondWorkDay.day}'),
     );
     expect(
-      tester.getRect(plainNumber!).top,
-      closeTo(tester.getRect(shiftNumber).top, 0.5),
+      tester.getRect(plainNumber!).top - tester.getRect(plainCellFinder!).top,
+      closeTo(
+        tester.getRect(shiftNumber).top -
+            tester
+                .getRect(
+                  find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
+                )
+                .top,
+        0.5,
+      ),
     );
     expect(
       find.descendant(

@@ -11,6 +11,8 @@ abstract interface class SyncMutationObserver {
   Future<void> recurrenceSeriesDeleted(String id, DateTime deletedAt);
   void recurrenceExceptionsChanged();
   Future<void> recurrenceExceptionDeleted(String id, DateTime deletedAt);
+  void financeEntriesChanged();
+  Future<void> financeEntryDeleted(String id, DateTime deletedAt);
 }
 
 class NoopSyncMutationObserver implements SyncMutationObserver {
@@ -54,5 +56,10 @@ class NoopSyncMutationObserver implements SyncMutationObserver {
     String id,
     DateTime deletedAt,
   ) async {}
-}
 
+  @override
+  void financeEntriesChanged() {}
+
+  @override
+  Future<void> financeEntryDeleted(String id, DateTime deletedAt) async {}
+}

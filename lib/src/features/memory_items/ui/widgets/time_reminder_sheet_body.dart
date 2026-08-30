@@ -51,13 +51,8 @@ class TimeReminderSheetBody extends StatelessWidget {
     final strings = AppStrings.of(context);
 
     return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          18,
-          0,
-          18,
-          18 + MediaQuery.viewInsetsOf(context).bottom,
-        ),
+      child: KeyboardInsetPadding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

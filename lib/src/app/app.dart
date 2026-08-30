@@ -12,6 +12,7 @@ import '../features/security/security.dart';
 import '../features/sync/sync.dart';
 import '../platform/windows/windows_desktop.dart';
 import '../platform/windows/windows_tray_frame.dart';
+import 'app_shell.dart';
 import 'theme/app_content_font_controller.dart';
 import 'theme/app_theme_controller.dart';
 import 'locale/app_locale_controller.dart';
@@ -25,7 +26,6 @@ class EzhednevnikV2App extends ConsumerStatefulWidget {
 }
 
 class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
-  final GlobalKey<PageTurnFrameState> _rootPageTurnKey = GlobalKey();
   StreamSubscription<String>? _notificationSubscription;
   Locale? _desktopLocale;
   late final AppLifecycleListener _lifecycleObserver;
@@ -99,7 +99,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     final notifications = ref.read(notificationServiceProvider);
     _notificationSubscription = notifications.openedItemIds.listen((itemId) {
       if (mounted) {
-        unawaited(_openNotificationItem(itemId));
+        _openNotificationItem(itemId);
       }
     });
     try {
@@ -109,19 +109,12 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     }
   }
 
-  Future<void> _openNotificationItem(String itemId) async {
-    final router = ref.read(appRouterProvider);
-    final location = '/memory/view/${Uri.encodeComponent(itemId)}';
-    final frame = _rootPageTurnKey.currentState;
-    if (frame == null) {
-      router.go(location);
-      return;
-    }
-    final started = await frame.beginTurn(
-      direction: PageTurnDirection.forward,
-      switchContent: () => router.go(location),
-    );
-    if (!started) router.go(location);
+  /// Уведомление открывает запись без переворота листа: лист принадлежит
+  /// оболочке, а сюда, выше маршрутов, она не дотягивается — и незачем.
+  void _openNotificationItem(String itemId) {
+    ref
+        .read(appRouterProvider)
+        .go('/memory/view/${Uri.encodeComponent(itemId)}');
   }
 
   @override
@@ -181,17 +174,14 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
               isDark ? Brightness.light : Brightness.dark,
         );
 
+        // Оболочка стоит выше навигатора: панели живут одни на всё
+        // приложение, страницы приходят и уходят под ними, и переворот листа
+        // достаётся только странице. Замок закрывает и панели тоже.
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: overlayStyle,
-          child: PageTurnFrame(
-            key: _rootPageTurnKey,
-            provideNavigation: true,
-            child: AppBackground(
-              child: WindowsTrayFrame(
-                child: SecurityGate(
-                  child: child ?? const SizedBox.shrink(),
-                ),
-              ),
+          child: WindowsTrayFrame(
+            child: SecurityGate(
+              child: AppShell(child: child ?? const SizedBox.shrink()),
             ),
           ),
         );

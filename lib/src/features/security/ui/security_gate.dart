@@ -49,8 +49,8 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
     final session = ref.watch(securitySessionProvider);
 
     if (_gate.isLoading) {
-      return const Scaffold(
-        body: Center(
+      return const SecurityScaffold(
+        child: Center(
           child: CircularProgressIndicator(key: ValueKey('gate_loading')),
         ),
       );

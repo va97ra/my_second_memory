@@ -121,6 +121,47 @@ void main() {
         hasLength(2));
     expect((await repository.loadAll()).first.body, 'Изменена');
   });
+
+  test('sqlite finance migration encrypts rows and clears plaintext', () async {
+    SharedPreferences.setMockInitialValues({});
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final plain = SqliteFinanceRepository(database, false);
+    final backend = DriftSecureEntityBackend(database);
+    final date = DateTime.utc(2026, 8, 30);
+    await plain.replaceAll([
+      FinanceEntry(
+        id: 'salary',
+        kind: FinanceEntryKind.income,
+        amount: '125000.75',
+        currencyCode: 'RUB',
+        category: 'Зарплата',
+        occurredOn: date,
+        createdAt: date,
+        updatedAt: date,
+      ),
+    ]);
+    final cipher = await AppCipher.fromPin(
+      pin: '1234',
+      salt: List<int>.filled(16, 4),
+    );
+    addTearDown(cipher.destroy);
+    final repository = EncryptedFinanceRepository(
+      store: EncryptedJsonStore(cipher: cipher),
+      plainRepository: plain,
+      backend: backend,
+    );
+
+    final migrated = await repository.loadAll();
+    final rows = await backend.loadSecureEntities(
+      EncryptedFinanceRepository.entityKind,
+    );
+
+    expect(migrated.single.amount, '125000.75');
+    expect(await plain.loadAll(), isEmpty);
+    expect(rows, hasLength(1));
+    expect(rows.single.encryptedPayload, isNot(contains('Зарплата')));
+  });
 }
 
 class _MemoryRepository implements MemoryRepository {

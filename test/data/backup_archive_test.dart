@@ -79,6 +79,10 @@ void main() {
           updatedAt: date,
         ),
       ]),
+      financeRepository: FakeFinanceRepository([
+        financeEntry('groceries', date),
+        financeEntry('usd-groceries', date, currency: 'USD'),
+      ]),
     );
 
     final raw = await service.createBackupJson();
@@ -105,6 +109,30 @@ void main() {
     expect(restored.accounts.single.password, 'secret');
     expect(restored.recurrenceSeries.single.id, 'monthly-payment');
     expect(restored.recurrenceSeries.single.template.amountMinor, 90000);
+    expect(restored.financeEntries, hasLength(2));
+    expect(
+      restored.financeEntries.map((entry) => entry.currencyCode),
+      unorderedEquals(['RUB', 'USD']),
+    );
+  });
+
+  test('version 2 backup without finance restores an empty journal', () async {
+    final service = BackupService(
+      memoryRepository: FakeMemoryRepository(const []),
+      shiftScheduleRepository: FakeShiftRepository(const []),
+      accountRepository: FakeAccountRepository(const []),
+      financeRepository: FakeFinanceRepository(const []),
+    );
+
+    final restored = await service.parseBackupJson(jsonEncode({
+      'format': BackupService.format,
+      'version': 2,
+      'memoryItems': const [],
+      'shiftSchedules': const [],
+      'accounts': const [],
+    }));
+
+    expect(restored.financeEntries, isEmpty);
   });
 
   test('exports and restores encrypted zip with password', () async {

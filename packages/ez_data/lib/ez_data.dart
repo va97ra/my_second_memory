@@ -12,6 +12,9 @@
 /// сломал бы сборку под веб самим фактом импорта.
 library;
 
+export 'src/finance/encrypted_finance_repository.dart';
+export 'src/finance/finance_repository.dart';
+export 'src/finance/local_finance_repository.dart';
 export 'src/accounts/account_repository.dart';
 export 'src/accounts/encrypted_account_repository.dart';
 export 'src/accounts/local_account_repository.dart';

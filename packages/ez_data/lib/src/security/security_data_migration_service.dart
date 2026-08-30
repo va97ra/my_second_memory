@@ -1,6 +1,9 @@
-import '../storage/local_storage_scope.dart';
+import 'dart:convert';
+
 import '../accounts/encrypted_account_repository.dart';
 import '../accounts/local_account_repository.dart';
+import '../finance/encrypted_finance_repository.dart';
+import '../finance/finance_repository.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../memory/encrypted_memory_repository.dart';
 import '../memory/memory_repository.dart';
@@ -11,6 +14,7 @@ import '../recurrence/recurrence_exception_repository.dart';
 import '../recurrence/recurrence_repository.dart';
 import '../shifts/encrypted_shift_schedule_repository.dart';
 import '../shifts/local_shift_schedule_repository.dart';
+import '../storage/local_storage_scope.dart';
 import 'app_cipher.dart';
 import 'encrypted_json_store.dart';
 import 'secure_entity_backend.dart';
@@ -22,6 +26,7 @@ class SecurityDataMigrationSnapshot {
     this.accounts,
     this.recurrenceSeries,
     this.recurrenceExceptions,
+    this.financeEntries,
   });
 
   final List<MemoryItem>? memoryItems;
@@ -29,6 +34,7 @@ class SecurityDataMigrationSnapshot {
   final List<AccountItem>? accounts;
   final List<RecurrenceSeries>? recurrenceSeries;
   final List<RecurrenceOccurrenceException>? recurrenceExceptions;
+  final List<FinanceEntry>? financeEntries;
 }
 
 class SecurityDataMigrationService {
@@ -72,6 +78,11 @@ class SecurityDataMigrationService {
       recurrenceExceptions: await EncryptedRecurrenceExceptionRepository(
         store: store,
         plainRepository: plainRecurrenceExceptions,
+        backend: backend,
+      ).loadAll(),
+      financeEntries: await EncryptedFinanceRepository(
+        store: store,
+        plainRepository: storage.financeRepository,
         backend: backend,
       ).loadAll(),
     );
@@ -127,6 +138,14 @@ class SecurityDataMigrationService {
         await repositories.recurrenceExceptions.loadAll();
       }
       await repositories.plainRecurrenceExceptions.replaceAll(const []);
+      final financeEntries =
+          snapshot.financeEntries ?? await repositories.plainFinance.loadAll();
+      await repositories.finance.replaceAll(financeEntries);
+      final verifiedFinance = await repositories.finance.loadAll();
+      if (!_sameFinanceEntries(financeEntries, verifiedFinance)) {
+        throw StateError('Encrypted finance migration verification failed');
+      }
+      await repositories.plainFinance.replaceAll(const []);
       await mediaStorage.commitMigration(mediaMigration);
     } catch (_) {
       await mediaStorage.rollbackMigration(mediaMigration);
@@ -212,12 +231,41 @@ class SecurityDataMigrationService {
         const [],
       );
       await store.remove(EncryptedRecurrenceExceptionRepository.storageKey);
+
+      final financeRepository = EncryptedFinanceRepository(
+        store: store,
+        plainRepository: storage.financeRepository,
+        backend: backend,
+      );
+      final financeEntries = await financeRepository.loadAll();
+      await storage.financeRepository.replaceAll(financeEntries);
+      final verifiedFinance = await storage.financeRepository.loadAll();
+      if (!_sameFinanceEntries(financeEntries, verifiedFinance)) {
+        throw StateError('Plain finance migration verification failed');
+      }
+      await backend?.replaceSecureEntities(
+        EncryptedFinanceRepository.entityKind,
+        const [],
+      );
+      await store.remove(EncryptedFinanceRepository.storageKey);
       await mediaStorage.commitMigration(mediaMigration);
     } catch (_) {
       await mediaStorage.rollbackMigration(mediaMigration);
       rethrow;
     }
   }
+}
+
+bool _sameFinanceEntries(List<FinanceEntry> first, List<FinanceEntry> second) {
+  final firstJson = first.map((item) => jsonEncode(item.toJson())).toList()
+    ..sort();
+  final secondJson = second.map((item) => jsonEncode(item.toJson())).toList()
+    ..sort();
+  if (firstJson.length != secondJson.length) return false;
+  for (var index = 0; index < firstJson.length; index++) {
+    if (firstJson[index] != secondJson[index]) return false;
+  }
+  return true;
 }
 
 Set<String> _mediaPaths(List<MemoryItem> items) => {
@@ -248,12 +296,14 @@ class _EncryptedRepositories {
         plainMemory = storage.memoryRepository,
         plainRecurrence = storage.recurrenceRepository,
         plainRecurrenceExceptions = storage.recurrenceExceptionRepository,
+        plainFinance = storage.financeRepository,
         backend = storage.secureEntityBackend;
 
   final EncryptedJsonStore store;
   final MemoryRepository plainMemory;
   final RecurrenceRepository plainRecurrence;
   final RecurrenceExceptionRepository plainRecurrenceExceptions;
+  final FinanceRepository plainFinance;
   final SecureEntityBackend? backend;
 
   EncryptedMemoryRepository get memory => EncryptedMemoryRepository(
@@ -285,6 +335,12 @@ class _EncryptedRepositories {
       EncryptedRecurrenceExceptionRepository(
         store: store,
         plainRepository: plainRecurrenceExceptions,
+        backend: backend,
+      );
+
+  EncryptedFinanceRepository get finance => EncryptedFinanceRepository(
+        store: store,
+        plainRepository: plainFinance,
         backend: backend,
       );
 }

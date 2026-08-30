@@ -1517,6 +1517,9 @@ class RecurrenceSeriesRow extends DataClass
   final bool isEnabled;
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  /// Unused. Kept so existing databases keep a column nothing reads or
+  /// writes; dropping it would need a migration for no gain.
   final DateTime? generatedThrough;
   final DateTime? endDate;
   final DateTime? subscriptionEndDate;
@@ -2592,6 +2595,480 @@ class SecureEntitiesCompanion extends UpdateCompanion<SecureEntityRow> {
   }
 }
 
+class $FinanceEntriesTable extends FinanceEntries
+    with TableInfo<$FinanceEntriesTable, FinanceEntryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FinanceEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+      'kind', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<String> amount = GeneratedColumn<String>(
+      'amount', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _currencyCodeMeta =
+      const VerificationMeta('currencyCode');
+  @override
+  late final GeneratedColumn<String> currencyCode = GeneratedColumn<String>(
+      'currency_code', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoryMeta =
+      const VerificationMeta('category');
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+      'category', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _descriptionMeta =
+      const VerificationMeta('description');
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+      'description', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(''));
+  static const VerificationMeta _occurredOnMeta =
+      const VerificationMeta('occurredOn');
+  @override
+  late final GeneratedColumn<DateTime> occurredOn = GeneratedColumn<DateTime>(
+      'occurred_on', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        kind,
+        amount,
+        currencyCode,
+        category,
+        description,
+        occurredOn,
+        createdAt,
+        updatedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'finance_entries';
+  @override
+  VerificationContext validateIntegrity(Insertable<FinanceEntryRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+          _kindMeta, kind.isAcceptableOrUnknown(data['kind']!, _kindMeta));
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(_amountMeta,
+          amount.isAcceptableOrUnknown(data['amount']!, _amountMeta));
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('currency_code')) {
+      context.handle(
+          _currencyCodeMeta,
+          currencyCode.isAcceptableOrUnknown(
+              data['currency_code']!, _currencyCodeMeta));
+    } else if (isInserting) {
+      context.missing(_currencyCodeMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(_categoryMeta,
+          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+          _descriptionMeta,
+          description.isAcceptableOrUnknown(
+              data['description']!, _descriptionMeta));
+    }
+    if (data.containsKey('occurred_on')) {
+      context.handle(
+          _occurredOnMeta,
+          occurredOn.isAcceptableOrUnknown(
+              data['occurred_on']!, _occurredOnMeta));
+    } else if (isInserting) {
+      context.missing(_occurredOnMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FinanceEntryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FinanceEntryRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      kind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}kind'])!,
+      amount: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}amount'])!,
+      currencyCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}currency_code'])!,
+      category: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
+      description: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
+      occurredOn: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}occurred_on'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $FinanceEntriesTable createAlias(String alias) {
+    return $FinanceEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class FinanceEntryRow extends DataClass implements Insertable<FinanceEntryRow> {
+  final String id;
+  final String kind;
+  final String amount;
+  final String currencyCode;
+  final String category;
+  final String description;
+  final DateTime occurredOn;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const FinanceEntryRow(
+      {required this.id,
+      required this.kind,
+      required this.amount,
+      required this.currencyCode,
+      required this.category,
+      required this.description,
+      required this.occurredOn,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['kind'] = Variable<String>(kind);
+    map['amount'] = Variable<String>(amount);
+    map['currency_code'] = Variable<String>(currencyCode);
+    map['category'] = Variable<String>(category);
+    map['description'] = Variable<String>(description);
+    map['occurred_on'] = Variable<DateTime>(occurredOn);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  FinanceEntriesCompanion toCompanion(bool nullToAbsent) {
+    return FinanceEntriesCompanion(
+      id: Value(id),
+      kind: Value(kind),
+      amount: Value(amount),
+      currencyCode: Value(currencyCode),
+      category: Value(category),
+      description: Value(description),
+      occurredOn: Value(occurredOn),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory FinanceEntryRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FinanceEntryRow(
+      id: serializer.fromJson<String>(json['id']),
+      kind: serializer.fromJson<String>(json['kind']),
+      amount: serializer.fromJson<String>(json['amount']),
+      currencyCode: serializer.fromJson<String>(json['currencyCode']),
+      category: serializer.fromJson<String>(json['category']),
+      description: serializer.fromJson<String>(json['description']),
+      occurredOn: serializer.fromJson<DateTime>(json['occurredOn']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'kind': serializer.toJson<String>(kind),
+      'amount': serializer.toJson<String>(amount),
+      'currencyCode': serializer.toJson<String>(currencyCode),
+      'category': serializer.toJson<String>(category),
+      'description': serializer.toJson<String>(description),
+      'occurredOn': serializer.toJson<DateTime>(occurredOn),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  FinanceEntryRow copyWith(
+          {String? id,
+          String? kind,
+          String? amount,
+          String? currencyCode,
+          String? category,
+          String? description,
+          DateTime? occurredOn,
+          DateTime? createdAt,
+          DateTime? updatedAt}) =>
+      FinanceEntryRow(
+        id: id ?? this.id,
+        kind: kind ?? this.kind,
+        amount: amount ?? this.amount,
+        currencyCode: currencyCode ?? this.currencyCode,
+        category: category ?? this.category,
+        description: description ?? this.description,
+        occurredOn: occurredOn ?? this.occurredOn,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  FinanceEntryRow copyWithCompanion(FinanceEntriesCompanion data) {
+    return FinanceEntryRow(
+      id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      currencyCode: data.currencyCode.present
+          ? data.currencyCode.value
+          : this.currencyCode,
+      category: data.category.present ? data.category.value : this.category,
+      description:
+          data.description.present ? data.description.value : this.description,
+      occurredOn:
+          data.occurredOn.present ? data.occurredOn.value : this.occurredOn,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinanceEntryRow(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('amount: $amount, ')
+          ..write('currencyCode: $currencyCode, ')
+          ..write('category: $category, ')
+          ..write('description: $description, ')
+          ..write('occurredOn: $occurredOn, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, kind, amount, currencyCode, category,
+      description, occurredOn, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FinanceEntryRow &&
+          other.id == this.id &&
+          other.kind == this.kind &&
+          other.amount == this.amount &&
+          other.currencyCode == this.currencyCode &&
+          other.category == this.category &&
+          other.description == this.description &&
+          other.occurredOn == this.occurredOn &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class FinanceEntriesCompanion extends UpdateCompanion<FinanceEntryRow> {
+  final Value<String> id;
+  final Value<String> kind;
+  final Value<String> amount;
+  final Value<String> currencyCode;
+  final Value<String> category;
+  final Value<String> description;
+  final Value<DateTime> occurredOn;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const FinanceEntriesCompanion({
+    this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.currencyCode = const Value.absent(),
+    this.category = const Value.absent(),
+    this.description = const Value.absent(),
+    this.occurredOn = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FinanceEntriesCompanion.insert({
+    required String id,
+    required String kind,
+    required String amount,
+    required String currencyCode,
+    required String category,
+    this.description = const Value.absent(),
+    required DateTime occurredOn,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        kind = Value(kind),
+        amount = Value(amount),
+        currencyCode = Value(currencyCode),
+        category = Value(category),
+        occurredOn = Value(occurredOn),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<FinanceEntryRow> custom({
+    Expression<String>? id,
+    Expression<String>? kind,
+    Expression<String>? amount,
+    Expression<String>? currencyCode,
+    Expression<String>? category,
+    Expression<String>? description,
+    Expression<DateTime>? occurredOn,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (amount != null) 'amount': amount,
+      if (currencyCode != null) 'currency_code': currencyCode,
+      if (category != null) 'category': category,
+      if (description != null) 'description': description,
+      if (occurredOn != null) 'occurred_on': occurredOn,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FinanceEntriesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? kind,
+      Value<String>? amount,
+      Value<String>? currencyCode,
+      Value<String>? category,
+      Value<String>? description,
+      Value<DateTime>? occurredOn,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<int>? rowid}) {
+    return FinanceEntriesCompanion(
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      amount: amount ?? this.amount,
+      currencyCode: currencyCode ?? this.currencyCode,
+      category: category ?? this.category,
+      description: description ?? this.description,
+      occurredOn: occurredOn ?? this.occurredOn,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<String>(amount.value);
+    }
+    if (currencyCode.present) {
+      map['currency_code'] = Variable<String>(currencyCode.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (occurredOn.present) {
+      map['occurred_on'] = Variable<DateTime>(occurredOn.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinanceEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('amount: $amount, ')
+          ..write('currencyCode: $currencyCode, ')
+          ..write('category: $category, ')
+          ..write('description: $description, ')
+          ..write('occurredOn: $occurredOn, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2602,6 +3079,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       recurrenceOccurrenceExceptionRows =
       $RecurrenceOccurrenceExceptionRowsTable(this);
   late final $SecureEntitiesTable secureEntities = $SecureEntitiesTable(this);
+  late final $FinanceEntriesTable financeEntries = $FinanceEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2610,7 +3088,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         memoryItems,
         recurrenceSeriesRows,
         recurrenceOccurrenceExceptionRows,
-        secureEntities
+        secureEntities,
+        financeEntries
       ];
 }
 
@@ -3811,6 +4290,241 @@ typedef $$SecureEntitiesTableProcessedTableManager = ProcessedTableManager<
     ),
     SecureEntityRow,
     PrefetchHooks Function()>;
+typedef $$FinanceEntriesTableCreateCompanionBuilder = FinanceEntriesCompanion
+    Function({
+  required String id,
+  required String kind,
+  required String amount,
+  required String currencyCode,
+  required String category,
+  Value<String> description,
+  required DateTime occurredOn,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<int> rowid,
+});
+typedef $$FinanceEntriesTableUpdateCompanionBuilder = FinanceEntriesCompanion
+    Function({
+  Value<String> id,
+  Value<String> kind,
+  Value<String> amount,
+  Value<String> currencyCode,
+  Value<String> category,
+  Value<String> description,
+  Value<DateTime> occurredOn,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$FinanceEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $FinanceEntriesTable> {
+  $$FinanceEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get amount => $composableBuilder(
+      column: $table.amount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get currencyCode => $composableBuilder(
+      column: $table.currencyCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get occurredOn => $composableBuilder(
+      column: $table.occurredOn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$FinanceEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $FinanceEntriesTable> {
+  $$FinanceEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get amount => $composableBuilder(
+      column: $table.amount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get currencyCode => $composableBuilder(
+      column: $table.currencyCode,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get occurredOn => $composableBuilder(
+      column: $table.occurredOn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$FinanceEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FinanceEntriesTable> {
+  $$FinanceEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get currencyCode => $composableBuilder(
+      column: $table.currencyCode, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get occurredOn => $composableBuilder(
+      column: $table.occurredOn, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$FinanceEntriesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $FinanceEntriesTable,
+    FinanceEntryRow,
+    $$FinanceEntriesTableFilterComposer,
+    $$FinanceEntriesTableOrderingComposer,
+    $$FinanceEntriesTableAnnotationComposer,
+    $$FinanceEntriesTableCreateCompanionBuilder,
+    $$FinanceEntriesTableUpdateCompanionBuilder,
+    (
+      FinanceEntryRow,
+      BaseReferences<_$AppDatabase, $FinanceEntriesTable, FinanceEntryRow>
+    ),
+    FinanceEntryRow,
+    PrefetchHooks Function()> {
+  $$FinanceEntriesTableTableManager(
+      _$AppDatabase db, $FinanceEntriesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FinanceEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FinanceEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FinanceEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> kind = const Value.absent(),
+            Value<String> amount = const Value.absent(),
+            Value<String> currencyCode = const Value.absent(),
+            Value<String> category = const Value.absent(),
+            Value<String> description = const Value.absent(),
+            Value<DateTime> occurredOn = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              FinanceEntriesCompanion(
+            id: id,
+            kind: kind,
+            amount: amount,
+            currencyCode: currencyCode,
+            category: category,
+            description: description,
+            occurredOn: occurredOn,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String kind,
+            required String amount,
+            required String currencyCode,
+            required String category,
+            Value<String> description = const Value.absent(),
+            required DateTime occurredOn,
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              FinanceEntriesCompanion.insert(
+            id: id,
+            kind: kind,
+            amount: amount,
+            currencyCode: currencyCode,
+            category: category,
+            description: description,
+            occurredOn: occurredOn,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$FinanceEntriesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $FinanceEntriesTable,
+    FinanceEntryRow,
+    $$FinanceEntriesTableFilterComposer,
+    $$FinanceEntriesTableOrderingComposer,
+    $$FinanceEntriesTableAnnotationComposer,
+    $$FinanceEntriesTableCreateCompanionBuilder,
+    $$FinanceEntriesTableUpdateCompanionBuilder,
+    (
+      FinanceEntryRow,
+      BaseReferences<_$AppDatabase, $FinanceEntriesTable, FinanceEntryRow>
+    ),
+    FinanceEntryRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3825,4 +4539,6 @@ class $AppDatabaseManager {
               _db, _db.recurrenceOccurrenceExceptionRows);
   $$SecureEntitiesTableTableManager get secureEntities =>
       $$SecureEntitiesTableTableManager(_db, _db.secureEntities);
+  $$FinanceEntriesTableTableManager get financeEntries =>
+      $$FinanceEntriesTableTableManager(_db, _db.financeEntries);
 }

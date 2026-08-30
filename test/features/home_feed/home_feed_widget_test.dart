@@ -185,7 +185,7 @@ void main() {
     expect(tester.widget<IconButton>(today).onPressed, isNull);
   });
 
-  testWidgets('feed header takes whole ruled rows and starts on a line',
+  testWidgets('feed header keeps to the panel and takes whole ruled rows',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -205,12 +205,14 @@ void main() {
     await tester.pumpAndSettle();
     await openTab(tester, 'feed');
 
-    final header = tester.getRect(
-      find.byKey(const ValueKey('feed_header_card')),
+    final card = find.byKey(const ValueKey('feed_header_card'));
+    final header = tester.getRect(card);
+    // Шапка — продолжение верхней панели: между ними ровно зазор, а не
+    // пустая полоса до ближайшей линейки.
+    final sheet = tester.getRect(
+      find.ancestor(of: card, matching: find.byType(NotebookPageSurface)).first,
     );
-    final offsetFromLine =
-        (header.top - notebookPageLineTop) % notebookPageLineHeight;
-    expect(offsetFromLine, closeTo(0, 0.01));
+    expect(header.top - sheet.top, closeTo(notebookHeaderTopSpacing, 0.01));
     expect(header.height % notebookPageLineHeight, closeTo(0, 0.01));
   });
 
@@ -269,10 +271,13 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('feed_section_notes')));
     await tester.pumpAndSettle();
-    expect(
+    // Обёртка листания остаётся на месте — иначе у рамки перелистывания на
+    // смене закладки меняется родитель и под листом мигает подложка, — но
+    // листать записки нечем: у них нет периода.
+    final swipeArea = tester.widget<PageSwipeArea>(
       find.byKey(const ValueKey('feed_period_swipe_area')),
-      findsNothing,
     );
+    expect(swipeArea.onHorizontalSwipe, isNull);
   });
 
   testWidgets('hides empty previous day sections', (tester) async {

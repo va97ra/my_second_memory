@@ -57,7 +57,7 @@ void main() {
     });
   }
 
-  testWidgets('calendar header wears the same bands as the feed',
+  testWidgets('calendar header starts two pixels below the tool bar',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -89,16 +89,24 @@ void main() {
     final header = tester.getRect(
       find.byKey(const ValueKey('calendar_header_card')),
     );
-    expect(
-      (header.top - notebookPageLineTop) % notebookPageLineHeight,
-      closeTo(0, 0.01),
-    );
+    final toolBar = tester.getRect(find.byType(AppToolBar));
+    expect(header.top - toolBar.bottom, closeTo(2, 0.01));
     expect(header.height % notebookPageLineHeight, closeTo(0, 0.01));
 
-    // Title, month navigation and the shift legend all live in the header.
-    expect(find.text('Календарь'), findsWidgets);
-    expect(find.byKey(const ValueKey('calendar_month_label')), findsOneWidget);
-    expect(find.byKey(const ValueKey('calendar_today')), findsOneWidget);
+    final headerFinder = find.byKey(const ValueKey('calendar_header_card'));
+    expect(
+      find.descendant(of: headerFinder, matching: find.text('Календарь')),
+      findsNothing,
+    );
+    final previous = find.byKey(const ValueKey('calendar_previous_month'));
+    final month = find.byKey(const ValueKey('calendar_month_label'));
+    final today = find.byKey(const ValueKey('calendar_today'));
+    final next = find.byKey(const ValueKey('calendar_next_month'));
+    expect(month, findsOneWidget);
+    expect(today, findsOneWidget);
+    expect(tester.getCenter(previous).dx, lessThan(tester.getCenter(month).dx));
+    expect(tester.getCenter(month).dx, lessThan(tester.getCenter(today).dx));
+    expect(tester.getCenter(today).dx, lessThan(tester.getCenter(next).dx));
     expect(
       find.byKey(const ValueKey('calendar_shift_legend')),
       findsOneWidget,
@@ -127,7 +135,8 @@ void main() {
 
     await tester.pumpAndSettle();
     await openTab(tester, 'calendar');
-    final todayCell = find.text('${today.day}').first;
+    final todayKey = DateFormat('yyyy-MM-dd').format(today);
+    final todayCell = find.byKey(ValueKey('calendar_day_$todayKey'));
     await tester.ensureVisible(todayCell);
     await tester.tap(todayCell);
     await tester.pumpAndSettle();
@@ -217,7 +226,7 @@ void main() {
       findsNothing,
     );
 
-    final todayCell = find.text('${today.day}').first;
+    final todayCell = find.byKey(ValueKey('calendar_day_$todayKey'));
     await tester.ensureVisible(todayCell);
     await tester.pumpAndSettle();
     await tester.tap(todayCell);
@@ -293,7 +302,8 @@ void main() {
 
     await tester.pumpAndSettle();
     await openTab(tester, 'calendar');
-    await tester.tap(find.text('${today.day}').first);
+    final todayKey = DateFormat('yyyy-MM-dd').format(today);
+    await tester.tap(find.byKey(ValueKey('calendar_day_$todayKey')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('План на сегодня'));
     await tester.pumpAndSettle();

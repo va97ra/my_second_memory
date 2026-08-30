@@ -6,6 +6,7 @@ import 'package:archive/archive.dart';
 import 'package:cryptography/cryptography.dart';
 
 import '../accounts/account_repository.dart';
+import '../finance/finance_repository.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../memory/memory_repository.dart';
 import '../recurrence/recurrence_repository.dart';
@@ -21,20 +22,22 @@ class BackupService {
     required this.accountRepository,
     this.recurrenceRepository,
     this.recurrenceExceptionRepository,
+    this.financeRepository,
   });
 
   static const format = 'ezhednevnik_v2_backup';
-  static const version = 2;
+  static const version = 3;
   static const legacyVersion = 1;
   static const encryptedZipFormat = 'ezhednevnik_v2_encrypted_zip';
   static const streamingZipFormat = 'ezhednevnik_v2_streaming_zip';
-  static const streamingZipVersion = 5;
+  static const streamingZipVersion = 6;
 
   final MemoryRepository memoryRepository;
   final ShiftScheduleRepository shiftScheduleRepository;
   final AccountRepository accountRepository;
   final RecurrenceRepository? recurrenceRepository;
   final RecurrenceExceptionRepository? recurrenceExceptionRepository;
+  final FinanceRepository? financeRepository;
 
   Future<String> createBackupJson() async {
     final memoryItems = await memoryRepository.loadAll();
@@ -43,6 +46,7 @@ class BackupService {
     final recurrenceSeries = await recurrenceRepository?.loadAll() ?? const [];
     final recurrenceExceptions =
         await recurrenceExceptionRepository?.loadAll() ?? const [];
+    final financeEntries = await financeRepository?.loadAll() ?? const [];
     final mediaFiles = await collectBackupMedia(memoryItems);
 
     return const JsonEncoder.withIndent('  ').convert({
@@ -56,6 +60,7 @@ class BackupService {
           recurrenceSeries.map((item) => item.toJson()).toList(),
       'recurrenceExceptions':
           recurrenceExceptions.map((item) => item.toJson()).toList(),
+      'financeEntries': financeEntries.map((item) => item.toJson()).toList(),
       'mediaFiles': mediaFiles,
     });
   }
@@ -105,6 +110,7 @@ class BackupService {
       recurrenceSeries: await recurrenceRepository?.loadAll() ?? const [],
       recurrenceExceptions:
           await recurrenceExceptionRepository?.loadAll() ?? const [],
+      financeEntries: await financeRepository?.loadAll() ?? const [],
       temporaryRoot: temporaryRoot,
     );
   }
@@ -155,6 +161,7 @@ class BackupService {
       recurrenceSeries: await recurrenceRepository?.loadAll() ?? const [],
       recurrenceExceptions:
           await recurrenceExceptionRepository?.loadAll() ?? const [],
+      financeEntries: await financeRepository?.loadAll() ?? const [],
     );
   }
 
@@ -166,6 +173,9 @@ class BackupService {
         data.recurrenceExceptions.isNotEmpty) {
       throw StateError('Recurrence exception repository is unavailable');
     }
+    if (financeRepository == null && data.financeEntries.isNotEmpty) {
+      throw StateError('Finance repository is unavailable');
+    }
 
     await memoryRepository.replaceAll(data.memoryItems);
     await shiftScheduleRepository.saveSchedules(data.shiftSchedules);
@@ -174,6 +184,7 @@ class BackupService {
       data.recurrenceExceptions,
     );
     await recurrenceRepository?.replaceAll(data.recurrenceSeries);
+    await financeRepository?.replaceAll(data.financeEntries);
   }
 
   bool _sameData(BackupRestoreData first, BackupRestoreData second) {
@@ -196,6 +207,10 @@ class BackupService {
         _sameJsonList(
           first.recurrenceExceptions.map((item) => item.toJson()),
           second.recurrenceExceptions.map((item) => item.toJson()),
+        ) &&
+        _sameJsonList(
+          first.financeEntries.map((item) => item.toJson()),
+          second.financeEntries.map((item) => item.toJson()),
         );
   }
 
@@ -220,7 +235,8 @@ class BackupService {
     final unencryptedManifest = _readManifest(unencryptedArchive);
     if (unencryptedManifest != null &&
         unencryptedManifest['format'] == streamingZipFormat &&
-        unencryptedManifest['version'] == streamingZipVersion) {
+        (unencryptedManifest['version'] == streamingZipVersion ||
+            unencryptedManifest['version'] == 5)) {
       return _parseGcmStreamingZip(
         unencryptedArchive,
         unencryptedManifest,
@@ -340,12 +356,19 @@ class BackupService {
                   Map<String, Object?>.from(entry as Map),
                 ))
             .toList();
+    final financeEntries =
+        (manifest['financeEntries'] as List<dynamic>? ?? const [])
+            .map((entry) => FinanceEntry.fromJson(
+                  Map<String, Object?>.from(entry as Map),
+                ))
+            .toList();
     return BackupRestoreData(
       memoryItems: restoredItems,
       shiftSchedules: shifts,
       accounts: accounts,
       recurrenceSeries: recurrenceSeries,
       recurrenceExceptions: recurrenceExceptions,
+      financeEntries: financeEntries,
     );
   }
 
@@ -353,7 +376,9 @@ class BackupService {
     final decoded = jsonDecode(raw) as Map<String, Object?>;
     final backupVersion = decoded['version'];
     if (decoded['format'] != format ||
-        (backupVersion != version && backupVersion != legacyVersion)) {
+        (backupVersion != version &&
+            backupVersion != 2 &&
+            backupVersion != legacyVersion)) {
       throw const FormatException('Unsupported backup file');
     }
 
@@ -386,6 +411,10 @@ class BackupService {
                   Map<String, Object?>.from(entry as Map),
                 ))
             .toList();
+    final financeEntries =
+        (decoded['financeEntries'] as List<dynamic>? ?? const []).map((entry) {
+      return FinanceEntry.fromJson(Map<String, Object?>.from(entry as Map));
+    }).toList();
 
     return BackupRestoreData(
       memoryItems: restoredItems,
@@ -393,6 +422,7 @@ class BackupService {
       accounts: accounts,
       recurrenceSeries: recurrenceSeries,
       recurrenceExceptions: recurrenceExceptions,
+      financeEntries: financeEntries,
     );
   }
 
@@ -467,6 +497,7 @@ class BackupRestoreData {
     required this.accounts,
     this.recurrenceSeries = const [],
     this.recurrenceExceptions = const [],
+    this.financeEntries = const [],
   });
 
   final List<MemoryItem> memoryItems;
@@ -474,4 +505,5 @@ class BackupRestoreData {
   final List<AccountItem> accounts;
   final List<RecurrenceSeries> recurrenceSeries;
   final List<RecurrenceOccurrenceException> recurrenceExceptions;
+  final List<FinanceEntry> financeEntries;
 }

@@ -4,11 +4,11 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/media/voice_note_player.dart';
-import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
 import 'media_delete_menu.dart';
 import 'record_editor_actions.dart';
 import 'record_editor_field.dart';
 import 'record_editor_images.dart';
+import 'record_editor_layout.dart';
 import 'recording_pill.dart';
 
 /// Лист записи: вложения сверху, текст по линейке и действия снизу.
@@ -48,9 +48,8 @@ class RecordEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // На низком экране лист ужимается: клавиатура забирает половину места.
-        final compact = constraints.maxHeight < 360;
-        final gap = SizedBox(height: compact ? 8 : 12);
+        final layout = RecordEditorLayout.from(constraints);
+        final gap = SizedBox(height: layout.gap);
 
         return KeyedSubtree(
           key: const ValueKey('record_editor_panel'),
@@ -59,18 +58,20 @@ class RecordEditor extends StatelessWidget {
             child: DecoratedBox(
               decoration: _paper(context),
               child: Padding(
-                padding: EdgeInsets.fromLTRB(14, 10, 12, compact ? 8 : 12),
+                padding: EdgeInsets.fromLTRB(
+                  14,
+                  10,
+                  12,
+                  layout.bottomPadding,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (imagePaths.isNotEmpty) ...[
                       RecordEditorImages(
                         paths: imagePaths,
-                        height: compact ? 120 : memoryAttachmentPreviewHeight,
-                        maxWidth: compact
-                            ? 180
-                            : constraints.maxWidth
-                                .clamp(0.0, memoryAttachmentPreviewMaxWidth),
+                        height: layout.imageHeight,
+                        maxWidth: layout.imageMaxWidth,
                         onRemove: onRemoveImage,
                       ),
                       gap,
@@ -92,7 +93,7 @@ class RecordEditor extends StatelessWidget {
                     RecordEditorActions(
                       recurrenceFrequency: recurrenceFrequency,
                       isRecording: isRecording,
-                      buttonSize: compact ? 38 : 42,
+                      buttonSize: layout.buttonSize,
                       onRecurrenceTap: onRecurrenceTap,
                       onPickImage: onPickImage,
                       onVoicePressed: onVoicePressed,

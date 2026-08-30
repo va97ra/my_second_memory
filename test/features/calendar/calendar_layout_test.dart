@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:ezhednevnik_v2/src/app/app.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
@@ -33,6 +34,13 @@ void main() {
       find.byKey(const ValueKey('calendar_landscape_scroll')),
       findsNothing,
     );
+    final calendarBottom = tester
+        .getBottomRight(
+          find.byKey(const ValueKey('calendar_month_swipe_area')),
+        )
+        .dy;
+    final bottomNavigationTop = tester.getTopLeft(find.byType(AppNavBar)).dy;
+    expect(calendarBottom, closeTo(bottomNavigationTop, 0.1));
     final gridBottom = tester
         .getBottomRight(find.byKey(const ValueKey('calendar_month_grid')))
         .dy;

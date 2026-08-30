@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../themes/notebook/notebook_background.dart';
-import '../themes/notebook/notebook_visuals.dart';
 
 /// Width an icon button claims beside a header title, tap padding included.
 ///
@@ -23,43 +22,41 @@ class NotebookHeaderBand {
   final int ruledRows;
 }
 
+/// Зазор между шапкой и панелью над ней.
+///
+/// Шапка — продолжение верхней панели, а не плашка, брошенная посреди листа:
+/// она держится к панели вплотную. Раньше карту опускали на ближайшую линейку,
+/// и лист начинался с пустой полосы в треть шапки высотой.
+const double notebookHeaderTopSpacing = 2;
+
 /// The header every page wears: a card lying on ruled paper, split into bands.
 ///
-/// The card starts on a ruled line and each band is a whole number of ruled
-/// rows, so the header never floats between the ruling. The card's border
-/// paints inside the box and costs no height; the divider between two bands
-/// costs one pixel, which the lower band gives back.
+/// Each band is a whole number of ruled rows, so the header keeps the rhythm
+/// of the page it sits on. The card's border paints inside the box and costs
+/// no height; the divider between two bands costs one pixel, which the lower
+/// band gives back.
 class NotebookPageHeader extends StatelessWidget {
   const NotebookPageHeader({
     required this.bands,
-    this.alignToRuling = true,
-    this.sheetTopInset = 0,
     this.cardKey,
     super.key,
   });
 
   final List<NotebookHeaderBand> bands;
 
-  /// Whether to drop the card onto a ruled line. Off where the header does not
-  /// sit at the top of the page, since then there is no line to meet.
-  final bool alignToRuling;
-
-  /// How far below the top of the ruled background the page itself starts.
-  final double sheetTopInset;
-
   final Key? cardKey;
 
   @override
   Widget build(BuildContext context) {
-    final onRuling = alignToRuling && NotebookVisuals.maybeOf(context) != null;
-    final topPadding = onRuling
-        ? _ruledTopPadding(MediaQuery.paddingOf(context).top + sheetTopInset)
-        : 6.0;
-
     return SafeArea(
       bottom: false,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(10, topPadding, 10, 6),
+        padding: const EdgeInsets.fromLTRB(
+          10,
+          notebookHeaderTopSpacing,
+          10,
+          6,
+        ),
         child: NotebookCardSurface(
           key: cardKey,
           depth: NotebookSurfaceDepth.card,
@@ -83,17 +80,4 @@ class NotebookPageHeader extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Top padding that drops the header onto the first ruled line it can reach.
-///
-/// [offset] is everything the header already sits below. Lines only exist from
-/// [notebookPageLineTop] downwards, so a header that would start above the
-/// first one waits for it.
-double _ruledTopPadding(double offset) {
-  final steps =
-      ((offset - notebookPageLineTop) / notebookPageLineHeight).ceil();
-  final line =
-      notebookPageLineTop + (steps < 0 ? 0 : steps) * notebookPageLineHeight;
-  return line - offset;
 }

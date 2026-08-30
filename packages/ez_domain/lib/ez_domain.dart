@@ -5,6 +5,10 @@
 /// приложении, а не тут — провайдер это способ доставки, а не правило.
 library;
 
+export 'src/calculator/calculator_engine.dart';
+export 'src/calculator/calculator_types.dart';
+export 'src/finance/finance_entry.dart';
+export 'src/finance/finance_summary.dart';
 export 'src/accounts/account_item.dart';
 export 'src/calendar/holiday_calendar_service.dart';
 export 'src/calendar/holiday_definition.dart';

@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'shift_legend_chip.dart';
 
-/// Шапка календаря: заголовок, месяц со стрелками и графики смен, которые
+/// Шапка календаря: месяц со стрелками и графики смен, которые
 /// его красят. Та же карточка, те же полосы и те же кегли, что и у ленты.
 class CalendarHeader extends StatelessWidget {
   const CalendarHeader({
@@ -38,34 +38,6 @@ class CalendarHeader extends StatelessWidget {
         NotebookHeaderBand(
           child: Row(
             children: [
-              // Домашняя вкладка: возвращаться некуда, но слот остаётся, чтобы
-              // заголовок держал свою середину.
-              const SizedBox(width: notebookHeaderSlot),
-              Expanded(
-                child: Text(
-                  strings.calendar,
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-              ),
-              IconButton(
-                key: const ValueKey('calendar_today'),
-                tooltip: strings.today,
-                onPressed: onToday,
-                icon: const Icon(Icons.today_rounded, size: 22),
-                style: notebookIconButtonStyle(),
-              ),
-            ],
-          ),
-        ),
-        NotebookHeaderBand(
-          child: Row(
-            children: [
               IconButton(
                 key: const ValueKey('calendar_previous_month'),
                 tooltip: strings.previousMonth,
@@ -85,6 +57,13 @@ class CalendarHeader extends StatelessWidget {
                         height: 1.08,
                       ),
                 ),
+              ),
+              IconButton(
+                key: const ValueKey('calendar_today'),
+                tooltip: strings.today,
+                onPressed: onToday,
+                icon: const Icon(Icons.today_rounded, size: 22),
+                style: notebookIconButtonStyle(),
               ),
               IconButton(
                 key: const ValueKey('calendar_next_month'),

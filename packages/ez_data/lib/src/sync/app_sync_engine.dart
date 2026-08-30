@@ -28,6 +28,8 @@ class AppSyncEngine {
     required List<RecurrenceOccurrenceException> recurrenceExceptions,
     required Future<void> Function(List<RecurrenceOccurrenceException>)
         replaceRecurrenceExceptions,
+    List<FinanceEntry> financeEntries = const [],
+    Future<void> Function(List<FinanceEntry>)? replaceFinanceEntries,
   }) async {
     final remoteEntities = await remote.fetchEntities();
     final memoryOutcome = await EncryptedEntitySyncEngine<MemoryItem>(
@@ -181,6 +183,22 @@ class AppSyncEngine {
       remoteEntities: remoteEntities,
       replaceLocal: replaceRecurrenceSeries,
     );
+    final financeOutcome = await EncryptedEntitySyncEngine<FinanceEntry>(
+      remote: remote,
+      cipher: cipher,
+      tombstones: tombstones,
+      kind: SyncEntityKind.financeEntry,
+      idOf: (entry) => entry.id,
+      updatedAtOf: (entry) => entry.updatedAt,
+      toJson: (entry) => entry.toJson(),
+      fromJson: FinanceEntry.fromJson,
+      withCanonicalUpdatedAt: (entry, updatedAt) =>
+          entry.copyWith(updatedAt: updatedAt),
+    ).merge(
+      localItems: financeEntries,
+      remoteEntities: remoteEntities,
+      replaceLocal: replaceFinanceEntries ?? (_) async {},
+    );
 
     await remote.applyEntities([
       ...memoryOutcome.changesToUpload,
@@ -188,6 +206,7 @@ class AppSyncEngine {
       ...accountsOutcome.changesToUpload,
       ...recurrenceExceptionsOutcome.changesToUpload,
       ...recurrenceSeriesOutcome.changesToUpload,
+      ...financeOutcome.changesToUpload,
     ]);
     return _combine([
       memoryOutcome.result,
@@ -195,6 +214,7 @@ class AppSyncEngine {
       accountsOutcome.result,
       recurrenceExceptionsOutcome.result,
       recurrenceSeriesOutcome.result,
+      financeOutcome.result,
     ]);
   }
 

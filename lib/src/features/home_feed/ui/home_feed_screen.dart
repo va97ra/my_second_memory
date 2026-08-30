@@ -40,7 +40,6 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
             layout: layout,
             loadState: loadState,
             showHelp: showHelp,
-            alignToRuling: useSideTabs,
           );
 
           if (!useSideTabs) {
@@ -83,7 +82,6 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     required FeedLayout layout,
     required AsyncValue<void> loadState,
     required bool showHelp,
-    required bool alignToRuling,
   }) {
     final sheet = PageTurnFrame(
       key: _pageTurnKey,
@@ -92,7 +90,6 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
         layout: layout,
         loadState: loadState,
         showHelp: showHelp,
-        alignToRuling: alignToRuling,
         onGoToToday: view.showsPeriodOf(DateTime.now()) ? null : _goToToday,
         onFilterSelected: (filter) =>
             ref.read(feedViewProvider.notifier).selectFilter(filter),
@@ -106,11 +103,12 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     );
 
     // Страницу листают пальцем, а не только стрелками. У записок периода нет,
-    // поэтому они остаются на месте.
-    if (view.section == FeedSection.notes) return sheet;
+    // и листать им нечего — но обёртка остаётся на месте: без неё у рамки
+    // перелистывания на смене закладки меняется родитель, она вместе с листом
+    // на кадр выпадает из дерева, и под ним мигает подложка.
     return PageSwipeArea(
       key: const ValueKey('feed_period_swipe_area'),
-      onHorizontalSwipe: _movePeriod,
+      onHorizontalSwipe: view.section == FeedSection.notes ? null : _movePeriod,
       child: sheet,
     );
   }

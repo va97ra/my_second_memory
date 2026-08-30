@@ -61,13 +61,10 @@ class NavBarStyle {
   /// читаемой, пока изображение ещё не готово.
   Widget wrap(Widget child) {
     if (!wearsLeather) return child;
-    return ColoredBox(
+    return NotebookLeatherSurface(
       color: surface,
-      child: NotebookLeatherSurface(
-        color: surface,
-        lightweight: true,
-        child: child,
-      ),
+      lightweight: true,
+      child: child,
     );
   }
 }

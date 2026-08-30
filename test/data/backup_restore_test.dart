@@ -1,4 +1,3 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ez_data/ez_data.dart';
 
@@ -16,21 +15,57 @@ void main() {
     final accounts = FakeAccountRepository([
       account('old-account', date),
     ]);
+    final finance = FakeFinanceRepository([financeEntry('old-finance', date)]);
     final service = BackupService(
       memoryRepository: memory,
       shiftScheduleRepository: shifts,
       accountRepository: accounts,
+      financeRepository: finance,
     );
 
     await service.restore(BackupRestoreData(
       memoryItems: [memoryItem('restored-note', date)],
       shiftSchedules: [shiftSchedule('restored-shift', date)],
       accounts: [account('restored-account', date)],
+      financeEntries: [financeEntry('restored-finance', date)],
     ));
 
     expect((await memory.loadAll()).single.id, 'restored-note');
     expect((await shifts.loadSchedules()).single.id, 'restored-shift');
     expect((await accounts.loadAccounts()).single.id, 'restored-account');
+    expect((await finance.loadAll()).single.id, 'restored-finance');
+  });
+
+  test('restore rolls every repository back when finance write fails',
+      () async {
+    final date = DateTime(2026, 8, 8);
+    final memory = FakeMemoryRepository([memoryItem('old-note', date)]);
+    final shifts = FakeShiftRepository([shiftSchedule('old-shift', date)]);
+    final accounts = FakeAccountRepository([account('old-account', date)]);
+    final finance = FailOnceFinanceRepository([
+      financeEntry('old-finance', date),
+    ]);
+    final service = BackupService(
+      memoryRepository: memory,
+      shiftScheduleRepository: shifts,
+      accountRepository: accounts,
+      financeRepository: finance,
+    );
+
+    await expectLater(
+      service.restore(BackupRestoreData(
+        memoryItems: [memoryItem('new-note', date)],
+        shiftSchedules: [shiftSchedule('new-shift', date)],
+        accounts: [account('new-account', date)],
+        financeEntries: [financeEntry('new-finance', date)],
+      )),
+      throwsStateError,
+    );
+
+    expect((await memory.loadAll()).single.id, 'old-note');
+    expect((await shifts.loadSchedules()).single.id, 'old-shift');
+    expect((await accounts.loadAccounts()).single.id, 'old-account');
+    expect((await finance.loadAll()).single.id, 'old-finance');
   });
 
   test('restore rolls earlier repositories back when a write fails', () async {
