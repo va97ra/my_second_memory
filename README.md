@@ -16,7 +16,8 @@ Local-first Flutter-приложение для личных записей, к�
 - [`docs/recurrence.md`](docs/recurrence.md) — модель повторов и её инвариант;
 - [`docs/sync_setup.md`](docs/sync_setup.md) — настройка зашифрованной
   синхронизации;
-- [`docs/debt.md`](docs/debt.md) — чем код сегодня расходится с картой.
+- [`docs/debt.md`](docs/debt.md) — чем код сегодня расходится с картой;
+- [`docs/pending.md`](docs/pending.md) — о чём договорились, но ещё не сделали.
 
 ## Платформы
 

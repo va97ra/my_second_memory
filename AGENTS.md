@@ -16,3 +16,8 @@ piece of knowledge lives in one place. The code map, the table of where new
 code goes, and the size ceilings are in
 [`docs/architecture.md`](docs/architecture.md); deliberate exceptions to the
 ceilings are listed in [`docs/debt.md`](docs/debt.md).
+
+Before picking up work, read [`docs/pending.md`](docs/pending.md): it lists
+what has been agreed but not finished, and what is waiting on the owner rather
+than on code. One entry there is a safety matter — the current-carrying tables
+used for wire sizing have not been checked against ПУЭ by a human.
