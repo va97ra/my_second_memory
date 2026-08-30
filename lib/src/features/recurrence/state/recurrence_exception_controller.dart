@@ -94,24 +94,15 @@ class RecurrenceExceptionController
     required List<RecurrenceOccurrenceException> baseline,
   }) async {
     await _loadFuture;
-    final mergedById = {for (final item in exceptions) item.id: item};
-    final currentById = {for (final item in state) item.id: item};
-    final baselineById = {for (final item in baseline) item.id: item};
-    for (final id in baselineById.keys) {
-      if (!currentById.containsKey(id)) mergedById.remove(id);
-    }
-    for (final current in currentById.values) {
-      final before = baselineById[current.id];
-      final changedDuringSync =
-          before == null || current.updatedAt.isAfter(before.updatedAt);
-      if (!changedDuringSync) continue;
-      final incoming = mergedById[current.id];
-      if (incoming == null || !incoming.updatedAt.isAfter(current.updatedAt)) {
-        mergedById[current.id] = current;
-      }
-    }
-    await _repository.replaceAll(mergedById.values.toList(growable: false));
-    state = mergedById.values.toList(growable: false);
+    final merged = mergeSyncedEntities(
+      incoming: exceptions,
+      current: state,
+      baseline: baseline,
+      idOf: (item) => item.id,
+      updatedAtOf: (item) => item.updatedAt,
+    );
+    await _repository.replaceAll(merged);
+    state = merged;
   }
 
   List<RecurrenceOccurrenceException> _replace(

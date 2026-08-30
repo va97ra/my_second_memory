@@ -28,7 +28,7 @@ void main() {
     expect(restored.single.currencyCode, 'RUB');
   });
 
-  test('database upgrade from schema 9 creates the finance table', () async {
+  test('database upgrade from schema 9 creates current local tables', () async {
     final directory = await Directory.systemTemp.createTemp('finance_v9_');
     addTearDown(() => directory.delete(recursive: true));
     final file = File('${directory.path}/v9.sqlite');
@@ -43,7 +43,10 @@ void main() {
     await repository.replaceAll([_entry('migrated', '1.25', 'USD')]);
 
     expect((await repository.loadAll()).single.id, 'migrated');
-    expect(database.schemaVersion, 10);
+    final tools = SqliteToolDataRepository(database, false);
+    await tools.replaceAll(const ToolDataSnapshot());
+    expect((await tools.load()).calculations, isEmpty);
+    expect(database.schemaVersion, 11);
   });
 
   test('SharedPreferences fallback restores independent currency journals',

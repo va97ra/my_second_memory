@@ -243,15 +243,11 @@ void main() {
 
     expect(find.byKey(const ValueKey('top_calculator')), findsOneWidget);
     expect(find.byKey(const ValueKey('top_finance')), findsOneWidget);
-    for (var index = 3; index <= 5; index++) {
-      expect(
-        find.byKey(ValueKey('top_tool_placeholder_$index')),
-        findsOneWidget,
-      );
-    }
+    expect(find.byKey(const ValueKey('top_converter')), findsOneWidget);
+    expect(find.byKey(const ValueKey('top_engineering')), findsOneWidget);
+    expect(find.byKey(const ValueKey('top_reference')), findsOneWidget);
     final tools = tester.widget<AppToolBar>(find.byType(AppToolBar)).items;
     expect(tools, hasLength(5));
-    expect(tools.skip(2).every((item) => !item.enabled), isTrue);
     expect(find.byType(AppNavigationItems), findsNWidgets(2));
     expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex,
         isNull);
@@ -278,6 +274,21 @@ void main() {
       tester.widget<AppNavBar>(find.byType(AppNavBar)).selectedIndex,
       isNull,
     );
+
+    await tester.tap(find.byKey(const ValueKey('top_converter')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('converter_screen')), findsOneWidget);
+    expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex, 2);
+
+    await tester.tap(find.byKey(const ValueKey('top_engineering')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('engineering_tabs')), findsOneWidget);
+    expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex, 3);
+
+    await tester.tap(find.byKey(const ValueKey('top_reference')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('reference_search')), findsOneWidget);
+    expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex, 4);
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();

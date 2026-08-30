@@ -3069,6 +3069,279 @@ class FinanceEntriesCompanion extends UpdateCompanion<FinanceEntryRow> {
   }
 }
 
+class $ToolDataRowsTable extends ToolDataRows
+    with TableInfo<$ToolDataRowsTable, ToolDataRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ToolDataRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+      'kind', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _payloadJsonMeta =
+      const VerificationMeta('payloadJson');
+  @override
+  late final GeneratedColumn<String> payloadJson = GeneratedColumn<String>(
+      'payload_json', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, kind, payloadJson, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'tool_data_rows';
+  @override
+  VerificationContext validateIntegrity(Insertable<ToolDataRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+          _kindMeta, kind.isAcceptableOrUnknown(data['kind']!, _kindMeta));
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('payload_json')) {
+      context.handle(
+          _payloadJsonMeta,
+          payloadJson.isAcceptableOrUnknown(
+              data['payload_json']!, _payloadJsonMeta));
+    } else if (isInserting) {
+      context.missing(_payloadJsonMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ToolDataRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ToolDataRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      kind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}kind'])!,
+      payloadJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}payload_json'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $ToolDataRowsTable createAlias(String alias) {
+    return $ToolDataRowsTable(attachedDatabase, alias);
+  }
+}
+
+class ToolDataRow extends DataClass implements Insertable<ToolDataRow> {
+  final String id;
+  final String kind;
+  final String payloadJson;
+  final DateTime updatedAt;
+  const ToolDataRow(
+      {required this.id,
+      required this.kind,
+      required this.payloadJson,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['kind'] = Variable<String>(kind);
+    map['payload_json'] = Variable<String>(payloadJson);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ToolDataRowsCompanion toCompanion(bool nullToAbsent) {
+    return ToolDataRowsCompanion(
+      id: Value(id),
+      kind: Value(kind),
+      payloadJson: Value(payloadJson),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ToolDataRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ToolDataRow(
+      id: serializer.fromJson<String>(json['id']),
+      kind: serializer.fromJson<String>(json['kind']),
+      payloadJson: serializer.fromJson<String>(json['payloadJson']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'kind': serializer.toJson<String>(kind),
+      'payloadJson': serializer.toJson<String>(payloadJson),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ToolDataRow copyWith(
+          {String? id,
+          String? kind,
+          String? payloadJson,
+          DateTime? updatedAt}) =>
+      ToolDataRow(
+        id: id ?? this.id,
+        kind: kind ?? this.kind,
+        payloadJson: payloadJson ?? this.payloadJson,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  ToolDataRow copyWithCompanion(ToolDataRowsCompanion data) {
+    return ToolDataRow(
+      id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      payloadJson:
+          data.payloadJson.present ? data.payloadJson.value : this.payloadJson,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ToolDataRow(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, kind, payloadJson, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ToolDataRow &&
+          other.id == this.id &&
+          other.kind == this.kind &&
+          other.payloadJson == this.payloadJson &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ToolDataRowsCompanion extends UpdateCompanion<ToolDataRow> {
+  final Value<String> id;
+  final Value<String> kind;
+  final Value<String> payloadJson;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const ToolDataRowsCompanion({
+    this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.payloadJson = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ToolDataRowsCompanion.insert({
+    required String id,
+    required String kind,
+    required String payloadJson,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        kind = Value(kind),
+        payloadJson = Value(payloadJson),
+        updatedAt = Value(updatedAt);
+  static Insertable<ToolDataRow> custom({
+    Expression<String>? id,
+    Expression<String>? kind,
+    Expression<String>? payloadJson,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (payloadJson != null) 'payload_json': payloadJson,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ToolDataRowsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? kind,
+      Value<String>? payloadJson,
+      Value<DateTime>? updatedAt,
+      Value<int>? rowid}) {
+    return ToolDataRowsCompanion(
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      payloadJson: payloadJson ?? this.payloadJson,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (payloadJson.present) {
+      map['payload_json'] = Variable<String>(payloadJson.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ToolDataRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3080,6 +3353,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $RecurrenceOccurrenceExceptionRowsTable(this);
   late final $SecureEntitiesTable secureEntities = $SecureEntitiesTable(this);
   late final $FinanceEntriesTable financeEntries = $FinanceEntriesTable(this);
+  late final $ToolDataRowsTable toolDataRows = $ToolDataRowsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3089,7 +3363,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         recurrenceSeriesRows,
         recurrenceOccurrenceExceptionRows,
         secureEntities,
-        financeEntries
+        financeEntries,
+        toolDataRows
       ];
 }
 
@@ -4525,6 +4800,164 @@ typedef $$FinanceEntriesTableProcessedTableManager = ProcessedTableManager<
     ),
     FinanceEntryRow,
     PrefetchHooks Function()>;
+typedef $$ToolDataRowsTableCreateCompanionBuilder = ToolDataRowsCompanion
+    Function({
+  required String id,
+  required String kind,
+  required String payloadJson,
+  required DateTime updatedAt,
+  Value<int> rowid,
+});
+typedef $$ToolDataRowsTableUpdateCompanionBuilder = ToolDataRowsCompanion
+    Function({
+  Value<String> id,
+  Value<String> kind,
+  Value<String> payloadJson,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$ToolDataRowsTableFilterComposer
+    extends Composer<_$AppDatabase, $ToolDataRowsTable> {
+  $$ToolDataRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get payloadJson => $composableBuilder(
+      column: $table.payloadJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$ToolDataRowsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ToolDataRowsTable> {
+  $$ToolDataRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get payloadJson => $composableBuilder(
+      column: $table.payloadJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ToolDataRowsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ToolDataRowsTable> {
+  $$ToolDataRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get payloadJson => $composableBuilder(
+      column: $table.payloadJson, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ToolDataRowsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ToolDataRowsTable,
+    ToolDataRow,
+    $$ToolDataRowsTableFilterComposer,
+    $$ToolDataRowsTableOrderingComposer,
+    $$ToolDataRowsTableAnnotationComposer,
+    $$ToolDataRowsTableCreateCompanionBuilder,
+    $$ToolDataRowsTableUpdateCompanionBuilder,
+    (
+      ToolDataRow,
+      BaseReferences<_$AppDatabase, $ToolDataRowsTable, ToolDataRow>
+    ),
+    ToolDataRow,
+    PrefetchHooks Function()> {
+  $$ToolDataRowsTableTableManager(_$AppDatabase db, $ToolDataRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ToolDataRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ToolDataRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ToolDataRowsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> kind = const Value.absent(),
+            Value<String> payloadJson = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ToolDataRowsCompanion(
+            id: id,
+            kind: kind,
+            payloadJson: payloadJson,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String kind,
+            required String payloadJson,
+            required DateTime updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ToolDataRowsCompanion.insert(
+            id: id,
+            kind: kind,
+            payloadJson: payloadJson,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ToolDataRowsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ToolDataRowsTable,
+    ToolDataRow,
+    $$ToolDataRowsTableFilterComposer,
+    $$ToolDataRowsTableOrderingComposer,
+    $$ToolDataRowsTableAnnotationComposer,
+    $$ToolDataRowsTableCreateCompanionBuilder,
+    $$ToolDataRowsTableUpdateCompanionBuilder,
+    (
+      ToolDataRow,
+      BaseReferences<_$AppDatabase, $ToolDataRowsTable, ToolDataRow>
+    ),
+    ToolDataRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4541,4 +4974,6 @@ class $AppDatabaseManager {
       $$SecureEntitiesTableTableManager(_db, _db.secureEntities);
   $$FinanceEntriesTableTableManager get financeEntries =>
       $$FinanceEntriesTableTableManager(_db, _db.financeEntries);
+  $$ToolDataRowsTableTableManager get toolDataRows =>
+      $$ToolDataRowsTableTableManager(_db, _db.toolDataRows);
 }

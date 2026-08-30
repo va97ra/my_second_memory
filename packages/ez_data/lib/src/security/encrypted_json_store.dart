@@ -34,6 +34,20 @@ class EncryptedJsonStore {
     await prefs.setString(key, encrypted);
   }
 
+  Future<Map<String, Object?>> readMap(String key) async {
+    final prefs = preferences ?? await SharedPreferences.getInstance();
+    final raw = prefs.getString(key);
+    if (raw == null || raw.isEmpty) return const {};
+    final clear = await cipher.decryptString(raw);
+    return Map<String, Object?>.from(jsonDecode(clear) as Map);
+  }
+
+  Future<void> writeMap(String key, Map<String, Object?> value) async {
+    final prefs = preferences ?? await SharedPreferences.getInstance();
+    final encrypted = await cipher.encryptString(jsonEncode(value));
+    await prefs.setString(key, encrypted);
+  }
+
   Future<void> remove(String key) async {
     final prefs = preferences ?? await SharedPreferences.getInstance();
     await prefs.remove(key);

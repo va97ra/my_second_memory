@@ -13,6 +13,8 @@
 library;
 
 export 'src/finance/encrypted_finance_repository.dart';
+export 'src/finance/exchange_rate_repository.dart';
+export 'src/finance/exchange_rate_source.dart';
 export 'src/finance/finance_repository.dart';
 export 'src/finance/local_finance_repository.dart';
 export 'src/accounts/account_repository.dart';
@@ -44,6 +46,9 @@ export 'src/shifts/local_shift_schedule_repository.dart';
 export 'src/shifts/shift_schedule_repository.dart';
 export 'src/storage/local_storage_scope.dart';
 export 'src/storage/local_storage_scope_factory.dart';
+export 'src/tools/encrypted_tool_data_repository.dart';
+export 'src/tools/local_tool_data_repository.dart';
+export 'src/tools/tool_data_repository.dart';
 export 'src/sync/app_sync_engine.dart';
 export 'src/sync/encrypted_entity_sync_engine.dart';
 export 'src/sync/supabase_sync_remote_store.dart';

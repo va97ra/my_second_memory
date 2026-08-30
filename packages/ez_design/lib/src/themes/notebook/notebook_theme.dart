@@ -264,7 +264,10 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
 
   return base.copyWith(
     colorScheme: scheme,
-    canvasColor: c.deskStart,
+    // Бумага, а не стол: `canvasColor` — это фон выпадающих списков, и на
+    // столе цвета кофе чернильный текст в них не читался. Фоны приложения
+    // рисуются своими градиентами и на этот цвет не смотрят.
+    canvasColor: paper,
     disabledColor: c.disabled,
     extensions: [palette, visuals],
     appBarTheme: base.appBarTheme.copyWith(foregroundColor: ink),

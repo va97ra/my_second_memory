@@ -30,6 +30,16 @@ class SyncDataSources {
     Future<void> Function(List<FinanceEntry>)? replaceFinanceEntries,
     Future<void> Function(List<FinanceEntry>, List<FinanceEntry>)?
         mergeFinanceEntries,
+    Future<List<SavedToolCalculation>> Function()? readToolCalculations,
+    Future<void> Function(List<SavedToolCalculation>)? replaceToolCalculations,
+    Future<void> Function(
+      List<SavedToolCalculation>,
+      List<SavedToolCalculation>,
+    )? mergeToolCalculations,
+    Future<List<ReferenceBookmark>> Function()? readToolBookmarks,
+    Future<void> Function(List<ReferenceBookmark>)? replaceToolBookmarks,
+    Future<void> Function(List<ReferenceBookmark>, List<ReferenceBookmark>)?
+        mergeToolBookmarks,
   })  :
         // Слияние знает, с чем сравнивать, а замена — нет. Там, где слияния не
         // дали, приходящее просто заменяет то, что лежало.
@@ -53,7 +63,15 @@ class SyncDataSources {
         readFinanceEntries = readFinanceEntries ?? _noFinanceEntries,
         mergeFinanceEntries = mergeFinanceEntries ??
             ((entries, _) =>
-                (replaceFinanceEntries ?? _ignoreFinanceEntries)(entries));
+                (replaceFinanceEntries ?? _ignoreFinanceEntries)(entries)),
+        readToolCalculations = readToolCalculations ?? _noToolCalculations,
+        mergeToolCalculations = mergeToolCalculations ??
+            ((items, _) =>
+                (replaceToolCalculations ?? _ignoreToolCalculations)(items)),
+        readToolBookmarks = readToolBookmarks ?? _noToolBookmarks,
+        mergeToolBookmarks = mergeToolBookmarks ??
+            ((items, _) =>
+                (replaceToolBookmarks ?? _ignoreToolBookmarks)(items));
 
   final Future<List<MemoryItem>> Function() readMemoryItems;
   final Future<void> Function(List<MemoryItem>, List<MemoryItem>)
@@ -74,6 +92,14 @@ class SyncDataSources {
   final Future<List<FinanceEntry>> Function() readFinanceEntries;
   final Future<void> Function(List<FinanceEntry>, List<FinanceEntry>)
       mergeFinanceEntries;
+  final Future<List<SavedToolCalculation>> Function() readToolCalculations;
+  final Future<void> Function(
+    List<SavedToolCalculation>,
+    List<SavedToolCalculation>,
+  ) mergeToolCalculations;
+  final Future<List<ReferenceBookmark>> Function() readToolBookmarks;
+  final Future<void> Function(List<ReferenceBookmark>, List<ReferenceBookmark>)
+      mergeToolBookmarks;
 }
 
 Future<List<ShiftSchedule>> _noShiftSchedules() async => const [];
@@ -98,3 +124,11 @@ Future<void> _ignoreRecurrenceExceptions(
 Future<List<FinanceEntry>> _noFinanceEntries() async => const [];
 
 Future<void> _ignoreFinanceEntries(List<FinanceEntry> _) async {}
+
+Future<List<SavedToolCalculation>> _noToolCalculations() async => const [];
+
+Future<void> _ignoreToolCalculations(List<SavedToolCalculation> _) async {}
+
+Future<List<ReferenceBookmark>> _noToolBookmarks() async => const [];
+
+Future<void> _ignoreToolBookmarks(List<ReferenceBookmark> _) async {}

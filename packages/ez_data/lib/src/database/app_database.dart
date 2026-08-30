@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'memory_tables.dart';
 import 'finance_tables.dart';
+import 'tool_data_tables.dart';
 
 part 'app_database.g.dart';
 
@@ -16,12 +17,13 @@ part 'app_database.g.dart';
   RecurrenceOccurrenceExceptionRows,
   SecureEntities,
   FinanceEntries,
+  ToolDataRows,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -86,6 +88,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 10) {
             await migrator.createTable(financeEntries);
+          }
+          if (from < 11) {
+            await migrator.createTable(toolDataRows);
           }
         },
       );

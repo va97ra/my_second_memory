@@ -19,6 +19,7 @@ Future<String?> createStreamingBackup({
   required List<RecurrenceSeries> recurrenceSeries,
   required List<RecurrenceOccurrenceException> recurrenceExceptions,
   required List<FinanceEntry> financeEntries,
+  required ToolDataSnapshot toolData,
   String? temporaryRoot,
 }) async {
   final temp = temporaryRoot == null
@@ -77,6 +78,7 @@ Future<String?> createStreamingBackup({
     'recurrenceExceptions':
         recurrenceExceptions.map((item) => item.toJson()).toList(),
     'financeEntries': financeEntries.map((item) => item.toJson()).toList(),
+    'toolData': toolData.toJson(),
     'mediaEntries': mediaEntries,
   }));
   final payloadNonce = _randomBytes(12);

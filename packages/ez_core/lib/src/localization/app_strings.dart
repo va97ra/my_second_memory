@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'russian_plural.dart';
-import 'package:flutter/services.dart';
 
 class AppStrings {
   AppStrings(this.locale);
@@ -15,8 +14,7 @@ class AppStrings {
 
   bool get isRu => locale.languageCode == 'ru';
 
-  String get appTitle =>
-      appFlavor == 'sync' ? 'Ежедневник Sync' : 'Ежедневник V2';
+  String get appTitle => 'Ежедневник V2';
   String get feed => isRu ? 'Лента' : 'Feed';
   String get dayFeed => isRu ? 'Лента дня' : 'Day feed';
   String get dayTab => isRu ? 'День' : 'Day';
@@ -46,7 +44,6 @@ class AppStrings {
       isRu ? 'Это было позавчера' : 'This was two days ago';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
   String get calculator => isRu ? 'Калькулятор' : 'Calculator';
-  String get toolPlaceholder => '?';
   String get calculatorStandard => isRu ? 'Обычный' : 'Standard';
   String get calculatorScientific => isRu ? 'Инженерный' : 'Scientific';
   String get calculatorCopyResult =>
@@ -60,6 +57,95 @@ class AppStrings {
         _ => isRu ? 'Ошибка в выражении' : 'Invalid expression',
       };
   String get finance => isRu ? 'Финансы' : 'Finances';
+  String get converter => isRu ? 'Конвертер' : 'Converter';
+  String get engineering => isRu ? 'Инженерка' : 'Engineering';
+  String get technicalReference =>
+      isRu ? 'Техсправочник' : 'Technical reference';
+  String get electrical => isRu ? 'Электрика' : 'Electrical';
+  String get plumbing => isRu ? 'Сантехника' : 'Plumbing';
+  String get ventilation => isRu ? 'Вентиляция' : 'Ventilation';
+  String get savedCalculations =>
+      isRu ? 'Сохранённые расчёты' : 'Saved calculations';
+  String get saveCalculation => isRu ? 'Сохранить расчёт' : 'Save calculation';
+  String get calculationName => isRu ? 'Название расчёта' : 'Calculation name';
+  String get noSavedCalculations =>
+      isRu ? 'Сохранённых расчётов пока нет' : 'No saved calculations yet';
+  String get result => isRu ? 'Результат' : 'Result';
+  String get from => isRu ? 'Из' : 'From';
+  String get to => isRu ? 'В' : 'To';
+  String get value => isRu ? 'Значение' : 'Value';
+  String get search => isRu ? 'Поиск' : 'Search';
+  String get favorites => isRu ? 'Избранное' : 'Favorites';
+  String get source => isRu ? 'Источник' : 'Source';
+  String get scope => isRu ? 'Область применения' : 'Scope';
+  String get warning => isRu ? 'Важно' : 'Important';
+  String get personalNote => isRu ? 'Личная заметка' : 'Personal note';
+  String get invalidNumber =>
+      isRu ? 'Введите корректное число' : 'Enter a valid number';
+  String get engineeringDisclaimer => isRu
+      ? 'Расчёт показывает исходные условия и не заменяет проект, нормы и документацию оборудования.'
+      : 'The calculation shows its assumptions and does not replace a project, codes or equipment documentation.';
+
+  // Величины конвертера. Те же слова служат подписями в инженерных расчётах:
+  // «Расход» и «Давление» — одно понятие, и строка у него одна.
+  String get length => isRu ? 'Длина' : 'Length';
+  String get area => isRu ? 'Площадь' : 'Area';
+  String get volume => isRu ? 'Объём' : 'Volume';
+  String get mass => isRu ? 'Масса' : 'Mass';
+  String get temperature => isRu ? 'Температура' : 'Temperature';
+  String get pressure => isRu ? 'Давление' : 'Pressure';
+  String get speed => isRu ? 'Скорость' : 'Speed';
+  String get flow => isRu ? 'Расход' : 'Flow';
+  String get power => isRu ? 'Мощность' : 'Power';
+  String get energy => isRu ? 'Энергия' : 'Energy';
+  String get dataSize => isRu ? 'Объём данных' : 'Data size';
+
+  // Электрика.
+  String get voltageDrop => isRu ? 'Падение U' : 'Voltage drop';
+  String get phases => isRu ? 'Фазы' : 'Phases';
+  String get voltage => isRu ? 'Напряжение' : 'Voltage';
+  String get current => isRu ? 'Ток' : 'Current';
+  String get efficiency => isRu ? 'КПД' : 'Efficiency';
+  String get oneWayLength => isRu ? 'Длина в одну сторону' : 'One-way length';
+  String get conductorSection => isRu ? 'Сечение' : 'Section';
+  String get copperConductor => isRu ? 'Медный проводник' : 'Copper conductor';
+  String get threePhaseSystem =>
+      isRu ? 'Трёхфазная сеть' : 'Three-phase system';
+  String get loss => isRu ? 'Потери' : 'Loss';
+  String get loadsSeparatedByCommas => isRu
+      ? 'Нагрузки через запятую, Вт'
+      : 'Loads separated by commas, W';
+
+  // Сантехника.
+  String get pipe => isRu ? 'Труба' : 'Pipe';
+  String get internalDiameter =>
+      isRu ? 'Внутренний диаметр' : 'Internal diameter';
+  String get targetVelocity => isRu ? 'Целевая скорость' : 'Target velocity';
+  String get pipeLength => isRu ? 'Длина трубы' : 'Pipe length';
+  String get head => isRu ? 'Напор' : 'Head';
+  String get roughness => isRu ? 'Шероховатость' : 'Roughness';
+  String get diameterAtTargetVelocity => isRu
+      ? 'Диаметр при целевой скорости'
+      : 'Diameter at target velocity';
+  String get fillTime => isRu ? 'Время заполнения' : 'Fill time';
+  String get linearLoss => isRu ? 'Линейные потери' : 'Linear loss';
+  String get totalLoss => isRu ? 'Потери всего' : 'Total loss';
+
+  // Вентиляция.
+  String get duct => isRu ? 'Воздуховод' : 'Duct';
+  String get airExchange => isRu ? 'Воздухообмен' : 'Air exchange';
+  String get airflow => isRu ? 'Расход воздуха' : 'Airflow';
+  String get width => isRu ? 'Ширина' : 'Width';
+  String get height => isRu ? 'Высота' : 'Height';
+  String get roomLength => isRu ? 'Длина помещения' : 'Room length';
+  String get roomWidth => isRu ? 'Ширина помещения' : 'Room width';
+  String get roomHeight => isRu ? 'Высота помещения' : 'Room height';
+  String get airChanges => isRu ? 'Кратность' : 'Air changes';
+  String get equivalentDiameter =>
+      isRu ? 'Эквивалентный диаметр' : 'Equivalent diameter';
+  String get roundAtTargetVelocity => isRu
+      ? 'Круглый при целевой скорости'
+      : 'Round at target velocity';
   String get incomeAndExpenses =>
       isRu ? 'Доходы и расходы' : 'Income and expenses';
   String get income => isRu ? 'Доход' : 'Income';
@@ -68,6 +154,18 @@ class AppStrings {
   String get balance => isRu ? 'Остаток' : 'Balance';
   String get currency => isRu ? 'Валюта' : 'Currency';
   String get amount => isRu ? 'Сумма' : 'Amount';
+  String get currencyConverter =>
+      isRu ? 'Конвертер валют' : 'Currency converter';
+  String get swapCurrencies => isRu ? 'Поменять местами' : 'Swap';
+  String get exchangeRate => isRu ? 'Курс' : 'Rate';
+  String ratesAsOf(String date) =>
+      isRu ? 'Курс ЦБ РФ на $date' : 'Bank of Russia rate for $date';
+  String get ratesNotLoaded => isRu
+      ? 'Курсы ещё не загружены — нужен интернет'
+      : 'Rates are not loaded yet — the internet is needed';
+  String get ratesOffline => isRu
+      ? 'Показан последний известный курс'
+      : 'Showing the last known rate';
   String get category => isRu ? 'Категория' : 'Category';
   String get financeDescription => isRu ? 'Описание' : 'Description';
   String get operationDate => isRu ? 'Дата операции' : 'Operation date';

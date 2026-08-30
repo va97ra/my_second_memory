@@ -15,6 +15,8 @@ import '../recurrence/recurrence_repository.dart';
 import '../shifts/encrypted_shift_schedule_repository.dart';
 import '../shifts/local_shift_schedule_repository.dart';
 import '../storage/local_storage_scope.dart';
+import '../tools/encrypted_tool_data_repository.dart';
+import '../tools/tool_data_repository.dart';
 import 'app_cipher.dart';
 import 'encrypted_json_store.dart';
 import 'secure_entity_backend.dart';
@@ -27,6 +29,7 @@ class SecurityDataMigrationSnapshot {
     this.recurrenceSeries,
     this.recurrenceExceptions,
     this.financeEntries,
+    this.toolData,
   });
 
   final List<MemoryItem>? memoryItems;
@@ -35,6 +38,7 @@ class SecurityDataMigrationSnapshot {
   final List<RecurrenceSeries>? recurrenceSeries;
   final List<RecurrenceOccurrenceException>? recurrenceExceptions;
   final List<FinanceEntry>? financeEntries;
+  final ToolDataSnapshot? toolData;
 }
 
 class SecurityDataMigrationService {
@@ -85,6 +89,11 @@ class SecurityDataMigrationService {
         plainRepository: storage.financeRepository,
         backend: backend,
       ).loadAll(),
+      toolData: await EncryptedToolDataRepository(
+        store: store,
+        plainRepository: storage.toolDataRepository,
+        backend: backend,
+      ).load(),
     );
   }
 
@@ -146,6 +155,14 @@ class SecurityDataMigrationService {
         throw StateError('Encrypted finance migration verification failed');
       }
       await repositories.plainFinance.replaceAll(const []);
+      final toolData =
+          snapshot.toolData ?? await repositories.plainToolData.load();
+      await repositories.toolData.replaceAll(toolData);
+      final verifiedToolData = await repositories.toolData.load();
+      if (!_sameToolData(toolData, verifiedToolData)) {
+        throw StateError('Encrypted tool data migration verification failed');
+      }
+      await repositories.plainToolData.replaceAll(const ToolDataSnapshot());
       await mediaStorage.commitMigration(mediaMigration);
     } catch (_) {
       await mediaStorage.rollbackMigration(mediaMigration);
@@ -248,6 +265,23 @@ class SecurityDataMigrationService {
         const [],
       );
       await store.remove(EncryptedFinanceRepository.storageKey);
+
+      final toolDataRepository = EncryptedToolDataRepository(
+        store: store,
+        plainRepository: storage.toolDataRepository,
+        backend: backend,
+      );
+      final toolData = await toolDataRepository.load();
+      await storage.toolDataRepository.replaceAll(toolData);
+      final verifiedToolData = await storage.toolDataRepository.load();
+      if (!_sameToolData(toolData, verifiedToolData)) {
+        throw StateError('Plain tool data migration verification failed');
+      }
+      await backend?.replaceSecureEntities(
+        EncryptedToolDataRepository.entityKind,
+        const [],
+      );
+      await store.remove(EncryptedToolDataRepository.storageKey);
       await mediaStorage.commitMigration(mediaMigration);
     } catch (_) {
       await mediaStorage.rollbackMigration(mediaMigration);
@@ -267,6 +301,9 @@ bool _sameFinanceEntries(List<FinanceEntry> first, List<FinanceEntry> second) {
   }
   return true;
 }
+
+bool _sameToolData(ToolDataSnapshot first, ToolDataSnapshot second) =>
+    jsonEncode(first.toJson()) == jsonEncode(second.toJson());
 
 Set<String> _mediaPaths(List<MemoryItem> items) => {
       for (final item in items) ...[
@@ -297,6 +334,7 @@ class _EncryptedRepositories {
         plainRecurrence = storage.recurrenceRepository,
         plainRecurrenceExceptions = storage.recurrenceExceptionRepository,
         plainFinance = storage.financeRepository,
+        plainToolData = storage.toolDataRepository,
         backend = storage.secureEntityBackend;
 
   final EncryptedJsonStore store;
@@ -304,6 +342,7 @@ class _EncryptedRepositories {
   final RecurrenceRepository plainRecurrence;
   final RecurrenceExceptionRepository plainRecurrenceExceptions;
   final FinanceRepository plainFinance;
+  final ToolDataRepository plainToolData;
   final SecureEntityBackend? backend;
 
   EncryptedMemoryRepository get memory => EncryptedMemoryRepository(
@@ -341,6 +380,12 @@ class _EncryptedRepositories {
   EncryptedFinanceRepository get finance => EncryptedFinanceRepository(
         store: store,
         plainRepository: plainFinance,
+        backend: backend,
+      );
+
+  EncryptedToolDataRepository get toolData => EncryptedToolDataRepository(
+        store: store,
+        plainRepository: plainToolData,
         backend: backend,
       );
 }

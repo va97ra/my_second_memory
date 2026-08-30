@@ -153,6 +153,20 @@ class FailOnceFinanceRepository extends FakeFinanceRepository {
   }
 }
 
+class FakeToolDataRepository implements ToolDataRepository {
+  FakeToolDataRepository(this.snapshot);
+
+  ToolDataSnapshot snapshot;
+
+  @override
+  Future<ToolDataSnapshot> load() async => snapshot;
+
+  @override
+  Future<void> replaceAll(ToolDataSnapshot snapshot) async {
+    this.snapshot = snapshot;
+  }
+}
+
 class FakeRecurrenceRepository implements RecurrenceRepository {
   FakeRecurrenceRepository(this.series);
 

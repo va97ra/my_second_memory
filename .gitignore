@@ -33,3 +33,6 @@ supabase/.temp/
 # мусор Проводника Windows
 desktop.ini
 Thumbs.db
+
+# Снимки и логи прогонов инструментов, не исходники.
+output/

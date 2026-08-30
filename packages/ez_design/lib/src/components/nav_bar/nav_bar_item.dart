@@ -11,7 +11,6 @@ class NavBarItem {
     required this.id,
     required this.icon,
     required this.label,
-    this.enabled = true,
   });
 
   /// Стабильный ключ. Панель добавляет свой префикс, поэтому тесты находят
@@ -19,5 +18,4 @@ class NavBarItem {
   final String id;
   final IconData icon;
   final String label;
-  final bool enabled;
 }

@@ -50,11 +50,7 @@ class ShellNavigation {
   /// [panel] — пункт, с которого инструмент открыли: панель под ним остаётся
   /// прежней.
   void selectTool(AppDestination destination, {required String panel}) {
-    if (!destination.isEnabled ||
-        coordinator.isBusy ||
-        destination.id == activeToolId) {
-      return;
-    }
+    if (coordinator.isBusy || destination.id == activeToolId) return;
     final location = '${destination.location}?panel=$panel';
     if (activeToolId != null) {
       _turnTo(() => router.pushReplacement(location));

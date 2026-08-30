@@ -40,12 +40,12 @@ void main() {
     await _openCalculator(tester, const Size(360, 800));
     await _selectScientific(tester);
 
-    expect(find.byType(CalculatorKey), findsNWidgets(40));
+    expect(_gridKeys(), findsNWidgets(40));
     expect(find.text('DEG'), findsOneWidget);
     expect(find.text('sin'), findsOneWidget);
     await tester.tap(find.text('2nd'));
     await tester.pump();
-    expect(find.byType(CalculatorKey), findsNWidgets(40));
+    expect(_gridKeys(), findsNWidgets(40));
     expect(find.text('sin⁻¹'), findsOneWidget);
     expect(find.text('2ˣ'), findsOneWidget);
     await tester.tap(find.text('Hyp'));
@@ -56,9 +56,9 @@ void main() {
   testWidgets('keys fill the phone height without scrolling', (tester) async {
     await _openCalculator(tester, const Size(320, 800));
     final standardHeight =
-        tester.getSize(find.byType(CalculatorKey).first).height;
+        tester.getSize(_gridKeys().first).height;
     expect(
-      tester.getSize(find.byType(CalculatorKey).first).width,
+      tester.getSize(_gridKeys().first).width,
       closeTo(68, 0.1),
     );
     expect(standardHeight, greaterThan(68));
@@ -66,10 +66,10 @@ void main() {
 
     await _selectScientific(tester);
     expect(
-      tester.getSize(find.byType(CalculatorKey).first).width,
+      tester.getSize(_gridKeys().first).width,
       closeTo(52.8, 0.1),
     );
-    expect(tester.getSize(find.byType(CalculatorKey).first).height,
+    expect(tester.getSize(_gridKeys().first).height,
         lessThan(standardHeight));
   });
 
@@ -102,11 +102,11 @@ void main() {
 
   testWidgets('key height adapts to available phone height', (tester) async {
     await _openCalculator(tester, const Size(360, 720));
-    final shortHeight = tester.getSize(find.byType(CalculatorKey).first).height;
+    final shortHeight = tester.getSize(_gridKeys().first).height;
 
     await tester.binding.setSurfaceSize(const Size(360, 840));
     await tester.pumpAndSettle();
-    final tallHeight = tester.getSize(find.byType(CalculatorKey).first).height;
+    final tallHeight = tester.getSize(_gridKeys().first).height;
 
     expect(tallHeight, greaterThan(shortHeight));
   });
@@ -114,7 +114,7 @@ void main() {
   testWidgets('calculator keys are raised and move down while pressed',
       (tester) async {
     await _openCalculator(tester, const Size(360, 800));
-    final key = find.byType(CalculatorKey).first;
+    final key = _gridKeys().first;
     final surface = find.descendant(
       of: key,
       matching: find.byType(AnimatedContainer),
@@ -144,7 +144,7 @@ void main() {
 
     expect(find.byType(CalculatorScientificGrid), findsOneWidget);
     expect(find.byType(CalculatorKeyGrid), findsNWidgets(2));
-    expect(find.byType(CalculatorKey), findsNWidgets(40));
+    expect(_gridKeys(), findsNWidgets(40));
   });
 
   for (final width in [320.0, 360.0, 600.0, 840.0]) {
@@ -186,3 +186,10 @@ Future<void> _openCalculator(WidgetTester tester, Size size) async {
   await tester.tap(find.byKey(const ValueKey('top_calculator')));
   await tester.pumpAndSettle();
 }
+
+/// Клавиши самой клавиатуры, без строки памяти: она сделана теми же
+/// клавишами, и поиск по типу иначе цепляет её первой.
+Finder _gridKeys() => find.descendant(
+      of: find.byType(CalculatorKeyGrid),
+      matching: find.byType(CalculatorKey),
+    );

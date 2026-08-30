@@ -12,6 +12,9 @@ import '../features/sync/sync.dart';
 import '../features/shift_schedules/shift_schedules.dart';
 import '../features/calculator/calculator.dart';
 import '../features/finance/finance.dart';
+import '../features/converter/converter.dart';
+import '../features/engineering/engineering.dart';
+import '../features/technical_reference/technical_reference.dart';
 import 'page_turn_transition.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -85,6 +88,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           context: context,
           state: state,
           child: const FinanceScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/tools/converter',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          child: const ConverterScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/tools/engineering',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          child: const EngineeringScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/tools/reference',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          child: const TechnicalReferenceScreen(),
         ),
       ),
       GoRoute(

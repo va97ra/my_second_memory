@@ -8,6 +8,8 @@ import '../security/secure_entity_backend.dart';
 import 'local_storage_scope.dart';
 import '../finance/finance_repository.dart';
 import '../finance/local_finance_repository.dart';
+import '../tools/local_tool_data_repository.dart';
+import '../tools/tool_data_repository.dart';
 
 LocalStorageScope createLocalStorageScope() => WebLocalStorageScope();
 
@@ -25,6 +27,9 @@ class WebLocalStorageScope implements LocalStorageScope {
 
   @override
   final FinanceRepository financeRepository = const LocalFinanceRepository();
+
+  @override
+  final ToolDataRepository toolDataRepository = const LocalToolDataRepository();
 
   @override
   SecureEntityBackend? get secureEntityBackend => null;

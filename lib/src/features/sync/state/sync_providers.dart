@@ -7,6 +7,7 @@ import '../../recurrence/recurrence.dart';
 import '../../security/security.dart';
 import '../../shift_schedules/shift_schedules.dart';
 import '../../finance/finance.dart';
+import '../../tool_data/tool_data.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'sync_controller_impl.dart';
@@ -106,6 +107,22 @@ final syncControllerProvider =
       mergeFinanceEntries: (entries, baseline) => ref
           .read(financeControllerProvider.notifier)
           .replaceAllFromSync(entries, baseline: baseline),
+      readToolCalculations: () async {
+        final tools = ref.read(toolDataControllerProvider.notifier);
+        await tools.load();
+        return tools.snapshot.calculations;
+      },
+      mergeToolCalculations: (items, baseline) => ref
+          .read(toolDataControllerProvider.notifier)
+          .replaceCalculationsFromSync(items, baseline: baseline),
+      readToolBookmarks: () async {
+        final tools = ref.read(toolDataControllerProvider.notifier);
+        await tools.load();
+        return tools.snapshot.bookmarks;
+      },
+      mergeToolBookmarks: (items, baseline) => ref
+          .read(toolDataControllerProvider.notifier)
+          .replaceBookmarksFromSync(items, baseline: baseline),
     ),
   );
 });
@@ -211,6 +228,34 @@ class _RiverpodSyncMutationObserver implements SyncMutationObserver {
     return ref.read(syncControllerProvider.notifier).recordDeletion(
           SyncEntityKind.financeEntry,
           id,
+          deletedAt,
+        );
+  }
+
+  @override
+  void toolCalculationsChanged() {
+    ref.read(syncControllerProvider.notifier).schedule();
+  }
+
+  @override
+  Future<void> toolCalculationDeleted(String id, DateTime deletedAt) {
+    return ref.read(syncControllerProvider.notifier).recordDeletion(
+          SyncEntityKind.toolCalculation,
+          id,
+          deletedAt,
+        );
+  }
+
+  @override
+  void toolBookmarksChanged() {
+    ref.read(syncControllerProvider.notifier).schedule();
+  }
+
+  @override
+  Future<void> toolBookmarkDeleted(String entryId, DateTime deletedAt) {
+    return ref.read(syncControllerProvider.notifier).recordDeletion(
+          SyncEntityKind.toolBookmark,
+          entryId,
           deletedAt,
         );
   }

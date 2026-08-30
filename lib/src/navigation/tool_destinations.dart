@@ -17,10 +17,22 @@ List<AppDestination> toolDestinations(AppStrings strings) => [
         label: strings.finance,
         location: '/tools/finance',
       ),
-      for (var index = 3; index <= 5; index++)
-        AppDestination.placeholder(
-          id: 'tool_placeholder_$index',
-          icon: Icons.help_outline_rounded,
-          label: strings.toolPlaceholder,
-        ),
+      AppDestination.route(
+        id: 'converter',
+        icon: Icons.swap_horiz_rounded,
+        label: strings.converter,
+        location: '/tools/converter',
+      ),
+      AppDestination.route(
+        id: 'engineering',
+        icon: Icons.engineering_rounded,
+        label: strings.engineering,
+        location: '/tools/engineering',
+      ),
+      AppDestination.route(
+        id: 'reference',
+        icon: Icons.menu_book_rounded,
+        label: strings.technicalReference,
+        location: '/tools/reference',
+      ),
     ];

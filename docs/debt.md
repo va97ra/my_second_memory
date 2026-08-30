@@ -17,7 +17,7 @@ packages/ez_domain/lib/src/calendar/holiday_observance_table.dart     457
 packages/ez_domain/lib/src/calendar/holiday_russian_table.dart        994
    таблицы праздников: официальные, международные дни и праздники России
 
-packages/ez_core/lib/src/localization/app_strings.dart                476
+packages/ez_core/lib/src/localization/app_strings.dart                570
    строки интерфейса
 
 packages/ez_design/lib/src/themes/app_theme.dart                      406
@@ -43,13 +43,13 @@ lib/src/features/sync/state/sync_controller_impl.dart                 342
    одно состояние и время жизни ключа, и растащить их значит размазать это
    состояние по трём объектам
 
-lib/src/features/recurrence/state/recurrence_series_controller.dart   505
+lib/src/features/recurrence/state/recurrence_series_controller.dart   493
    один инвариант серии, описанный в recurrence.md: настройки серии и правка
    отдельного вхождения держат его вместе. Напоминания, уборка медиа и правила
    дат из него вынуты; разложить оставшееся по двум объектам значит разложить
    по двум объектам сам инвариант, а именно так и выросли три дефекта повторов
 
-lib/src/features/memory_items/state/memory_items_controller.dart      371
+lib/src/features/memory_items/state/memory_items_controller.dart      356
    одно хранилище записей и его состояние. Напоминания и уборка файлов из него
    вынуты, осталось само чтение и запись
 
@@ -63,7 +63,7 @@ packages/ez_data/lib/src/notifications/notification_service.dart      495
    класс, мы получим два объекта, спорящих за один плагин. Правила из него
    вынуты: когда график будит, решает shiftAlarmTimes в домене
 
-packages/ez_data/lib/src/backup/backup_service.dart                   509
+packages/ez_data/lib/src/backup/backup_service.dart                   537
    один формат архива, прочитанный в обе стороны. Выгрузка и загрузка знают
    одну и ту же раскладку файлов, и разложить их по разным классам значит
    завести две копии этого знания

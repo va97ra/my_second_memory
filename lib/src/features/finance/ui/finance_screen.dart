@@ -3,11 +3,11 @@ import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../state/finance_controller.dart';
-import '../state/finance_currencies.dart';
 import '../state/finance_preferences.dart';
+import 'widgets/currency_converter_sheet.dart';
+import 'widgets/finance_month_header.dart';
 import 'widgets/finance_entry_sheet_launcher.dart';
 import 'widgets/finance_entry_list.dart';
 import 'widgets/finance_summary_card.dart';
@@ -34,36 +34,18 @@ class FinanceScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   child: Column(
                     children: [
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 8,
-                        runSpacing: 8,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          DropdownButton<String>(
-                            key: const ValueKey('finance_currency'),
-                            value: currency,
-                            items: [
-                              for (final code in financeCurrencyCodes)
-                                DropdownMenuItem(value: code, child: Text(code))
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                ref
-                                    .read(financeCurrencyProvider.notifier)
-                                    .select(value);
-                              }
-                            },
-                          ),
-                          IconButton(
-                              onPressed: () => _changeMonth(ref, month, -1),
-                              icon: const Icon(Icons.chevron_left_rounded)),
-                          Text(DateFormat.yMMMM(locale).format(month),
-                              style: Theme.of(context).textTheme.titleMedium),
-                          IconButton(
-                              onPressed: () => _changeMonth(ref, month, 1),
-                              icon: const Icon(Icons.chevron_right_rounded)),
-                        ],
+                      FinanceMonthHeader(
+                        currency: currency,
+                        month: month,
+                        onCurrency: (value) => ref
+                            .read(financeCurrencyProvider.notifier)
+                            .select(value),
+                        onMonthDelta: (delta) =>
+                            _changeMonth(ref, month, delta),
+                        onConverter: () => showCurrencyConverterSheet(
+                          context,
+                          currencyCode: currency,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       FinanceSummaryCard(

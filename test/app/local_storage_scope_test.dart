@@ -39,6 +39,9 @@ class _CountingLocalStorageScope implements LocalStorageScope {
   final FinanceRepository financeRepository = const LocalFinanceRepository();
 
   @override
+  final ToolDataRepository toolDataRepository = const LocalToolDataRepository();
+
+  @override
   SecureEntityBackend? get secureEntityBackend => null;
 
   @override

@@ -1,0 +1,1 @@
+enum VentilationMode { duct, room }

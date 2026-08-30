@@ -28,6 +28,8 @@ class SyncRunner {
     final recurrenceSeries = await data.readRecurrenceSeries();
     final recurrenceExceptions = await data.readRecurrenceExceptions();
     final financeEntries = await data.readFinanceEntries();
+    final toolCalculations = await data.readToolCalculations();
+    final toolBookmarks = await data.readToolBookmarks();
 
     return AppSyncEngine(
       remote: remote,
@@ -49,6 +51,12 @@ class SyncRunner {
       financeEntries: financeEntries,
       replaceFinanceEntries: (entries) =>
           data.mergeFinanceEntries(entries, financeEntries),
+      toolCalculations: toolCalculations,
+      replaceToolCalculations: (items) =>
+          data.mergeToolCalculations(items, toolCalculations),
+      toolBookmarks: toolBookmarks,
+      replaceToolBookmarks: (items) =>
+          data.mergeToolBookmarks(items, toolBookmarks),
     );
   }
 }

@@ -103,23 +103,13 @@ class FinanceController extends StateNotifier<List<FinanceEntry>> {
     required List<FinanceEntry> baseline,
   }) async {
     await _loadFuture;
-    final mergedById = {for (final entry in entries) entry.id: entry};
-    final currentById = {for (final entry in state) entry.id: entry};
-    final baselineById = {for (final entry in baseline) entry.id: entry};
-    for (final id in baselineById.keys) {
-      if (!currentById.containsKey(id)) mergedById.remove(id);
-    }
-    for (final current in currentById.values) {
-      final before = baselineById[current.id];
-      final changedDuringSync =
-          before == null || current.updatedAt.isAfter(before.updatedAt);
-      if (!changedDuringSync) continue;
-      final incoming = mergedById[current.id];
-      if (incoming == null || !incoming.updatedAt.isAfter(current.updatedAt)) {
-        mergedById[current.id] = current;
-      }
-    }
-    state = _sorted(mergedById.values.toList(growable: false));
+    state = _sorted(mergeSyncedEntities(
+      incoming: entries,
+      current: state,
+      baseline: baseline,
+      idOf: (entry) => entry.id,
+      updatedAtOf: (entry) => entry.updatedAt,
+    ));
     await _repository.replaceAll(state);
   }
 

@@ -4,7 +4,9 @@ enum SyncEntityKind {
   account('account'),
   recurrenceSeries('recurrence_series'),
   recurrenceException('recurrence_exception'),
-  financeEntry('finance_entry');
+  financeEntry('finance_entry'),
+  toolCalculation('tool_calculation'),
+  toolBookmark('tool_bookmark');
 
   const SyncEntityKind(this.storageName);
 

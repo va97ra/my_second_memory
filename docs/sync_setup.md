@@ -7,8 +7,13 @@ payloads, timestamps, deletion markers, and opaque entity identifiers.
 
 1. Create a Supabase project.
 2. Run every SQL file from `supabase/migrations` in filename order. Existing
-   projects must also apply newly added migrations; the finance migration is
-   what allows encrypted `finance_entry` rows and their deletion tombstones.
+   projects must also apply newly added migrations: each of them drops and
+   rebuilds the whole `sync_entity_kind_supported` constraint, so running only
+   the newest one is enough to catch a project up. The finance migration is
+   what allows encrypted `finance_entry` rows, and the tools migration adds
+   `tool_calculation` and `tool_bookmark`. A missing kind is not a partial
+   failure: uploads travel in one `apply_sync_changes` call, so a single
+   rejected row aborts the whole run and nothing synchronizes at all.
 3. In Authentication, enable the Google provider with a Google OAuth Web
    client. Its authorized redirect URI must be the Supabase callback URL shown
    in the provider form. Google is the only way into the cloud: the app has no
@@ -36,19 +41,19 @@ Use the same defines for Android and release builds. Never put a
 `service_role`, Supabase secret key, or Google OAuth client secret in the
 application.
 
-Android registers the callback only for the `sync` flavor. The Windows runner
+Android registers the callback in the single application manifest. The Windows runner
 forwards callback launches to the existing tray process, and the Inno Setup
 installer registers the custom URI scheme for the current user.
 
 ## Android distribution
 
-RuStore uses the `sync` flavor (`com.va97ra.ezhednevnikv2`) with encrypted
-synchronization. The former `simple` edition is no longer a release target.
-Release artifacts are built with:
+RuStore takes `com.va97ra.ezhednevnikv2` with encrypted synchronization. The
+former `simple` edition was retired on 30 August 2026 and the build has no
+flavors left. Release artifacts are built with:
 
 ```powershell
-flutter build apk --release --flavor sync
-flutter build appbundle --release --flavor sync
+flutter build apk --release
+flutter build appbundle --release
 ```
 
 ## Security model

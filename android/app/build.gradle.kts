@@ -35,6 +35,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        resValue("string", "app_name", "Ежедневник V2")
     }
 
     signingConfigs {
@@ -51,19 +52,6 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-        }
-    }
-
-    flavorDimensions += "distribution"
-    productFlavors {
-        create("simple") {
-            dimension = "distribution"
-            applicationIdSuffix = ".simple"
-            resValue("string", "app_name", "Ежедневник без синхронизации")
-        }
-        create("sync") {
-            dimension = "distribution"
-            resValue("string", "app_name", "Ежедневник V2")
         }
     }
 }

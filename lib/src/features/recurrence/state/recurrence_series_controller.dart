@@ -355,25 +355,13 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     required List<RecurrenceSeries> baseline,
   }) async {
     await _loadFuture;
-    final mergedById = {for (final item in series) item.id: item};
-    final currentById = {for (final item in state) item.id: item};
-    final baselineById = {for (final item in baseline) item.id: item};
-    for (final id in baselineById.keys) {
-      if (!currentById.containsKey(id)) mergedById.remove(id);
-    }
-    for (final current in currentById.values) {
-      final before = baselineById[current.id];
-      final changedDuringSync =
-          before == null || current.updatedAt.isAfter(before.updatedAt);
-      if (!changedDuringSync) continue;
-      final incoming = mergedById[current.id];
-      if (incoming == null || !incoming.updatedAt.isAfter(current.updatedAt)) {
-        mergedById[current.id] = current;
-      }
-    }
-    await _replaceAllAndReconcile(
-      mergedById.values.toList(growable: false),
-    );
+    await _replaceAllAndReconcile(mergeSyncedEntities(
+      incoming: series,
+      current: state,
+      baseline: baseline,
+      idOf: (item) => item.id,
+      updatedAtOf: (item) => item.updatedAt,
+    ));
   }
 
   Future<void> _replaceAllAndReconcile(List<RecurrenceSeries> series) async {

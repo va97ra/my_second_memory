@@ -10,6 +10,8 @@ import '../database/drift_secure_entity_backend.dart';
 import 'local_storage_scope.dart';
 import '../finance/finance_repository.dart';
 import '../finance/sqlite_finance_repository.dart';
+import '../tools/sqlite_tool_data_repository.dart';
+import '../tools/tool_data_repository.dart';
 
 LocalStorageScope createLocalStorageScope() => IoLocalStorageScope();
 
@@ -25,6 +27,7 @@ class IoLocalStorageScope implements LocalStorageScope {
         SqliteRecurrenceExceptionRepository(_database, false);
     secureEntityBackend = DriftSecureEntityBackend(_database);
     financeRepository = SqliteFinanceRepository(_database, false);
+    toolDataRepository = SqliteToolDataRepository(_database, false);
   }
 
   final AppDatabase _database;
@@ -44,6 +47,9 @@ class IoLocalStorageScope implements LocalStorageScope {
 
   @override
   late final FinanceRepository financeRepository;
+
+  @override
+  late final ToolDataRepository toolDataRepository;
 
   @override
   Future<void> close() async {

@@ -259,28 +259,13 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     required List<MemoryItem> baseline,
   }) async {
     await _loadFuture;
-    final mergedById = {
-      for (final item in await _withoutDeletedItems(items)) item.id: item,
-    };
-    final currentById = {for (final item in state) item.id: item};
-    final baselineById = {for (final item in baseline) item.id: item};
-
-    // A missing current row that existed in the snapshot was deleted while
-    // the network request was in flight. Never re-add it from that snapshot.
-    for (final id in baselineById.keys) {
-      if (!currentById.containsKey(id)) mergedById.remove(id);
-    }
-    for (final current in currentById.values) {
-      final before = baselineById[current.id];
-      final changedDuringSync =
-          before == null || current.updatedAt.isAfter(before.updatedAt);
-      if (!changedDuringSync) continue;
-      final incoming = mergedById[current.id];
-      if (incoming == null || !incoming.updatedAt.isAfter(current.updatedAt)) {
-        mergedById[current.id] = current;
-      }
-    }
-    await _persistReplacement(mergedById.values.toList(growable: false));
+    await _persistReplacement(mergeSyncedEntities(
+      incoming: await _withoutDeletedItems(items),
+      current: state,
+      baseline: baseline,
+      idOf: (item) => item.id,
+      updatedAtOf: (item) => item.updatedAt,
+    ));
   }
 
   Future<List<MemoryItem>> _withoutDeletedItems(

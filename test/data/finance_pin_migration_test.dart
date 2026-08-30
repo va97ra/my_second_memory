@@ -6,8 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  test('enabling and disabling PIN migrates and verifies finance entries',
-      () async {
+  test('enabling and disabling PIN migrates finance and tool data', () async {
     SharedPreferences.setMockInitialValues({});
     final database = AppDatabase(NativeDatabase.memory());
     final storage = _TestStorage(database);
@@ -25,6 +24,15 @@ void main() {
         updatedAt: date,
       ),
     ]);
+    await storage.toolDataRepository.replaceAll(ToolDataSnapshot(
+      bookmarks: [
+        ReferenceBookmark(
+          entryId: 'ip_code',
+          note: 'Личная заметка',
+          updatedAt: date,
+        ),
+      ],
+    ));
     final cipher = await AppCipher.fromPin(
       pin: '1234',
       salt: List<int>.filled(16, 7),
@@ -44,12 +52,23 @@ void main() {
       ),
       hasLength(1),
     );
+    expect((await storage.toolDataRepository.load()).bookmarks, isEmpty);
+    expect(
+      await storage.secureEntityBackend.loadSecureEntities(
+        EncryptedToolDataRepository.entityKind,
+      ),
+      hasLength(1),
+    );
 
     await service.decryptToPlainData(cipher);
 
     final restored = await storage.financeRepository.loadAll();
     expect(restored.single.id, 'income');
     expect(restored.single.amount, '999.99');
+    expect(
+      (await storage.toolDataRepository.load()).bookmarks.single.note,
+      'Личная заметка',
+    );
     expect(
       await storage.secureEntityBackend.loadSecureEntities(
         EncryptedFinanceRepository.entityKind,
@@ -69,6 +88,7 @@ class _TestStorage implements LocalStorageScope {
     recurrenceExceptionRepository =
         SqliteRecurrenceExceptionRepository(database, false);
     financeRepository = SqliteFinanceRepository(database, false);
+    toolDataRepository = SqliteToolDataRepository(database, false);
     secureEntityBackend = DriftSecureEntityBackend(database);
   }
 
@@ -85,6 +105,9 @@ class _TestStorage implements LocalStorageScope {
 
   @override
   late final FinanceRepository financeRepository;
+
+  @override
+  late final ToolDataRepository toolDataRepository;
 
   @override
   late final SecureEntityBackend secureEntityBackend;

@@ -31,7 +31,7 @@ String? panelIdForLocation(Uri location) {
 /// совпадения: у страницы инструмента нет ни вложенных экранов, ни хвостов.
 String? toolIdForLocation(Uri location, List<AppDestination> tools) {
   for (final tool in tools) {
-    if (tool.isEnabled && tool.location == location.path) return tool.id;
+    if (tool.location == location.path) return tool.id;
   }
   return null;
 }

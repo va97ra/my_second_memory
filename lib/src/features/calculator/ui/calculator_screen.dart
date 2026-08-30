@@ -8,6 +8,7 @@ import '../state/calculator_controller.dart';
 import 'calculator_input_handler.dart';
 import 'calculator_key_layouts.dart';
 import 'widgets/calculator_display.dart';
+import 'widgets/calculator_key.dart';
 import 'widgets/calculator_key_grid.dart';
 import 'widgets/calculator_mode_bar.dart';
 import 'widgets/calculator_scientific_grid.dart';
@@ -54,13 +55,17 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
         builder: (context, constraints) {
           final wideScientific =
               state.scientific && constraints.maxWidth >= 600;
+          // Потолок ширины держит клавиатуру осмысленной на десктопе, но не
+          // должен обрезать её на телефоне: 360 совпадали ровно с узким
+          // экраном, и всё, что шире, получало поля по бокам. 480 перекрывают
+          // любой телефон, и клавиши доходят до краёв везде, где это уместно.
           final width = constraints.maxWidth.clamp(
             0.0,
             wideScientific
                 ? 760.0
                 : state.scientific
-                    ? 440.0
-                    : 360.0,
+                    ? 560.0
+                    : 480.0,
           );
           return Align(
             alignment: Alignment.topCenter,
@@ -121,17 +126,23 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
     );
   }
 
+  /// Память: те же клавиши, что и остальные, а не подписи без кнопок.
+  /// Голый текст не читался нажимаемым — было непонятно, что по нему вообще
+  /// можно ударить пальцем.
   Widget _memoryRow() => Row(
         children: [
-          for (final command in const ['MC', 'MR', 'M+', 'M-', 'MS'])
+          for (final command in const ['MC', 'MR', 'M+', 'M-', 'MS']) ...[
+            if (command != 'MC') const SizedBox(width: 4),
             Expanded(
-              child: TextButton(
+              child: CalculatorKey(
+                label: command,
+                role: CalculatorKeyRole.operation,
                 onPressed: () => ref
                     .read(calculatorControllerProvider.notifier)
                     .memoryCommand(command),
-                child: Text(command),
               ),
             ),
+          ],
         ],
       );
 

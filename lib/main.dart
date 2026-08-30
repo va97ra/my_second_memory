@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -18,14 +17,12 @@ import 'src/app/theme/app_theme_controller.dart';
 Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowsDesktopPlatform.initialize(arguments);
-  final isSimpleAndroidBuild =
-      defaultTargetPlatform == TargetPlatform.android && appFlavor == 'simple';
-  var syncConfig = isSimpleAndroidBuild
-      ? const SyncBackendConfig(url: '', publishableKey: '')
-      : SyncBackendConfig.fromEnvironment(useBundledDefaults: true);
+  var syncConfig = SyncBackendConfig.fromEnvironment(
+    useBundledDefaults: true,
+  );
   debugPrint(
     'Synchronization startup: platform=$defaultTargetPlatform, '
-    'flavor=$appFlavor, configured=${syncConfig.isConfigured}',
+    'configured=${syncConfig.isConfigured}',
   );
   if (syncConfig.isConfigured) {
     try {

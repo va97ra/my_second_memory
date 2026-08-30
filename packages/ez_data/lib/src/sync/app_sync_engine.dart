@@ -30,6 +30,10 @@ class AppSyncEngine {
         replaceRecurrenceExceptions,
     List<FinanceEntry> financeEntries = const [],
     Future<void> Function(List<FinanceEntry>)? replaceFinanceEntries,
+    List<SavedToolCalculation> toolCalculations = const [],
+    Future<void> Function(List<SavedToolCalculation>)? replaceToolCalculations,
+    List<ReferenceBookmark> toolBookmarks = const [],
+    Future<void> Function(List<ReferenceBookmark>)? replaceToolBookmarks,
   }) async {
     final remoteEntities = await remote.fetchEntities();
     final memoryOutcome = await EncryptedEntitySyncEngine<MemoryItem>(
@@ -200,6 +204,43 @@ class AppSyncEngine {
       replaceLocal: replaceFinanceEntries ?? (_) async {},
     );
 
+    final toolCalculationsOutcome =
+        await EncryptedEntitySyncEngine<SavedToolCalculation>(
+      remote: remote,
+      cipher: cipher,
+      tombstones: tombstones,
+      kind: SyncEntityKind.toolCalculation,
+      idOf: (calculation) => calculation.id,
+      updatedAtOf: (calculation) => calculation.updatedAt,
+      toJson: (calculation) => calculation.toJson(),
+      fromJson: SavedToolCalculation.fromJson,
+      withCanonicalUpdatedAt: (calculation, updatedAt) =>
+          calculation.copyWith(updatedAt: updatedAt),
+    ).merge(
+      localItems: toolCalculations,
+      remoteEntities: remoteEntities,
+      replaceLocal: replaceToolCalculations ?? (_) async {},
+    );
+    // Закладка опознаётся статьёй справочника: своего идентификатора у неё
+    // нет, и заводить второй было бы вторым именем одной и той же вещи.
+    final toolBookmarksOutcome =
+        await EncryptedEntitySyncEngine<ReferenceBookmark>(
+      remote: remote,
+      cipher: cipher,
+      tombstones: tombstones,
+      kind: SyncEntityKind.toolBookmark,
+      idOf: (bookmark) => bookmark.entryId,
+      updatedAtOf: (bookmark) => bookmark.updatedAt,
+      toJson: (bookmark) => bookmark.toJson(),
+      fromJson: ReferenceBookmark.fromJson,
+      withCanonicalUpdatedAt: (bookmark, updatedAt) =>
+          bookmark.copyWith(updatedAt: updatedAt),
+    ).merge(
+      localItems: toolBookmarks,
+      remoteEntities: remoteEntities,
+      replaceLocal: replaceToolBookmarks ?? (_) async {},
+    );
+
     await remote.applyEntities([
       ...memoryOutcome.changesToUpload,
       ...shiftsOutcome.changesToUpload,
@@ -207,6 +248,8 @@ class AppSyncEngine {
       ...recurrenceExceptionsOutcome.changesToUpload,
       ...recurrenceSeriesOutcome.changesToUpload,
       ...financeOutcome.changesToUpload,
+      ...toolCalculationsOutcome.changesToUpload,
+      ...toolBookmarksOutcome.changesToUpload,
     ]);
     return _combine([
       memoryOutcome.result,
@@ -215,6 +258,8 @@ class AppSyncEngine {
       recurrenceExceptionsOutcome.result,
       recurrenceSeriesOutcome.result,
       financeOutcome.result,
+      toolCalculationsOutcome.result,
+      toolBookmarksOutcome.result,
     ]);
   }
 
