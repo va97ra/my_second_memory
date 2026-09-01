@@ -76,7 +76,7 @@
 /tools/finance       Финансы
 /tools/converter     Конвертер величин
 /tools/engineering   Инженерные расчёты
-/tools/reference     Техсправочник
+/tools/reference     Учебник электрика
 /settings/backup     Резервные копии
 /settings/sync       Синхронизация
 /security            PIN и биометрия

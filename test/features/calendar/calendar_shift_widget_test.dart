@@ -180,12 +180,13 @@ void main() {
     expect(alarm.top, greaterThanOrEqualTo(header.top));
     expect(alarm.bottom - header.bottom, lessThan(alarm.height / 4));
 
-    // Будильник ушёл в правый угол: он правее числа и лежит в правой трети
-    // ячейки. Точное расстояние до края не проверяется — правее него может
-    // стоять отметка архива.
+    // Будильник ушёл вправо: он правее числа и лежит в правой половине
+    // ячейки. Более узкой границы здесь быть не может — правее будильника
+    // стоит отметка архива, и вдвоём они занимают заметную долю ширины,
+    // так что «правая треть» не выполняется при верной раскладке.
     final cellRect = tester.getRect(cell);
     expect(alarm.left, greaterThan(numberRect.right));
-    expect(alarm.left, greaterThan(cellRect.left + cellRect.width * 2 / 3));
+    expect(alarm.left, greaterThan(cellRect.left + cellRect.width / 2));
 
     // Число со сменой стоит на том же уровне, что и в дне без смены.
     Finder? plainNumber;

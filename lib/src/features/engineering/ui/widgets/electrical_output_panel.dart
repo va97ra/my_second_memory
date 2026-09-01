@@ -14,86 +14,81 @@ class ElectricalOutputPanel extends ConsumerWidget {
     this.current = '',
     this.factor = '',
     this.extra = '',
-    this.section = '',
     this.loads = '',
     this.loadsController,
     this.onChanged,
     this.threePhase = false,
-    this.copper = true,
     super.key,
   });
 
   final ElectricalMode mode;
-  final String voltage, current, factor, extra, section, loads;
+  final String voltage, current, factor, extra, loads;
   final TextEditingController? loadsController;
   final VoidCallback? onChanged;
-  final bool threePhase, copper;
+  final bool threePhase;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ru = AppStrings.of(context).isRu;
+    final strings = AppStrings.of(context);
     if (mode == ElectricalMode.phases) return _phases(context, ref);
-    final voltageV = parseToolNumber(voltage),
-        currentA = parseToolNumber(current);
-    final powerFactor = parseToolNumber(factor),
-        extraValue = parseToolNumber(extra);
-    try {
-      if ([voltageV, currentA, powerFactor, extraValue].contains(null)) {
-        throw const FormatException();
-      }
-      if (mode == ElectricalMode.power) {
-        final result = threePhase
-            ? EngineeringCalculations.threePhase(
-                lineVoltageV: voltageV!,
-                currentA: currentA!,
-                powerFactor: powerFactor!,
-                efficiency: extraValue!)
-            : EngineeringCalculations.singlePhase(
-                voltageV: voltageV!,
-                currentA: currentA!,
-                powerFactor: powerFactor!,
-                efficiency: extraValue!);
-        return _output(context, ref,
-            '${formatToolNumber(result.activePowerW / 1000)} ${EngUnit.kilowatt.symbol(ru)}',
-            'power', {
-          'voltageV': voltageV,
-          'currentA': currentA,
-          'powerFactor': powerFactor,
-          'efficiency': extraValue,
-          'threePhase': threePhase ? 1 : 0,
-        });
-      }
-      final sectionMm2 = parseToolNumber(section);
-      if (sectionMm2 == null) throw const FormatException();
-      final result = EngineeringCalculations.voltageDrop(
-          currentA: currentA!,
-          oneWayLengthM: extraValue!,
-          sectionMm2: sectionMm2,
-          voltageV: voltageV!,
-          threePhase: threePhase,
-          copper: copper,
-          powerFactor: powerFactor!);
-      return _output(
-          context,
-          ref,
-          '${formatToolNumber(result.dropV)} ${EngUnit.volt.symbol(ru)}'
-          ' · ${formatToolNumber(result.dropPercent)} %',
-          'voltageDrop', {
+    final voltageV = parseToolNumber(voltage);
+    final currentA = parseToolNumber(current);
+    final powerFactor = parseToolNumber(factor);
+    final efficiency = parseToolNumber(extra);
+    final problem = _problem(strings, voltageV, currentA, powerFactor, efficiency);
+    if (problem != null) {
+      return ToolResultCard(
+        value: '$problem — ${strings.invalidNumber.toLowerCase()}',
+      );
+    }
+    final result = threePhase
+        ? EngineeringCalculations.threePhase(
+            lineVoltageV: voltageV!,
+            currentA: currentA!,
+            powerFactor: powerFactor!,
+            efficiency: efficiency!,
+          )
+        : EngineeringCalculations.singlePhase(
+            voltageV: voltageV!,
+            currentA: currentA!,
+            powerFactor: powerFactor!,
+            efficiency: efficiency!,
+          );
+    return _output(
+      context,
+      ref,
+      formatEngValue(result.activePowerW / 1000, EngUnit.kilowatt, strings.isRu),
+      'power',
+      {
         'voltageV': voltageV,
         'currentA': currentA,
         'powerFactor': powerFactor,
-        'lengthM': extraValue,
-        'sectionMm2': sectionMm2,
+        'efficiency': efficiency,
         'threePhase': threePhase ? 1 : 0,
-        'copper': copper ? 1 : 0,
       },
-          details: [
-            '${AppStrings.of(context).loss}: '
-                '${formatToolNumber(result.lossW)} ${EngUnit.watt.symbol(ru)}'
-          ]);
-    } catch (_) {
-      return ToolResultCard(value: AppStrings.of(context).invalidNumber);
+    );
+  }
+
+  /// Первое поле, которое мешает посчитать, — сверху вниз, как на экране.
+  ///
+  /// Вместо `catch` вокруг расчёта: «введите корректное число» без имени поля
+  /// одинаково выглядело и при пустой графе, и при ошибке в самом расчёте.
+  String? _problem(
+    AppStrings strings,
+    double? voltageV,
+    double? currentA,
+    double? powerFactor,
+    double? efficiency,
+  ) {
+    if (voltageV == null || voltageV <= 0) return strings.voltage;
+    if (currentA == null || currentA < 0) return strings.loadCurrent;
+    if (powerFactor == null || powerFactor <= 0 || powerFactor > 1) {
+      return 'cos φ';
     }
+    if (efficiency == null || efficiency <= 0 || efficiency > 1) {
+      return strings.efficiency;
+    }
+    return null;
   }
 
   Widget _phases(BuildContext context, WidgetRef ref) {
@@ -117,9 +112,9 @@ class ElectricalOutputPanel extends ConsumerWidget {
       ToolResultCard(
           value: phases.isEmpty
               ? '—'
-              : 'L1 ${formatToolNumber(phases[0])} ${EngUnit.watt.symbol(strings.isRu)}'
-                  ' · L2 ${formatToolNumber(phases[1])} ${EngUnit.watt.symbol(strings.isRu)}'
-                  ' · L3 ${formatToolNumber(phases[2])} ${EngUnit.watt.symbol(strings.isRu)}'),
+              : 'L1 ${formatEngValue(phases[0], EngUnit.watt, strings.isRu)}'
+                  ' · L2 ${formatEngValue(phases[1], EngUnit.watt, strings.isRu)}'
+                  ' · L3 ${formatEngValue(phases[2], EngUnit.watt, strings.isRu)}'),
       const SizedBox(height: 12),
       _saveButton(context, ref, phases.isEmpty ? null : 'phaseBalance',
           {for (var i = 0; i < values.length; i++) 'load$i': values[i]}),

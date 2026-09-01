@@ -10,6 +10,8 @@
 /// проект. Ответ показывается вместе с условиями, при которых он получен.
 library;
 
+import 'numeric_guards.dart';
+
 enum ConductorMaterial { copper, aluminium }
 
 /// Способ прокладки. Чем теснее жилам, тем хуже они остывают, и тем меньше
@@ -60,9 +62,9 @@ double singlePhaseCurrent({
   required double voltageV,
   double powerFactor = 1,
 }) {
-  _positive(voltageV, 'voltageV');
-  _fraction(powerFactor, 'powerFactor');
-  _nonNegative(powerW, 'powerW');
+  positiveValue(voltageV, 'voltageV');
+  fractionValue(powerFactor, 'powerFactor');
+  nonNegativeValue(powerW, 'powerW');
   return powerW / (voltageV * powerFactor);
 }
 
@@ -72,9 +74,9 @@ double threePhaseCurrent({
   required double lineVoltageV,
   double powerFactor = 1,
 }) {
-  _positive(lineVoltageV, 'lineVoltageV');
-  _fraction(powerFactor, 'powerFactor');
-  _nonNegative(powerW, 'powerW');
+  positiveValue(lineVoltageV, 'lineVoltageV');
+  fractionValue(powerFactor, 'powerFactor');
+  nonNegativeValue(powerW, 'powerW');
   return powerW / (1.7320508075688772 * lineVoltageV * powerFactor);
 }
 
@@ -87,7 +89,7 @@ WireSizingResult? selectWireSection({
   ConductorMaterial material = ConductorMaterial.copper,
   WireRouting routing = WireRouting.conduitThree,
 }) {
-  _nonNegative(currentA, 'currentA');
+  nonNegativeValue(currentA, 'currentA');
   final rows = _tables[material]!;
   for (final row in rows) {
     final allowable = row.allowable[routing.index];
@@ -147,21 +149,3 @@ const _tables = <ConductorMaterial, List<_WireRow>>{
     _WireRow(50, [165, 140, 130]),
   ],
 };
-
-void _positive(double value, String name) {
-  if (!value.isFinite || value <= 0) {
-    throw ArgumentError.value(value, name, 'Must be finite and positive');
-  }
-}
-
-void _nonNegative(double value, String name) {
-  if (!value.isFinite || value < 0) {
-    throw ArgumentError.value(value, name, 'Must be finite and non-negative');
-  }
-}
-
-void _fraction(double value, String name) {
-  if (!value.isFinite || value <= 0 || value > 1) {
-    throw ArgumentError.value(value, name, 'Must be in the range (0, 1]');
-  }
-}

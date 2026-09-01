@@ -22,6 +22,11 @@ enum EngUnit {
   bar,
   metreOfWater,
   second,
+  perHour,
+  celsius,
+  ohm,
+  percent,
+  person,
 }
 
 extension EngUnitText on EngUnit {
@@ -44,6 +49,11 @@ extension EngUnitText on EngUnit {
         EngUnit.bar => isRu ? 'бар' : 'bar',
         EngUnit.metreOfWater => isRu ? 'м вод. ст.' : 'm H₂O',
         EngUnit.second => isRu ? 'с' : 's',
+        EngUnit.perHour => isRu ? '1/ч' : '1/h',
+        EngUnit.celsius => '°C',
+        EngUnit.ohm => isRu ? 'Ом' : 'Ω',
+        EngUnit.percent => '%',
+        EngUnit.person => isRu ? 'чел.' : 'ppl',
       };
 
   /// Расшифровка словом — то, что читают вслух.
@@ -57,19 +67,21 @@ extension EngUnitText on EngUnit {
         EngUnit.millimetre => isRu ? 'миллиметр' : 'millimetre',
         EngUnit.metre => isRu ? 'метр' : 'metre',
         EngUnit.metreSquared => isRu ? 'квадратный метр' : 'square metre',
-        EngUnit.metrePerSecond =>
-          isRu ? 'метр в секунду' : 'metre per second',
+        EngUnit.metrePerSecond => isRu ? 'метр в секунду' : 'metre per second',
         EngUnit.litre => isRu ? 'литр' : 'litre',
-        EngUnit.litrePerMinute =>
-          isRu ? 'литр в минуту' : 'litre per minute',
+        EngUnit.litrePerMinute => isRu ? 'литр в минуту' : 'litre per minute',
         EngUnit.cubicMetrePerHour =>
           isRu ? 'кубометр в час' : 'cubic metre per hour',
         EngUnit.pascal => isRu ? 'паскаль' : 'pascal',
-        EngUnit.pascalPerMetre =>
-          isRu ? 'паскаль на метр' : 'pascal per metre',
+        EngUnit.pascalPerMetre => isRu ? 'паскаль на метр' : 'pascal per metre',
         EngUnit.bar => isRu ? 'бар' : 'bar',
         EngUnit.metreOfWater =>
           isRu ? 'метр водяного столба' : 'metre of water column',
         EngUnit.second => isRu ? 'секунда' : 'second',
+        EngUnit.perHour => isRu ? 'раз в час' : 'per hour',
+        EngUnit.celsius => isRu ? 'градус Цельсия' : 'degree Celsius',
+        EngUnit.ohm => isRu ? 'ом' : 'ohm',
+        EngUnit.percent => isRu ? 'процент' : 'per cent',
+        EngUnit.person => isRu ? 'человек' : 'person',
       };
 }

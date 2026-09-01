@@ -31,8 +31,8 @@ List<AppDestination> toolDestinations(AppStrings strings) => [
       ),
       AppDestination.route(
         id: 'reference',
-        icon: Icons.menu_book_rounded,
-        label: strings.technicalReference,
+        icon: Icons.school_rounded,
+        label: strings.electricianGuide,
         location: '/tools/reference',
       ),
     ];

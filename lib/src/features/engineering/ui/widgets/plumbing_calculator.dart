@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../tool_data/tool_data.dart';
 import 'engineering_disclaimer.dart';
-import 'engineering_helpers.dart';
-import 'plumbing_output_panel.dart';
+import 'engineering_input_grid.dart';
+import 'engineering_mode_picker.dart';
 import 'plumbing_mode.dart';
+import 'plumbing_output_panel.dart';
 
 class PlumbingCalculator extends ConsumerStatefulWidget {
   const PlumbingCalculator({super.key});
@@ -22,6 +23,9 @@ class _PlumbingState extends ConsumerState<PlumbingCalculator> {
   final _length = TextEditingController(text: '10');
   final _head = TextEditingController(text: '10');
   final _roughness = TextEditingController(text: '0.01');
+  final _power = TextEditingController(text: '10');
+  final _deltaT = TextEditingController(text: '20');
+  final _slope = TextEditingController(text: '2');
   PlumbingMode _mode = PlumbingMode.flow;
 
   @override
@@ -32,7 +36,10 @@ class _PlumbingState extends ConsumerState<PlumbingCalculator> {
       _velocity,
       _length,
       _head,
-      _roughness
+      _roughness,
+      _power,
+      _deltaT,
+      _slope,
     ]) {
       item.dispose();
     }
@@ -42,75 +49,93 @@ class _PlumbingState extends ConsumerState<PlumbingCalculator> {
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    final ru = strings.isRu;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        engineeringModeSelector(
+        EngineeringModePicker<PlumbingMode>(
           value: _mode,
-          segments: [
-            ButtonSegment(
-                value: PlumbingMode.flow, label: Text(strings.flow)),
-            ButtonSegment(
-                value: PlumbingMode.volume, label: Text(strings.pipe)),
-            ButtonSegment(
-                value: PlumbingMode.pressure,
-                label: Text(strings.pressure)),
+          options: [
+            (PlumbingMode.flow, strings.flow),
+            (PlumbingMode.volume, strings.pipe),
+            (PlumbingMode.pressure, strings.pressure),
+            (PlumbingMode.heating, strings.heating),
+            (PlumbingMode.slope, strings.slope),
           ],
           onChanged: (value) => setState(() => _mode = value),
         ),
-        const SizedBox(height: 16),
-        ToolNumberField(
-            controller: _flow,
-            label: strings.flow,
-            suffix: EngUnit.litrePerMinute.symbol(ru),
-            onChanged: (_) => setState(() {})),
-        const SizedBox(height: 12),
-        ToolNumberField(
-            controller: _diameter,
-            label: strings.internalDiameter,
-            suffix: EngUnit.millimetre.symbol(ru),
-            onChanged: (_) => setState(() {})),
-        if (_mode == PlumbingMode.flow) ...[
-          const SizedBox(height: 12),
-          ToolNumberField(
-              controller: _velocity,
-              label: strings.targetVelocity,
-              suffix: EngUnit.metrePerSecond.symbol(ru),
-              onChanged: (_) => setState(() {})),
-        ] else ...[
-          const SizedBox(height: 12),
-          ToolNumberField(
-              controller: _length,
-              label: strings.pipeLength,
-              suffix: EngUnit.metre.symbol(ru),
-              onChanged: (_) => setState(() {})),
-        ],
-        if (_mode == PlumbingMode.pressure) ...[
-          const SizedBox(height: 12),
-          ToolNumberField(
-              controller: _head,
-              label: strings.head,
-              suffix: EngUnit.metreOfWater.symbol(ru),
-              onChanged: (_) => setState(() {})),
-          const SizedBox(height: 12),
-          ToolNumberField(
-              controller: _roughness,
-              label: strings.roughness,
-              suffix: EngUnit.millimetre.symbol(ru),
-              onChanged: (_) => setState(() {})),
-        ],
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        EngineeringInputGrid(children: _fields(strings)),
+        const SizedBox(height: 8),
         PlumbingOutputPanel(
-            mode: _mode,
-            flow: _flow.text,
-            diameter: _diameter.text,
-            third: _mode == PlumbingMode.flow ? _velocity.text : _length.text,
-            head: _head.text,
-            roughness: _roughness.text),
+          mode: _mode,
+          flow: _flow.text,
+          diameter: _diameter.text,
+          third: _mode == PlumbingMode.flow ? _velocity.text : _length.text,
+          head: _head.text,
+          roughness: _roughness.text,
+          power: _power.text,
+          deltaTemperature: _deltaT.text,
+          slope: _slope.text,
+        ),
         const SizedBox(height: 12),
         const EngineeringDisclaimer(),
       ],
     );
+  }
+
+  /// Поля своего расчёта и ничьи больше: пустая графа от соседнего режима
+  /// заставляет гадать, участвует она в ответе или нет.
+  List<Widget> _fields(AppStrings strings) {
+    final ru = strings.isRu;
+    ToolNumberField field(
+      TextEditingController controller,
+      String label,
+      EngUnit unit,
+      String hint,
+    ) =>
+        ToolNumberField(
+          controller: controller,
+          label: label,
+          suffix: unit.symbol(ru),
+          hint: hint,
+          onChanged: (_) => setState(() {}),
+        );
+    return switch (_mode) {
+      PlumbingMode.heating => [
+          field(_power, strings.heatPower, EngUnit.kilowatt,
+              strings.hintHeatPower),
+          field(_deltaT, strings.deltaTemperature, EngUnit.celsius,
+              strings.hintDeltaWater),
+        ],
+      PlumbingMode.slope => [
+          field(_slope, strings.slope, EngUnit.percent, strings.hintSlope),
+          field(_length, strings.sectionLength, EngUnit.metre,
+              strings.hintPipeLength),
+        ],
+      PlumbingMode.flow => [
+          field(_flow, strings.flow, EngUnit.litrePerMinute, strings.hintFlow),
+          field(_diameter, strings.internalDiameter, EngUnit.millimetre,
+              strings.hintInternalDiameter),
+          field(_velocity, strings.targetVelocity, EngUnit.metrePerSecond,
+              strings.hintTargetVelocity),
+        ],
+      PlumbingMode.volume => [
+          field(_flow, strings.flow, EngUnit.litrePerMinute, strings.hintFlow),
+          field(_diameter, strings.internalDiameter, EngUnit.millimetre,
+              strings.hintInternalDiameter),
+          field(_length, strings.pipeLength, EngUnit.metre,
+              strings.hintPipeLength),
+        ],
+      PlumbingMode.pressure => [
+          field(_flow, strings.flow, EngUnit.litrePerMinute, strings.hintFlow),
+          field(_diameter, strings.internalDiameter, EngUnit.millimetre,
+              strings.hintInternalDiameter),
+          field(_length, strings.pipeLength, EngUnit.metre,
+              strings.hintPipeLength),
+          field(_head, strings.head, EngUnit.metreOfWater, strings.hintHead),
+          field(_roughness, strings.roughness, EngUnit.millimetre,
+              strings.hintRoughness),
+        ],
+    };
   }
 }

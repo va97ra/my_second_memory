@@ -14,7 +14,7 @@ import '../features/calculator/calculator.dart';
 import '../features/finance/finance.dart';
 import '../features/converter/converter.dart';
 import '../features/engineering/engineering.dart';
-import '../features/technical_reference/technical_reference.dart';
+import '../features/electrician/electrician.dart';
 import 'page_turn_transition.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -111,7 +111,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
-          child: const TechnicalReferenceScreen(),
+          child: const ElectricianScreen(),
         ),
       ),
       GoRoute(

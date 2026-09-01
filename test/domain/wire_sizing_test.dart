@@ -80,4 +80,93 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('common currents are sized for every material and routing', () {
+    const cases = <({
+      double currentA,
+      ConductorMaterial material,
+      WireRouting routing,
+      double sectionMm2,
+    })>[
+      (
+        currentA: 20,
+        material: ConductorMaterial.copper,
+        routing: WireRouting.openAir,
+        sectionMm2: 1.5
+      ),
+      (
+        currentA: 20,
+        material: ConductorMaterial.copper,
+        routing: WireRouting.conduitTwo,
+        sectionMm2: 2.5
+      ),
+      (
+        currentA: 20,
+        material: ConductorMaterial.aluminium,
+        routing: WireRouting.conduitThree,
+        sectionMm2: 4
+      ),
+      (
+        currentA: 32,
+        material: ConductorMaterial.copper,
+        routing: WireRouting.conduitTwo,
+        sectionMm2: 4
+      ),
+      (
+        currentA: 32,
+        material: ConductorMaterial.aluminium,
+        routing: WireRouting.openAir,
+        sectionMm2: 4
+      ),
+      (
+        currentA: 32,
+        material: ConductorMaterial.aluminium,
+        routing: WireRouting.conduitTwo,
+        sectionMm2: 6
+      ),
+      (
+        currentA: 60,
+        material: ConductorMaterial.copper,
+        routing: WireRouting.conduitThree,
+        sectionMm2: 10
+      ),
+      (
+        currentA: 60,
+        material: ConductorMaterial.aluminium,
+        routing: WireRouting.conduitTwo,
+        sectionMm2: 16
+      ),
+      (
+        currentA: 100,
+        material: ConductorMaterial.copper,
+        routing: WireRouting.openAir,
+        sectionMm2: 16
+      ),
+      (
+        currentA: 100,
+        material: ConductorMaterial.aluminium,
+        routing: WireRouting.conduitThree,
+        sectionMm2: 50
+      ),
+    ];
+
+    for (final testCase in cases) {
+      final result = selectWireSection(
+        currentA: testCase.currentA,
+        material: testCase.material,
+        routing: testCase.routing,
+      )!;
+      expect(
+        result.sectionMm2,
+        testCase.sectionMm2,
+        reason:
+            '${testCase.currentA} A, ${testCase.material}, ${testCase.routing}',
+      );
+      expect(result.allowableCurrentA, greaterThanOrEqualTo(testCase.currentA));
+      if (result.breakerA case final breaker?) {
+        expect(breaker, greaterThanOrEqualTo(testCase.currentA));
+        expect(breaker, lessThanOrEqualTo(result.allowableCurrentA));
+      }
+    }
+  });
 }

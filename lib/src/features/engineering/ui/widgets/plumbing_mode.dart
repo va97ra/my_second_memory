@@ -1,1 +1,1 @@
-enum PlumbingMode { flow, volume, pressure }
+enum PlumbingMode { flow, volume, pressure, heating, slope }

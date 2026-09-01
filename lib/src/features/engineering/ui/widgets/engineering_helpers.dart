@@ -1,3 +1,4 @@
+import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,16 +30,25 @@ Future<void> saveEngineering(
       );
 }
 
-Widget engineeringModeSelector<T>({
-  required T value,
-  required List<ButtonSegment<T>> segments,
-  required ValueChanged<T> onChanged,
-}) =>
-    SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SegmentedButton<T>(
-        segments: segments,
-        selected: {value},
-        onSelectionChanged: (selection) => onChanged(selection.first),
-      ),
-    );
+/// Подпись способа прокладки. Нужна и подбору сечения, и падению напряжения.
+String wireRoutingLabel(AppStrings strings, WireRouting routing) =>
+    switch (routing) {
+      WireRouting.openAir => strings.wireRoutingOpen,
+      WireRouting.conduitTwo => strings.wireRoutingConduitTwo,
+      WireRouting.conduitThree => strings.wireRoutingConduitThree,
+    };
+
+/// Стандартные напряжения сети.
+const singlePhaseVoltage = '230';
+const threePhaseVoltage = '400';
+
+/// Напряжение после смены числа фаз.
+///
+/// Стандартное меняется вместе с сетью, введённое руками остаётся: прежний
+/// экран подставлял 400 В и не возвращал 230, и однофазный расчёт молча шёл
+/// от чужого напряжения.
+String voltageForPhases({required String text, required bool threePhase}) {
+  final previous = threePhase ? singlePhaseVoltage : threePhaseVoltage;
+  if (text.trim() != previous) return text;
+  return threePhase ? threePhaseVoltage : singlePhaseVoltage;
+}

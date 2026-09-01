@@ -85,6 +85,34 @@ class AppStrings {
   String get engineeringDisclaimer => isRu
       ? 'Расчёт показывает исходные условия и не заменяет проект, нормы и документацию оборудования.'
       : 'The calculation shows its assumptions and does not replace a project, codes or equipment documentation.';
+  // Учебник электрика. Разделы главного экрана и подписи карточки.
+  String get electricianGuide => isRu ? 'Учебник' : 'Guide';
+  String get nothingFound => isRu ? 'Ничего не найдено' : 'Nothing found';
+  String get sectionLearning => isRu ? 'Обучение' : 'Learning';
+  String get sectionTools => isRu ? 'Инструменты' : 'Tools';
+  String get sectionComponents => isRu ? 'Компоненты' : 'Components';
+  String get sectionGlossary => isRu ? 'Словарь' : 'Glossary';
+  String get sectionSchematics => isRu ? 'Схемы' : 'Schematics';
+  String get sectionDiagnostics => isRu ? 'Диагностика' : 'Diagnostics';
+  String get sectionSafety => isRu ? 'Безопасность' : 'Safety';
+  String get sectionReference => isRu ? 'Справочник' : 'Reference';
+  String get sectionEmpty =>
+      isRu ? 'Раздел ещё не наполнен' : 'This section has no cards yet';
+  String get cardsCount => isRu ? 'карточек' : 'cards';
+  String get cardWhat => isRu ? 'Что это' : 'What it is';
+  String get example => isRu ? 'Пример' : 'Example';
+  String get learned => isRu ? 'Изучено' : 'Learned';
+  String get markLearned => isRu ? 'Тема пройдена' : 'Mark as learned';
+  String get answerRight => isRu ? 'Правильно' : 'Correct';
+  String get answerWrong => isRu ? 'Неправильно' : 'Not quite';
+  String get cardPurpose => isRu ? 'Для чего' : 'What it is for';
+  String get cardCaution => isRu ? 'Что важно знать' : 'What to watch for';
+  String get notCheckedAgainstSource => isRu
+      ? 'Содержание не сверено по тексту документа'
+      : 'The text has not been checked against the source document';
+  String get electricianDisclaimer => isRu
+      ? 'Справочник объясняет устройство и понятия. Он не даёт допуска к работам и не заменяет обучение, группу по электробезопасности и проект.'
+      : 'This reference explains concepts and equipment. It grants no permit to work and replaces neither training nor a design.';
 
   // Величины конвертера. Те же слова служат подписями в инженерных расчётах:
   // «Расход» и «Давление» — одно понятие, и строка у него одна.
@@ -99,12 +127,22 @@ class AppStrings {
   String get power => isRu ? 'Мощность' : 'Power';
   String get energy => isRu ? 'Энергия' : 'Energy';
   String get dataSize => isRu ? 'Объём данных' : 'Data size';
+  String get resistance => isRu ? 'Сопротивление' : 'Resistance';
+  String get frequency => isRu ? 'Частота' : 'Frequency';
 
   // Электрика.
+  String get ohmLaw => isRu ? 'Закон Ома' : 'Ohm law';
+  String get ohmLawActiveLoadNote => isRu
+      ? 'Мощность верна для активной нагрузки; для двигателя нужен расчёт с cos φ'
+      : 'The power holds for a resistive load; a motor needs the cos φ calculation';
+  String get whatToFind => isRu ? 'Что найти' : 'What to find';
+  String get formula => isRu ? 'Формула' : 'Formula';
   String get voltageDrop => isRu ? 'Падение U' : 'Voltage drop';
   String get phases => isRu ? 'Фазы' : 'Phases';
+  String get wireSizing => isRu ? 'Подбор сечения' : 'Wire size';
   String get voltage => isRu ? 'Напряжение' : 'Voltage';
   String get current => isRu ? 'Ток' : 'Current';
+  String get loadCurrent => isRu ? 'Ток нагрузки' : 'Load current';
   String get efficiency => isRu ? 'КПД' : 'Efficiency';
   String get oneWayLength => isRu ? 'Длина в одну сторону' : 'One-way length';
   String get conductorSection => isRu ? 'Сечение' : 'Section';
@@ -112,9 +150,93 @@ class AppStrings {
   String get threePhaseSystem =>
       isRu ? 'Трёхфазная сеть' : 'Three-phase system';
   String get loss => isRu ? 'Потери' : 'Loss';
-  String get loadsSeparatedByCommas => isRu
-      ? 'Нагрузки через запятую, Вт'
-      : 'Loads separated by commas, W';
+  String get loadsSeparatedByCommas =>
+      isRu ? 'Нагрузки через запятую, Вт' : 'Loads separated by commas, W';
+  String get conductorMaterial => isRu ? 'Материал жилы' : 'Conductor material';
+  String get copper => isRu ? 'Медь' : 'Copper';
+  String get aluminium => isRu ? 'Алюминий' : 'Aluminium';
+  String get wireRouting => isRu ? 'Способ прокладки' : 'Installation method';
+  String get wireRoutingOpen =>
+      isRu ? 'Открытая прокладка' : 'Open air';
+  String get wireRoutingConduitTwo => isRu
+      ? 'Два одножильных в трубе'
+      : 'Two single-core wires in conduit';
+  String get wireRoutingConduitThree => isRu
+      ? 'Три одножильных в трубе'
+      : 'Three single-core wires in conduit';
+  String get allowableCurrent => isRu ? 'Допустимый ток' : 'Allowable current';
+  String get recommendedBreaker => isRu ? 'Автомат' : 'Circuit breaker';
+  String get currentMargin => isRu ? 'Запас по току' : 'Current margin';
+  String get wireSizingNoResult => isRu
+      ? 'Ток выше диапазона таблицы'
+      : 'Current is outside the table range';
+
+  // Падение напряжения. Экран собран блоками, и каждый блок назван.
+  String get networkSection => isRu ? 'Сеть' : 'Network';
+  String get loadSection => isRu ? 'Нагрузка' : 'Load';
+  String get lineSection => isRu ? 'Линия' : 'Line';
+  String get dropLimitSection => isRu ? 'Норма падения' : 'Drop limit';
+  String get singlePhaseNetwork => isRu ? '1 фаза' : '1 phase';
+  String get threePhaseNetwork => isRu ? '3 фазы' : '3 phases';
+  String get byCurrent => isRu ? 'По току' : 'By current';
+  String get byPower => isRu ? 'По мощности' : 'By power';
+  String get loadPower => isRu ? 'Мощность нагрузки' : 'Load power';
+  String get withinDropLimit =>
+      isRu ? 'Проходит по норме' : 'Within the limit';
+  String get overDropLimit => isRu ? 'Не проходит по норме' : 'Over the limit';
+  String get conductorUnderLoad => isRu ? 'Под нагрузкой' : 'Under load';
+  String get conductorCold => isRu ? 'Холодная жила' : 'Cold conductor';
+  String get minimumSectionForLimit => isRu
+      ? 'Минимальное сечение под норму'
+      : 'Smallest section within the limit';
+  String get noSectionFitsLimit => isRu
+      ? 'В ряду подходящего сечения нет: делить линию или менять напряжение'
+      : 'No section in the series fits: split the line or change the voltage';
+  String get voltageDropUnverifiedWarning => isRu
+      ? 'Реактивное сопротивление взято по способу прокладки и ещё не сверено с нормами. Перед монтажом проверьте результат по паспорту кабеля.'
+      : 'Reactance is taken from the installation method and has not been checked against the codes yet. Verify the result against the cable data sheet before installation.';
+
+  // Подсказки под полями: короткая строка о том, что вводят и откуда берут.
+  String get hintVoltage =>
+      isRu ? 'Фаза–ноль 230 В, межфазное 400 В' : '230 V to neutral, 400 V line-line';
+  String get hintLoadCurrent =>
+      isRu ? 'По автомату или клещами' : 'From the breaker or a clamp meter';
+  String get hintPowerFactor =>
+      isRu ? '1 — нагрев, меньше — двигатель' : '1 for heaters, less for motors';
+  String get hintEfficiency =>
+      isRu ? 'Доля полезной мощности' : 'Share of useful power';
+  String get hintOneWayLength =>
+      isRu ? 'От щита до потребителя' : 'From the board to the load';
+  String get hintSection =>
+      isRu ? 'Сечение одной жилы' : 'One conductor cross-section';
+  String get hintLoadPower =>
+      isRu ? 'Паспортная мощность прибора' : 'Rated power of the load';
+  String get hintResistance =>
+      isRu ? 'Сопротивление участка цепи' : 'Resistance of the circuit part';
+  String get hintMaterial =>
+      isRu ? 'Медь или алюминий' : 'Copper or aluminium';
+  String get hintRouting =>
+      isRu ? 'Столбец таблицы допустимого тока' : 'Column of the capacity table';
+  String get hintFlow =>
+      isRu ? 'Объём воды за время' : 'Water volume per time';
+  String get hintInternalDiameter =>
+      isRu ? 'Внутренний, не наружный' : 'Internal, not outer';
+  String get hintTargetVelocity =>
+      isRu ? 'Скорость для подбора диаметра' : 'Velocity the diameter follows';
+  String get hintPipeLength =>
+      isRu ? 'Длина участка трубы' : 'Length of the pipe run';
+  String get hintHead =>
+      isRu ? 'Давление высотой столба воды' : 'Pressure as a water column';
+  String get hintRoughness =>
+      isRu ? 'Сталь грубее пластика' : 'Steel is rougher than plastic';
+  String get hintAirflow =>
+      isRu ? 'Объём воздуха за час' : 'Air volume per hour';
+  String get hintDuctSide =>
+      isRu ? 'Сторона воздуховода' : 'Side of the duct';
+  String get hintRoomSide =>
+      isRu ? 'Размер помещения' : 'Room dimension';
+  String get hintAirChanges =>
+      isRu ? 'Сколько раз за час меняется воздух' : 'Air replacements per hour';
 
   // Сантехника.
   String get pipe => isRu ? 'Труба' : 'Pipe';
@@ -124,12 +246,48 @@ class AppStrings {
   String get pipeLength => isRu ? 'Длина трубы' : 'Pipe length';
   String get head => isRu ? 'Напор' : 'Head';
   String get roughness => isRu ? 'Шероховатость' : 'Roughness';
-  String get diameterAtTargetVelocity => isRu
-      ? 'Диаметр при целевой скорости'
-      : 'Diameter at target velocity';
+  String get diameterAtTargetVelocity =>
+      isRu ? 'Диаметр при целевой скорости' : 'Diameter at target velocity';
   String get fillTime => isRu ? 'Время заполнения' : 'Fill time';
   String get linearLoss => isRu ? 'Линейные потери' : 'Linear loss';
   String get totalLoss => isRu ? 'Потери всего' : 'Total loss';
+
+  // Отопление, уклон и нагрев приточного воздуха.
+  String get heating => isRu ? 'Отопление' : 'Heating';
+  String get slope => isRu ? 'Уклон' : 'Slope';
+  String get heater => isRu ? 'Нагрев' : 'Heating';
+  String get byPeople => isRu ? 'По людям' : 'By occupancy';
+  String get ventilationRateSource => isRu
+      ? 'СП 60.13330.2020, приложение В — норму задаёте вы, приложение её не знает'
+      : 'The rate comes from the ventilation code and is entered by you';
+  String get peopleCount => isRu ? 'Количество людей' : 'Number of people';
+  String get airPerPerson =>
+      isRu ? 'Норма на человека' : 'Rate per person';
+  String get hintPeopleCount => isRu
+      ? 'Постоянно находящиеся в помещении'
+      : 'People permanently in the room';
+  String get hintAirPerPerson =>
+      isRu ? 'Из СП 60.13330.2020, прил. В' : 'From the ventilation code';
+  String get heatPower => isRu ? 'Тепловая мощность' : 'Heat power';
+  String get deltaTemperature =>
+      isRu ? 'Перепад температур' : 'Temperature difference';
+  String get coolantFlow => isRu ? 'Расход теплоносителя' : 'Coolant flow';
+  String get heaterPower => isRu ? 'Мощность нагрева' : 'Heating power';
+  String get fall => isRu ? 'Перепад' : 'Fall';
+  String get fallPerMetre => isRu ? 'Перепад на метр' : 'Fall per metre';
+  String get sectionLength => isRu ? 'Длина участка' : 'Section length';
+  String get standardDuct =>
+      isRu ? 'Ближайший из ряда' : 'Nearest standard size';
+  String get noStandardDuct => isRu
+      ? 'Диаметр вышел за стандартный ряд'
+      : 'The diameter is outside the standard range';
+  String get hintDeltaWater =>
+      isRu ? 'Разница подачи и обратки' : 'Flow minus return';
+  String get hintDeltaAir =>
+      isRu ? 'На сколько греем воздух' : 'How much the air is heated';
+  String get hintHeatPower =>
+      isRu ? 'Мощность приборов отопления' : 'Power of the heating devices';
+  String get hintSlope => isRu ? '2 % — это 2 см на метр' : '2% is 2 cm per metre';
 
   // Вентиляция.
   String get duct => isRu ? 'Воздуховод' : 'Duct';
@@ -143,9 +301,8 @@ class AppStrings {
   String get airChanges => isRu ? 'Кратность' : 'Air changes';
   String get equivalentDiameter =>
       isRu ? 'Эквивалентный диаметр' : 'Equivalent diameter';
-  String get roundAtTargetVelocity => isRu
-      ? 'Круглый при целевой скорости'
-      : 'Round at target velocity';
+  String get roundAtTargetVelocity =>
+      isRu ? 'Круглый при целевой скорости' : 'Round at target velocity';
   String get incomeAndExpenses =>
       isRu ? 'Доходы и расходы' : 'Income and expenses';
   String get income => isRu ? 'Доход' : 'Income';
@@ -163,9 +320,8 @@ class AppStrings {
   String get ratesNotLoaded => isRu
       ? 'Курсы ещё не загружены — нужен интернет'
       : 'Rates are not loaded yet — the internet is needed';
-  String get ratesOffline => isRu
-      ? 'Показан последний известный курс'
-      : 'Showing the last known rate';
+  String get ratesOffline =>
+      isRu ? 'Показан последний известный курс' : 'Showing the last known rate';
   String get category => isRu ? 'Категория' : 'Category';
   String get financeDescription => isRu ? 'Описание' : 'Description';
   String get operationDate => isRu ? 'Дата операции' : 'Operation date';

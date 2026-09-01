@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/features/converter/converter.dart';
 import 'package:ezhednevnik_v2/src/features/engineering/engineering.dart';
-import 'package:ezhednevnik_v2/src/features/technical_reference/technical_reference.dart';
+import 'package:ezhednevnik_v2/src/features/electrician/electrician.dart';
 
 import '../../support/widget_test_harness.dart';
 
@@ -21,7 +21,7 @@ void main() {
         for (final screen in const <Widget>[
           ConverterScreen(),
           EngineeringScreen(),
-          TechnicalReferenceScreen(),
+          ElectricianScreen(),
         ]) {
           await tester.pumpWidget(
             testProviderScope(child: MaterialApp(home: screen)),

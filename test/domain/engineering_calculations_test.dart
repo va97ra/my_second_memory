@@ -21,19 +21,6 @@ void main() {
     );
   });
 
-  test('calculates copper single phase voltage drop', () {
-    final result = EngineeringCalculations.voltageDrop(
-      currentA: 10,
-      oneWayLengthM: 20,
-      sectionMm2: 2.5,
-      voltageV: 230,
-      threePhase: false,
-      copper: true,
-    );
-    expect(result.dropV, closeTo(2.8, 1e-9));
-    expect(result.dropPercent, closeTo(1.21739, 1e-5));
-  });
-
   test('calculates pipe flow and room air exchange', () {
     final flow = EngineeringCalculations.circularFlow(
       flowM3s: 0.001,

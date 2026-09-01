@@ -2,12 +2,22 @@ import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../tool_data/tool_data.dart';
-import 'electrical_output_panel.dart';
+import 'electrical_input_grid.dart';
 import 'electrical_mode.dart';
+import 'electrical_output_panel.dart';
 import 'engineering_disclaimer.dart';
+import 'engineering_mode_picker.dart';
 import 'engineering_helpers.dart';
+import 'engineering_network_section.dart';
+import 'engineering_section.dart';
+import 'ohm_law_calculator.dart';
+import 'voltage_drop_calculator.dart';
+import 'wire_sizing_calculator.dart';
 
+/// Электрика: выбор расчёта и сам расчёт.
+///
+/// Падение напряжения и подбор сечения — самостоятельные экраны со своими
+/// полями; здесь остаются мощность и раскладка по фазам.
 class ElectricalCalculator extends ConsumerStatefulWidget {
   const ElectricalCalculator({super.key});
 
@@ -16,16 +26,13 @@ class ElectricalCalculator extends ConsumerStatefulWidget {
 }
 
 class _ElectricalState extends ConsumerState<ElectricalCalculator> {
-  final _voltage = TextEditingController(text: '230');
+  final _voltage = TextEditingController(text: singlePhaseVoltage);
   final _current = TextEditingController(text: '10');
   final _factor = TextEditingController(text: '0.9');
   final _efficiency = TextEditingController(text: '0.95');
-  final _length = TextEditingController(text: '20');
-  final _section = TextEditingController(text: '2.5');
   final _loads = TextEditingController(text: '2000, 1500, 1200, 800');
   ElectricalMode _mode = ElectricalMode.power;
   bool _threePhase = false;
-  bool _copper = true;
 
   @override
   void dispose() {
@@ -34,9 +41,7 @@ class _ElectricalState extends ConsumerState<ElectricalCalculator> {
       _current,
       _factor,
       _efficiency,
-      _length,
-      _section,
-      _loads
+      _loads,
     ]) {
       item.dispose();
     }
@@ -46,95 +51,85 @@ class _ElectricalState extends ConsumerState<ElectricalCalculator> {
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    final ru = strings.isRu;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        engineeringModeSelector(
+        EngineeringModePicker<ElectricalMode>(
           value: _mode,
-          segments: [
-            ButtonSegment(
-                value: ElectricalMode.power,
-                label: Text(strings.power)),
-            ButtonSegment(
-                value: ElectricalMode.voltageDrop,
-                label: Text(strings.voltageDrop)),
-            ButtonSegment(
-                value: ElectricalMode.phases,
-                label: Text(strings.phases)),
+          options: [
+            (ElectricalMode.ohmLaw, strings.ohmLaw),
+            (ElectricalMode.power, strings.power),
+            (ElectricalMode.voltageDrop, strings.voltageDrop),
+            (ElectricalMode.phases, strings.phases),
+            (ElectricalMode.wireSizing, strings.wireSizing),
           ],
           onChanged: (value) => setState(() => _mode = value),
         ),
-        const SizedBox(height: 16),
-        if (_mode == ElectricalMode.phases)
-          ElectricalOutputPanel(
-              mode: _mode,
-              loads: _loads.text,
-              onChanged: () => setState(() {}),
-              loadsController: _loads)
-        else ...[
-          ToolNumberField(
-              controller: _voltage,
-              label: strings.voltage,
-              suffix: EngUnit.volt.symbol(ru),
-              onChanged: (_) => setState(() {})),
+        const SizedBox(height: 12),
+        switch (_mode) {
+          ElectricalMode.ohmLaw => const OhmLawCalculator(),
+          ElectricalMode.wireSizing => const WireSizingCalculator(),
+          ElectricalMode.voltageDrop => const VoltageDropCalculator(),
+          ElectricalMode.power => _power(strings),
+          ElectricalMode.phases => _phases(strings),
+        },
+      ],
+    );
+  }
+
+  /// Общая рамка расчёта: оговорка под ответом.
+  Widget _framed(List<Widget> children) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ...children,
           const SizedBox(height: 12),
-          ToolNumberField(
-              controller: _current,
-              label: strings.current,
-              suffix: EngUnit.ampere.symbol(ru),
-              onChanged: (_) => setState(() {})),
+          const EngineeringDisclaimer(),
+        ],
+      );
+
+  Widget _power(AppStrings strings) => _framed([
+          EngineeringNetworkSection(
+            voltage: _voltage,
+            threePhase: _threePhase,
+            onThreePhaseChanged: (value) =>
+                setState(() => _threePhase = value),
+            onChanged: () => setState(() {}),
+          ),
+          const SizedBox(height: 8),
+          EngineeringSection(
+            title: strings.loadSection,
+            children: [
+              ElectricalInputGrid(
+                current: _current,
+                factor: _factor,
+                efficiency: _efficiency,
+                onChanged: () => setState(() {}),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
-          ToolNumberField(
-              controller: _factor,
-              label: 'cos φ',
-              onChanged: (_) => setState(() {})),
-          if (_mode == ElectricalMode.power) ...[
-            const SizedBox(height: 12),
-            ToolNumberField(
-                controller: _efficiency,
-                label: strings.efficiency,
-                onChanged: (_) => setState(() {})),
-          ] else ...[
-            const SizedBox(height: 12),
-            ToolNumberField(
-                controller: _length,
-                label: strings.oneWayLength,
-                suffix: EngUnit.metre.symbol(ru),
-                onChanged: (_) => setState(() {})),
-            const SizedBox(height: 12),
-            ToolNumberField(
-                controller: _section,
-                label: strings.conductorSection,
-                suffix: EngUnit.millimetreSquared.symbol(ru),
-                onChanged: (_) => setState(() {})),
-            SwitchListTile(
-                value: _copper,
-                onChanged: (v) => setState(() => _copper = v),
-                title: Text(strings.copperConductor)),
-          ],
-          SwitchListTile(
-              value: _threePhase,
-              onChanged: (v) => setState(() {
-                    _threePhase = v;
-                    if (v && _voltage.text == '230') _voltage.text = '400';
-                  }),
-              title: Text(strings.threePhaseSystem)),
           ElectricalOutputPanel(
             mode: _mode,
             voltage: _voltage.text,
             current: _current.text,
             factor: _factor.text,
-            extra:
-                _mode == ElectricalMode.power ? _efficiency.text : _length.text,
-            section: _section.text,
+            extra: _efficiency.text,
             threePhase: _threePhase,
-            copper: _copper,
           ),
-        ],
-        const SizedBox(height: 12),
-        const EngineeringDisclaimer(),
-      ],
-    );
-  }
+      ]);
+
+  Widget _phases(AppStrings strings) => _framed([
+          EngineeringSection(
+            title: strings.loadSection,
+            children: [
+              ElectricalOutputPanel(
+                mode: _mode,
+                loads: _loads.text,
+                onChanged: () => setState(() {}),
+                loadsController: _loads,
+              ),
+            ],
+          ),
+      ]);
 }

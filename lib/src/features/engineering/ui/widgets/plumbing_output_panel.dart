@@ -15,10 +15,14 @@ class PlumbingOutputPanel extends ConsumerWidget {
       required this.third,
       required this.head,
       required this.roughness,
+      required this.power,
+      required this.deltaTemperature,
+      required this.slope,
       super.key});
 
   final PlumbingMode mode;
   final String flow, diameter, third, head, roughness;
+  final String power, deltaTemperature, slope;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,6 +32,40 @@ class PlumbingOutputPanel extends ConsumerWidget {
     final strings = AppStrings.of(context);
     final ru = strings.isRu;
     try {
+      if (mode == PlumbingMode.heating) {
+        final powerKw = parseToolNumber(power);
+        final delta = parseToolNumber(deltaTemperature);
+        if (powerKw == null || delta == null) throw const FormatException();
+        final heatingFlow = waterFlowForHeatM3s(
+            powerW: powerKw * 1000, deltaTemperatureK: delta);
+        return _output(
+            context,
+            ref,
+            formatEngValue(heatingFlow * 60000, EngUnit.litrePerMinute, ru),
+            'heatingFlow',
+            {'powerKw': powerKw, 'deltaTemperatureK': delta},
+            [
+              '${strings.flow}: '
+                  '${formatEngValue(heatingFlow * 3600, EngUnit.cubicMetrePerHour, ru)}'
+            ]);
+      }
+      if (mode == PlumbingMode.slope) {
+        final slopePercent = parseToolNumber(slope);
+        if (slopePercent == null || thirdValue == null) {
+          throw const FormatException();
+        }
+        final fall = slopeFallM(slope: slopePercent / 100, lengthM: thirdValue);
+        return _output(
+            context,
+            ref,
+            formatEngValue(fall * 1000, EngUnit.millimetre, ru),
+            'slopeFall',
+            {'slopePercent': slopePercent, 'lengthM': thirdValue},
+            [
+              '${strings.fallPerMetre}: '
+                  '${formatEngValue(slopePercent * 10, EngUnit.millimetre, ru)}'
+            ]);
+      }
       if (flowLMin == null || diameterMm == null || thirdValue == null) {
         throw const FormatException();
       }
@@ -38,14 +76,14 @@ class PlumbingOutputPanel extends ConsumerWidget {
         final recommended = EngineeringCalculations.diameterForFlow(
             flowM3s: flowM3s, targetVelocityMs: thirdValue);
         return _output(context, ref,
-            '${formatToolNumber(actual.velocityMs)} ${EngUnit.metrePerSecond.symbol(ru)}',
+            formatEngValue(actual.velocityMs, EngUnit.metrePerSecond, ru),
             'flow', {
           'flowLMin': flowLMin,
           'diameterMm': diameterMm,
           'targetVelocityMs': thirdValue
         }, [
           '${strings.diameterAtTargetVelocity}: '
-              '${formatToolNumber(recommended * 1000)} ${EngUnit.millimetre.symbol(ru)}'
+              '${formatEngValue(recommended * 1000, EngUnit.millimetre, ru)}'
         ]);
       }
       final volume = EngineeringCalculations.pipeVolumeM3(
@@ -53,13 +91,13 @@ class PlumbingOutputPanel extends ConsumerWidget {
       final fill = EngineeringCalculations.fillTimeSeconds(
           volumeM3: volume, flowM3s: flowM3s);
       if (mode == PlumbingMode.volume) {
-        return _output(context, ref, '${formatToolNumber(volume * 1000)} ${EngUnit.litre.symbol(ru)}',
+        return _output(context, ref, formatEngValue(volume * 1000, EngUnit.litre, ru),
             'pipeVolume', {
           'flowLMin': flowLMin,
           'diameterMm': diameterMm,
           'lengthM': thirdValue
         }, [
-          '${strings.fillTime}: ${formatToolNumber(fill)} ${EngUnit.second.symbol(ru)}'
+          '${strings.fillTime}: ${formatEngValue(fill, EngUnit.second, ru)}'
         ]);
       }
       final headM = parseToolNumber(head),
@@ -71,7 +109,7 @@ class PlumbingOutputPanel extends ConsumerWidget {
           diameterM: diameterM,
           lengthM: thirdValue,
           roughnessM: roughnessMm / 1000);
-      return _output(context, ref, '${formatToolNumber(pressure / 100000)} ${EngUnit.bar.symbol(ru)}',
+      return _output(context, ref, formatEngValue(pressure / 100000, EngUnit.bar, ru),
           'pressureLoss', {
         'flowLMin': flowLMin,
         'diameterMm': diameterMm,
@@ -80,9 +118,9 @@ class PlumbingOutputPanel extends ConsumerWidget {
         'roughnessMm': roughnessMm
       }, [
         '${strings.linearLoss}: '
-            '${formatToolNumber(loss.lossPaPerM)} ${EngUnit.pascalPerMetre.symbol(ru)}',
+            '${formatEngValue(loss.lossPaPerM, EngUnit.pascalPerMetre, ru)}',
         '${strings.totalLoss}: '
-            '${formatToolNumber(loss.lossPa)} ${EngUnit.pascal.symbol(ru)}'
+            '${formatEngValue(loss.lossPa, EngUnit.pascal, ru)}'
       ]);
     } catch (_) {
       return ToolResultCard(value: AppStrings.of(context).invalidNumber);

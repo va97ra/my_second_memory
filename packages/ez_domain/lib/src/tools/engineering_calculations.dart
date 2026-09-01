@@ -1,22 +1,12 @@
 import 'dart:math' as math;
 
+import 'numeric_guards.dart';
+
 class AcPowerResult {
   const AcPowerResult({required this.activePowerW, required this.currentA});
 
   final double activePowerW;
   final double currentA;
-}
-
-class VoltageDropResult {
-  const VoltageDropResult({
-    required this.dropV,
-    required this.dropPercent,
-    required this.lossW,
-  });
-
-  final double dropV;
-  final double dropPercent;
-  final double lossW;
 }
 
 class FlowSectionResult {
@@ -66,10 +56,10 @@ class EngineeringCalculations {
     double powerFactor = 1,
     double efficiency = 1,
   }) {
-    _positive(voltageV, 'voltageV');
-    _nonNegative(currentA, 'currentA');
-    _fraction(powerFactor, 'powerFactor');
-    _fraction(efficiency, 'efficiency');
+    positiveValue(voltageV, 'voltageV');
+    nonNegativeValue(currentA, 'currentA');
+    fractionValue(powerFactor, 'powerFactor');
+    fractionValue(efficiency, 'efficiency');
     return AcPowerResult(
       activePowerW: voltageV * currentA * powerFactor * efficiency,
       currentA: currentA,
@@ -82,10 +72,10 @@ class EngineeringCalculations {
     double powerFactor = 1,
     double efficiency = 1,
   }) {
-    _positive(lineVoltageV, 'lineVoltageV');
-    _nonNegative(currentA, 'currentA');
-    _fraction(powerFactor, 'powerFactor');
-    _fraction(efficiency, 'efficiency');
+    positiveValue(lineVoltageV, 'lineVoltageV');
+    nonNegativeValue(currentA, 'currentA');
+    fractionValue(powerFactor, 'powerFactor');
+    fractionValue(efficiency, 'efficiency');
     return AcPowerResult(
       activePowerW:
           math.sqrt(3) * lineVoltageV * currentA * powerFactor * efficiency,
@@ -93,52 +83,12 @@ class EngineeringCalculations {
     );
   }
 
-  static double currentForPower({
-    required double powerW,
-    required double voltageV,
-    required bool threePhase,
-    double powerFactor = 1,
-    double efficiency = 1,
-  }) {
-    _nonNegative(powerW, 'powerW');
-    _positive(voltageV, 'voltageV');
-    _fraction(powerFactor, 'powerFactor');
-    _fraction(efficiency, 'efficiency');
-    final phaseFactor = threePhase ? math.sqrt(3) : 1;
-    return powerW / (phaseFactor * voltageV * powerFactor * efficiency);
-  }
-
-  static VoltageDropResult voltageDrop({
-    required double currentA,
-    required double oneWayLengthM,
-    required double sectionMm2,
-    required double voltageV,
-    required bool threePhase,
-    required bool copper,
-    double powerFactor = 1,
-  }) {
-    _nonNegative(currentA, 'currentA');
-    _nonNegative(oneWayLengthM, 'oneWayLengthM');
-    _positive(sectionMm2, 'sectionMm2');
-    _positive(voltageV, 'voltageV');
-    _fraction(powerFactor, 'powerFactor');
-    final resistivity = copper ? 0.0175 : 0.0282;
-    final lengthFactor = threePhase ? math.sqrt(3) : 2;
-    final resistance = lengthFactor * resistivity * oneWayLengthM / sectionMm2;
-    final drop = currentA * resistance * powerFactor;
-    return VoltageDropResult(
-      dropV: drop,
-      dropPercent: drop / voltageV * 100,
-      lossW: currentA * currentA * resistance,
-    );
-  }
-
   static FlowSectionResult circularFlow({
     required double flowM3s,
     required double diameterM,
   }) {
-    _nonNegative(flowM3s, 'flowM3s');
-    _positive(diameterM, 'diameterM');
+    nonNegativeValue(flowM3s, 'flowM3s');
+    positiveValue(diameterM, 'diameterM');
     final area = math.pi * diameterM * diameterM / 4;
     return FlowSectionResult(
       areaM2: area,
@@ -151,8 +101,8 @@ class EngineeringCalculations {
     required double flowM3s,
     required double targetVelocityMs,
   }) {
-    _nonNegative(flowM3s, 'flowM3s');
-    _positive(targetVelocityMs, 'targetVelocityMs');
+    nonNegativeValue(flowM3s, 'flowM3s');
+    positiveValue(targetVelocityMs, 'targetVelocityMs');
     return math.sqrt(4 * flowM3s / (math.pi * targetVelocityMs));
   }
 
@@ -160,8 +110,8 @@ class EngineeringCalculations {
     required double internalDiameterM,
     required double lengthM,
   }) {
-    _positive(internalDiameterM, 'internalDiameterM');
-    _nonNegative(lengthM, 'lengthM');
+    positiveValue(internalDiameterM, 'internalDiameterM');
+    nonNegativeValue(lengthM, 'lengthM');
     return math.pi * internalDiameterM * internalDiameterM / 4 * lengthM;
   }
 
@@ -169,13 +119,13 @@ class EngineeringCalculations {
     required double volumeM3,
     required double flowM3s,
   }) {
-    _nonNegative(volumeM3, 'volumeM3');
-    _positive(flowM3s, 'flowM3s');
+    nonNegativeValue(volumeM3, 'volumeM3');
+    positiveValue(flowM3s, 'flowM3s');
     return volumeM3 / flowM3s;
   }
 
   static double pressureFromWaterHead(double headM) {
-    _nonNegative(headM, 'headM');
+    nonNegativeValue(headM, 'headM');
     return 998.2 * 9.80665 * headM;
   }
 
@@ -186,11 +136,11 @@ class EngineeringCalculations {
     required double roughnessM,
     double kinematicViscosityM2s = 1.004e-6,
   }) {
-    _nonNegative(flowM3s, 'flowM3s');
-    _positive(diameterM, 'diameterM');
-    _nonNegative(lengthM, 'lengthM');
-    _nonNegative(roughnessM, 'roughnessM');
-    _positive(kinematicViscosityM2s, 'kinematicViscosityM2s');
+    nonNegativeValue(flowM3s, 'flowM3s');
+    positiveValue(diameterM, 'diameterM');
+    nonNegativeValue(lengthM, 'lengthM');
+    nonNegativeValue(roughnessM, 'roughnessM');
+    positiveValue(kinematicViscosityM2s, 'kinematicViscosityM2s');
     if (flowM3s == 0) {
       return const PressureLossResult(
         reynolds: 0,
@@ -229,9 +179,9 @@ class EngineeringCalculations {
     required double widthM,
     required double heightM,
   }) {
-    _nonNegative(flowM3s, 'flowM3s');
-    _positive(widthM, 'widthM');
-    _positive(heightM, 'heightM');
+    nonNegativeValue(flowM3s, 'flowM3s');
+    positiveValue(widthM, 'widthM');
+    positiveValue(heightM, 'heightM');
     final area = widthM * heightM;
     final equivalent = 1.3 *
         math.pow(widthM * heightM, 0.625) /
@@ -249,16 +199,16 @@ class EngineeringCalculations {
     required double heightM,
     required double airChangesPerHour,
   }) {
-    _positive(lengthM, 'lengthM');
-    _positive(widthM, 'widthM');
-    _positive(heightM, 'heightM');
-    _nonNegative(airChangesPerHour, 'airChangesPerHour');
+    positiveValue(lengthM, 'lengthM');
+    positiveValue(widthM, 'widthM');
+    positiveValue(heightM, 'heightM');
+    nonNegativeValue(airChangesPerHour, 'airChangesPerHour');
     return lengthM * widthM * heightM * airChangesPerHour;
   }
 
   static List<double> balancePhases(List<double> loadsW) {
     for (final load in loadsW) {
-      _nonNegative(load, 'load');
+      nonNegativeValue(load, 'load');
     }
     final phases = [0.0, 0.0, 0.0];
     final sorted = [...loadsW]..sort((a, b) => b.compareTo(a));
@@ -271,23 +221,102 @@ class EngineeringCalculations {
     }
     return phases;
   }
+}
 
-  static void _positive(double value, String name) {
-    if (!value.isFinite || value <= 0) {
-      throw ArgumentError.value(
-          value, name, 'Must be finite and greater than 0');
-    }
-  }
+/// Расход наружного воздуха на группу людей, м³/ч.
+///
+/// Арифметика простая — число людей на норму, — но сама норма зависит от
+/// назначения помещения и от того, есть ли естественное проветривание. Её
+/// значения приведены в СП 60.13330.2020, приложение В «Минимальный расход
+/// наружного воздуха на одного человека», и в приложение вводит человек:
+/// подставлять число за него здесь нельзя.
+double airFlowForPeopleM3h({
+  required double people,
+  required double perPersonM3h,
+}) {
+  nonNegativeValue(people, 'people');
+  nonNegativeValue(perPersonM3h, 'perPersonM3h');
+  return people * perPersonM3h;
+}
 
-  static void _nonNegative(double value, String name) {
-    if (!value.isFinite || value < 0) {
-      throw ArgumentError.value(value, name, 'Must be finite and non-negative');
-    }
-  }
+/// Стандартный ряд круглых воздуховодов, мм.
+///
+/// Точный расчётный диаметр не купить: воздуховоды делают по ряду, и в
+/// монтаж идёт ближайший больший.
+const standardRoundDuctsMm = <double>[
+  100,
+  125,
+  160,
+  200,
+  250,
+  315,
+  400,
+  500,
+  630,
+  800,
+];
 
-  static void _fraction(double value, String name) {
-    if (!value.isFinite || value <= 0 || value > 1) {
-      throw ArgumentError.value(value, name, 'Must be in the range (0, 1]');
-    }
+/// Ближайший воздуховод из ряда, не меньше расчётного диаметра.
+///
+/// `null` — расчётный диаметр вышел за ряд: такой воздуховод подбирают по
+/// каталогу изготовителя, а не округлением.
+double? roundDuctForDiameter(double diameterMm) {
+  nonNegativeValue(diameterMm, 'diameterMm');
+  for (final size in standardRoundDuctsMm) {
+    if (size >= diameterMm) return size;
   }
+  return null;
+}
+
+/// Тепловая мощность потока воды, Вт.
+///
+/// `Q = ρ · c · V · ΔT`. Плотность 998,2 кг/м³ и теплоёмкость 4187 Дж/(кг·К)
+/// взяты для воды около 20 °C: при других температурах они меняются на
+/// единицы процентов.
+double waterHeatPowerW({
+  required double flowM3s,
+  required double deltaTemperatureK,
+}) {
+  nonNegativeValue(flowM3s, 'flowM3s');
+  nonNegativeValue(deltaTemperatureK, 'deltaTemperatureK');
+  return 998.2 * 4187 * flowM3s * deltaTemperatureK;
+}
+
+/// Расход воды, который переносит заданную мощность, м³/с.
+double waterFlowForHeatM3s({
+  required double powerW,
+  required double deltaTemperatureK,
+}) {
+  nonNegativeValue(powerW, 'powerW');
+  positiveValue(deltaTemperatureK, 'deltaTemperatureK');
+  return powerW / (998.2 * 4187 * deltaTemperatureK);
+}
+
+/// Мощность нагрева приточного воздуха, Вт.
+///
+/// `P = ρ · c · L · ΔT` при плотности 1,2 кг/м³ и теплоёмкости
+/// 1005 Дж/(кг·К) — воздух около 20 °C.
+double airHeatPowerW({
+  required double flowM3s,
+  required double deltaTemperatureK,
+}) {
+  nonNegativeValue(flowM3s, 'flowM3s');
+  nonNegativeValue(deltaTemperatureK, 'deltaTemperatureK');
+  return 1.2 * 1005 * flowM3s * deltaTemperatureK;
+}
+
+/// Перепад высоты на участке с заданным уклоном, м.
+///
+/// Уклон задают долей: 0,02 — это два сантиметра на метр.
+double slopeFallM({required double slope, required double lengthM}) {
+  nonNegativeValue(slope, 'slope');
+  nonNegativeValue(lengthM, 'lengthM');
+  return slope * lengthM;
+}
+
+/// Уклон участка по перепаду и длине.
+double slopeFromFall({required double fallM, required double lengthM}) {
+  nonNegativeValue(fallM, 'fallM');
+  positiveValue(lengthM, 'lengthM');
+  return fallM / lengthM;
 }

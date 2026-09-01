@@ -12,6 +12,10 @@ enum UnitCategory {
   power,
   energy,
   data,
+  voltage,
+  current,
+  resistance,
+  frequency,
 }
 
 class UnitDefinition {
@@ -109,6 +113,27 @@ class UnitConverter {
       UnitDefinition.linear('kw', 'кВт', 1000),
       UnitDefinition.linear('mw', 'МВт', 1e6),
       UnitDefinition.linear('hp_metric', 'л.с.', 735.49875),
+    ],
+    UnitCategory.voltage: [
+      UnitDefinition.linear('mv', 'мВ', 0.001),
+      UnitDefinition.linear('v', 'В', 1),
+      UnitDefinition.linear('kv', 'кВ', 1000),
+    ],
+    UnitCategory.current: [
+      UnitDefinition.linear('ma', 'мА', 0.001),
+      UnitDefinition.linear('a', 'А', 1),
+      UnitDefinition.linear('ka', 'кА', 1000),
+    ],
+    UnitCategory.resistance: [
+      UnitDefinition.linear('mohm', 'мОм', 0.001),
+      UnitDefinition.linear('ohm', 'Ом', 1),
+      UnitDefinition.linear('kohm', 'кОм', 1000),
+      UnitDefinition.linear('megohm', 'МОм', 1e6),
+    ],
+    UnitCategory.frequency: [
+      UnitDefinition.linear('hz', 'Гц', 1),
+      UnitDefinition.linear('khz', 'кГц', 1000),
+      UnitDefinition.linear('mhz', 'МГц', 1e6),
     ],
     UnitCategory.energy: [
       UnitDefinition.linear('j', 'Дж', 1),

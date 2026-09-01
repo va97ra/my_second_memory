@@ -45,4 +45,8 @@ String categoryLabel(UnitCategory category, AppStrings strings) =>
       UnitCategory.power => strings.power,
       UnitCategory.energy => strings.energy,
       UnitCategory.data => strings.dataSize,
+      UnitCategory.voltage => strings.voltage,
+      UnitCategory.current => strings.current,
+      UnitCategory.resistance => strings.resistance,
+      UnitCategory.frequency => strings.frequency,
     };

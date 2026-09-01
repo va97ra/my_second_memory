@@ -2,7 +2,9 @@ import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
 class EngineeringDisclaimer extends StatelessWidget {
-  const EngineeringDisclaimer({super.key});
+  const EngineeringDisclaimer({this.message, super.key});
+
+  final String? message;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -17,7 +19,9 @@ class EngineeringDisclaimer extends StatelessWidget {
                 const Icon(Icons.info_outline_rounded),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(AppStrings.of(context).engineeringDisclaimer),
+                  child: Text(
+                    message ?? AppStrings.of(context).engineeringDisclaimer,
+                  ),
                 ),
               ],
             ),

@@ -19,5 +19,8 @@ String formatToolNumber(double value, {int precision = 6}) {
     return value.toStringAsExponential(4);
   }
   final fixed = value.toStringAsFixed(precision);
+  // Хвостовые нули срезаются только в дробной части: у целого числа нули
+  // значащие, и `precision: 0` превращал 280 в 28.
+  if (!fixed.contains('.')) return fixed;
   return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
 }

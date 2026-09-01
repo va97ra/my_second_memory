@@ -7,6 +7,14 @@ import '../../../tool_data/tool_data.dart';
 import 'engineering_helpers.dart';
 import 'ventilation_mode.dart';
 
+/// Расчётный диаметр округляют до изделия, а не до красивого числа.
+String _standardDuct(AppStrings strings, double diameterMm, bool ru) {
+  final size = roundDuctForDiameter(diameterMm);
+  return size == null
+      ? strings.noStandardDuct
+      : formatEngValue(size, EngUnit.millimetre, ru);
+}
+
 class VentilationOutputPanel extends ConsumerWidget {
   const VentilationOutputPanel(
       {required this.mode,
@@ -18,17 +26,50 @@ class VentilationOutputPanel extends ConsumerWidget {
       required this.roomWidth,
       required this.roomHeight,
       required this.ach,
+      required this.deltaTemperature,
+      required this.people,
+      required this.perPerson,
       super.key});
 
   final VentilationMode mode;
   final String flow, width, height, velocity;
   final String roomLength, roomWidth, roomHeight, ach;
+  final String deltaTemperature;
+  final String people, perPerson;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
     final ru = strings.isRu;
     try {
+      if (mode == VentilationMode.people) {
+        final count = parseToolNumber(people);
+        final rate = parseToolNumber(perPerson);
+        if (count == null || rate == null) throw const FormatException();
+        final required =
+            airFlowForPeopleM3h(people: count, perPersonM3h: rate);
+        return _output(
+            context,
+            ref,
+            formatEngValue(required, EngUnit.cubicMetrePerHour, ru),
+            'airForPeople',
+            {'people': count, 'perPersonM3h': rate},
+            ['${strings.source}: ${strings.ventilationRateSource}']);
+      }
+      if (mode == VentilationMode.heater) {
+        final flowM3h = parseToolNumber(flow);
+        final delta = parseToolNumber(deltaTemperature);
+        if (flowM3h == null || delta == null) throw const FormatException();
+        final power = airHeatPowerW(
+            flowM3s: flowM3h / 3600, deltaTemperatureK: delta);
+        return _output(
+            context,
+            ref,
+            formatEngValue(power / 1000, EngUnit.kilowatt, ru),
+            'airHeater',
+            {'flowM3h': flowM3h, 'deltaTemperatureK': delta},
+            ['${strings.heaterPower}: ${formatEngValue(power, EngUnit.watt, ru)}']);
+      }
       if (mode == VentilationMode.duct) {
         final flowM3h = parseToolNumber(flow),
             widthMm = parseToolNumber(width),
@@ -47,7 +88,7 @@ class VentilationOutputPanel extends ConsumerWidget {
         final round = EngineeringCalculations.diameterForFlow(
             flowM3s: flowM3h / 3600, targetVelocityMs: target);
         return _output(context, ref,
-            '${formatToolNumber(result.velocityMs)} ${EngUnit.metrePerSecond.symbol(ru)}',
+            formatEngValue(result.velocityMs, EngUnit.metrePerSecond, ru),
             'duct', {
           'flowM3h': flowM3h,
           'widthMm': widthMm,
@@ -55,11 +96,13 @@ class VentilationOutputPanel extends ConsumerWidget {
           'targetVelocityMs': target
         }, [
           '${strings.area}: '
-              '${formatToolNumber(result.areaM2)} ${EngUnit.metreSquared.symbol(ru)}',
+              '${formatEngValue(result.areaM2, EngUnit.metreSquared, ru)}',
           '${strings.equivalentDiameter}: '
-              '${formatToolNumber(result.equivalentDiameterM * 1000)} ${EngUnit.millimetre.symbol(ru)}',
+              '${formatEngValue(result.equivalentDiameterM * 1000, EngUnit.millimetre, ru)}',
           '${strings.roundAtTargetVelocity}: '
-              '${formatToolNumber(round * 1000)} ${EngUnit.millimetre.symbol(ru)}',
+              '${formatEngValue(round * 1000, EngUnit.millimetre, ru)}',
+          '${strings.standardDuct}: '
+              '${_standardDuct(strings, round * 1000, ru)}',
         ]);
       }
       final lengthM = parseToolNumber(roomLength),
@@ -78,7 +121,7 @@ class VentilationOutputPanel extends ConsumerWidget {
           heightM: heightM,
           airChangesPerHour: changes);
       return _output(
-          context, ref, '${formatToolNumber(airflow)} ${EngUnit.cubicMetrePerHour.symbol(ru)}',
+          context, ref, formatEngValue(airflow, EngUnit.cubicMetrePerHour, ru),
           'airExchange', {
         'lengthM': lengthM,
         'widthM': widthM,

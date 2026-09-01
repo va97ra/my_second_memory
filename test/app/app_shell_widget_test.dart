@@ -287,7 +287,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('top_reference')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('reference_search')), findsOneWidget);
+    expect(find.byKey(const ValueKey('electrician_search')), findsOneWidget);
     expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex, 4);
 
     await tester.binding.handlePopRoute();

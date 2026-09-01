@@ -35,6 +35,7 @@ class ToolNumberField extends StatelessWidget {
     required this.controller,
     required this.label,
     this.suffix,
+    this.hint,
     this.onChanged,
     super.key,
   });
@@ -42,6 +43,9 @@ class ToolNumberField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final String? suffix;
+
+  /// Короткая подсказка под полем: что сюда вводят и откуда берут.
+  final String? hint;
   final ValueChanged<String>? onChanged;
 
   @override
@@ -52,6 +56,8 @@ class ToolNumberField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           suffixText: suffix,
+          helperText: hint,
+          helperMaxLines: 3,
           border: const OutlineInputBorder(),
         ),
       );

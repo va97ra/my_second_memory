@@ -1,1 +1,1 @@
-enum VentilationMode { duct, room }
+enum VentilationMode { duct, room, heater, people }
