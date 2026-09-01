@@ -15,8 +15,6 @@ class SqliteToolDataRepository implements ToolDataRepository {
   Future<ToolDataSnapshot> load() async {
     final rows = await _database.select(_database.toolDataRows).get();
     final calculations = <SavedToolCalculation>[];
-    final bookmarks = <ReferenceBookmark>[];
-    final learning = <LearningRecord>[];
     for (final row in rows) {
       final json = Map<String, Object?>.from(
         jsonDecode(row.payloadJson) as Map,
@@ -24,22 +22,14 @@ class SqliteToolDataRepository implements ToolDataRepository {
       switch (row.kind) {
         case 'calculation':
           calculations.add(SavedToolCalculation.fromJson(json));
-        case 'bookmark':
-          bookmarks.add(ReferenceBookmark.fromJson(json));
-        case 'learning':
-          learning.add(LearningRecord.fromJson(json));
         default:
-          throw FormatException('Unknown tool data row kind: ${row.kind}');
+          // Строка удалённого инструмента: читать нечем, но открывать
+          // хранилище она мешать не должна.
+          continue;
       }
     }
     calculations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    bookmarks.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    learning.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    return ToolDataSnapshot(
-      calculations: calculations,
-      bookmarks: bookmarks,
-      learning: learning,
-    );
+    return ToolDataSnapshot(calculations: calculations);
   }
 
   @override
@@ -52,20 +42,6 @@ class SqliteToolDataRepository implements ToolDataRepository {
             ToolDataRowsCompanion.insert(
               id: 'calculation:${item.id}',
               kind: 'calculation',
-              payloadJson: jsonEncode(item.toJson()),
-              updatedAt: item.updatedAt,
-            ),
-          for (final item in snapshot.bookmarks)
-            ToolDataRowsCompanion.insert(
-              id: 'bookmark:${item.entryId}',
-              kind: 'bookmark',
-              payloadJson: jsonEncode(item.toJson()),
-              updatedAt: item.updatedAt,
-            ),
-          for (final item in snapshot.learning)
-            ToolDataRowsCompanion.insert(
-              id: 'learning:${item.topicId}',
-              kind: 'learning',
               payloadJson: jsonEncode(item.toJson()),
               updatedAt: item.updatedAt,
             ),

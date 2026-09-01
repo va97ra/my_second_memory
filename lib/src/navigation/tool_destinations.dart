@@ -24,15 +24,15 @@ List<AppDestination> toolDestinations(AppStrings strings) => [
         location: '/tools/converter',
       ),
       AppDestination.route(
-        id: 'engineering',
+        id: 'slot_one',
         icon: Icons.engineering_rounded,
-        label: strings.engineering,
-        location: '/tools/engineering',
+        label: strings.toolSlotOne,
+        location: '/tools/slot-one',
       ),
       AppDestination.route(
-        id: 'reference',
+        id: 'slot_two',
         icon: Icons.school_rounded,
-        label: strings.electricianGuide,
-        location: '/tools/reference',
+        label: strings.toolSlotTwo,
+        location: '/tools/slot-two',
       ),
     ];

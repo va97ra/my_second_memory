@@ -13,8 +13,7 @@ import '../features/shift_schedules/shift_schedules.dart';
 import '../features/calculator/calculator.dart';
 import '../features/finance/finance.dart';
 import '../features/converter/converter.dart';
-import '../features/engineering/engineering.dart';
-import '../features/electrician/electrician.dart';
+import '../features/tool_slots/tool_slots.dart';
 import 'page_turn_transition.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -99,19 +98,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/tools/engineering',
+        path: '/tools/slot-one',
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
-          child: const EngineeringScreen(),
+          child: const EmptyToolScreen(),
         ),
       ),
       GoRoute(
-        path: '/tools/reference',
+        path: '/tools/slot-two',
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
-          child: const ElectricianScreen(),
+          child: const EmptyToolScreen(),
         ),
       ),
       GoRoute(

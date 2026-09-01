@@ -25,10 +25,17 @@ void main() {
       ),
     ]);
     await storage.toolDataRepository.replaceAll(ToolDataSnapshot(
-      bookmarks: [
-        ReferenceBookmark(
-          entryId: 'ip_code',
-          note: 'Личная заметка',
+      calculations: [
+        SavedToolCalculation(
+          id: 'conversion',
+          name: 'Личная заметка',
+          payload: const SavedConversionPayload(
+            category: 'flow',
+            fromUnit: 'm3_h',
+            toUnit: 'l_s',
+            value: 1,
+          ),
+          createdAt: date,
           updatedAt: date,
         ),
       ],
@@ -52,7 +59,7 @@ void main() {
       ),
       hasLength(1),
     );
-    expect((await storage.toolDataRepository.load()).bookmarks, isEmpty);
+    expect((await storage.toolDataRepository.load()).calculations, isEmpty);
     expect(
       await storage.secureEntityBackend.loadSecureEntities(
         EncryptedToolDataRepository.entityKind,
@@ -66,7 +73,7 @@ void main() {
     expect(restored.single.id, 'income');
     expect(restored.single.amount, '999.99');
     expect(
-      (await storage.toolDataRepository.load()).bookmarks.single.note,
+      (await storage.toolDataRepository.load()).calculations.single.name,
       'Личная заметка',
     );
     expect(

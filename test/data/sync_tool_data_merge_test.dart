@@ -33,33 +33,6 @@ void main() {
     expect(stored.encryptedPayload, isNot(contains('Кабель')));
   });
 
-  test('a bookmark travels by the reference entry it marks', () async {
-    final remote = SyncRemote();
-    final key = List<int>.generate(32, (index) => index + 5);
-    final firstCipher = AppCipher.fromKeyBytes(key);
-    final secondCipher = AppCipher.fromKeyBytes(key);
-    addTearDown(firstCipher.destroy);
-    addTearDown(secondCipher.destroy);
-    final created = DateTime.utc(2026, 8, 30, 11);
-    var first = [
-      ReferenceBookmark(
-        entryId: 'cable-section',
-        note: 'для щитка',
-        updatedAt: created,
-      ),
-    ];
-    var second = <ReferenceBookmark>[];
-
-    await _runBookmarks(remote, firstCipher, first, (v) => first = v);
-    await _runBookmarks(remote, secondCipher, second, (v) => second = v);
-
-    expect(second.single.entryId, 'cable-section');
-    expect(second.single.note, 'для щитка');
-    final stored = remote.storedEntities['tool_bookmark:cable-section']!;
-    expect(stored.kind, SyncEntityKind.toolBookmark);
-    expect(stored.encryptedPayload, isNot(contains('щитка')));
-  });
-
   test('a deleted calculation does not come back from another device',
       () async {
     final remote = SyncRemote();
@@ -128,26 +101,6 @@ Future<void> _runCalculations(
     tombstones: tombstones ?? MemoryTombstoneStore(),
     toolCalculations: calculations,
     replaceToolCalculations: (value) async => replace(value),
-    shifts: const [],
-    replaceShifts: (_) async {},
-    accounts: const [],
-    replaceAccounts: (_) async {},
-  ).then((_) {});
-}
-
-Future<void> _runBookmarks(
-  SyncRemote remote,
-  AppCipher cipher,
-  List<ReferenceBookmark> bookmarks,
-  void Function(List<ReferenceBookmark>) replace, {
-  MemoryTombstoneStore? tombstones,
-}) {
-  return sync(
-    remote: remote,
-    cipher: cipher,
-    tombstones: tombstones ?? MemoryTombstoneStore(),
-    toolBookmarks: bookmarks,
-    replaceToolBookmarks: (value) async => replace(value),
     shifts: const [],
     replaceShifts: (_) async {},
     accounts: const [],

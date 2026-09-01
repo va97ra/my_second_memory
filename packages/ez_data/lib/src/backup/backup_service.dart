@@ -184,9 +184,7 @@ class BackupService {
     if (financeRepository == null && data.financeEntries.isNotEmpty) {
       throw StateError('Finance repository is unavailable');
     }
-    if (toolDataRepository == null &&
-        (data.toolData.calculations.isNotEmpty ||
-            data.toolData.bookmarks.isNotEmpty)) {
+    if (toolDataRepository == null && data.toolData.calculations.isNotEmpty) {
       throw StateError('Tool data repository is unavailable');
     }
 

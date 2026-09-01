@@ -22,16 +22,6 @@ void main() {
         updatedAt: date,
       ),
     ],
-    learning: [
-      LearningRecord(topicId: 'learn_current', updatedAt: date),
-    ],
-    bookmarks: [
-      ReferenceBookmark(
-        entryId: 'ip_code',
-        note: 'Проверить паспорт шкафа',
-        updatedAt: date,
-      ),
-    ],
   );
 
   test('SQLite saves, changes and deletes tool entities', () async {
@@ -42,14 +32,10 @@ void main() {
     await repository.replaceAll(snapshot);
     final restored = await repository.load();
     expect(restored.calculations.single.name, 'Рабочий расход');
-    expect(restored.bookmarks.single.note, 'Проверить паспорт шкафа');
-    expect(restored.learning.single.topicId, 'learn_current');
 
     await repository.replaceAll(const ToolDataSnapshot());
     final deleted = await repository.load();
     expect(deleted.calculations, isEmpty);
-    expect(deleted.bookmarks, isEmpty);
-    expect(deleted.learning, isEmpty);
   });
 
   test('Web fallback round-trips typed tool data', () async {
@@ -61,7 +47,6 @@ void main() {
     final restored = await repository.load();
 
     expect(restored.calculations.single.payload, isA<SavedConversionPayload>());
-    expect(restored.bookmarks.single.entryId, 'ip_code');
   });
 
   test('encrypted fallback removes plaintext after migration', () async {

@@ -21,7 +21,6 @@ class AppStrings {
   String get notesTabShort => isRu ? 'Зап.' : 'Notes';
   String get monthlyRecurring => isRu ? 'Каждый месяц' : 'Every month';
   String get yearlyRecurring => isRu ? 'Каждый год' : 'Every year';
-  String get pickDay => isRu ? 'Выбрать день' : 'Pick a day';
   String get feedFilter => isRu ? 'Фильтр' : 'Filter';
   String get previousPeriod => isRu ? 'Предыдущий период' : 'Previous period';
   String get nextPeriod => isRu ? 'Следующий период' : 'Next period';
@@ -39,10 +38,15 @@ class AppStrings {
 
   String get previousMonth => isRu ? 'Предыдущий месяц' : 'Previous month';
   String get nextMonth => isRu ? 'Следующий месяц' : 'Next month';
-  String get yesterdaySection => isRu ? 'Это было вчера' : 'This was yesterday';
   String get dayBeforeYesterdaySection =>
       isRu ? 'Это было позавчера' : 'This was two days ago';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
+  String get emptySlot => isRu ? 'Место свободно' : 'Free slot';
+  String get emptySlotHint => isRu
+      ? 'Инструмент, который здесь стоял, убран. Место в панели осталось под следующий.'
+      : 'The tool that lived here is gone. The slot is kept for the next one.';
+  String get toolSlotOne => isRu ? 'Слот 1' : 'Slot 1';
+  String get toolSlotTwo => isRu ? 'Слот 2' : 'Slot 2';
   String get calculator => isRu ? 'Калькулятор' : 'Calculator';
   String get calculatorStandard => isRu ? 'Обычный' : 'Standard';
   String get calculatorScientific => isRu ? 'Инженерный' : 'Scientific';
@@ -59,11 +63,7 @@ class AppStrings {
   String get finance => isRu ? 'Финансы' : 'Finances';
   String get converter => isRu ? 'Конвертер' : 'Converter';
   String get engineering => isRu ? 'Инженерка' : 'Engineering';
-  String get technicalReference =>
-      isRu ? 'Техсправочник' : 'Technical reference';
-  String get electrical => isRu ? 'Электрика' : 'Electrical';
   String get plumbing => isRu ? 'Сантехника' : 'Plumbing';
-  String get ventilation => isRu ? 'Вентиляция' : 'Ventilation';
   String get savedCalculations =>
       isRu ? 'Сохранённые расчёты' : 'Saved calculations';
   String get saveCalculation => isRu ? 'Сохранить расчёт' : 'Save calculation';
@@ -74,48 +74,11 @@ class AppStrings {
   String get from => isRu ? 'Из' : 'From';
   String get to => isRu ? 'В' : 'To';
   String get value => isRu ? 'Значение' : 'Value';
-  String get search => isRu ? 'Поиск' : 'Search';
-  String get favorites => isRu ? 'Избранное' : 'Favorites';
   String get source => isRu ? 'Источник' : 'Source';
   String get scope => isRu ? 'Область применения' : 'Scope';
-  String get warning => isRu ? 'Важно' : 'Important';
-  String get personalNote => isRu ? 'Личная заметка' : 'Personal note';
   String get invalidNumber =>
       isRu ? 'Введите корректное число' : 'Enter a valid number';
-  // Учебник электрика. Разделы главного экрана и подписи карточки.
-  String get electricianGuide => isRu ? 'Учебник' : 'Guide';
-  String get nothingFound => isRu ? 'Ничего не найдено' : 'Nothing found';
-  String get sectionLearning => isRu ? 'Обучение' : 'Learning';
-  String get sectionTools => isRu ? 'Инструменты' : 'Tools';
-  String get sectionComponents => isRu ? 'Компоненты' : 'Components';
-  String get sectionGlossary => isRu ? 'Словарь' : 'Glossary';
-  String get sectionSchematics => isRu ? 'Схемы' : 'Schematics';
-  String get sectionDiagnostics => isRu ? 'Диагностика' : 'Diagnostics';
-  String get sectionSafety => isRu ? 'Безопасность' : 'Safety';
-  String get sectionReference => isRu ? 'Справочник' : 'Reference';
-  String get sectionEmpty =>
-      isRu ? 'Раздел ещё не наполнен' : 'This section has no cards yet';
-  String get cardsCount => isRu ? 'карточек' : 'cards';
-  String get cardWhat => isRu ? 'Что это' : 'What it is';
   String get example => isRu ? 'Пример' : 'Example';
-  String get learned => isRu ? 'Изучено' : 'Learned';
-  String levelTitle(int number) =>
-      isRu ? 'Уровень $number' : 'Level $number';
-  String get markLearned => isRu ? 'Тема пройдена' : 'Mark as learned';
-  String get answerRight => isRu ? 'Правильно' : 'Correct';
-  String get whatToDo => isRu ? 'Что сделать' : 'What to do';
-  String get startOver => isRu ? 'Начать заново' : 'Start over';
-  String get callSpecialist => isRu
-      ? 'Дальше нужна работа со снятием напряжения и право на неё'
-      : 'What follows needs the line dead and a qualified person';
-  String get diagnosisSubtitle =>
-      isRu ? 'Ответьте на несколько вопросов' : 'Answer a few questions';
-  String get answerWrong => isRu ? 'Неправильно' : 'Not quite';
-  String get cardPurpose => isRu ? 'Для чего' : 'What it is for';
-  String get cardCaution => isRu ? 'Что важно знать' : 'What to watch for';
-  String get notCheckedAgainstSource => isRu
-      ? 'Содержание не сверено по тексту документа'
-      : 'The text has not been checked against the source document';
 
   // Величины конвертера. Те же слова служат подписями в инженерных расчётах:
   // «Расход» и «Давление» — одно понятие, и строка у него одна.
@@ -133,185 +96,13 @@ class AppStrings {
   String get resistance => isRu ? 'Сопротивление' : 'Resistance';
   String get frequency => isRu ? 'Частота' : 'Frequency';
 
-  // Электрика.
-  String get ohmLaw => isRu ? 'Закон Ома' : 'Ohm law';
-  String get ohmLawActiveLoadNote => isRu
-      ? 'Мощность верна для активной нагрузки; для двигателя нужен расчёт с cos φ'
-      : 'The power holds for a resistive load; a motor needs the cos φ calculation';
-  String get whatToFind => isRu ? 'Что найти' : 'What to find';
-  String get formula => isRu ? 'Формула' : 'Formula';
-  String get voltageDrop => isRu ? 'Падение U' : 'Voltage drop';
-  String get phases => isRu ? 'Фазы' : 'Phases';
-  String get wireSizing => isRu ? 'Подбор сечения' : 'Wire size';
   String get voltage => isRu ? 'Напряжение' : 'Voltage';
   String get current => isRu ? 'Ток' : 'Current';
-  String get loadCurrent => isRu ? 'Ток нагрузки' : 'Load current';
-  String get efficiency => isRu ? 'КПД' : 'Efficiency';
-  String get oneWayLength => isRu ? 'Длина в одну сторону' : 'One-way length';
-  String get conductorSection => isRu ? 'Сечение' : 'Section';
-  String get copperConductor => isRu ? 'Медный проводник' : 'Copper conductor';
-  String get threePhaseSystem =>
-      isRu ? 'Трёхфазная сеть' : 'Three-phase system';
-  String get loss => isRu ? 'Потери' : 'Loss';
-  String get phaseImbalance => isRu ? 'Перекос' : 'Imbalance';
-  String get loadsSeparatedByCommas =>
-      isRu ? 'Нагрузки через запятую, Вт' : 'Loads separated by commas, W';
-  String get conductorMaterial => isRu ? 'Материал жилы' : 'Conductor material';
-  String get copper => isRu ? 'Медь' : 'Copper';
-  String get aluminium => isRu ? 'Алюминий' : 'Aluminium';
-  String get wireRouting => isRu ? 'Способ прокладки' : 'Installation method';
-  String get wireRoutingOpen =>
-      isRu ? 'Открытая прокладка' : 'Open air';
-  String get wireRoutingConduitTwo => isRu
-      ? 'Два одножильных в трубе'
-      : 'Two single-core wires in conduit';
-  String get wireRoutingConduitThree => isRu
-      ? 'Три одножильных в трубе'
-      : 'Three single-core wires in conduit';
-  String get allowableCurrent => isRu ? 'Допустимый ток' : 'Allowable current';
-  String get recommendedBreaker => isRu ? 'Автомат' : 'Circuit breaker';
-  String get currentMargin => isRu ? 'Запас по току' : 'Current margin';
-  String get wireSizingNoResult => isRu
-      ? 'Ток выше диапазона таблицы'
-      : 'Current is outside the table range';
 
-  // Падение напряжения. Экран собран блоками, и каждый блок назван.
-  String get networkSection => isRu ? 'Сеть' : 'Network';
-  String get loadSection => isRu ? 'Нагрузка' : 'Load';
-  String get lineSection => isRu ? 'Линия' : 'Line';
-  String get dropLimitSection => isRu ? 'Норма падения' : 'Drop limit';
-  String get singlePhaseNetwork => isRu ? '1 фаза' : '1 phase';
-  String get threePhaseNetwork => isRu ? '3 фазы' : '3 phases';
-  String get byCurrent => isRu ? 'По току' : 'By current';
-  String get byPower => isRu ? 'По мощности' : 'By power';
-  String get loadPower => isRu ? 'Мощность нагрузки' : 'Load power';
-  String get withinDropLimit =>
-      isRu ? 'Проходит по норме' : 'Within the limit';
-  String get overDropLimit => isRu ? 'Не проходит по норме' : 'Over the limit';
-  String get conductorUnderLoad => isRu ? 'Под нагрузкой' : 'Under load';
-  String get conductorCold => isRu ? 'Холодная жила' : 'Cold conductor';
-  String get minimumSectionForLimit => isRu
-      ? 'Минимальное сечение под норму'
-      : 'Smallest section within the limit';
-  String get noSectionFitsLimit => isRu
-      ? 'В ряду подходящего сечения нет: делить линию или менять напряжение'
-      : 'No section in the series fits: split the line or change the voltage';
-
-  // Подсказки под полями: короткая строка о том, что вводят и откуда берут.
-  String get hintVoltage =>
-      isRu ? 'Фаза–ноль 230 В, межфазное 400 В' : '230 V to neutral, 400 V line-line';
-  String get hintLoadCurrent =>
-      isRu ? 'По автомату или клещами' : 'From the breaker or a clamp meter';
-  String get hintPowerFactor =>
-      isRu ? '1 — нагрев, меньше — двигатель' : '1 for heaters, less for motors';
-  String get hintEfficiency =>
-      isRu ? 'Доля полезной мощности' : 'Share of useful power';
-  String get hintOneWayLength =>
-      isRu ? 'От щита до потребителя' : 'From the board to the load';
-  String get hintSection =>
-      isRu ? 'Сечение одной жилы' : 'One conductor cross-section';
-  String get hintLoadPower =>
-      isRu ? 'Паспортная мощность прибора' : 'Rated power of the load';
-  String get hintResistance =>
-      isRu ? 'Сопротивление участка цепи' : 'Resistance of the circuit part';
-  String get hintMaterial =>
-      isRu ? 'Медь или алюминий' : 'Copper or aluminium';
-  String get hintRouting =>
-      isRu ? 'Столбец таблицы допустимого тока' : 'Column of the capacity table';
-  String get hintFlow =>
-      isRu ? 'Объём воды за время' : 'Water volume per time';
-  String get hintInternalDiameter =>
-      isRu ? 'Внутренний, не наружный' : 'Internal, not outer';
-  String get hintTargetVelocity =>
-      isRu ? 'Скорость для подбора диаметра' : 'Velocity the diameter follows';
-  String get hintPipeLength =>
-      isRu ? 'Длина участка трубы' : 'Length of the pipe run';
-  String get hintHead =>
-      isRu ? 'Давление высотой столба воды' : 'Pressure as a water column';
-  String get hintRoughness =>
-      isRu ? 'Сталь грубее пластика' : 'Steel is rougher than plastic';
-  String get hintAirflow =>
-      isRu ? 'Объём воздуха за час' : 'Air volume per hour';
-  String get hintDuctSide =>
-      isRu ? 'Сторона воздуховода' : 'Side of the duct';
-  String get hintRoomSide =>
-      isRu ? 'Размер помещения' : 'Room dimension';
-  String get hintAirChanges =>
-      isRu ? 'Сколько раз за час меняется воздух' : 'Air replacements per hour';
-
-  // Сантехника.
-  String get pipe => isRu ? 'Труба' : 'Pipe';
-  String get internalDiameter =>
-      isRu ? 'Внутренний диаметр' : 'Internal diameter';
-  String get targetVelocity => isRu ? 'Целевая скорость' : 'Target velocity';
-  String get pipeLength => isRu ? 'Длина трубы' : 'Pipe length';
-  String get head => isRu ? 'Напор' : 'Head';
-  String get roughness => isRu ? 'Шероховатость' : 'Roughness';
-  String get diameterAtTargetVelocity =>
-      isRu ? 'Диаметр при целевой скорости' : 'Diameter at target velocity';
-  String get fillTime => isRu ? 'Время заполнения' : 'Fill time';
-  String get linearLoss => isRu ? 'Линейные потери' : 'Linear loss';
-  String get totalLoss => isRu ? 'Потери всего' : 'Total loss';
-
-  // Отопление, уклон и нагрев приточного воздуха.
-  String get heating => isRu ? 'Отопление' : 'Heating';
-  String get slope => isRu ? 'Уклон' : 'Slope';
-  String get heater => isRu ? 'Нагрев' : 'Heating';
-  String get byPeople => isRu ? 'По людям' : 'By occupancy';
-  String get byArea => isRu ? 'По площади' : 'By floor area';
-  String get byAirChanges => isRu ? 'По кратности' : 'By air changes';
-  String get roomSection => isRu ? 'Помещение' : 'Room';
-  String get airBasis => isRu ? 'От чего считать' : 'What to count from';
-  String get airPerSquareMetre =>
-      isRu ? 'Норма на м² пола' : 'Rate per m² of floor';
-  String get hintAirPerSquareMetre =>
-      isRu ? 'Из СП 60.13330.2020, прил. В' : 'From the ventilation code';
-  String get ventilationRateSource => isRu
-      ? 'СП 60.13330.2020, приложение В — норму задаёте вы, приложение её не знает'
-      : 'The rate comes from the ventilation code and is entered by you';
-  String get peopleCount => isRu ? 'Количество людей' : 'Number of people';
-  String get airPerPerson =>
-      isRu ? 'Норма на человека' : 'Rate per person';
-  String get hintPeopleCount => isRu
-      ? 'Постоянно находящиеся в помещении'
-      : 'People permanently in the room';
-  String get hintAirPerPerson =>
-      isRu ? 'Из СП 60.13330.2020, прил. В' : 'From the ventilation code';
-  String get heatPower => isRu ? 'Тепловая мощность' : 'Heat power';
-  String get deltaTemperature =>
-      isRu ? 'Перепад температур' : 'Temperature difference';
-  String get coolantFlow => isRu ? 'Расход теплоносителя' : 'Coolant flow';
-  String get heaterPower => isRu ? 'Мощность нагрева' : 'Heating power';
   String get fall => isRu ? 'Перепад' : 'Fall';
-  String get fallPerMetre => isRu ? 'Перепад на метр' : 'Fall per metre';
-  String get sectionLength => isRu ? 'Длина участка' : 'Section length';
-  String get standardDuct =>
-      isRu ? 'Ближайший из ряда' : 'Nearest standard size';
-  String get noStandardDuct => isRu
-      ? 'Диаметр вышел за стандартный ряд'
-      : 'The diameter is outside the standard range';
-  String get hintDeltaWater =>
-      isRu ? 'Разница подачи и обратки' : 'Flow minus return';
-  String get hintDeltaAir =>
-      isRu ? 'На сколько греем воздух' : 'How much the air is heated';
-  String get hintHeatPower =>
-      isRu ? 'Мощность приборов отопления' : 'Power of the heating devices';
-  String get hintSlope => isRu ? '2 % — это 2 см на метр' : '2% is 2 cm per metre';
 
-  // Вентиляция.
-  String get duct => isRu ? 'Воздуховод' : 'Duct';
-  String get airExchange => isRu ? 'Воздухообмен' : 'Air exchange';
-  String get airflow => isRu ? 'Расход воздуха' : 'Airflow';
   String get width => isRu ? 'Ширина' : 'Width';
   String get height => isRu ? 'Высота' : 'Height';
-  String get roomLength => isRu ? 'Длина помещения' : 'Room length';
-  String get roomWidth => isRu ? 'Ширина помещения' : 'Room width';
-  String get roomHeight => isRu ? 'Высота помещения' : 'Room height';
-  String get airChanges => isRu ? 'Кратность' : 'Air changes';
-  String get equivalentDiameter =>
-      isRu ? 'Эквивалентный диаметр' : 'Equivalent diameter';
-  String get roundAtTargetVelocity =>
-      isRu ? 'Круглый при целевой скорости' : 'Round at target velocity';
   String get incomeAndExpenses =>
       isRu ? 'Доходы и расходы' : 'Income and expenses';
   String get income => isRu ? 'Доход' : 'Income';
@@ -329,8 +120,6 @@ class AppStrings {
   String get ratesNotLoaded => isRu
       ? 'Курсы ещё не загружены — нужен интернет'
       : 'Rates are not loaded yet — the internet is needed';
-  String get ratesOffline =>
-      isRu ? 'Показан последний известный курс' : 'Showing the last known rate';
   String get category => isRu ? 'Категория' : 'Category';
   String get financeDescription => isRu ? 'Описание' : 'Description';
   String get operationDate => isRu ? 'Дата операции' : 'Operation date';
@@ -587,10 +376,7 @@ class AppStrings {
   String get ready => isRu ? 'Готово' : 'Done';
   String get save => isRu ? 'Сохранить' : 'Save';
   String get saved => isRu ? 'Сохранено' : 'Saved';
-  String get requiredDate => isRu ? 'Дата обязательна' : 'Date is required';
-  String get noRecords => isRu ? 'Записей нет' : 'No records';
   String get voice => isRu ? 'Голос' : 'Voice';
-  String get startRecording => isRu ? 'Начать запись' : 'Start recording';
   String get stopRecording => isRu ? 'Остановить' : 'Stop';
   String get play => isRu ? 'Воспроизвести' : 'Play';
   String get delete => isRu ? 'Удалить' : 'Delete';
@@ -609,7 +395,6 @@ class AppStrings {
   String get saveFailed => isRu ? 'Ошибка сохранения' : 'Save failed';
   String get loadFailed => isRu ? 'Не удалось загрузить данные' : 'Load failed';
   String get dayRecords => isRu ? 'Записи дня' : 'Day records';
-  String get messageHint => isRu ? 'Сообщение' : 'Message';
   String get photo => isRu ? 'Фото' : 'Photo';
   String get voiceMessage => isRu ? 'Голосовое сообщение' : 'Voice message';
   String get recordingNow => isRu ? 'Идёт запись' : 'Recording';
@@ -622,7 +407,6 @@ class AppStrings {
   String get startDate => isRu ? 'Дата начала' : 'Start date';
   String get workDays => isRu ? 'Рабочих дней' : 'Work days';
   String get restDays => isRu ? 'Выходных дней' : 'Rest days';
-  String get schedulePreset => isRu ? 'Шаблон' : 'Pattern';
   String get customSchedule => isRu ? 'Свой' : 'Custom';
   String get manualSchedule => isRu ? 'Настроить вручную' : 'Set manually';
   String get mainSettings => isRu ? 'Основное' : 'Main';
@@ -654,7 +438,6 @@ class AppStrings {
 
   /// Время будильника, который звонит на следующий день после смены.
   String nextDayAlarmAt(String time) => isRu ? '+1 д. $time' : '+1 d. $time';
-  String get shiftAlarm => isRu ? 'Будильник смены' : 'Shift alarm';
   String get systemMelody => isRu ? 'Системная мелодия' : 'System melody';
   String get chooseAudioFile =>
       isRu ? 'Выбрать аудиофайл' : 'Choose audio file';
@@ -677,7 +460,6 @@ class AppStrings {
   String get appearance => isRu ? 'Оформление' : 'Appearance';
   String get lightTheme => isRu ? 'Светлая тема' : 'Light theme';
   String get darkTheme => isRu ? 'Тёмная тема' : 'Dark theme';
-  String get notebookTheme => isRu ? 'Тема «Блокнот»' : 'Notebook theme';
   String get unlock => isRu ? 'Открыть' : 'Unlock';
   String get setupPinTitle =>
       isRu ? 'Создайте PIN для защиты данных' : 'Create a PIN to protect data';
@@ -730,7 +512,4 @@ class AppStrings {
       ? 'Не удалось изменить автозапуск Windows'
       : 'Could not update Windows startup';
   String get pinSaved => isRu ? 'PIN сохранен' : 'PIN saved';
-  String get recordAudioBeforeSaving => isRu
-      ? 'Сначала запишите голосовую заметку'
-      : 'Record audio before saving';
 }

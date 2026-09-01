@@ -22,8 +22,6 @@ Future<SyncRunResult> sync({
   Future<void> Function(List<FinanceEntry>)? replaceFinanceEntries,
   List<SavedToolCalculation> toolCalculations = const [],
   Future<void> Function(List<SavedToolCalculation>)? replaceToolCalculations,
-  List<ReferenceBookmark> toolBookmarks = const [],
-  Future<void> Function(List<ReferenceBookmark>)? replaceToolBookmarks,
 }) {
   return AppSyncEngine(
     remote: remote,
@@ -44,8 +42,6 @@ Future<SyncRunResult> sync({
     replaceFinanceEntries: replaceFinanceEntries ?? (_) async {},
     toolCalculations: toolCalculations,
     replaceToolCalculations: replaceToolCalculations ?? (_) async {},
-    toolBookmarks: toolBookmarks,
-    replaceToolBookmarks: replaceToolBookmarks ?? (_) async {},
   );
 }
 

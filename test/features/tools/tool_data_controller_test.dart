@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/features/tool_data/tool_data.dart';
 
 void main() {
-  test('calculations and bookmarks can be saved, changed and deleted',
+  test('calculations can be saved, changed and deleted',
       () async {
     final repository = _ToolRepository();
     final controller = ToolDataController(repository);
@@ -26,15 +26,9 @@ void main() {
     await controller.renameCalculation(calculation.id, 'Замер');
     expect(repository.snapshot.calculations.single.name, 'Замер');
 
-    await controller.saveBookmark(entryId: 'ip_code', note: 'Шкаф на улице');
-    await controller.saveBookmark(entryId: 'ip_code', note: 'Шкаф под навесом');
-    expect(repository.snapshot.bookmarks, hasLength(1));
-    expect(repository.snapshot.bookmarks.single.note, 'Шкаф под навесом');
 
     await controller.deleteCalculation(calculation.id);
-    await controller.deleteBookmark('ip_code');
     expect(repository.snapshot.calculations, isEmpty);
-    expect(repository.snapshot.bookmarks, isEmpty);
   });
 }
 

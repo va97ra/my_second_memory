@@ -36,14 +36,6 @@ class SyncDataSources {
       List<SavedToolCalculation>,
       List<SavedToolCalculation>,
     )? mergeToolCalculations,
-    Future<List<ReferenceBookmark>> Function()? readToolBookmarks,
-    Future<void> Function(List<ReferenceBookmark>)? replaceToolBookmarks,
-    Future<void> Function(List<ReferenceBookmark>, List<ReferenceBookmark>)?
-        mergeToolBookmarks,
-    Future<List<LearningRecord>> Function()? readLearningRecords,
-    Future<void> Function(List<LearningRecord>)? replaceLearningRecords,
-    Future<void> Function(List<LearningRecord>, List<LearningRecord>)?
-        mergeLearningRecords,
   })  :
         // Слияние знает, с чем сравнивать, а замена — нет. Там, где слияния не
         // дали, приходящее просто заменяет то, что лежало.
@@ -71,15 +63,7 @@ class SyncDataSources {
         readToolCalculations = readToolCalculations ?? _noToolCalculations,
         mergeToolCalculations = mergeToolCalculations ??
             ((items, _) =>
-                (replaceToolCalculations ?? _ignoreToolCalculations)(items)),
-        readToolBookmarks = readToolBookmarks ?? _noToolBookmarks,
-        readLearningRecords = readLearningRecords ?? _noLearningRecords,
-        mergeLearningRecords = mergeLearningRecords ??
-            ((items, _) async =>
-                (replaceLearningRecords ?? _ignoreLearningRecords)(items)),
-        mergeToolBookmarks = mergeToolBookmarks ??
-            ((items, _) =>
-                (replaceToolBookmarks ?? _ignoreToolBookmarks)(items));
+                (replaceToolCalculations ?? _ignoreToolCalculations)(items));
 
   final Future<List<MemoryItem>> Function() readMemoryItems;
   final Future<void> Function(List<MemoryItem>, List<MemoryItem>)
@@ -105,12 +89,6 @@ class SyncDataSources {
     List<SavedToolCalculation>,
     List<SavedToolCalculation>,
   ) mergeToolCalculations;
-  final Future<List<ReferenceBookmark>> Function() readToolBookmarks;
-  final Future<void> Function(List<ReferenceBookmark>, List<ReferenceBookmark>)
-      mergeToolBookmarks;
-  final Future<List<LearningRecord>> Function() readLearningRecords;
-  final Future<void> Function(List<LearningRecord>, List<LearningRecord>)
-      mergeLearningRecords;
 }
 
 Future<List<ShiftSchedule>> _noShiftSchedules() async => const [];
@@ -140,10 +118,3 @@ Future<List<SavedToolCalculation>> _noToolCalculations() async => const [];
 
 Future<void> _ignoreToolCalculations(List<SavedToolCalculation> _) async {}
 
-Future<List<ReferenceBookmark>> _noToolBookmarks() async => const [];
-
-Future<void> _ignoreToolBookmarks(List<ReferenceBookmark> _) async {}
-
-Future<List<LearningRecord>> _noLearningRecords() async => const [];
-
-Future<void> _ignoreLearningRecords(List<LearningRecord> _) async {}

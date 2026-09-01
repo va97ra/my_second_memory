@@ -244,8 +244,8 @@ void main() {
     expect(find.byKey(const ValueKey('top_calculator')), findsOneWidget);
     expect(find.byKey(const ValueKey('top_finance')), findsOneWidget);
     expect(find.byKey(const ValueKey('top_converter')), findsOneWidget);
-    expect(find.byKey(const ValueKey('top_engineering')), findsOneWidget);
-    expect(find.byKey(const ValueKey('top_reference')), findsOneWidget);
+    expect(find.byKey(const ValueKey('top_slot_one')), findsOneWidget);
+    expect(find.byKey(const ValueKey('top_slot_two')), findsOneWidget);
     final tools = tester.widget<AppToolBar>(find.byType(AppToolBar)).items;
     expect(tools, hasLength(5));
     expect(find.byType(AppNavigationItems), findsNWidgets(2));
@@ -280,14 +280,15 @@ void main() {
     expect(find.byKey(const ValueKey('converter_screen')), findsOneWidget);
     expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex, 2);
 
-    await tester.tap(find.byKey(const ValueKey('top_engineering')));
+    // Два места в панели пока пусты: инструменты убраны, кнопки ждут новых.
+    await tester.tap(find.byKey(const ValueKey('top_slot_one')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('engineering_tabs')), findsOneWidget);
+    expect(find.text('Место свободно'), findsOneWidget);
     expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex, 3);
 
-    await tester.tap(find.byKey(const ValueKey('top_reference')));
+    await tester.tap(find.byKey(const ValueKey('top_slot_two')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('electrician_search')), findsOneWidget);
+    expect(find.text('Место свободно'), findsOneWidget);
     expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex, 4);
 
     await tester.binding.handlePopRoute();

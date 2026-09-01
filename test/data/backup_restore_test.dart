@@ -5,7 +5,7 @@ import 'package:ez_domain/ez_domain.dart';
 import '../support/backup_test_support.dart';
 
 void main() {
-  test('backup JSON carries saved calculations, bookmarks and notes', () async {
+  test('backup JSON carries saved calculations and notes', () async {
     final date = DateTime(2026, 8, 8);
     final tools = FakeToolDataRepository(ToolDataSnapshot(
       calculations: [
@@ -22,13 +22,6 @@ void main() {
           updatedAt: date,
         ),
       ],
-      bookmarks: [
-        ReferenceBookmark(
-          entryId: 'ip_code',
-          note: 'Из резервной копии',
-          updatedAt: date,
-        ),
-      ],
     ));
     final service = BackupService(
       memoryRepository: FakeMemoryRepository(const []),
@@ -41,7 +34,6 @@ void main() {
         await service.parseBackupJson(await service.createBackupJson());
 
     expect(parsed.toolData.calculations.single.name, 'Расход');
-    expect(parsed.toolData.bookmarks.single.note, 'Из резервной копии');
   });
 
   test('restore replaces and verifies all repositories', () async {
@@ -70,10 +62,17 @@ void main() {
       shiftSchedules: [shiftSchedule('restored-shift', date)],
       accounts: [account('restored-account', date)],
       financeEntries: [financeEntry('restored-finance', date)],
-      toolData: ToolDataSnapshot(bookmarks: [
-        ReferenceBookmark(
-          entryId: 'ip_code',
-          note: 'Из копии',
+      toolData: ToolDataSnapshot(calculations: [
+        SavedToolCalculation(
+          id: 'restored-conversion',
+          name: 'Из копии',
+          payload: const SavedConversionPayload(
+            category: 'flow',
+            fromUnit: 'm3_h',
+            toUnit: 'l_s',
+            value: 1,
+          ),
+          createdAt: date,
           updatedAt: date,
         ),
       ]),
@@ -83,7 +82,7 @@ void main() {
     expect((await shifts.loadSchedules()).single.id, 'restored-shift');
     expect((await accounts.loadAccounts()).single.id, 'restored-account');
     expect((await finance.loadAll()).single.id, 'restored-finance');
-    expect((await tools.load()).bookmarks.single.note, 'Из копии');
+    expect((await tools.load()).calculations.single.name, 'Из копии');
   });
 
   test('restore rolls every repository back when finance write fails',

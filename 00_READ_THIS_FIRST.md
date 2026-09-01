@@ -75,8 +75,8 @@
 /tools/calculator    Калькулятор
 /tools/finance       Финансы
 /tools/converter     Конвертер величин
-/tools/engineering   Инженерные расчёты
-/tools/reference     Учебник электрика
+/tools/slot-one      Свободное место панели
+/tools/slot-two      Свободное место панели
 /settings/backup     Резервные копии
 /settings/sync       Синхронизация
 /security            PIN и биометрия

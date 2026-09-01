@@ -5,21 +5,6 @@
 /// приложении, а не тут — провайдер это способ доставки, а не правило.
 library;
 
-export 'src/electrician/electrician_card.dart';
-export 'src/electrician/electrician_components.dart';
-export 'src/electrician/electrician_diagnosis_tree.dart';
-export 'src/electrician/electrician_learning.dart';
-export 'src/electrician/learning_level_1.dart';
-export 'src/electrician/learning_level_2.dart';
-export 'src/electrician/learning_level_3.dart';
-export 'src/electrician/learning_level_4.dart';
-export 'src/electrician/learning_level_5.dart';
-export 'src/electrician/electrician_tools.dart';
-export 'src/electrician/electrician_glossary.dart';
-export 'src/electrician/electrician_library.dart';
-export 'src/electrician/electrician_reference.dart';
-export 'src/electrician/electrician_schematics.dart';
-export 'src/electrician/electrician_safety.dart';
 export 'src/calculator/calculator_engine.dart';
 export 'src/calculator/calculator_types.dart';
 export 'src/finance/exchange_rates.dart';
@@ -51,9 +36,5 @@ export 'src/sync/sync_backend_config.dart';
 export 'src/sync/sync_merge.dart';
 export 'src/sync/sync_models.dart';
 export 'src/sync/sync_mutation_observer.dart';
-export 'src/tools/engineering_calculations.dart';
-export 'src/tools/ohm_law.dart';
 export 'src/tools/tool_data.dart';
 export 'src/tools/unit_converter.dart';
-export 'src/tools/voltage_drop.dart';
-export 'src/tools/wire_sizing.dart';

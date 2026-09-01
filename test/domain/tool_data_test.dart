@@ -8,16 +8,11 @@ void main() {
       SavedToolCalculation(
         id: '1',
         name: 'Щит',
-        payload: SavedEngineeringPayload(
-          discipline: 'electrical',
-          calculator: 'power',
-          values: const {
-            'voltageV': 400,
-            'currentA': 10,
-            'powerFactor': 0.9,
-            'efficiency': 0.95,
-            'threePhase': 1,
-          },
+        payload: const SavedConversionPayload(
+          category: 'length',
+          fromUnit: 'm',
+          toUnit: 'cm',
+          value: 3.6,
         ),
         createdAt: date,
         updatedAt: date,
@@ -28,45 +23,8 @@ void main() {
 
     expect(restored.calculations.single.version, 1);
     expect(
-        restored.calculations.single.payload, isA<SavedEngineeringPayload>());
+        restored.calculations.single.payload, isA<SavedConversionPayload>());
   });
 
-  test('engineering payload rejects unknown schemas and non-finite input', () {
-    expect(
-      () => SavedEngineeringPayload(
-        discipline: 'electrical',
-        calculator: 'unknown',
-        values: const {'x': 1},
-      ),
-      throwsFormatException,
-    );
-    expect(
-      () => SavedEngineeringPayload(
-        discipline: 'plumbing',
-        calculator: 'flow',
-        values: const {
-          'flowLMin': double.nan,
-          'diameterMm': 25,
-          'targetVelocityMs': 1,
-        },
-      ),
-      throwsFormatException,
-    );
-  });
 
-  group('запись о пройденной теме', () {
-    test('переживает запись и чтение json', () {
-      final record = LearningRecord(
-        topicId: 'learn_ohm',
-        updatedAt: DateTime.utc(2026, 9, 1, 10),
-      );
-      final restored = LearningRecord.fromJson(record.toJson());
-      expect(restored.topicId, 'learn_ohm');
-      expect(restored.updatedAt.toUtc(), record.updatedAt);
-    });
-
-    test('снимок по умолчанию пуст, а не null', () {
-      expect(const ToolDataSnapshot().learning, isEmpty);
-    });
-  });
 }
