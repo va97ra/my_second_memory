@@ -7,11 +7,11 @@ import 'currency_converter_body.dart';
 
 Future<void> showCurrencyConverterSheet(
   BuildContext context, {
-  required String currencyCode,
+  required String ledgerCurrency,
 }) {
   // Лист собирается один раз — как и лист операции: пока едет клавиатура,
   // обёртка пересобирается каждый кадр, и с нею пересобиралось бы поле суммы.
-  final sheet = CurrencyConverterSheet(initialFrom: currencyCode);
+  final sheet = CurrencyConverterSheet(ledgerCurrency: ledgerCurrency);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -25,9 +25,10 @@ Future<void> showCurrencyConverterSheet(
 /// Поле суммы отдаётся телу контроллером, а не строкой: набор цифры не должен
 /// пересобирать ни списки валют, ни оболочку — только строку ответа.
 class CurrencyConverterSheet extends ConsumerStatefulWidget {
-  const CurrencyConverterSheet({required this.initialFrom, super.key});
+  const CurrencyConverterSheet({required this.ledgerCurrency, super.key});
 
-  final String initialFrom;
+  /// Валюта журнала: в неё переводят, если она не доллар.
+  final String ledgerCurrency;
 
   @override
   ConsumerState<CurrencyConverterSheet> createState() =>
@@ -36,10 +37,14 @@ class CurrencyConverterSheet extends ConsumerStatefulWidget {
 
 class _CurrencyConverterSheetState
     extends ConsumerState<CurrencyConverterSheet> {
-  late final TextEditingController _amount =
-      TextEditingController(text: '1000');
-  late String _from = widget.initialFrom;
-  late String _to = widget.initialFrom == 'RUB' ? 'USD' : 'RUB';
+  // Лист открывается на вопросе, который задают чаще всего: «сколько сейчас
+  // стоит доллар». Единица слева и валюта журнала справа отвечают на него
+  // сразу, без единого нажатия; тысяча рублей в долларах такого ответа не
+  // давала — её ещё надо было поделить в уме.
+  late final TextEditingController _amount = TextEditingController(text: '1');
+  String _from = 'USD';
+  late String _to =
+      widget.ledgerCurrency == 'USD' ? 'RUB' : widget.ledgerCurrency;
 
   @override
   void dispose() {
@@ -51,6 +56,7 @@ class _CurrencyConverterSheetState
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final rates = ref.watch(exchangeRatesProvider);
+    final known = rates.valueOrNull;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -69,37 +75,68 @@ class _CurrencyConverterSheetState
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            TextField(
-              key: const ValueKey('converter_amount'),
-              controller: _amount,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: strings.amount,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: const ValueKey('converter_amount'),
+                    controller: _amount,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      border: const OutlineInputBorder(),
+                      labelText: strings.amount,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _syncButton(strings, busy: rates.isLoading),
+              ],
             ),
             const SizedBox(height: 12),
-            rates.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => Text(strings.ratesNotLoaded),
-              data: (value) => value == null
-                  ? Text(strings.ratesNotLoaded)
-                  : CurrencyConverterBody(
-                      rates: value,
-                      amount: _amount,
-                      from: _from,
-                      to: _to,
-                      onPick: (from, to) => setState(() {
-                        _from = from;
-                        _to = to;
-                      }),
-                    ),
-            ),
+            if (known != null)
+              CurrencyConverterBody(
+                rates: known,
+                amount: _amount,
+                from: _from,
+                to: _to,
+                onPick: (from, to) => setState(() {
+                  _from = from;
+                  _to = to;
+                }),
+              )
+            else if (rates.isLoading)
+              const Center(child: CircularProgressIndicator())
+            else
+              Text(strings.ratesNotLoaded, textAlign: TextAlign.center),
           ],
         ),
       ),
     );
   }
+
+  /// Кнопка стоит вплотную к сумме и ровно её высоты: это одна строка сетки,
+  /// а не значок, приклеенный сбоку.
+  Widget _syncButton(AppStrings strings, {required bool busy}) => SizedBox(
+        width: _fieldHeight,
+        height: _fieldHeight,
+        child: IconButton(
+          key: const ValueKey('converter_sync'),
+          tooltip: strings.syncWithSource,
+          onPressed: busy
+              ? null
+              : ref.read(exchangeRatesProvider.notifier).syncWithSource,
+          icon: busy
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.sync_rounded),
+        ),
+      );
 }
+
+/// Высота поля с рамкой `OutlineInputBorder` в этой теме.
+const double _fieldHeight = 56;

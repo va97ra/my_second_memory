@@ -45,9 +45,12 @@ class ExchangeRateRepository {
   ///
   /// Отказ сети не ошибка экрана: если в кэше что-то есть, возвращается оно.
   /// Пусто и сеть молчит — возвращается `null`, и экран говорит об этом сам.
-  Future<ExchangeRates?> load({DateTime? now}) async {
+  ///
+  /// `force` пропускает кэш и идёт к источнику всегда: так работает кнопка
+  /// «синхронизировать». Отказ сети и здесь оставляет прежние курсы.
+  Future<ExchangeRates?> load({DateTime? now, bool force = false}) async {
     final cached = await readCached();
-    if (cached != null && !_isStale(cached, now ?? DateTime.now())) {
+    if (!force && cached != null && !_isStale(cached, now ?? DateTime.now())) {
       return cached;
     }
     try {

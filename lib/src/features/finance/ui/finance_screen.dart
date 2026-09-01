@@ -44,7 +44,7 @@ class FinanceScreen extends ConsumerWidget {
                             _changeMonth(ref, month, delta),
                         onConverter: () => showCurrencyConverterSheet(
                           context,
-                          currencyCode: currency,
+                          ledgerCurrency: currency,
                         ),
                       ),
                       const SizedBox(height: 8),
