@@ -80,8 +80,8 @@ class AppStrings {
       isRu ? 'Введите корректное число' : 'Enter a valid number';
   String get example => isRu ? 'Пример' : 'Example';
 
-  // Величины конвертера. Те же слова служат подписями в инженерных расчётах:
-  // «Расход» и «Давление» — одно понятие, и строка у него одна.
+  // Величины конвертера: по одному слову на величину, и это слово живёт
+  // здесь, а не в таблице единиц.
   String get length => isRu ? 'Длина' : 'Length';
   String get area => isRu ? 'Площадь' : 'Area';
   String get volume => isRu ? 'Объём' : 'Volume';
@@ -95,6 +95,9 @@ class AppStrings {
   String get dataSize => isRu ? 'Объём данных' : 'Data size';
   String get resistance => isRu ? 'Сопротивление' : 'Resistance';
   String get frequency => isRu ? 'Частота' : 'Frequency';
+  String get angle => isRu ? 'Угол' : 'Angle';
+  String get torque => isRu ? 'Момент силы' : 'Torque';
+  String get density => isRu ? 'Плотность' : 'Density';
 
   String get voltage => isRu ? 'Напряжение' : 'Voltage';
   String get current => isRu ? 'Ток' : 'Current';
@@ -114,6 +117,8 @@ class AppStrings {
   String get currencyConverter =>
       isRu ? 'Конвертер валют' : 'Currency converter';
   String get swapCurrencies => isRu ? 'Поменять местами' : 'Swap';
+  String get syncWithSource =>
+      isRu ? 'Синхронизировать с источником' : 'Sync with the source';
   String get exchangeRate => isRu ? 'Курс' : 'Rate';
   String ratesAsOf(String date) =>
       isRu ? 'Курс ЦБ РФ на $date' : 'Bank of Russia rate for $date';

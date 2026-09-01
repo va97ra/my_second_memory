@@ -8,7 +8,6 @@ library;
 export 'src/async/sequential_task_queue.dart';
 export 'src/format/clock_format.dart';
 export 'src/format/decimal_input.dart';
-export 'src/format/engineering_format.dart';
+export 'src/format/inch_fraction.dart';
 export 'src/localization/app_strings.dart';
-export 'src/localization/engineering_units.dart';
 export 'src/localization/russian_plural.dart';
