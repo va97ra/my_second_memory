@@ -3,7 +3,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
 import '../../state/converter_controller.dart';
-import 'converter_helpers.dart';
+import 'converter_category_field.dart';
 
 /// Ширина, которую кнопка обмена занимает между колонками.
 ///
@@ -47,30 +47,9 @@ class ConverterInputs extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DropdownButtonFormField<UnitCategory>(
-          // Ключ несёт текущее значение: `initialValue` читается один раз при
-          // создании, и без смены ключа список не догонит выбор, сделанный
-          // мимо него — например, открытием сохранённого расчёта.
-          key: ValueKey('converter_category_${state.category.name}'),
-          initialValue: state.category,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: strings.category,
-            border: const OutlineInputBorder(),
-          ),
-          items: [
-            for (final category in UnitCategory.values)
-              DropdownMenuItem(
-                value: category,
-                child: Text(
-                  categoryLabel(category, strings),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          onChanged: (next) {
-            if (next != null) onCategory(next);
-          },
+        ConverterCategoryField(
+          category: state.category,
+          onCategory: onCategory,
         ),
         const SizedBox(height: 12),
         Row(
