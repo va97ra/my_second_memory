@@ -3,7 +3,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../state/learning_progress.dart';
+import '../../../tool_data/tool_data.dart';
 import 'learning_topic_sheet.dart';
 
 /// Список тем обучения с полосой прогресса.
@@ -20,7 +20,11 @@ class ElectricianLearningList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
     final ru = strings.isRu;
-    final passed = ref.watch(learningProgressProvider);
+    final snapshot = ref.watch(toolDataControllerProvider).valueOrNull ??
+        const ToolDataSnapshot();
+    final passed = {
+      for (final record in snapshot.learning) record.topicId,
+    };
     final needle = query.trim().toLowerCase();
     final topics = [
       for (final topic in learningTopics)

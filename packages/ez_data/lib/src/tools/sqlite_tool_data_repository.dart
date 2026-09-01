@@ -16,6 +16,7 @@ class SqliteToolDataRepository implements ToolDataRepository {
     final rows = await _database.select(_database.toolDataRows).get();
     final calculations = <SavedToolCalculation>[];
     final bookmarks = <ReferenceBookmark>[];
+    final learning = <LearningRecord>[];
     for (final row in rows) {
       final json = Map<String, Object?>.from(
         jsonDecode(row.payloadJson) as Map,
@@ -25,15 +26,19 @@ class SqliteToolDataRepository implements ToolDataRepository {
           calculations.add(SavedToolCalculation.fromJson(json));
         case 'bookmark':
           bookmarks.add(ReferenceBookmark.fromJson(json));
+        case 'learning':
+          learning.add(LearningRecord.fromJson(json));
         default:
           throw FormatException('Unknown tool data row kind: ${row.kind}');
       }
     }
     calculations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     bookmarks.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    learning.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     return ToolDataSnapshot(
       calculations: calculations,
       bookmarks: bookmarks,
+      learning: learning,
     );
   }
 
@@ -54,6 +59,13 @@ class SqliteToolDataRepository implements ToolDataRepository {
             ToolDataRowsCompanion.insert(
               id: 'bookmark:${item.entryId}',
               kind: 'bookmark',
+              payloadJson: jsonEncode(item.toJson()),
+              updatedAt: item.updatedAt,
+            ),
+          for (final item in snapshot.learning)
+            ToolDataRowsCompanion.insert(
+              id: 'learning:${item.topicId}',
+              kind: 'learning',
               payloadJson: jsonEncode(item.toJson()),
               updatedAt: item.updatedAt,
             ),

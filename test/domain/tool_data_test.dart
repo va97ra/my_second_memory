@@ -53,4 +53,20 @@ void main() {
       throwsFormatException,
     );
   });
+
+  group('запись о пройденной теме', () {
+    test('переживает запись и чтение json', () {
+      final record = LearningRecord(
+        topicId: 'learn_ohm',
+        updatedAt: DateTime.utc(2026, 9, 1, 10),
+      );
+      final restored = LearningRecord.fromJson(record.toJson());
+      expect(restored.topicId, 'learn_ohm');
+      expect(restored.updatedAt.toUtc(), record.updatedAt);
+    });
+
+    test('снимок по умолчанию пуст, а не null', () {
+      expect(const ToolDataSnapshot().learning, isEmpty);
+    });
+  });
 }

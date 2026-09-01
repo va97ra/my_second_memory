@@ -17,6 +17,8 @@ abstract interface class SyncMutationObserver {
   Future<void> toolCalculationDeleted(String id, DateTime deletedAt);
   void toolBookmarksChanged();
   Future<void> toolBookmarkDeleted(String entryId, DateTime deletedAt);
+  void learningRecordsChanged();
+  Future<void> learningRecordDeleted(String topicId, DateTime deletedAt);
 }
 
 class NoopSyncMutationObserver implements SyncMutationObserver {
@@ -79,6 +81,15 @@ class NoopSyncMutationObserver implements SyncMutationObserver {
   @override
   Future<void> toolBookmarkDeleted(
     String entryId,
+    DateTime deletedAt,
+  ) async {}
+
+  @override
+  void learningRecordsChanged() {}
+
+  @override
+  Future<void> learningRecordDeleted(
+    String topicId,
     DateTime deletedAt,
   ) async {}
 }

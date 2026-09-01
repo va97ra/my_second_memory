@@ -34,6 +34,8 @@ class AppSyncEngine {
     Future<void> Function(List<SavedToolCalculation>)? replaceToolCalculations,
     List<ReferenceBookmark> toolBookmarks = const [],
     Future<void> Function(List<ReferenceBookmark>)? replaceToolBookmarks,
+    List<LearningRecord> learningRecords = const [],
+    Future<void> Function(List<LearningRecord>)? replaceLearningRecords,
   }) async {
     final remoteEntities = await remote.fetchEntities();
     final memoryOutcome = await EncryptedEntitySyncEngine<MemoryItem>(
@@ -241,6 +243,25 @@ class AppSyncEngine {
       replaceLocal: replaceToolBookmarks ?? (_) async {},
     );
 
+    // Пройденная тема опознаётся самой темой: своего идентификатора у
+    // записи нет, и заводить второй незачем.
+    final learningOutcome = await EncryptedEntitySyncEngine<LearningRecord>(
+      remote: remote,
+      cipher: cipher,
+      tombstones: tombstones,
+      kind: SyncEntityKind.learningProgress,
+      idOf: (record) => record.topicId,
+      updatedAtOf: (record) => record.updatedAt,
+      toJson: (record) => record.toJson(),
+      fromJson: LearningRecord.fromJson,
+      withCanonicalUpdatedAt: (record, updatedAt) =>
+          record.copyWith(updatedAt: updatedAt),
+    ).merge(
+      localItems: learningRecords,
+      remoteEntities: remoteEntities,
+      replaceLocal: replaceLearningRecords ?? (_) async {},
+    );
+
     await remote.applyEntities([
       ...memoryOutcome.changesToUpload,
       ...shiftsOutcome.changesToUpload,
@@ -250,6 +271,7 @@ class AppSyncEngine {
       ...financeOutcome.changesToUpload,
       ...toolCalculationsOutcome.changesToUpload,
       ...toolBookmarksOutcome.changesToUpload,
+      ...learningOutcome.changesToUpload,
     ]);
     return _combine([
       memoryOutcome.result,
@@ -260,6 +282,7 @@ class AppSyncEngine {
       financeOutcome.result,
       toolCalculationsOutcome.result,
       toolBookmarksOutcome.result,
+      learningOutcome.result,
     ]);
   }
 

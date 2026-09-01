@@ -3,7 +3,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../state/learning_progress.dart';
+import '../../../tool_data/tool_data.dart';
 
 /// Тема целиком: объяснение, пример и тест.
 ///
@@ -88,8 +88,8 @@ class _TopicSheetState extends ConsumerState<_TopicSheet> {
                 onPressed: _allCorrect
                     ? () async {
                         await ref
-                            .read(learningProgressProvider.notifier)
-                            .markPassed(widget.topic.id);
+                            .read(toolDataControllerProvider.notifier)
+                            .markTopicPassed(widget.topic.id);
                         if (context.mounted) Navigator.pop(context);
                       }
                     : null,

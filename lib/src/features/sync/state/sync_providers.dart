@@ -123,6 +123,14 @@ final syncControllerProvider =
       mergeToolBookmarks: (items, baseline) => ref
           .read(toolDataControllerProvider.notifier)
           .replaceBookmarksFromSync(items, baseline: baseline),
+      readLearningRecords: () async {
+        final tools = ref.read(toolDataControllerProvider.notifier);
+        await tools.load();
+        return tools.snapshot.learning;
+      },
+      mergeLearningRecords: (items, baseline) => ref
+          .read(toolDataControllerProvider.notifier)
+          .replaceLearningFromSync(items, baseline: baseline),
     ),
   );
 });
@@ -259,4 +267,18 @@ class _RiverpodSyncMutationObserver implements SyncMutationObserver {
           deletedAt,
         );
   }
+  @override
+  void learningRecordsChanged() {
+    ref.read(syncControllerProvider.notifier).schedule();
+  }
+
+  @override
+  Future<void> learningRecordDeleted(String topicId, DateTime deletedAt) {
+    return ref.read(syncControllerProvider.notifier).recordDeletion(
+          SyncEntityKind.learningProgress,
+          topicId,
+          deletedAt,
+        );
+  }
+
 }

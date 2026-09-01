@@ -237,13 +237,43 @@ class ReferenceBookmark {
   }
 }
 
+/// Пройденная тема обучения.
+///
+/// Запись на каждую тему, а не список в одной записи: два устройства,
+/// прошедшие разные темы, при слиянии дают объединение, а не спор о том,
+/// чей список новее.
+class LearningRecord {
+  const LearningRecord({required this.topicId, required this.updatedAt});
+
+  final String topicId;
+  final DateTime updatedAt;
+
+  Map<String, Object?> toJson() => {
+        'topicId': topicId,
+        'updatedAt': updatedAt.toUtc().toIso8601String(),
+      };
+
+  LearningRecord copyWith({DateTime? updatedAt}) => LearningRecord(
+        topicId: topicId,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+
+  factory LearningRecord.fromJson(Map<String, Object?> json) =>
+      LearningRecord(
+        topicId: json['topicId'] as String,
+        updatedAt: DateTime.parse(json['updatedAt'] as String).toLocal(),
+      );
+}
+
 class ToolDataSnapshot {
   const ToolDataSnapshot({
     this.calculations = const [],
     this.bookmarks = const [],
+    this.learning = const [],
   });
 
   final List<SavedToolCalculation> calculations;
+  final List<LearningRecord> learning;
   final List<ReferenceBookmark> bookmarks;
 
   Map<String, Object?> toJson() => {

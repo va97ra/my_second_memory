@@ -60,6 +60,7 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
           if (item.id != calculation.id) item,
       ],
       bookmarks: current.bookmarks,
+      learning: current.learning,
     ));
     _sync?.toolCalculationsChanged();
   }
@@ -74,6 +75,7 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
           if (item.id != id) item,
       ],
       bookmarks: current.bookmarks,
+      learning: current.learning,
     ));
     await _sync?.toolCalculationDeleted(id, deletedAt);
   }
@@ -91,6 +93,7 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
             item,
       ],
       bookmarks: current.bookmarks,
+      learning: current.learning,
     ));
     _sync?.toolCalculationsChanged();
   }
@@ -113,6 +116,7 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
         for (final item in current.bookmarks)
           if (item.entryId != entryId) item,
       ],
+      learning: current.learning,
     ));
     _sync?.toolBookmarksChanged();
   }
@@ -151,6 +155,58 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
         (item) => item.updatedAt,
       ),
       bookmarks: current.bookmarks,
+      learning: current.learning,
+    ));
+  }
+
+  Future<void> markTopicPassed(String topicId) async {
+    await _loadFuture;
+    final current = snapshot;
+    if (current.learning.any((item) => item.topicId == topicId)) return;
+    await _save(ToolDataSnapshot(
+      calculations: current.calculations,
+      bookmarks: current.bookmarks,
+      learning: [
+        LearningRecord(topicId: topicId, updatedAt: DateTime.now()),
+        ...current.learning,
+      ],
+    ));
+    _sync?.learningRecordsChanged();
+  }
+
+  Future<void> resetLearning() async {
+    await _loadFuture;
+    final current = snapshot;
+    final deletedAt = DateTime.now();
+    final removed = [for (final item in current.learning) item.topicId];
+    await _save(ToolDataSnapshot(
+      calculations: current.calculations,
+      bookmarks: current.bookmarks,
+    ));
+    for (final topicId in removed) {
+      await _sync?.learningRecordDeleted(topicId, deletedAt);
+    }
+  }
+
+  Future<void> replaceLearningFromSync(
+    List<LearningRecord> records, {
+    required List<LearningRecord> baseline,
+  }) async {
+    await _loadFuture;
+    final current = snapshot;
+    await _save(ToolDataSnapshot(
+      calculations: current.calculations,
+      bookmarks: current.bookmarks,
+      learning: _newestFirst(
+        mergeSyncedEntities(
+          incoming: records,
+          current: current.learning,
+          baseline: baseline,
+          idOf: (item) => item.topicId,
+          updatedAtOf: (item) => item.updatedAt,
+        ),
+        (item) => item.updatedAt,
+      ),
     ));
   }
 
@@ -172,6 +228,7 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
         ),
         (item) => item.updatedAt,
       ),
+      learning: current.learning,
     ));
   }
 

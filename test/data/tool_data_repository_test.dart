@@ -22,6 +22,9 @@ void main() {
         updatedAt: date,
       ),
     ],
+    learning: [
+      LearningRecord(topicId: 'learn_current', updatedAt: date),
+    ],
     bookmarks: [
       ReferenceBookmark(
         entryId: 'ip_code',
@@ -40,11 +43,13 @@ void main() {
     final restored = await repository.load();
     expect(restored.calculations.single.name, 'Рабочий расход');
     expect(restored.bookmarks.single.note, 'Проверить паспорт шкафа');
+    expect(restored.learning.single.topicId, 'learn_current');
 
     await repository.replaceAll(const ToolDataSnapshot());
     final deleted = await repository.load();
     expect(deleted.calculations, isEmpty);
     expect(deleted.bookmarks, isEmpty);
+    expect(deleted.learning, isEmpty);
   });
 
   test('Web fallback round-trips typed tool data', () async {
