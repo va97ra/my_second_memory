@@ -136,6 +136,12 @@ void main() {
     expect(learningProgress(const {'нет такой темы'}), 0);
   });
 
+  test('у каждого инструмента есть рисунок', () {
+    for (final card in cardsOfSection(ElectricianSection.tools)) {
+      expect(card.symbol, isNotEmpty, reason: card.id);
+    }
+  });
+
   test('обозначения схем названы именем рисунка', () {
     final schematics = cardsOfSection(ElectricianSection.schematics);
     expect(schematics, hasLength(12));

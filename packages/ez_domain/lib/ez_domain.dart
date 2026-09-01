@@ -7,7 +7,7 @@ library;
 
 export 'src/electrician/electrician_card.dart';
 export 'src/electrician/electrician_components.dart';
-export 'src/electrician/electrician_diagnostics.dart';
+export 'src/electrician/electrician_diagnosis_tree.dart';
 export 'src/electrician/electrician_learning.dart';
 export 'src/electrician/learning_level_1.dart';
 export 'src/electrician/learning_level_2.dart';

@@ -106,6 +106,15 @@ class AppStrings {
       isRu ? 'Уровень $number' : 'Level $number';
   String get markLearned => isRu ? 'Тема пройдена' : 'Mark as learned';
   String get answerRight => isRu ? 'Правильно' : 'Correct';
+  String get yes => isRu ? 'Да' : 'Yes';
+  String get no => isRu ? 'Нет' : 'No';
+  String get howToCheck => isRu ? 'Как проверить' : 'How to check';
+  String get startOver => isRu ? 'Начать заново' : 'Start over';
+  String get callSpecialist => isRu
+      ? 'Дальше нужна работа со снятием напряжения и право на неё'
+      : 'What follows needs the line dead and a qualified person';
+  String get diagnosisSubtitle =>
+      isRu ? 'Ответьте на несколько вопросов' : 'Answer a few questions';
   String get answerWrong => isRu ? 'Неправильно' : 'Not quite';
   String get cardPurpose => isRu ? 'Для чего' : 'What it is for';
   String get cardCaution => isRu ? 'Что важно знать' : 'What to watch for';

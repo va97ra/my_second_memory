@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../tool_data/tool_data.dart';
 import 'electrician_card_sheet.dart';
-import 'electrician_symbol_art.dart';
+import 'electrician_art_view.dart';
 
 /// Список карточек раздела или результатов поиска.
 class ElectricianCardList extends ConsumerWidget {
@@ -70,15 +70,15 @@ class ElectricianCardList extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final card = cards[index];
                     final favourite = favouriteIds.contains(card.id);
-                    final symbol = electricianSymbolByName(card.symbol);
+                    final art = hasElectricianArt(card.symbol);
                     return Card(
                       margin: EdgeInsets.zero,
                       child: ListTile(
                         contentPadding:
                             const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                        leading: symbol == null
-                            ? null
-                            : ElectricianSymbolArt(symbol: symbol, size: 44),
+                        leading: art
+                            ? ElectricianArtView(name: card.symbol, size: 44)
+                            : null,
                         title: Text(card.title(ru)),
                         subtitle: Text(
                           card.what(ru),

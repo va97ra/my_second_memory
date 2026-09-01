@@ -20,6 +20,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_screwdriver',
     section: ElectricianSection.tools,
+    symbol: 'screwdriver',
     titleRu: 'Отвёртка',
     titleEn: 'Screwdriver',
     whatRu: 'Инструмент для винтовых зажимов. У электрика их несколько: '
@@ -37,6 +38,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_pliers',
     section: ElectricianSection.tools,
+    symbol: 'pliers',
     titleRu: 'Пассатижи',
     titleEn: 'Combination pliers',
     whatRu: 'Губки с насечкой, кусачки у основания и площадка для захвата.',
@@ -52,6 +54,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_side_cutters',
     section: ElectricianSection.tools,
+    symbol: 'sideCutters',
     titleRu: 'Бокорезы',
     titleEn: 'Side cutters',
     whatRu: 'Кусачки с режущими кромками сбоку от оси.',
@@ -66,6 +69,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_long_nose',
     section: ElectricianSection.tools,
+    symbol: 'longNose',
     titleRu: 'Длинногубцы',
     titleEn: 'Long-nose pliers',
     whatRu: 'Пассатижи с вытянутыми узкими губками.',
@@ -80,6 +84,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_cable_knife',
     section: ElectricianSection.tools,
+    symbol: 'knife',
     titleRu: 'Кабельный нож',
     titleEn: 'Cable knife',
     whatRu: 'Нож с изогнутым лезвием и пяткой, ограничивающей глубину реза.',
@@ -94,6 +99,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_stripper',
     section: ElectricianSection.tools,
+    symbol: 'stripper',
     titleRu: 'Стриппер',
     titleEn: 'Wire stripper',
     whatRu: 'Клещи с калиброванными гнёздами или с самонастройкой, снимающие '
@@ -110,6 +116,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_crimper',
     section: ElectricianSection.tools,
+    symbol: 'crimper',
     titleRu: 'Кримпер',
     titleEn: 'Crimping tool',
     whatRu: 'Пресс-клещи с профильными матрицами для опрессовки наконечников '
@@ -126,6 +133,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_multimeter',
     section: ElectricianSection.tools,
+    symbol: 'meter',
     titleRu: 'Мультиметр',
     titleEn: 'Multimeter',
     whatRu: 'Прибор, измеряющий напряжение, ток, сопротивление и '
@@ -143,6 +151,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_voltage_detector',
     section: ElectricianSection.tools,
+    symbol: 'detector',
     titleRu: 'Указатель напряжения',
     titleEn: 'Voltage detector',
     whatRu: 'Прибор, показывающий наличие напряжения между двумя точками. '
@@ -161,6 +170,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_clamp_meter',
     section: ElectricianSection.tools,
+    symbol: 'clampMeter',
     titleRu: 'Токовые клещи',
     titleEn: 'Clamp meter',
     whatRu: 'Прибор с раскрывающимся магнитопроводом: измеряет ток, не '
@@ -178,6 +188,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_insulation_tester',
     section: ElectricianSection.tools,
+    symbol: 'insulationTester',
     titleRu: 'Мегаомметр',
     titleEn: 'Insulation tester',
     whatRu: 'Прибор, подающий высокое испытательное напряжение и измеряющий '
@@ -195,6 +206,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_rotary_hammer',
     section: ElectricianSection.tools,
+    symbol: 'rotaryHammer',
     titleRu: 'Перфоратор',
     titleEn: 'Rotary hammer',
     whatRu: 'Инструмент с ударным механизмом для бетона и кирпича.',
@@ -208,6 +220,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_hole_saw',
     section: ElectricianSection.tools,
+    symbol: 'holeSaw',
     titleRu: 'Коронка',
     titleEn: 'Hole saw',
     whatRu: 'Кольцевая насадка с зубьями или алмазным напылением.',
@@ -221,6 +234,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_insulated_set',
     section: ElectricianSection.tools,
+    symbol: 'insulatedSet',
     titleRu: 'Изолированный инструмент',
     titleEn: 'Insulated tools',
     whatRu: 'Инструмент с изоляцией, испытанной на 1000 В: отвёртки, '
@@ -238,6 +252,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_gloves',
     section: ElectricianSection.tools,
+    symbol: 'gloves',
     titleRu: 'Диэлектрические перчатки',
     titleEn: 'Insulating gloves',
     whatRu: 'Перчатки из диэлектрической резины с отметкой об испытании.',
@@ -253,6 +268,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_mat',
     section: ElectricianSection.tools,
+    symbol: 'mat',
     titleRu: 'Диэлектрический коврик',
     titleEn: 'Insulating mat',
     whatRu: 'Резиновый коврик с рифлением, отделяющий человека от пола.',
@@ -267,6 +283,7 @@ const electricianTools = <ElectricianCard>[
   ElectricianCard(
     id: 'tool_goggles',
     section: ElectricianSection.tools,
+    symbol: 'goggles',
     titleRu: 'Защитные очки',
     titleEn: 'Safety goggles',
     whatRu: 'Очки с ударопрочными стёклами и боковой защитой.',

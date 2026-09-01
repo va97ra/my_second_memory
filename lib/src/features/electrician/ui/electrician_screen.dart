@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../tool_data/tool_data.dart';
 import 'widgets/electrician_card_list.dart';
+import 'widgets/electrician_diagnosis_list.dart';
 import 'widgets/electrician_learning_list.dart';
 import 'widgets/electrician_tiles.dart';
 
@@ -91,8 +92,10 @@ class _ElectricianScreenState extends ConsumerState<ElectricianScreen> {
             ),
           ),
           Expanded(
-            child: _section == ElectricianSection.learning
-                ? ElectricianLearningList(query: query)
+            child: _section == ElectricianSection.diagnostics
+                ? ElectricianDiagnosisList(query: query)
+                : _section == ElectricianSection.learning
+                    ? ElectricianLearningList(query: query)
                 : showList
                         ? ElectricianCardList(
                         cards: searchElectricianCards(

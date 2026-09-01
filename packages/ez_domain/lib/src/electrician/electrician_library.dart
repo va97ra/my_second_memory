@@ -6,9 +6,9 @@ library;
 
 import 'electrician_card.dart';
 import 'electrician_components.dart';
-import 'electrician_diagnostics.dart';
 import 'electrician_glossary.dart';
 import 'electrician_reference.dart';
+import 'electrician_diagnosis_tree.dart';
 import 'electrician_learning.dart';
 import 'electrician_schematics.dart';
 import 'electrician_tools.dart';
@@ -18,7 +18,6 @@ const electricianCards = <ElectricianCard>[
   ...electricianGlossary,
   ...electricianTools,
   ...electricianComponents,
-  ...electricianDiagnostics,
   ...electricianSafety,
   ...electricianSchematics,
   ...electricianReference,
@@ -30,10 +29,11 @@ List<ElectricianCard> cardsOfSection(ElectricianSection section) =>
 
 /// Сколько карточек уже написано в разделе. Ноль означает, что раздел
 /// объявлен, но пуст: экран говорит об этом прямо, а не показывает пустоту.
-int sectionCardCount(ElectricianSection section) =>
-    section == ElectricianSection.learning
-        ? learningTopics.length
-        : cardsOfSection(section).length;
+int sectionCardCount(ElectricianSection section) => switch (section) {
+      ElectricianSection.learning => learningTopics.length,
+      ElectricianSection.diagnostics => diagnosisTrees.length,
+      _ => cardsOfSection(section).length,
+    };
 
 /// Поиск по всем разделам сразу.
 ///

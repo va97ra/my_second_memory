@@ -1,4 +1,5 @@
 import 'package:ezhednevnik_v2/src/features/electrician/electrician.dart';
+import 'package:ezhednevnik_v2/src/features/electrician/ui/widgets/electrician_art_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -135,6 +136,64 @@ void main() {
 
     // Одна тема из двадцати трёх — четыре процента.
     expect(find.text('4 %'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('диагностика ведёт по дереву и доводит до вывода',
+      (tester) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pumpGuide(tester);
+
+    await tester.tap(find.text('Диагностика'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Отключается автомат'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Автомат включается, если отключить от линии всё?'),
+      findsOneWidget,
+    );
+    expect(find.text('Как проверить'), findsOneWidget);
+
+    // «Нет» — значит замыкание в самой проводке: вывод со снятием
+    // напряжения и предупреждением.
+    await tester.tap(find.text('Нет'));
+    await tester.pumpAndSettle();
+    expect(find.text('Короткое замыкание в проводке'), findsOneWidget);
+    expect(
+      find.textContaining('нужна работа со снятием напряжения'),
+      findsOneWidget,
+    );
+
+    // Ответ можно отменить и пойти другой веткой.
+    await tester.tap(find.byIcon(Icons.undo_rounded));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Да'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Нет'));
+    await tester.pumpAndSettle();
+    expect(find.text('Перегрузка суммой нагрузки'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('у инструмента есть рисунок, и он открывается во весь экран',
+      (tester) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pumpGuide(tester);
+
+    await tester.tap(find.text('Инструменты'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ElectricianArtView), findsWidgets);
+
+    await tester.tap(find.text('Отвёртка'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ElectricianArtView), findsWidgets);
+
+    // Последний рисунок — тот, что в открытом листе; первые лежат в
+    // списке позади него.
+    await tester.tap(find.byType(ElectricianArtView).last);
+    await tester.pumpAndSettle();
+    expect(find.byType(InteractiveViewer), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

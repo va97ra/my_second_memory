@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../tool_data/tool_data.dart';
-import 'electrician_symbol_art.dart';
+import 'electrician_art_view.dart';
 
 /// Карточка целиком: три вопроса, документ, пометка о сверке и своя заметка.
 Future<void> showElectricianCardSheet(
@@ -41,10 +41,8 @@ Future<void> showElectricianCardSheet(
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 12),
-                if (electricianSymbolByName(card.symbol) case final symbol?)
-                  Center(
-                    child: _ZoomableSymbol(symbol: symbol),
-                  ),
+                if (hasElectricianArt(card.symbol))
+                  Center(child: _ZoomableArt(name: card.symbol)),
                 _Block(label: strings.cardWhat, value: card.what(ru)),
                 _Block(label: strings.cardPurpose, value: card.purpose),
                 _Block(
@@ -154,10 +152,10 @@ class _Block extends StatelessWidget {
 
 /// Обозначение, которое можно рассмотреть: нажатие открывает его во весь
 /// экран с масштабированием — на схеме важны детали начертания.
-class _ZoomableSymbol extends StatelessWidget {
-  const _ZoomableSymbol({required this.symbol});
+class _ZoomableArt extends StatelessWidget {
+  const _ZoomableArt({required this.name});
 
-  final ElectricianSymbol symbol;
+  final String name;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -171,12 +169,12 @@ class _ZoomableSymbol extends StatelessWidget {
                 maxScale: 6,
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: ElectricianSymbolArt(symbol: symbol, size: 280),
+                  child: ElectricianArtView(name: name, size: 280),
                 ),
               ),
             ),
           ),
-          child: ElectricianSymbolArt(symbol: symbol, size: 120),
+          child: ElectricianArtView(name: name, size: 120),
         ),
       );
 }
