@@ -57,6 +57,16 @@ void main() {
     );
   });
 
+  test('подтверждённое владельцем помечено, остальное — нет', () {
+    final sizing = electricianCards.singleWhere(
+      (card) => card.id == 'wire_section_selection',
+    );
+    // Таблицы допустимого тока подтверждены электриком 1 сентября 2026.
+    expect(sizing.checkedAgainstSource, isTrue);
+    // И даже подтверждённая карточка говорит, чего в таблицах нет.
+    expect(sizing.caution, contains('Кабеля с двумя и тремя жилами'));
+  });
+
   test('порядок действий по безопасности не помечен сверенным', () {
     for (final card in cardsOfSection(ElectricianSection.safety)) {
       expect(card.checkedAgainstSource, isFalse, reason: card.id);
