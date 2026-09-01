@@ -76,8 +76,6 @@ class _WalkSheetState extends State<_WalkSheet> {
               ),
               const SizedBox(height: 12),
               if (node case final DiagnosisQuestion question) ...[
-                Text(question.text(ru), style: theme.textTheme.titleMedium),
-                const SizedBox(height: 12),
                 Card(
                   margin: EdgeInsets.zero,
                   color: theme.colorScheme.surfaceContainerHighest,
@@ -87,32 +85,43 @@ class _WalkSheetState extends State<_WalkSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          strings.howToCheck,
+                          strings.whatToDo,
                           style: theme.textTheme.labelLarge,
                         ),
                         const SizedBox(height: 4),
-                        Text(question.how(ru)),
+                        Text(
+                          question.action(ru),
+                          style: theme.textTheme.bodyLarge,
+                        ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => _answer(question.yes),
-                        child: Text(strings.yes),
-                      ),
+                Text(question.text(ru), style: theme.textTheme.titleMedium),
+                const SizedBox(height: 12),
+                // Кнопки в столбец: исход назван словами, и такая подпись в
+                // половину ширины не помещается.
+                FilledButton(
+                  onPressed: () => _answer(question.yes),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      question.yesLabel(ru),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => _answer(question.no),
-                        child: Text(strings.no),
-                      ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: () => _answer(question.no),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      question.noLabel(ru),
+                      textAlign: TextAlign.center,
                     ),
-                  ],
+                  ),
                 ),
               ],
               if (node case final DiagnosisAnswer answer) ...[

@@ -149,15 +149,18 @@ void main() {
     await tester.tap(find.text('Отключается автомат'));
     await tester.pumpAndSettle();
 
+    // Сперва сказано, что сделать, и только потом — что получилось.
+    expect(find.text('Что сделать'), findsOneWidget);
     expect(
-      find.text('Автомат включается, если отключить от линии всё?'),
+      find.textContaining('Выньте из розеток линии все вилки'),
       findsOneWidget,
     );
-    expect(find.text('Как проверить'), findsOneWidget);
+    expect(find.text('Что делает автомат?'), findsOneWidget);
+    // Кнопки названы исходом, а не «да» и «нет».
+    expect(find.text('Да'), findsNothing);
+    expect(find.text('Держит, не выключается'), findsOneWidget);
 
-    // «Нет» — значит замыкание в самой проводке: вывод со снятием
-    // напряжения и предупреждением.
-    await tester.tap(find.text('Нет'));
+    await tester.tap(find.text('Сразу выключается'));
     await tester.pumpAndSettle();
     expect(find.text('Короткое замыкание в проводке'), findsOneWidget);
     expect(
@@ -168,9 +171,9 @@ void main() {
     // Ответ можно отменить и пойти другой веткой.
     await tester.tap(find.byIcon(Icons.undo_rounded));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Да'));
+    await tester.tap(find.text('Держит, не выключается'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Нет'));
+    await tester.tap(find.text('Когда работают несколько сразу'));
     await tester.pumpAndSettle();
     expect(find.text('Перегрузка суммой нагрузки'), findsOneWidget);
     expect(tester.takeException(), isNull);

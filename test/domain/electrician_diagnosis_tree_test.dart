@@ -10,7 +10,12 @@ void main() {
         if (node is DiagnosisQuestion) {
           expect(ids, contains(node.yes), reason: '${tree.id}/${node.id} да');
           expect(ids, contains(node.no), reason: '${tree.id}/${node.id} нет');
-          expect(node.howRu, isNotEmpty, reason: node.id);
+          expect(node.actionRu, isNotEmpty, reason: node.id);
+          expect(node.yesLabelRu, isNotEmpty, reason: node.id);
+          expect(node.noLabelRu, isNotEmpty, reason: node.id);
+          // Исход назван словами: «да» и «нет» ничего не сообщают.
+          expect(node.yesLabelRu.toLowerCase(), isNot('да'), reason: node.id);
+          expect(node.noLabelRu.toLowerCase(), isNot('нет'), reason: node.id);
         }
       }
     }

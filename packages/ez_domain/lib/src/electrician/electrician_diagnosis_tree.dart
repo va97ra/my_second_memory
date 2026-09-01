@@ -1,9 +1,9 @@
 /// Поиск причины неисправности деревом вопросов.
 ///
-/// Каждый вопрос отвечается «да» или «нет» и приводит либо к следующему
-/// вопросу, либо к выводу. Вопросы устроены так, чтобы на них можно было
-/// ответить **не вскрывая установку**: переставить прибор, посмотреть на
-/// щит, сравнить с соседней точкой. Вывод, требующий работы со снятием
+/// Шаг говорит, что сделать, и предлагает два исхода, названные словами:
+/// «Работает» и «Тоже не работает», а не «да» и «нет». Всё, что предлагается
+/// сделать, делается **не вскрывая установку**: переставить прибор,
+/// посмотреть на щит, сравнить с соседней точкой. Вывод, требующий работы со снятием
 /// напряжения или квалификации, помечен и заканчивается тем, что делать
 /// дальше — а не тем, как чинить.
 ///
@@ -20,31 +20,50 @@ sealed class DiagnosisNode {
   final String id;
 }
 
-/// Вопрос, на который отвечают «да» или «нет».
+/// Шаг проверки: что сделать, на что смотреть и два исхода.
+///
+/// Исходы названы словами — «УЗО включилось», «Сразу выключается», — а не
+/// «да» и «нет». «Да» отвечает на вопрос, который человек ещё не проверял,
+/// и после него непонятно, да к чему именно.
 class DiagnosisQuestion extends DiagnosisNode {
   const DiagnosisQuestion({
     required String id,
+    required this.actionRu,
+    required this.actionEn,
     required this.textRu,
     required this.textEn,
-    required this.howRu,
-    required this.howEn,
+    required this.yesLabelRu,
+    required this.yesLabelEn,
+    required this.noLabelRu,
+    required this.noLabelEn,
     required this.yes,
     required this.no,
   }) : super(id);
 
+  /// Что сделать — повелительным наклонением, без вскрытия установки.
+  final String actionRu;
+  final String actionEn;
+
+  /// На что после этого смотреть.
   final String textRu;
   final String textEn;
 
-  /// Как проверить, не вскрывая установку.
-  final String howRu;
-  final String howEn;
+  /// Первый исход и его подпись на кнопке.
+  final String yesLabelRu;
+  final String yesLabelEn;
+
+  /// Второй исход.
+  final String noLabelRu;
+  final String noLabelEn;
 
   /// Идентификаторы следующих узлов.
   final String yes;
   final String no;
 
+  String action(bool ru) => ru ? actionRu : actionEn;
   String text(bool ru) => ru ? textRu : textEn;
-  String how(bool ru) => ru ? howRu : howEn;
+  String yesLabel(bool ru) => ru ? yesLabelRu : yesLabelEn;
+  String noLabel(bool ru) => ru ? noLabelRu : noLabelEn;
 }
 
 /// Вывод: что это означает и что делать.
@@ -101,32 +120,45 @@ const diagnosisTrees = <DiagnosisTree>[
     nodes: [
       DiagnosisQuestion(
         id: 'socket_device',
-        textRu: 'Прибор работает в другой, заведомо исправной розетке?',
-        textEn: 'Does the device work in another socket known to be good?',
-        howRu: 'Переставить прибор в розетку, которая точно работает.',
-        howEn: 'Move the device to a socket that certainly works.',
+        actionRu: 'Возьмите прибор и включите его в другую розетку — ту, '
+            'которая точно работает.',
+        actionEn: 'Take the device and plug it into another socket — one that '
+            'certainly works.',
+        textRu: 'Что делает прибор в исправной розетке?',
+        textEn: 'What does the device do in the good socket?',
+        yesLabelRu: 'Работает',
+        yesLabelEn: 'It works',
+        noLabelRu: 'Тоже не работает',
+        noLabelEn: 'It does not work either',
         yes: 'socket_breaker',
         no: 'socket_answer_device',
       ),
       DiagnosisQuestion(
         id: 'socket_breaker',
-        textRu: 'В щите все аппараты этой линии включены?',
-        textEn: 'Are all devices of this line switched on in the board?',
-        howRu: 'Посмотреть на щит: рукоятки автоматов и УЗО в верхнем '
-            'положении, флажки не сброшены.',
-        howEn: 'Look at the board: breaker and RCD handles up, no tripped '
-            'flags.',
+        actionRu: 'Подойдите к щиту и посмотрите на автоматы и УЗО этой линии.',
+        actionEn: 'Go to the board and look at the breakers and RCDs of this '
+            'line.',
+        textRu: 'В каком они положении?',
+        textEn: 'What position are they in?',
+        yesLabelRu: 'Все включены',
+        yesLabelEn: 'All switched on',
+        noLabelRu: 'Какой-то выключен или сброшен',
+        noLabelEn: 'One is off or tripped',
         yes: 'socket_neighbours',
         no: 'socket_answer_protection',
       ),
       DiagnosisQuestion(
         id: 'socket_neighbours',
-        textRu: 'Соседние розетки этой же линии работают?',
-        textEn: 'Do the neighbouring sockets on the same line work?',
-        howRu: 'Проверить лампой или заведомо рабочим прибором соседние '
-            'точки той же группы.',
-        howEn: 'Check neighbouring points of the same group with a lamp or a '
-            'device known to work.',
+        actionRu: 'Включите лампу или заведомо рабочий прибор в соседние '
+            'розетки той же группы.',
+        actionEn: 'Plug a lamp or a device known to work into the '
+            'neighbouring sockets of the same group.',
+        textRu: 'Что в соседних розетках?',
+        textEn: 'What happens in them?',
+        yesLabelRu: 'Работают',
+        yesLabelEn: 'They work',
+        noLabelRu: 'Тоже не работают',
+        noLabelEn: 'They do not work either',
         yes: 'socket_answer_point',
         no: 'socket_answer_line',
       ),
@@ -184,30 +216,42 @@ const diagnosisTrees = <DiagnosisTree>[
     nodes: [
       DiagnosisQuestion(
         id: 'light_lamp',
-        textRu: 'С заведомо рабочей лампой свет появился?',
-        textEn: 'Does the light come on with a lamp known to work?',
-        howRu: 'Заменить лампу на исправную. Менять при выключенном '
-            'выключателе, а лучше при обесточенной линии.',
-        howEn: 'Fit a working lamp, with the switch off — better with the '
-            'line dead.',
+        actionRu: 'Выключите выключатель и поставьте заведомо рабочую лампу. '
+            'Менять лучше при обесточенной линии.',
+        actionEn: 'Switch the light off and fit a lamp known to work — better '
+            'with the line dead.',
+        textRu: 'Что со светом после замены?',
+        textEn: 'What does the light do now?',
+        yesLabelRu: 'Загорелся',
+        yesLabelEn: 'It lights up',
+        noLabelRu: 'Не загорелся',
+        noLabelEn: 'Still dark',
         yes: 'light_answer_lamp',
         no: 'light_breaker',
       ),
       DiagnosisQuestion(
         id: 'light_breaker',
-        textRu: 'Автомат линии освещения включён?',
-        textEn: 'Is the lighting breaker on?',
-        howRu: 'Посмотреть на щит.',
-        howEn: 'Look at the board.',
+        actionRu: 'Посмотрите в щите на автомат линии освещения.',
+        actionEn: 'Look at the lighting breaker in the board.',
+        textRu: 'В каком он положении?',
+        textEn: 'What position is it in?',
+        yesLabelRu: 'Включён',
+        yesLabelEn: 'Switched on',
+        noLabelRu: 'Выключен или сброшен',
+        noLabelEn: 'Off or tripped',
         yes: 'light_others',
         no: 'light_answer_protection',
       ),
       DiagnosisQuestion(
         id: 'light_others',
-        textRu: 'Свет в других помещениях этой линии есть?',
-        textEn: 'Is there light elsewhere on the same line?',
-        howRu: 'Включить свет в соседних комнатах той же группы.',
-        howEn: 'Switch on the light in neighbouring rooms of the group.',
+        actionRu: 'Включите свет в других комнатах этой же линии.',
+        actionEn: 'Switch on the light in other rooms of the same line.',
+        textRu: 'Что там со светом?',
+        textEn: 'What happens there?',
+        yesLabelRu: 'Горит',
+        yesLabelEn: 'It lights up',
+        noLabelRu: 'Тоже не горит',
+        noLabelEn: 'Dark there too',
         yes: 'light_answer_local',
         no: 'light_answer_line',
       ),
@@ -262,21 +306,31 @@ const diagnosisTrees = <DiagnosisTree>[
     nodes: [
       DiagnosisQuestion(
         id: 'breaker_empty',
-        textRu: 'Автомат включается, если отключить от линии всё?',
-        textEn: 'Does the breaker hold with everything unplugged?',
-        howRu: 'Вынуть из розеток линии все вилки, выключить светильники и '
-            'попробовать включить автомат.',
-        howEn: 'Unplug everything on the line, switch the lights off and try '
-            'the breaker.',
+        actionRu: 'Выньте из розеток линии все вилки, выключите светильники и '
+            'включите автомат.',
+        actionEn: 'Unplug everything on the line, switch the lights off and '
+            'put the breaker back on.',
+        textRu: 'Что делает автомат?',
+        textEn: 'What does the breaker do?',
+        yesLabelRu: 'Держит, не выключается',
+        yesLabelEn: 'It holds',
+        noLabelRu: 'Сразу выключается',
+        noLabelEn: 'It trips at once',
         yes: 'breaker_one_device',
         no: 'breaker_answer_short',
       ),
       DiagnosisQuestion(
         id: 'breaker_one_device',
-        textRu: 'Отключается при включении одного определённого прибора?',
-        textEn: 'Does it trip when one particular device is switched on?',
-        howRu: 'Подключать приборы по одному и следить, на каком отключится.',
-        howEn: 'Plug the devices in one by one and see which one trips it.',
+        actionRu: 'Включайте приборы по одному и смотрите, на каком автомат '
+            'выключится.',
+        actionEn: 'Switch the devices on one by one and watch which one trips '
+            'the breaker.',
+        textRu: 'Когда автомат выключается?',
+        textEn: 'When does it trip?',
+        yesLabelRu: 'На одном определённом приборе',
+        yesLabelEn: 'On one particular device',
+        noLabelRu: 'Когда работают несколько сразу',
+        noLabelEn: 'When several run together',
         yes: 'breaker_answer_device',
         no: 'breaker_answer_overload',
       ),
@@ -325,30 +379,42 @@ const diagnosisTrees = <DiagnosisTree>[
     nodes: [
       DiagnosisQuestion(
         id: 'rcd_empty',
-        textRu: 'УЗО включается, когда все приборы линии отключены?',
-        textEn: 'Does the RCD hold with all devices unplugged?',
-        howRu: 'Отключить от линии всё и попробовать включить УЗО.',
-        howEn: 'Unplug everything on the line and try the RCD.',
+        actionRu: 'Отключите от линии все приборы и включите УЗО.',
+        actionEn: 'Unplug everything on the line and switch the RCD on.',
+        textRu: 'Что делает УЗО?',
+        textEn: 'What does the RCD do?',
+        yesLabelRu: 'Включилось и держит',
+        yesLabelEn: 'It holds',
+        noLabelRu: 'Сразу выключается',
+        noLabelEn: 'It trips at once',
         yes: 'rcd_one_device',
         no: 'rcd_answer_wiring',
       ),
       DiagnosisQuestion(
         id: 'rcd_one_device',
-        textRu: 'Срабатывает при включении определённого прибора?',
-        textEn: 'Does it trip on one particular device?',
-        howRu: 'Подключать приборы по одному.',
-        howEn: 'Plug the devices in one by one.',
+        actionRu: 'Включайте приборы по одному.',
+        actionEn: 'Switch the devices on one by one.',
+        textRu: 'Когда УЗО выключается?',
+        textEn: 'When does the RCD trip?',
+        yesLabelRu: 'На одном определённом приборе',
+        yesLabelEn: 'On one particular device',
+        noLabelRu: 'Ни на одном — выключается само',
+        noLabelEn: 'On none — it trips by itself',
         yes: 'rcd_answer_device',
         no: 'rcd_water',
       ),
       DiagnosisQuestion(
         id: 'rcd_water',
-        textRu: 'Срабатывает в сырую погоду или когда идёт вода?',
-        textEn: 'Does it trip in damp weather or when water runs?',
-        howRu: 'Сопоставить срабатывания с погодой и с работой воды: '
+        actionRu: 'Вспомните, когда оно выключалось: в дождь, при включении '
             'бойлера, стиральной машины, полива.',
-        howEn: 'Match the trips with the weather and with water use: a '
-            'heater, a washing machine, watering.',
+        actionEn: 'Recall when it tripped: in the rain, when a water heater, '
+            'a washing machine or watering started.',
+        textRu: 'Совпадает ли это с водой или сыростью?',
+        textEn: 'Does that match water or damp?',
+        yesLabelRu: 'Да, совпадает',
+        yesLabelEn: 'Yes, it matches',
+        noLabelRu: 'Нет, без всякой связи',
+        noLabelEn: 'No connection at all',
         yes: 'rcd_answer_moisture',
         no: 'rcd_answer_intermittent',
       ),
@@ -410,24 +476,35 @@ const diagnosisTrees = <DiagnosisTree>[
     nodes: [
       DiagnosisQuestion(
         id: 'heat_point',
-        textRu: 'Греется именно точка подключения, а не кабель по длине?',
-        textEn: 'Is it the connection point that heats, not the cable along '
-            'its length?',
-        howRu: 'Снять нагрузку, дать остыть и осторожно сравнить нагрев '
-            'корпуса розетки и кабеля рядом. Ничего не разбирая.',
-        howEn: 'Remove the load, let it cool and compare the socket body '
-            'with the nearby cable — without opening anything.',
+        actionRu: 'Отключите нагрузку, дайте остыть и осторожно, тыльной '
+            'стороной руки, сравните нагрев корпуса розетки и кабеля рядом. '
+            'Ничего не разбирайте.',
+        actionEn: 'Remove the load, let it cool and carefully compare the '
+            'socket body with the nearby cable, using the back of your hand. '
+            'Open nothing.',
+        textRu: 'Что горячее?',
+        textEn: 'Which is hotter?',
+        yesLabelRu: 'Сама розетка или зажим',
+        yesLabelEn: 'The socket or the terminal',
+        noLabelRu: 'Кабель по всей длине',
+        noLabelEn: 'The cable along its length',
         yes: 'heat_answer_contact',
         no: 'heat_load',
       ),
       DiagnosisQuestion(
         id: 'heat_load',
-        textRu: 'Нагрузка линии близка к номиналу автомата?',
-        textEn: 'Is the line load close to the breaker rating?',
-        howRu: 'Сложить мощности включённых приборов и сравнить с номиналом '
-            'автомата — расчёт мощности есть в Инженерке.',
-        howEn: 'Add up the connected loads and compare with the breaker '
-            'rating — the power calculation is in the engineering tab.',
+        actionRu: 'Сложите мощности приборов, которые работали на линии, и '
+            'сравните с номиналом автомата — расчёт мощности есть в '
+            'Инженерке.',
+        actionEn: 'Add up the power of the devices that were running and '
+            'compare with the breaker rating — the power calculation is in '
+            'the engineering tab.',
+        textRu: 'Насколько нагрузка близка к номиналу автомата?',
+        textEn: 'How close is the load to the breaker rating?',
+        yesLabelRu: 'Близка или выше',
+        yesLabelEn: 'Close or above',
+        noLabelRu: 'Заметно меньше',
+        noLabelEn: 'Well below',
         yes: 'heat_answer_overload',
         no: 'heat_answer_specialist',
       ),

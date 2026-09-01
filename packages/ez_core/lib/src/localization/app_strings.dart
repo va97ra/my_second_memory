@@ -106,9 +106,7 @@ class AppStrings {
       isRu ? 'Уровень $number' : 'Level $number';
   String get markLearned => isRu ? 'Тема пройдена' : 'Mark as learned';
   String get answerRight => isRu ? 'Правильно' : 'Correct';
-  String get yes => isRu ? 'Да' : 'Yes';
-  String get no => isRu ? 'Нет' : 'No';
-  String get howToCheck => isRu ? 'Как проверить' : 'How to check';
+  String get whatToDo => isRu ? 'Что сделать' : 'What to do';
   String get startOver => isRu ? 'Начать заново' : 'Start over';
   String get callSpecialist => isRu
       ? 'Дальше нужна работа со снятием напряжения и право на неё'
