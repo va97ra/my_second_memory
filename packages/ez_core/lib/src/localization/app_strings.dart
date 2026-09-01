@@ -102,6 +102,8 @@ class AppStrings {
   String get cardWhat => isRu ? 'Что это' : 'What it is';
   String get example => isRu ? 'Пример' : 'Example';
   String get learned => isRu ? 'Изучено' : 'Learned';
+  String levelTitle(int number) =>
+      isRu ? 'Уровень $number' : 'Level $number';
   String get markLearned => isRu ? 'Тема пройдена' : 'Mark as learned';
   String get answerRight => isRu ? 'Правильно' : 'Correct';
   String get answerWrong => isRu ? 'Неправильно' : 'Not quite';

@@ -59,38 +59,64 @@ class ElectricianLearningList extends ConsumerWidget {
         Expanded(
           child: topics.isEmpty
               ? Center(child: Text(strings.nothingFound))
-              : ListView.separated(
+              : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  itemCount: topics.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final topic = topics[index];
-                    final done = passed.contains(topic.id);
-                    return Card(
-                      margin: EdgeInsets.zero,
-                      child: ListTile(
-                        leading: Icon(
-                          done
-                              ? Icons.check_circle_rounded
-                              : Icons.circle_outlined,
-                          color: done
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.outline,
+                  children: [
+                    for (final level in learningLevels)
+                      if (topics.any((topic) => topic.level == level)) ...[
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 12, 4, 6),
+                          child: Text(
+                            strings.levelTitle(level).toUpperCase(),
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(letterSpacing: 1.2),
+                          ),
                         ),
-                        title: Text(topic.title(ru)),
-                        subtitle: Text(
-                          topic.explanation(ru),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Text('${topic.quiz.length}'),
-                        onTap: () => showLearningTopicSheet(context, topic),
-                      ),
-                    );
-                  },
+                        for (final topic in topics)
+                          if (topic.level == level)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _TopicTile(
+                                topic: topic,
+                                done: passed.contains(topic.id),
+                              ),
+                            ),
+                      ],
+                  ],
                 ),
         ),
       ],
+    );
+  }
+}
+
+class _TopicTile extends StatelessWidget {
+  const _TopicTile({required this.topic, required this.done});
+
+  final LearningTopic topic;
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) {
+    final ru = AppStrings.of(context).isRu;
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ListTile(
+        leading: Icon(
+          done ? Icons.check_circle_rounded : Icons.circle_outlined,
+          color: done ? scheme.primary : scheme.outline,
+        ),
+        title: Text(topic.title(ru)),
+        subtitle: Text(
+          topic.explanation(ru),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        onTap: () => showLearningTopicSheet(context, topic),
+      ),
     );
   }
 }

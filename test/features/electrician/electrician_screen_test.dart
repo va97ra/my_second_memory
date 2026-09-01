@@ -38,7 +38,7 @@ void main() {
     // Пустых разделов не осталось: у каждой плитки есть счёт.
     expect(find.text('Раздел ещё не наполнен'), findsNothing);
     expect(find.text('19 карточек'), findsOneWidget);
-    expect(find.text('6 карточек'), findsOneWidget);
+    expect(find.text('23 карточек'), findsOneWidget);
   });
 
   testWidgets('карточка отвечает на три вопроса и называет документ',
@@ -98,6 +98,10 @@ void main() {
     await tester.tap(find.text('Обучение'));
     await tester.pumpAndSettle();
     expect(find.text('0 %'), findsOneWidget);
+    // Темы идут уровнями, как в задании. Дальние уровни лежат ниже сгиба,
+    // поэтому проверяется первый и то, что заголовок уровня не один.
+    expect(find.text('УРОВЕНЬ 1'), findsOneWidget);
+    expect(find.textContaining('УРОВЕНЬ '), findsWidgets);
 
     await tester.tap(find.text('Что такое электрический ток'));
     await tester.pumpAndSettle();
@@ -129,7 +133,8 @@ void main() {
     await tester.tap(done);
     await tester.pumpAndSettle();
 
-    expect(find.text('17 %'), findsOneWidget);
+    // Одна тема из двадцати трёх — четыре процента.
+    expect(find.text('4 %'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
