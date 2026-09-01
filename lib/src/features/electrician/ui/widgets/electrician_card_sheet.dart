@@ -45,11 +45,7 @@ Future<void> showElectricianCardSheet(
                   Center(child: _ZoomableArt(name: card.symbol)),
                 _Block(label: strings.cardWhat, value: card.what(ru)),
                 _Block(label: strings.cardPurpose, value: card.purpose),
-                _Block(
-                  label: strings.cardCaution,
-                  value: card.caution,
-                  tone: _Tone.caution,
-                ),
+                _Block(label: strings.cardCaution, value: card.caution),
                 _Block(
                   label: strings.source,
                   value: card.edition.isEmpty
@@ -94,7 +90,7 @@ Future<void> showElectricianCardSheet(
   note.dispose();
 }
 
-enum _Tone { plain, caution, unchecked }
+enum _Tone { plain, unchecked }
 
 class _Block extends StatelessWidget {
   const _Block({
@@ -116,7 +112,6 @@ class _Block extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       color: switch (tone) {
         _Tone.plain => null,
-        _Tone.caution => scheme.tertiaryContainer,
         _Tone.unchecked => scheme.errorContainer,
       },
       child: Padding(

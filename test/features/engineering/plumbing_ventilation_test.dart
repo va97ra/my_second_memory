@@ -72,11 +72,21 @@ void main() {
     // 500 м³/ч на 20 °C требуют около 3,35 кВт.
     expect(find.text('3.35 кВт'), findsOneWidget);
 
-    await pickMode(tester, 'По людям');
-    // Четыре человека по 60 м³/ч — 240 м³/ч, и норма названа документом.
+    // Помещение спрашивают один раз, а считать от него можно тремя
+    // способами. Комната 5 × 4 при высоте 3 и кратности 2 — 120 м³/ч.
+    await pickMode(tester, 'Воздухообмен');
+    expect(find.text('120 м³/ч'), findsOneWidget);
+    expect(find.textContaining('Площадь: 20 м²'), findsOneWidget);
+
+    await tester.tap(find.text('По людям'));
+    await tester.pumpAndSettle();
     expect(find.text('240 м³/ч'), findsOneWidget);
-    // Документ назван дважды: подсказкой под полем и строкой под ответом.
-    expect(find.textContaining('СП 60.13330.2020'), findsNWidgets(2));
+    expect(find.textContaining('Площадь: 20 м²'), findsOneWidget);
+
+    // По площади: 20 м² по 3 м³/ч на метр — 60 м³/ч.
+    await tester.tap(find.text('По площади'));
+    await tester.pumpAndSettle();
+    expect(find.text('60 м³/ч'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

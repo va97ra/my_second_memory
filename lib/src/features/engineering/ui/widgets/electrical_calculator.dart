@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'electrical_input_grid.dart';
 import 'electrical_mode.dart';
 import 'electrical_output_panel.dart';
-import 'engineering_disclaimer.dart';
 import 'engineering_mode_picker.dart';
 import 'engineering_helpers.dart';
 import 'engineering_network_section.dart';
@@ -83,8 +82,6 @@ class _ElectricalState extends ConsumerState<ElectricalCalculator> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ...children,
-          const SizedBox(height: 12),
-          const EngineeringDisclaimer(),
         ],
       );
 

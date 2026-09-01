@@ -82,9 +82,6 @@ class AppStrings {
   String get personalNote => isRu ? 'Личная заметка' : 'Personal note';
   String get invalidNumber =>
       isRu ? 'Введите корректное число' : 'Enter a valid number';
-  String get engineeringDisclaimer => isRu
-      ? 'Расчёт показывает исходные условия и не заменяет проект, нормы и документацию оборудования.'
-      : 'The calculation shows its assumptions and does not replace a project, codes or equipment documentation.';
   // Учебник электрика. Разделы главного экрана и подписи карточки.
   String get electricianGuide => isRu ? 'Учебник' : 'Guide';
   String get nothingFound => isRu ? 'Ничего не найдено' : 'Nothing found';
@@ -119,9 +116,6 @@ class AppStrings {
   String get notCheckedAgainstSource => isRu
       ? 'Содержание не сверено по тексту документа'
       : 'The text has not been checked against the source document';
-  String get electricianDisclaimer => isRu
-      ? 'Справочник объясняет устройство и понятия. Он не даёт допуска к работам и не заменяет обучение, группу по электробезопасности и проект.'
-      : 'This reference explains concepts and equipment. It grants no permit to work and replaces neither training nor a design.';
 
   // Величины конвертера. Те же слова служат подписями в инженерных расчётах:
   // «Расход» и «Давление» — одно понятие, и строка у него одна.
@@ -159,6 +153,7 @@ class AppStrings {
   String get threePhaseSystem =>
       isRu ? 'Трёхфазная сеть' : 'Three-phase system';
   String get loss => isRu ? 'Потери' : 'Loss';
+  String get phaseImbalance => isRu ? 'Перекос' : 'Imbalance';
   String get loadsSeparatedByCommas =>
       isRu ? 'Нагрузки через запятую, Вт' : 'Loads separated by commas, W';
   String get conductorMaterial => isRu ? 'Материал жилы' : 'Conductor material';
@@ -201,9 +196,6 @@ class AppStrings {
   String get noSectionFitsLimit => isRu
       ? 'В ряду подходящего сечения нет: делить линию или менять напряжение'
       : 'No section in the series fits: split the line or change the voltage';
-  String get voltageDropUnverifiedWarning => isRu
-      ? 'Реактивное сопротивление взято по способу прокладки и ещё не сверено с нормами. Перед монтажом проверьте результат по паспорту кабеля.'
-      : 'Reactance is taken from the installation method and has not been checked against the codes yet. Verify the result against the cable data sheet before installation.';
 
   // Подсказки под полями: короткая строка о том, что вводят и откуда берут.
   String get hintVoltage =>
@@ -266,6 +258,14 @@ class AppStrings {
   String get slope => isRu ? 'Уклон' : 'Slope';
   String get heater => isRu ? 'Нагрев' : 'Heating';
   String get byPeople => isRu ? 'По людям' : 'By occupancy';
+  String get byArea => isRu ? 'По площади' : 'By floor area';
+  String get byAirChanges => isRu ? 'По кратности' : 'By air changes';
+  String get roomSection => isRu ? 'Помещение' : 'Room';
+  String get airBasis => isRu ? 'От чего считать' : 'What to count from';
+  String get airPerSquareMetre =>
+      isRu ? 'Норма на м² пола' : 'Rate per m² of floor';
+  String get hintAirPerSquareMetre =>
+      isRu ? 'Из СП 60.13330.2020, прил. В' : 'From the ventilation code';
   String get ventilationRateSource => isRu
       ? 'СП 60.13330.2020, приложение В — норму задаёте вы, приложение её не знает'
       : 'The rate comes from the ventilation code and is entered by you';

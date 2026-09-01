@@ -29,33 +29,22 @@ class VentilationOutputPanel extends ConsumerWidget {
       required this.deltaTemperature,
       required this.people,
       required this.perPerson,
+      required this.perSquareMetre,
+      required this.basis,
       super.key});
 
   final VentilationMode mode;
   final String flow, width, height, velocity;
   final String roomLength, roomWidth, roomHeight, ach;
   final String deltaTemperature;
-  final String people, perPerson;
+  final String people, perPerson, perSquareMetre;
+  final RoomAirBasis basis;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
     final ru = strings.isRu;
     try {
-      if (mode == VentilationMode.people) {
-        final count = parseToolNumber(people);
-        final rate = parseToolNumber(perPerson);
-        if (count == null || rate == null) throw const FormatException();
-        final required =
-            airFlowForPeopleM3h(people: count, perPersonM3h: rate);
-        return _output(
-            context,
-            ref,
-            formatEngValue(required, EngUnit.cubicMetrePerHour, ru),
-            'airForPeople',
-            {'people': count, 'perPersonM3h': rate},
-            ['${strings.source}: ${strings.ventilationRateSource}']);
-      }
       if (mode == VentilationMode.heater) {
         final flowM3h = parseToolNumber(flow);
         final delta = parseToolNumber(deltaTemperature);
@@ -105,29 +94,79 @@ class VentilationOutputPanel extends ConsumerWidget {
               '${_standardDuct(strings, round * 1000, ru)}',
         ]);
       }
-      final lengthM = parseToolNumber(roomLength),
-          widthM = parseToolNumber(roomWidth),
-          heightM = parseToolNumber(roomHeight),
-          changes = parseToolNumber(ach);
-      if (lengthM == null ||
-          widthM == null ||
-          heightM == null ||
-          changes == null) {
-        throw const FormatException();
+      final lengthM = parseToolNumber(roomLength);
+      final widthM = parseToolNumber(roomWidth);
+      if (lengthM == null || widthM == null) throw const FormatException();
+      final areaM2 = lengthM * widthM;
+      final area = '${strings.area}: '
+          '${formatEngValue(areaM2, EngUnit.metreSquared, ru)}';
+      switch (basis) {
+        case RoomAirBasis.changes:
+          final heightM = parseToolNumber(roomHeight);
+          final changes = parseToolNumber(ach);
+          if (heightM == null || changes == null) {
+            throw const FormatException();
+          }
+          final airflow = EngineeringCalculations.airFlowForRoom(
+            lengthM: lengthM,
+            widthM: widthM,
+            heightM: heightM,
+            airChangesPerHour: changes,
+          );
+          return _output(
+              context,
+              ref,
+              formatEngValue(airflow, EngUnit.cubicMetrePerHour, ru),
+              'airExchange',
+              {
+                'lengthM': lengthM,
+                'widthM': widthM,
+                'heightM': heightM,
+                'airChangesPerHour': changes,
+              },
+              [
+                area,
+                '${strings.volume}: '
+                    '${formatToolNumber(areaM2 * heightM, precision: 2)}'
+                    ' ${EngUnit.metreSquared.symbol(ru)}·${EngUnit.metre.symbol(ru)}',
+              ]);
+        case RoomAirBasis.people:
+          final count = parseToolNumber(people);
+          final rate = parseToolNumber(perPerson);
+          if (count == null || rate == null) throw const FormatException();
+          final airflow =
+              airFlowForPeopleM3h(people: count, perPersonM3h: rate);
+          return _output(
+              context,
+              ref,
+              formatEngValue(airflow, EngUnit.cubicMetrePerHour, ru),
+              'airForPeople',
+              {
+                'lengthM': lengthM,
+                'widthM': widthM,
+                'people': count,
+                'perPersonM3h': rate,
+              },
+              [area, '${strings.source}: ${strings.ventilationRateSource}']);
+        case RoomAirBasis.area:
+          final rate = parseToolNumber(perSquareMetre);
+          if (rate == null) throw const FormatException();
+          final airflow = airFlowForAreaM3h(
+            areaM2: areaM2,
+            perSquareMetreM3h: rate,
+          );
+          return _output(
+              context,
+              ref,
+              formatEngValue(airflow, EngUnit.cubicMetrePerHour, ru),
+              'airForArea',
+              {
+                'lengthM': lengthM,
+                'widthM': widthM,
+                'perSquareMetreM3h': rate,
+              },
+              [area, '${strings.source}: ${strings.ventilationRateSource}']);
       }
-      final airflow = EngineeringCalculations.airFlowForRoom(
-          lengthM: lengthM,
-          widthM: widthM,
-          heightM: heightM,
-          airChangesPerHour: changes);
-      return _output(
-          context, ref, formatEngValue(airflow, EngUnit.cubicMetrePerHour, ru),
-          'airExchange', {
-        'lengthM': lengthM,
-        'widthM': widthM,
-        'heightM': heightM,
-        'airChangesPerHour': changes
-      }, const []);
     } catch (_) {
       return ToolResultCard(value: AppStrings.of(context).invalidNumber);
     }

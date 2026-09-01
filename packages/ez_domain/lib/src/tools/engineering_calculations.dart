@@ -47,6 +47,28 @@ class DuctResult {
   final double equivalentDiameterM;
 }
 
+/// Раскладка нагрузок по фазам: что на какой фазе и сколько всего.
+class PhaseBalance {
+  const PhaseBalance({required this.loads, required this.totals});
+
+  /// Нагрузки каждой фазы в порядке L1, L2, L3.
+  final List<List<double>> loads;
+
+  /// Сумма по каждой фазе.
+  final List<double> totals;
+
+  /// Перекос: насколько самая нагруженная фаза тяжелее самой лёгкой, в долях
+  /// от средней. Ноль — нагрузка разложена поровну.
+  double get imbalance {
+    final sum = totals.fold<double>(0, (value, item) => value + item);
+    if (sum == 0) return 0;
+    final average = sum / totals.length;
+    final heaviest = totals.reduce((a, b) => a > b ? a : b);
+    final lightest = totals.reduce((a, b) => a < b ? a : b);
+    return (heaviest - lightest) / average;
+  }
+}
+
 class EngineeringCalculations {
   const EngineeringCalculations._();
 
@@ -206,21 +228,49 @@ class EngineeringCalculations {
     return lengthM * widthM * heightM * airChangesPerHour;
   }
 
-  static List<double> balancePhases(List<double> loadsW) {
+  /// Раскладка однофазных нагрузок по трём фазам.
+  ///
+  /// Возвращает не только суммы, но и сами нагрузки на каждой фазе: ответ
+  /// «на L3 — 2000 Вт» ничего не говорит монтажнику, а «на L3 — 1200 и 800»
+  /// говорит, что именно вешать.
+  ///
+  /// Нагрузки раскладываются от большей к меньшей, каждая — на самую лёгкую
+  /// фазу. Это не идеальное разбиение, но именно так раскидывают руками, и
+  /// перекос получается небольшой.
+  static PhaseBalance balancePhases(List<double> loadsW) {
     for (final load in loadsW) {
       nonNegativeValue(load, 'load');
     }
-    final phases = [0.0, 0.0, 0.0];
+    final phases = <List<double>>[[], [], []];
+    final totals = [0.0, 0.0, 0.0];
     final sorted = [...loadsW]..sort((a, b) => b.compareTo(a));
     for (final load in sorted) {
       var lightest = 0;
-      for (var index = 1; index < phases.length; index++) {
-        if (phases[index] < phases[lightest]) lightest = index;
+      for (var index = 1; index < totals.length; index++) {
+        if (totals[index] < totals[lightest]) lightest = index;
       }
-      phases[lightest] += load;
+      phases[lightest].add(load);
+      totals[lightest] += load;
     }
-    return phases;
+    return PhaseBalance(
+      loads: [for (final phase in phases) List<double>.unmodifiable(phase)],
+      totals: List<double>.unmodifiable(totals),
+    );
   }
+}
+
+/// Расход наружного воздуха по площади помещения, м³/ч.
+///
+/// Норма на квадратный метр пола зависит от назначения помещения и от того,
+/// есть ли естественное проветривание; её значения — в СП 60.13330.2020,
+/// приложение В, и вводит их человек.
+double airFlowForAreaM3h({
+  required double areaM2,
+  required double perSquareMetreM3h,
+}) {
+  nonNegativeValue(areaM2, 'areaM2');
+  nonNegativeValue(perSquareMetreM3h, 'perSquareMetreM3h');
+  return areaM2 * perSquareMetreM3h;
 }
 
 /// Расход наружного воздуха на группу людей, м³/ч.

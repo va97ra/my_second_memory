@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../state/voltage_drop_query.dart';
 import 'engineering_choice.dart';
-import 'engineering_disclaimer.dart';
 import 'engineering_helpers.dart';
 import 'engineering_section.dart';
 import 'voltage_drop_line_section.dart';
@@ -81,8 +80,6 @@ class _VoltageDropCalculatorState extends State<VoltageDropCalculator> {
         ),
         const SizedBox(height: 12),
         VoltageDropOutputPanel(input: _read(strings)),
-        const SizedBox(height: 12),
-        EngineeringDisclaimer(message: strings.voltageDropUnverifiedWarning),
       ],
     );
   }

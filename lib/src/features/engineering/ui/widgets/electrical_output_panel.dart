@@ -97,27 +97,58 @@ class ElectricalOutputPanel extends ConsumerWidget {
         .map(parseToolNumber)
         .whereType<double>()
         .toList();
-    final phases = values.isEmpty
-        ? const <double>[]
-        : EngineeringCalculations.balancePhases(values);
     final strings = AppStrings.of(context);
+    final ru = strings.isRu;
+    if (values.isEmpty) {
+      return ToolResultCard(value: strings.invalidNumber);
+    }
+    final balance = EngineeringCalculations.balancePhases(values);
+    const watt = EngUnit.watt;
     return Column(children: [
       TextField(
-          controller: loadsController,
-          onChanged: (_) => onChanged?.call(),
-          decoration: InputDecoration(
-              border: const OutlineInputBorder(),
-              labelText: strings.loadsSeparatedByCommas)),
-      const SizedBox(height: 16),
-      ToolResultCard(
-          value: phases.isEmpty
-              ? '—'
-              : 'L1 ${formatEngValue(phases[0], EngUnit.watt, strings.isRu)}'
-                  ' · L2 ${formatEngValue(phases[1], EngUnit.watt, strings.isRu)}'
-                  ' · L3 ${formatEngValue(phases[2], EngUnit.watt, strings.isRu)}'),
+        controller: loadsController,
+        minLines: 1,
+        maxLines: 3,
+        onChanged: (_) => onChanged?.call(),
+        decoration: InputDecoration(
+          labelText: strings.loadsSeparatedByCommas,
+          border: const OutlineInputBorder(),
+        ),
+      ),
       const SizedBox(height: 12),
-      _saveButton(context, ref, phases.isEmpty ? null : 'phaseBalance',
-          {for (var i = 0; i < values.length; i++) 'load$i': values[i]}),
+      // Ответ — что на какой фазе, а не только сумма: с суммой монтажнику
+      // нечего делать, он вешает конкретные нагрузки.
+      for (var index = 0; index < balance.totals.length; index++)
+        Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: Text(
+              'L${index + 1}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            title: Text(formatEngValue(balance.totals[index], watt, ru)),
+            subtitle: Text(
+              balance.loads[index].isEmpty
+                  ? '—'
+                  : balance.loads[index]
+                      .map((load) => formatEngValue(load, watt, ru))
+                      .join(' + '),
+            ),
+          ),
+        ),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          '${strings.phaseImbalance}: '
+          '${formatToolNumber(balance.imbalance * 100, precision: 1)} %',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ),
+      const SizedBox(height: 12),
+      _saveButton(context, ref, 'phases', {
+        for (var index = 0; index < balance.totals.length; index++)
+          'L${index + 1}': balance.totals[index],
+      }),
     ]);
   }
 

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../tool_data/tool_data.dart';
-import 'engineering_disclaimer.dart';
 import 'engineering_input_grid.dart';
 import 'engineering_mode_picker.dart';
 import 'plumbing_mode.dart';
@@ -77,8 +76,6 @@ class _PlumbingState extends ConsumerState<PlumbingCalculator> {
           deltaTemperature: _deltaT.text,
           slope: _slope.text,
         ),
-        const SizedBox(height: 12),
-        const EngineeringDisclaimer(),
       ],
     );
   }

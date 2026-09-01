@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../../tool_data/tool_data.dart';
 import 'engineering_choice.dart';
-import 'engineering_disclaimer.dart';
 import 'engineering_input_grid.dart';
 import 'engineering_section.dart';
 import 'ohm_law_output_panel.dart';
@@ -91,8 +90,6 @@ class _OhmLawCalculatorState extends State<OhmLawCalculator> {
           current: _current.text,
           resistance: _resistance.text,
         ),
-        const SizedBox(height: 12),
-        const EngineeringDisclaimer(),
       ],
     );
   }
