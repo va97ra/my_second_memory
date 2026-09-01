@@ -75,8 +75,8 @@
 /tools/calculator    Калькулятор
 /tools/finance       Финансы
 /tools/converter     Конвертер величин
-/tools/slot-one      Свободное место панели
-/tools/slot-two      Свободное место панели
+/tools/slot-one      Свободное место, кнопки в панели нет
+/tools/slot-two      Свободное место, кнопки в панели нет
 /settings/backup     Резервные копии
 /settings/sync       Синхронизация
 /security            PIN и биометрия
