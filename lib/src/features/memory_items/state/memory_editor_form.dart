@@ -35,12 +35,18 @@ class MemoryEditorForm {
   factory MemoryEditorForm.blank({
     required DateTime date,
     required bool isUndated,
+    int? timeMinutes,
+    int? endMinutes,
   }) {
     return MemoryEditorForm(
       type: MemoryType.note,
       memoryDate: DateTime(date.year, date.month, date.day),
       status: MemoryStatus.active,
       isUndated: isUndated,
+      // Отрезок приходит со шкалы дня: рамку нарисовали пальцем, и время
+      // уже выбрано — переспрашивать его в редакторе незачем.
+      timeMinutes: timeMinutes,
+      endMinutes: endMinutes,
     );
   }
 

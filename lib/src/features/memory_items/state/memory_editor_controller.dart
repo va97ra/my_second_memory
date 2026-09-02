@@ -104,10 +104,20 @@ class MemoryEditorController extends ChangeNotifier {
   }
 
   /// Готовит форму новой записи. Тоже молча и по той же причине.
-  bool initializeNew({required DateTime date, required bool isUndated}) {
+  bool initializeNew({
+    required DateTime date,
+    required bool isUndated,
+    int? timeMinutes,
+    int? endMinutes,
+  }) {
     if (loadedItemId == newRecordKey) return false;
     loadedItemId = newRecordKey;
-    form = MemoryEditorForm.blank(date: date, isUndated: isUndated);
+    form = MemoryEditorForm.blank(
+      date: date,
+      isUndated: isUndated,
+      timeMinutes: timeMinutes,
+      endMinutes: endMinutes,
+    );
     fields.clear();
     return true;
   }

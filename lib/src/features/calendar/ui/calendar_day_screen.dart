@@ -11,6 +11,7 @@ import '../../shift_schedules/shift_schedules.dart';
 import '../state/holiday_providers.dart';
 import 'widgets/add_record_bar.dart';
 import 'widgets/day_records_list.dart';
+import 'widgets/day_timeline.dart';
 import 'widgets/holiday_summary_card.dart';
 import 'widgets/working_shift_chips.dart';
 
@@ -26,6 +27,12 @@ class CalendarDayScreen extends ConsumerWidget {
     final locale = Localizations.localeOf(context).languageCode;
     final items = ref.watch(memoryItemsForDayProvider(date)).toList()
       ..sort(compareByVisibleTime);
+    // На шкале живёт только то, у чего есть время. Остальное — полосой сверху,
+    // иначе записка без времени просто пропала бы с экрана дня.
+    final timed =
+        items.where((item) => item.timeMinutes != null).toList(growable: false);
+    final untimed =
+        items.where((item) => item.timeMinutes == null).toList(growable: false);
     final workingSchedules = ref
         .watch(shiftSchedulesControllerProvider)
         .where((schedule) => schedule.isWorkday(date))
@@ -42,7 +49,21 @@ class CalendarDayScreen extends ConsumerWidget {
             children: [
               if (workingSchedules.isNotEmpty)
                 WorkingShiftChips(schedules: workingSchedules, date: date),
-              Expanded(child: DayRecordsList(items: items)),
+              if (untimed.isNotEmpty)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 148),
+                  child: DayRecordsList(items: untimed),
+                ),
+              Expanded(
+                child: DayTimeline(
+                  items: timed,
+                  onCreate: (from, to) => _openNewRecord(
+                    context,
+                    fromMinutes: from,
+                    toMinutes: to,
+                  ),
+                ),
+              ),
               if (holidays.isNotEmpty)
                 HolidaySummaryCard(
                   holidays: holidays,
@@ -81,9 +102,15 @@ class CalendarDayScreen extends ConsumerWidget {
     );
   }
 
-  void _openNewRecord(BuildContext context) {
-    context.pageTurnPush(
-      '/memory/new?date=${DateFormat('yyyy-MM-dd').format(date)}',
-    );
+  void _openNewRecord(
+    BuildContext context, {
+    int? fromMinutes,
+    int? toMinutes,
+  }) {
+    final day = DateFormat('yyyy-MM-dd').format(date);
+    final range = fromMinutes == null || toMinutes == null
+        ? ''
+        : '&from=$fromMinutes&to=$toMinutes';
+    context.pageTurnPush('/memory/new?date=$day$range');
   }
 }

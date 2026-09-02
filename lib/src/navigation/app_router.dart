@@ -141,12 +141,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final date = rawDate == null
               ? DateTime.now()
               : DateTime.tryParse(rawDate) ?? DateTime.now();
+          final query = state.uri.queryParameters;
           return pageTurnPage(
             context: context,
             state: state,
             interceptBack: false,
             child: MemoryItemDetailScreen(
               initialDate: DateTime(date.year, date.month, date.day),
+              // Рамка со шкалы дня приносит готовый отрезок в минутах.
+              initialTimeMinutes: int.tryParse(query['from'] ?? ''),
+              initialEndMinutes: int.tryParse(query['to'] ?? ''),
             ),
           );
         },

@@ -30,12 +30,18 @@ class MemoryItemDetailScreen extends ConsumerStatefulWidget {
     this.initialDate,
     this.createUndated = false,
     this.newlyCreated = false,
+    this.initialTimeMinutes,
+    this.initialEndMinutes,
   });
 
   final String? itemId;
   final DateTime? initialDate;
   final bool createUndated;
   final bool newlyCreated;
+
+  /// Отрезок, нарисованный рамкой на шкале дня.
+  final int? initialTimeMinutes;
+  final int? initialEndMinutes;
 
   @override
   ConsumerState<MemoryItemDetailScreen> createState() =>
@@ -156,6 +162,8 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
       _controller.initializeNew(
         date: widget.initialDate ?? DateTime.now(),
         isUndated: widget.createUndated,
+        timeMinutes: widget.initialTimeMinutes,
+        endMinutes: widget.initialEndMinutes,
       );
       return;
     }
