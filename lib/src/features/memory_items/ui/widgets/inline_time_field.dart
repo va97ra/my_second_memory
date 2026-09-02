@@ -13,6 +13,7 @@ class InlineTimeField extends StatefulWidget {
     required this.minutes,
     required this.onChanged,
     required this.onClear,
+    this.readOnly = false,
   });
 
   /// Подпись слева: одно и то же поле служит и времени записи, и напоминанию.
@@ -25,6 +26,10 @@ class InlineTimeField extends StatefulWidget {
 
   /// Null, когда убирать нечего.
   final VoidCallback? onClear;
+
+  /// Время записи в листе напоминания только показывают: его задают рамкой на
+  /// шкале дня, и менять его здесь значило бы завести второй способ.
+  final bool readOnly;
 
   @override
   State<InlineTimeField> createState() => _InlineTimeFieldState();
@@ -88,15 +93,27 @@ class _InlineTimeFieldState extends State<InlineTimeField> {
             const Icon(Icons.schedule_rounded, color: Color(0xFF218CFF)),
             const SizedBox(width: 10),
             Expanded(child: Text(widget.label)),
-            _box(_hours, 23),
-            Text(
-              ':',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            _box(_minutes, 59),
+            if (widget.readOnly)
+              Text(
+                widget.minutes == null
+                    ? '--:--'
+                    : '${_two(widget.minutes! ~/ 60)}:'
+                        '${_two(widget.minutes! % 60)}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              )
+            else ...[
+              _box(_hours, 23),
+              Text(
+                ':',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              _box(_minutes, 59),
+            ],
             if (widget.onClear != null)
               IconButton(
                 tooltip: strings.delete,

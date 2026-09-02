@@ -76,7 +76,9 @@ class TimeReminderSheetBody extends StatelessWidget {
               label: strings.time,
               minutes: timeMinutes,
               onChanged: onTimeChanged,
-              onClear: onClearTime,
+              // Время записи здесь только показывают: его задают рамкой.
+              onClear: null,
+              readOnly: true,
             ),
             const SizedBox(height: 5),
             ReminderToggleTile(

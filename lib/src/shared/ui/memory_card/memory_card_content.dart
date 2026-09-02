@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'memory_item_presentation.dart';
 import '../media/voice_note_player.dart';
+import 'memory_card_attachment_icons.dart';
 import 'memory_card_image_thumbnail.dart';
 import 'memory_card_labels.dart';
 import 'memory_card_ruled_background.dart';
@@ -78,6 +79,16 @@ class MemoryCardContent extends StatelessWidget {
                             color: colors.onSurfaceVariant,
                             fontWeight: FontWeight.w800,
                           ),
+                    ),
+                  ],
+                  if (item.remindAt != null) ...[
+                    const SizedBox(height: 4),
+                    // Тот же колокольчик, что на плотной карточке и на шкале:
+                    // заведённое напоминание видно у записи везде.
+                    const MemoryCardAttachmentIcons(
+                      imageCount: 0,
+                      hasAudio: false,
+                      hasReminder: true,
                     ),
                   ],
                   if (hasAudio) ...[

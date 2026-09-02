@@ -90,6 +90,7 @@ class MemoryCardDenseContent extends StatelessWidget {
                     MemoryCardAttachmentIcons(
                       imageCount: item.imagePaths.length,
                       hasAudio: hasAudio,
+                      hasReminder: item.remindAt != null,
                     ),
                   ],
                 ],

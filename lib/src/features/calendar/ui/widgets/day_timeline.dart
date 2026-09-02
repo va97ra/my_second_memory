@@ -362,11 +362,14 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
                     ),
                   ),
                 ),
-                if (!(tall && hasImages) || item.audioPath != null) ...[
+                if (!(tall && hasImages) ||
+                    item.audioPath != null ||
+                    item.remindAt != null) ...[
                   const SizedBox(width: 4),
                   MemoryCardAttachmentIcons(
                     imageCount: tall && hasImages ? 0 : item.imagePaths.length,
                     hasAudio: item.audioPath != null,
+                    hasReminder: item.remindAt != null,
                   ),
                 ],
               ],
