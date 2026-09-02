@@ -193,6 +193,9 @@ class MemoryEditorSaver {
       clearReminder: draft.remindAt == null,
       reminderSoundUri: draft.reminderSoundUri,
       reminderSoundName: draft.reminderSoundName,
+      // Пустая мелодия — это «системный звук», а не «оставь прежнюю»: без
+      // флага выбранная однажды мелодия не снималась никогда.
+      clearReminderSound: draft.reminderSoundUri == null,
       memoryDate: draft.memoryDate,
       status: draft.status,
       audioPath: draft.audioPath,

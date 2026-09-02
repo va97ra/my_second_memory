@@ -96,6 +96,37 @@ void main() {
     expect(env.series.state, isEmpty);
   });
 
+  test('the chosen melody can be taken off a record', () async {
+    final env = await _controllers();
+    final date = DateTime(2026, 3, 10);
+    final existing = MemoryItem(
+      id: 'with-melody',
+      type: MemoryType.note,
+      title: 'Интернет',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+      timeMinutes: 9 * 60,
+      remindAt: DateTime(2026, 3, 10, 9),
+      reminderSoundUri: 'content://media/alarm/7',
+      reminderSoundName: 'Carbon',
+    );
+    await env.memories.add(existing);
+
+    // Черновик без мелодии — это «системный звук», а не «оставь прежнюю».
+    await env.saver.persist(
+      _draft(savedAt: DateTime(2026, 3, 10, 12), memoryDate: date),
+      existing: existing,
+      refreshSeriesTemplate: false,
+      editFutureOccurrences: false,
+      originalOccurrenceDate: null,
+    );
+
+    final saved = env.memories.items.single;
+    expect(saved.reminderSoundUri, isNull);
+    expect(saved.reminderSoundName, isNull);
+  });
+
   test('a new repeating record starts a series', () async {
     final env = await _controllers();
 
