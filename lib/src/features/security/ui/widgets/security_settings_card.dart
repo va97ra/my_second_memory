@@ -65,19 +65,30 @@ class SecuritySettingsCard extends StatelessWidget {
           keyboardType: TextInputType.number,
           obscureText: true,
           maxLength: 8,
+          // Длину и так не дадут превысить, а счётчик висел бы служебной
+          // цифрой, не совпадающей с краем поля.
+          buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
           decoration: const InputDecoration(labelText: 'PIN'),
         ),
-        FilledButton.icon(
-          onPressed: onSavePin,
-          icon: const Icon(Icons.lock_rounded),
-          label: Text(session.hasPin ? strings.changePin : strings.enablePin),
+        // Кнопки тянутся во всю колонку карточки: иначе каждая встаёт по
+        // ширине своей подписи и края не сходятся ни с полями, ни между собой.
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: onSavePin,
+            icon: const Icon(Icons.lock_rounded),
+            label: Text(session.hasPin ? strings.changePin : strings.enablePin),
+          ),
         ),
         if (session.hasPin) ...[
           const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: onDisablePin,
-            icon: const Icon(Icons.lock_open_rounded),
-            label: Text(strings.disablePin),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onDisablePin,
+              icon: const Icon(Icons.lock_open_rounded),
+              label: Text(strings.disablePin),
+            ),
           ),
         ],
         const SizedBox(height: 14),
@@ -85,7 +96,11 @@ class SecuritySettingsCard extends StatelessWidget {
           value: session.biometricsEnabled,
           // Биометрия отпирает тот же ключ, что и PIN: без PIN отпирать нечего.
           onChanged: session.hasPin ? onBiometricsChanged : null,
-          contentPadding: EdgeInsets.zero,
+          // Те же 12 и 10, что у строк состояния выше: значок и подпись
+          // обязаны стоять с ними на одной вертикали.
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          minLeadingWidth: 24,
+          horizontalTitleGap: 10,
           secondary: const Icon(Icons.fingerprint_rounded),
           title: Text(strings.biometrics),
           subtitle: Text(

@@ -14,6 +14,7 @@ import 'settings_switch_tile.dart';
 import 'settings_tile.dart';
 import 'theme_picker_sheet.dart';
 import 'windows_startup_tile.dart';
+import 'settings_chevron.dart';
 
 /// Настройки самого приложения: язык, вид, шрифт записей и что показывать.
 class AppSettingsSection extends ConsumerWidget {
@@ -35,15 +36,20 @@ class AppSettingsSection extends ConsumerWidget {
           icon: Icons.language_rounded,
           title: strings.language,
           subtitle: isRu ? 'Русский' : 'English',
-          trailing: SegmentedButton<String>(
-            // Подпись и так говорит, какой язык включён.
-            showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(value: 'ru', label: Text('RU')),
-              ButtonSegment(value: 'en', label: Text('EN')),
-            ],
-            selected: {locale.languageCode},
-            onSelectionChanged: (value) => _setLocale(ref, value.first),
+          // Рамка выбора шире переключателей соседних строк ровно на эти
+          // четыре пикселя — без отступа её край выпирал правее всех.
+          trailing: Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: SegmentedButton<String>(
+              // Подпись и так говорит, какой язык включён.
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(value: 'ru', label: Text('RU')),
+                ButtonSegment(value: 'en', label: Text('EN')),
+              ],
+              selected: {locale.languageCode},
+              onSelectionChanged: (value) => _setLocale(ref, value.first),
+            ),
           ),
         ),
         SettingsTile(
@@ -55,14 +61,14 @@ class AppSettingsSection extends ConsumerWidget {
             AppThemeStyle.notebookLight => strings.lightTheme,
             AppThemeStyle.notebookDark => strings.darkTheme,
           },
-          trailing: const Icon(Icons.chevron_right_rounded),
+          trailing: const SettingsChevron(),
           onTap: () => _pickTheme(context, ref, themeStyle, isRu),
         ),
         SettingsTile(
           icon: Icons.font_download_rounded,
           title: isRu ? 'Шрифт записей' : 'Record font',
           subtitle: contentFont.label,
-          trailing: const Icon(Icons.chevron_right_rounded),
+          trailing: const SettingsChevron(),
           onTap: () => _pickFont(context, ref, contentFont, isRu),
         ),
         SettingsSwitchTile(

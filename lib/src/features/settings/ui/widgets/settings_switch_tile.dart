@@ -36,6 +36,9 @@ class SettingsSwitchTile extends ConsumerWidget {
       trailing: Switch(
         value: ref.watch(setting),
         onChanged: enabled ? ref.read(setting.notifier).setEnabled : null,
+        // Без этого вокруг переключателя остаётся служебный отступ под палец,
+        // и он вылезает правее шевронов соседних строк.
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

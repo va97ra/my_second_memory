@@ -23,7 +23,7 @@ Future<AppThemeStyle?> showThemePickerSheet({
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                isRu ? 'Выберите оформление' : 'Choose appearance',
+                isRu ? 'Оформление' : 'Appearance',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 14),

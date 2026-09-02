@@ -108,18 +108,13 @@ class ThemePreview extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 7),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // Галочка стоит у края и подпись не двигает — так же, как в
+            // выборе шрифта. Иначе подпись прыгает вбок при переключении.
+            Stack(
+              alignment: Alignment.center,
               children: [
-                if (selected) ...[
-                  Icon(
-                    Icons.check_circle_rounded,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                Flexible(
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 22),
                   child: Text(
                     label,
                     maxLines: 1,
@@ -129,6 +124,15 @@ class ThemePreview extends StatelessWidget {
                         ),
                   ),
                 ),
+                if (selected)
+                  Positioned(
+                    right: 0,
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
               ],
             ),
           ],

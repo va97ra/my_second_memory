@@ -30,6 +30,15 @@ class ShiftSchedulesScreen extends ConsumerWidget {
                 fontWeight: FontWeight.w900,
               ),
         ),
+        actions: [
+          IconButton(
+            key: const ValueKey('shift_schedule_add'),
+            tooltip: strings.addShiftSchedule,
+            onPressed: () => _openEditor(context),
+            icon: const Icon(Icons.add_rounded, size: 22),
+            style: notebookIconButtonStyle(),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
@@ -40,7 +49,7 @@ class ShiftSchedulesScreen extends ConsumerWidget {
       ),
       body: WarmGradientBackground(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
@@ -73,11 +82,6 @@ class ShiftSchedulesScreen extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openEditor(context),
-        icon: const Icon(Icons.add_rounded),
-        label: Text(strings.addShiftSchedule),
       ),
     );
   }

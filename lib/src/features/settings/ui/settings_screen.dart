@@ -12,6 +12,7 @@ import 'widgets/data_settings_section.dart';
 import 'widgets/feedback_request_card.dart';
 import 'widgets/settings_section.dart';
 import 'widgets/settings_tile.dart';
+import './widgets/settings_chevron.dart';
 
 /// Настройки: приложение, безопасность, данные.
 class SettingsScreen extends ConsumerWidget {
@@ -39,7 +40,7 @@ class SettingsScreen extends ConsumerWidget {
                       SettingsTile(
                         icon: Icons.lock_rounded,
                         title: strings.pinSecurity,
-                        trailing: const Icon(Icons.chevron_right_rounded),
+                        trailing: const SettingsChevron(),
                         onTap: () => context.pageTurnGo('/security'),
                       ),
                     ],

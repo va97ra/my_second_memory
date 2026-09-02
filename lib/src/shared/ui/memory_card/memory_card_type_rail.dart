@@ -54,7 +54,9 @@ class MemoryCardTypeRail extends StatelessWidget {
           ),
           child: Column(
             children: [
-              if (item.isUndated) const Spacer(),
+              // Значок и подпись всегда прижаты к верху — и у датированных, и
+              // у записок. Раньше записка центрировалась распоркой сверху, и
+              // подписи соседних карточек стояли на разной высоте.
               Icon(
                 memoryTypeIcon(item.type),
                 color: foreground,

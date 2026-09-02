@@ -6,6 +6,7 @@ import '../../../../navigation/page_turn_navigation.dart';
 import '../../../sync/sync.dart';
 import 'settings_section.dart';
 import 'settings_tile.dart';
+import 'settings_chevron.dart';
 
 /// Данные и планирование: графики смен, архив, облако, резервная копия.
 class DataSettingsSection extends ConsumerWidget {
@@ -25,13 +26,13 @@ class DataSettingsSection extends ConsumerWidget {
         SettingsTile(
           icon: Icons.work_history_rounded,
           title: strings.shiftSchedules,
-          trailing: const Icon(Icons.chevron_right_rounded),
+          trailing: const SettingsChevron(),
           onTap: () => context.pageTurnGo('/settings/shifts'),
         ),
         SettingsTile(
           icon: Icons.inventory_2_rounded,
           title: strings.memoryArchive,
-          trailing: const Icon(Icons.chevron_right_rounded),
+          trailing: const SettingsChevron(),
           onTap: () => context.pageTurnGo('/memory'),
         ),
         if (syncEnabled) _syncTile(context, strings, ref),
@@ -39,7 +40,7 @@ class DataSettingsSection extends ConsumerWidget {
           icon: Icons.cloud_upload_rounded,
           title: strings.backup,
           subtitle: strings.backupSubtitle,
-          trailing: const Icon(Icons.chevron_right_rounded),
+          trailing: const SettingsChevron(),
           onTap: () => context.pageTurnGo('/settings/backup'),
         ),
       ],
@@ -59,7 +60,7 @@ class DataSettingsSection extends ConsumerWidget {
               dimension: 20,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : const Icon(Icons.chevron_right_rounded),
+          : const SettingsChevron(),
       onTap: () => context.pageTurnGo('/settings/sync'),
     );
   }
