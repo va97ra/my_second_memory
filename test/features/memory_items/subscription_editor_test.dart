@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/day_timeline.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ezhednevnik_v2/src/app/app.dart';
 import 'package:ezhednevnik_v2/src/navigation/app_router.dart';
@@ -41,7 +42,10 @@ void main() {
     await tester.ensureVisible(todayCell);
     await tester.tap(todayCell);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('calendar_day_add_record')));
+    // Нажатие по шкале ставит рамку, нажатие в неё открывает редактор.
+    await tester.tap(find.byType(DayTimeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DayTimeline));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('memory_type_picker')));
     await tester.pumpAndSettle();

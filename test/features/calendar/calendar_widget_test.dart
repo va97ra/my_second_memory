@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/day_timeline.dart';
 import 'package:intl/intl.dart';
 import 'package:ezhednevnik_v2/src/app/app.dart';
 import 'package:ez_domain/ez_domain.dart';
@@ -143,10 +144,8 @@ void main() {
 
     expect(find.text('На этот день пока ничего нет'), findsNothing);
     expect(find.text('За этот день пока ничего нет'), findsNothing);
-    expect(
-      find.byKey(const ValueKey('calendar_day_add_record')),
-      findsOneWidget,
-    );
+    // Пустой день — это шкала часов, а не пустая страница с кнопкой.
+    expect(find.byType(DayTimeline), findsOneWidget);
   });
 
   testWidgets('calendar date opens day and add opens editor on selected date',
@@ -237,23 +236,20 @@ void main() {
     // Архивная запись на экране дня не показывается: её место — архив, до
     // тех пор пока её не восстановят.
     expect(find.text('Архивная запись'), findsNothing);
-    expect(find.text('Добавить запись'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('calendar_day_add_record')),
-      findsOneWidget,
-    );
+    // Запись заводят рамкой на шкале, отдельной кнопки внизу больше нет.
+    expect(find.text('Добавить запись'), findsNothing);
+    expect(find.byType(DayTimeline), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Сообщение'), findsNothing);
     expect(find.byIcon(Icons.send), findsNothing);
     expect(find.byIcon(Icons.attach_file), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('calendar_day_add_record')));
+    // Нажатие по шкале ставит рамку, нажатие в неё открывает редактор.
+    await tester.tap(find.byType(DayTimeline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DayTimeline));
     await tester.pumpAndSettle();
 
     expect(find.text('Новая запись'), findsOneWidget);
-    expect(
-      find.text(DateFormat('d MMM y', 'ru').format(today)),
-      findsOneWidget,
-    );
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Запись'),
       'Новая запись из календаря',
@@ -263,10 +259,13 @@ void main() {
 
     expect(find.text('Редактировать запись'), findsOneWidget);
     expect(find.text('Новая запись из календаря'), findsOneWidget);
-    final savedCloud = tester.widget<Icon>(
-      find.byKey(const ValueKey('memory_autosave_saved')),
+    // Об успешном сохранении говорит цвет самой подписи: облачка рядом с
+    // ней больше нет, оно повторяло то же самое вторым значком.
+    final savedStatus = tester.widget<Text>(
+      find.byKey(const ValueKey('memory_save_status')),
     );
-    expect(savedCloud.color, const Color(0xFF168653));
+    expect(savedStatus.data, 'Сохранено');
+    expect(savedStatus.style?.color, const Color(0xFF168653));
     expect(
       repository.savedItems.any(
         (item) =>

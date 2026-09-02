@@ -42,9 +42,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
     await tester.pumpAndSettle();
     expect(find.text('Новая записка'), findsOneWidget);
-    expect(find.byKey(const ValueKey('memory_type_picker')), findsNothing);
-    expect(find.byKey(const ValueKey('memory_date_picker')), findsNothing);
-    expect(find.byKey(const ValueKey('memory_time_picker')), findsNothing);
+    // Вид есть и у записки, он виден в ленте — значит и кнопка ей нужна.
+    expect(find.byKey(const ValueKey('memory_type_picker')), findsOneWidget);
     expect(find.byKey(const ValueKey('record_editor_panel')), findsOneWidget);
 
     await tester.enterText(

@@ -1,7 +1,5 @@
-import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../state/memory_editor_controller.dart';
 import '../memory_editor_actions.dart';
@@ -34,25 +32,9 @@ class MemoryEditorBodyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final form = controller.form;
-    final locale = Localizations.localeOf(context).languageCode;
 
     return EditorBody(
       isUndated: form.isUndated,
-      selectedType: form.type,
-      dateText: DateFormat('d MMM y', locale).format(form.memoryDate),
-      timeText: form.timeMinutes == null
-          ? null
-          : formatMinutesOfDay(form.timeMinutes!),
-      reminderEnabled: form.remindAt != null,
-      onDateTap: actions.pickDate,
-      onTimeTap: actions.openTimeAndReminder,
-      onClearTime: form.timeMinutes == null
-          ? null
-          : () => controller.applyForm(
-                (form) => form.copyWith(clearTime: true, clearReminder: true),
-              ),
-      onTypeChanged: (type) =>
-          controller.applyForm((form) => form.withType(type)),
       specialFields: _specialFields(),
       showRecurrenceHint:
           !form.isUndated && showHints && form.recurrenceFrequency == null,

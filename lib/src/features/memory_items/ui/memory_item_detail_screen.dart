@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../../calendar/calendar.dart';
 import '../../recurrence/recurrence.dart';
@@ -129,6 +131,19 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
           item: item,
           onBack: () => unawaited(actions.goBack()),
           onAction: (action) => actions.runMenuAction(action, item),
+          dateText: DateFormat(
+            'd MMM y',
+            Localizations.localeOf(context).languageCode,
+          ).format(_controller.form.memoryDate),
+          timeText: _controller.form.timeMinutes == null
+              ? null
+              : formatMinutesOfDay(_controller.form.timeMinutes!),
+          reminderEnabled: _controller.form.remindAt != null,
+          // Дата и время выбираются рамкой на шкале дня, в меню их не
+          // повторяем.
+          showDateAndTime: false,
+          onTypeChanged: (type) =>
+              _controller.applyForm((form) => form.withType(type)),
         ),
         body: SafeArea(
           child: Form(

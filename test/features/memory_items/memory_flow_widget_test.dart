@@ -98,12 +98,12 @@ void main() {
     expect(find.byIcon(Icons.photo_camera_rounded), findsOneWidget);
     expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('memory_time_picker')));
+    // Дата и время в меню редактора скрыты: их выбирают рамкой на шкале дня.
+    await tester.tap(find.byKey(const ValueKey('memory_editor_menu')));
     await tester.pumpAndSettle();
-    expect(find.text('Время и напоминание'), findsOneWidget);
-    expect(find.text('Звуковое уведомление'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('memory_reminder_done')));
-    await tester.pumpAndSettle();
+    expect(find.textContaining('Дата:'), findsNothing);
+    expect(find.textContaining('Время:'), findsNothing);
+    expect(find.text('Настроить повтор'), findsOneWidget);
   });
 
   testWidgets('note editor uses the full space above the keyboard',
@@ -162,11 +162,8 @@ void main() {
     await tester.pumpAndSettle();
     await openTab(tester, 'feed');
 
-    // Лента -> просмотр -> редактор: под редактором в стеке остаётся экран
-    // просмотра той же записи.
+    // Лента -> редактор: промежуточного просмотра больше нет.
     await tester.tap(find.text('План на сегодня'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.edit_rounded));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('memory_editor_menu')));
@@ -178,12 +175,11 @@ void main() {
 
     // Возврат не должен упереться в страницу удалённой записи.
     expect(find.text('Запись не найдена'), findsNothing);
-    expect(find.byKey(const ValueKey('memory_readonly_view')), findsNothing);
     expect(find.text('План на сегодня'), findsNothing);
     expect(find.byKey(const ValueKey('feed_section_day')), findsWidgets);
   });
 
-  testWidgets('readonly image opens fullscreen viewer', (tester) async {
+  testWidgets('an image opens the fullscreen viewer from the editor', (tester) async {
     await tester.binding.setSurfaceSize(const Size(430, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -207,18 +203,10 @@ void main() {
     await tester.tap(find.text('Длинная запись'));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('memory_readonly_view')), findsOneWidget);
-    expect(
-      tester
-          .getSize(find.byKey(const ValueKey('memory_readonly_panel')))
-          .height,
-      // Обе панели оболочки остаются видимыми и на вложенной странице.
-      greaterThan(530),
-    );
-    expect(
-        find.byKey(const ValueKey('memory_readonly_content')), findsOneWidget);
+    // Просмотр записи удалён, фотографию открывают из редактора.
+    expect(find.byKey(const ValueKey('record_editor_images')), findsOneWidget);
     final image =
-        find.byKey(const ValueKey('readonly_image_$pixelImageDataUrl')).first;
+        find.byKey(const ValueKey('editor_image_$pixelImageDataUrl')).first;
     await tester.ensureVisible(image);
     await tester.pumpAndSettle();
     await tester.tap(image);

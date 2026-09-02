@@ -25,6 +25,7 @@ import 'widgets/recurrence_picker_sheet.dart';
 import 'widgets/subscription_term_sheet.dart';
 import 'widgets/time_reminder_draft.dart';
 import 'widgets/time_reminder_sheet.dart';
+import '../state/memory_editor_form.dart';
 
 /// Что происходит по нажатию в редакторе записи.
 ///
@@ -58,6 +59,18 @@ class MemoryEditorActions {
   /// черновика просто ничего не делают.
   void runMenuAction(MemoryEditorAction action, MemoryItem? item) {
     switch (action) {
+      case MemoryEditorAction.date:
+        unawaited(pickDate());
+      case MemoryEditorAction.time:
+        unawaited(openTimeAndReminder());
+      case MemoryEditorAction.clearTime:
+        // Время уходит вместе с напоминанием: напоминать не о чем, если
+        // запись больше не привязана к часу.
+        controller.applyForm(
+          (form) => form.copyWith(clearTime: true, clearReminder: true),
+        );
+      case MemoryEditorAction.reminder:
+        unawaited(openTimeAndReminder());
       case MemoryEditorAction.repeat:
         unawaited(openRepeatPicker());
       case MemoryEditorAction.duplicate:
@@ -180,6 +193,25 @@ class MemoryEditorActions {
     });
   }
 
+  /// Насколько раньше записи стоит её напоминание.
+  ///
+  /// В модели хранится сам момент, а не фора: она вычисляется обратно, чтобы
+  /// лист открылся на том же выборе, что человек сделал в прошлый раз.
+  static int _leadMinutesOf(MemoryEditorForm form) {
+    final remindAt = form.remindAt;
+    final timeMinutes = form.timeMinutes;
+    if (remindAt == null || timeMinutes == null) return 0;
+    final start = DateTime(
+      form.memoryDate.year,
+      form.memoryDate.month,
+      form.memoryDate.day,
+      timeMinutes ~/ 60,
+      timeMinutes % 60,
+    );
+    final lead = start.difference(remindAt).inMinutes;
+    return const [0, 10, 30, 60, 24 * 60].contains(lead) ? lead : 0;
+  }
+
   Future<void> openTimeAndReminder() async {
     final form = controller.form;
     final result = await showModalBottomSheet<TimeReminderDraft>(
@@ -190,6 +222,7 @@ class MemoryEditorActions {
       builder: (context) => TimeReminderSheet(
         initialTimeMinutes: form.timeMinutes,
         initialReminderEnabled: form.remindAt != null,
+        initialLeadMinutes: _leadMinutesOf(form),
         initialSoundUri: form.reminderSoundUri,
         initialSoundName: form.reminderSoundName,
         memoryDate: form.memoryDate,
@@ -201,6 +234,7 @@ class MemoryEditorActions {
     controller.applyForm((form) {
       final remindAt = result.reminderEnabled && result.timeMinutes != null
           ? _dateTimeFor(form.memoryDate, result.timeMinutes!)
+              .subtract(Duration(minutes: result.leadMinutes))
           : null;
       return form.copyWith(
         timeMinutes: result.timeMinutes,
