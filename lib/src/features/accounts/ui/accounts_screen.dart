@@ -39,9 +39,7 @@ class AccountsScreen extends ConsumerWidget {
                 return AccountCard(
                   account: account,
                   onEdit: () => _showAccountEditor(context, ref, account),
-                  onDelete: () => ref
-                      .read(accountsControllerProvider.notifier)
-                      .delete(account.id),
+                  onDelete: () => _delete(context, ref, account),
                 );
               },
             ),
@@ -50,6 +48,35 @@ class AccountsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Пароль может не храниться больше нигде, а удаление разъезжается по всем
+  /// устройствам. Поэтому корзина спрашивает — тем же диалогом, что и операции.
+  Future<void> _delete(
+    BuildContext context,
+    WidgetRef ref,
+    AccountItem account,
+  ) async {
+    final strings = AppStrings.of(context);
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(strings.deleteAccountQuestion),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(strings.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(strings.delete),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed) return;
+    await ref.read(accountsControllerProvider.notifier).delete(account.id);
   }
 
   Future<void> _showAccountEditor(

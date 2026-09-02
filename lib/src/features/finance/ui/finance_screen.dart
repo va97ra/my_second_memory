@@ -89,9 +89,7 @@ class FinanceScreen extends ConsumerWidget {
             ),
           ),
           if (ledger.entries.isEmpty)
-            SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(child: Text(strings.noFinanceEntries)))
+            const SliverToBoxAdapter(child: SizedBox.shrink())
           else
             FinanceEntryList(
               days: ledger.days,

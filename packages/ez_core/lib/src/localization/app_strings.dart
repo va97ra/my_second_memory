@@ -131,8 +131,6 @@ class AppStrings {
   String get editOperation => isRu ? 'Изменить операцию' : 'Edit operation';
   String get addIncome => isRu ? 'Добавить доход' : 'Add income';
   String get addExpense => isRu ? 'Добавить расход' : 'Add expense';
-  String get noFinanceEntries =>
-      isRu ? 'За этот месяц операций нет' : 'No operations this month';
   String get deleteOperationQuestion =>
       isRu ? 'Удалить эту операцию?' : 'Delete this operation?';
   List<String> get defaultIncomeCategories => isRu
@@ -192,6 +190,8 @@ class AppStrings {
       : 'Tap a date to open the day. Swipe sideways for months, up or down for years.';
   String get accounts => isRu ? 'Аккаунты' : 'Accounts';
   String get addAccount => isRu ? 'Добавить аккаунт' : 'Add account';
+  String get deleteAccountQuestion =>
+      isRu ? 'Удалить этот аккаунт?' : 'Delete this account?';
   String get editAccount => isRu ? 'Редактировать аккаунт' : 'Edit account';
   String get serviceName => isRu ? 'Сервис' : 'Service';
   String get login => isRu ? 'Логин' : 'Login';
