@@ -114,7 +114,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
   void _openNotificationItem(String itemId) {
     ref
         .read(appRouterProvider)
-        .go('/memory/view/${Uri.encodeComponent(itemId)}');
+        .go('/memory/item/${Uri.encodeComponent(itemId)}');
   }
 
   @override

@@ -31,7 +31,7 @@ class FeedMemoryCard extends ConsumerWidget {
       denseFeedLayout: true,
       margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
       onOpen: () => context.pageTurnPush(
-        '/memory/view/${Uri.encodeComponent(item.id)}',
+        '/memory/item/${Uri.encodeComponent(item.id)}',
       ),
       onToggleDone: () => toggleMemoryDone(ref, item),
       onArchive: () => archiveMemory(ref, item),

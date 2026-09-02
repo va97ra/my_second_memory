@@ -66,7 +66,7 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
     return MemoryItemCard(
       item: item,
       onOpen: () => context.pageTurnPush(
-        '/memory/view/${Uri.encodeComponent(item.id)}',
+        '/memory/item/${Uri.encodeComponent(item.id)}',
       ),
       onRestore: () => _restore(item),
     );

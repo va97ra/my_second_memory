@@ -165,19 +165,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/memory/view/:id',
-        pageBuilder: (context, state) {
-          return pageTurnPage(
-            context: context,
-            state: state,
-            backFallback: '/',
-            child: MemoryItemViewScreen(
-              itemId: state.pathParameters['id'] ?? '',
-            ),
-          );
-        },
-      ),
-      GoRoute(
         path: '/calendar/day',
         pageBuilder: (context, state) {
           final rawDate = state.uri.queryParameters['date'];

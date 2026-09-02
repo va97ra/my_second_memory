@@ -11,7 +11,7 @@ import '../../support/widget_test_harness.dart';
 void main() {
   useTestEnvironment();
 
-  testWidgets('feed card can be completed and opened read-only',
+  testWidgets('feed card can be completed and opened in the editor',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -102,12 +102,10 @@ void main() {
     await tester.tap(find.text('План на сегодня'));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('memory_readonly_view')), findsOneWidget);
-    expect(find.text('Редактировать запись'), findsNothing);
-    expect(find.byIcon(Icons.save_rounded), findsNothing);
-    expect(find.byIcon(Icons.more_vert), findsNothing);
-    expect(find.widgetWithText(TextFormField, 'Запись'), findsNothing);
-    expect(find.text('Тип записи'), findsNothing);
+    // Просмотра больше нет: карточка открывается сразу в редакторе — одно и
+    // то же содержимое на двух экранах повторять незачем.
+    expect(find.text('Редактировать запись'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Запись'), findsOneWidget);
   });
 
   testWidgets('feed card can be archived from the feed', (tester) async {
