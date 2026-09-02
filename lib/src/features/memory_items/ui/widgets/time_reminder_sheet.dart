@@ -12,7 +12,7 @@ class TimeReminderSheet extends StatefulWidget {
     super.key,
     required this.initialTimeMinutes,
     required this.initialReminderEnabled,
-    required this.initialLeadMinutes,
+    required this.initialReminderMinutes,
     required this.initialSoundUri,
     required this.initialSoundName,
     required this.memoryDate,
@@ -21,7 +21,7 @@ class TimeReminderSheet extends StatefulWidget {
 
   final int? initialTimeMinutes;
   final bool initialReminderEnabled;
-  final int initialLeadMinutes;
+  final int? initialReminderMinutes;
   final String? initialSoundUri;
   final String? initialSoundName;
   final DateTime memoryDate;
@@ -34,7 +34,7 @@ class TimeReminderSheet extends StatefulWidget {
 class _TimeReminderSheetState extends State<TimeReminderSheet> {
   int? _timeMinutes;
   late bool _reminderEnabled;
-  late int _leadMinutes;
+  late int? _reminderMinutes;
   String? _soundUri;
   String? _soundName;
   String? _error;
@@ -45,7 +45,7 @@ class _TimeReminderSheetState extends State<TimeReminderSheet> {
     super.initState();
     _timeMinutes = widget.initialTimeMinutes;
     _reminderEnabled = widget.initialReminderEnabled;
-    _leadMinutes = widget.initialLeadMinutes;
+    _reminderMinutes = widget.initialReminderMinutes;
     _soundUri = widget.initialSoundUri;
     _soundName = widget.initialSoundName;
   }
@@ -55,8 +55,9 @@ class _TimeReminderSheetState extends State<TimeReminderSheet> {
     return TimeReminderSheetBody(
       timeMinutes: _timeMinutes,
       reminderEnabled: _reminderEnabled,
-      leadMinutes: _leadMinutes,
-      onLeadChanged: (lead) => setState(() => _leadMinutes = lead),
+      reminderMinutes: _reminderMinutes ?? _timeMinutes,
+      onReminderTimeChanged: (minutes) =>
+          setState(() => _reminderMinutes = minutes),
       reminderSupported: widget.scheduler.isSupported,
       soundName: _soundName,
       hasOwnSound: _soundUri != null,
@@ -165,7 +166,7 @@ class _TimeReminderSheetState extends State<TimeReminderSheet> {
       TimeReminderDraft(
         timeMinutes: _timeMinutes,
         reminderEnabled: _reminderEnabled,
-        leadMinutes: _leadMinutes,
+        reminderMinutes: _reminderMinutes ?? _timeMinutes,
         soundUri: _soundUri,
         soundName: _soundName,
       ),

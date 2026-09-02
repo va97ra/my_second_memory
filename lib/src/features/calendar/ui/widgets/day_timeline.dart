@@ -46,6 +46,13 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
   /// Табличка с показанными ручками. Выбор снимается нажатием мимо.
   String? _selectedId;
 
+  /// Табличка, которую сейчас несут пальцем, и её новое начало.
+  ///
+  /// Длительность при переносе не меняется: двигают дело целиком, а не его
+  /// край. Пока палец в пути, положение живёт здесь и в запись не пишется.
+  String? _movingId;
+  int? _movedStart;
+
   bool _scrolledToStart = false;
 
   @override
@@ -203,12 +210,40 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
     setState(() => _draftEnd = moved);
   }
 
+  /// Табличка едет за пальцем целиком, упираясь в границы суток.
+  void _carry(DayTimelineBlock block, double travelled) {
+    if (_movingId != block.item.id) return;
+    final length = block.end - block.start;
+    final moved = dayTimelineMinutesAt(block.top + travelled)
+        .clamp(0, 24 * 60 - length);
+    if (moved == _movedStart) return;
+    setState(() => _movedStart = moved);
+  }
+
+  /// Палец отпустили — новое время записывается один раз, а не по дороге.
+  void _dropCarried(DayTimelineBlock block) {
+    final moved = _movedStart;
+    setState(() {
+      _movingId = null;
+      _movedStart = null;
+    });
+    if (moved == null || moved == block.start) return;
+    final length = block.end - block.start;
+    _save(
+      block.item.copyWith(timeMinutes: moved, endMinutes: moved + length),
+    );
+  }
+
   Widget _block(DayTimelineBlock block) {
     final selected = block.item.id == _selectedId;
     final short = block.height < dayTimelineHourHeight / 2;
+    final carried = block.item.id == _movingId ? _movedStart : null;
+    final top = carried == null
+        ? block.top
+        : dayTimelineOffsetOf(carried);
 
     return Positioned(
-      top: block.top,
+      top: top,
       left: dayTimelineGutterWidth + block.indent,
       right: 8,
       height: block.height,
@@ -217,7 +252,19 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
         onTap: () => context.pageTurnPush(
           '/memory/item/${Uri.encodeComponent(block.item.id)}',
         ),
-        onLongPress: () => setState(() => _selectedId = block.item.id),
+        // Долгое нажатие выбирает табличку, а если палец пошёл — несёт её.
+        onLongPressStart: (_) => setState(() {
+          _selectedId = block.item.id;
+          _movingId = block.item.id;
+          _movedStart = block.start;
+        }),
+        onLongPressMoveUpdate: (details) =>
+            _carry(block, details.localOffsetFromOrigin.dy),
+        onLongPressEnd: (_) => _dropCarried(block),
+        onLongPressCancel: () => setState(() {
+          _movingId = null;
+          _movedStart = null;
+        }),
         // Табличка — отдельный листок и на тёмном блокноте остаётся светлой,
         // как карточки в ленте. Тёмная на тёмной шкале читалась мрачно.
         child: NotebookPaperIsland(
@@ -406,6 +453,11 @@ class _HandleState extends State<_Handle> {
         _travelled += details.delta.dy;
         widget.onDrag(_travelled);
       },
+      // Точка ловит и удержание: иначе задержавшийся на ней палец отдаёт жест
+      // табличке, и та уезжает целиком вместо того, чтобы растянуться.
+      onLongPressStart: (_) => widget.onGrab(),
+      onLongPressMoveUpdate: (details) =>
+          widget.onDrag(details.localOffsetFromOrigin.dy),
       // Кружок мелкий, а палец нет: прозрачное поле вокруг ловит промах.
       child: SizedBox(
         width: 28,

@@ -9,10 +9,14 @@ import 'package:flutter/services.dart';
 class InlineTimeField extends StatefulWidget {
   const InlineTimeField({
     super.key,
+    required this.label,
     required this.minutes,
     required this.onChanged,
     required this.onClear,
   });
+
+  /// Подпись слева: одно и то же поле служит и времени записи, и напоминанию.
+  final String label;
 
   /// Время от полуночи, или null, когда его нет.
   final int? minutes;
@@ -83,7 +87,7 @@ class _InlineTimeFieldState extends State<InlineTimeField> {
           children: [
             const Icon(Icons.schedule_rounded, color: Color(0xFF218CFF)),
             const SizedBox(width: 10),
-            Expanded(child: Text(strings.time)),
+            Expanded(child: Text(widget.label)),
             _box(_hours, 23),
             Text(
               ':',

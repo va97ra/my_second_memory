@@ -13,8 +13,8 @@ class TimeReminderSheetBody extends StatelessWidget {
     super.key,
     required this.timeMinutes,
     required this.reminderEnabled,
-    required this.leadMinutes,
-    required this.onLeadChanged,
+    required this.reminderMinutes,
+    required this.onReminderTimeChanged,
     required this.reminderSupported,
     required this.soundName,
     required this.hasOwnSound,
@@ -32,9 +32,9 @@ class TimeReminderSheetBody extends StatelessWidget {
   final int? timeMinutes;
   final bool reminderEnabled;
 
-  /// За сколько минут до записи напомнить. Ноль — ровно в её время.
-  final int leadMinutes;
-  final ValueChanged<int> onLeadChanged;
+  /// Во сколько напомнить, от полуночи того же дня.
+  final int? reminderMinutes;
+  final ValueChanged<int> onReminderTimeChanged;
 
   /// Звуковые напоминания есть только на Android.
   final bool reminderSupported;
@@ -73,6 +73,7 @@ class TimeReminderSheetBody extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             InlineTimeField(
+              label: strings.time,
               minutes: timeMinutes,
               onChanged: onTimeChanged,
               onClear: onClearTime,
@@ -87,10 +88,14 @@ class TimeReminderSheetBody extends StatelessWidget {
             ),
             if (reminderEnabled) ...[
               const SizedBox(height: 5),
-              _LeadRow(
-                selected: leadMinutes,
-                enabled: !busy,
-                onChanged: onLeadChanged,
+              InlineTimeField(
+                key: const ValueKey('reminder_time_field'),
+                label: Localizations.localeOf(context).languageCode == 'ru'
+                    ? 'Напомнить в'
+                    : 'Remind at',
+                minutes: reminderMinutes,
+                onChanged: onReminderTimeChanged,
+                onClear: null,
               ),
               const SizedBox(height: 5),
               TimeReminderSoundRow(
@@ -125,53 +130,6 @@ class TimeReminderSheetBody extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// За сколько напомнить. Ровно во время записи или заранее.
-///
-/// Строкой чипов, а не отдельным листом: выбор короткий, а лишний экран ради
-/// пяти значений — то же самое лишнее действие, что и всё, что мы убрали.
-class _LeadRow extends StatelessWidget {
-  const _LeadRow({
-    required this.selected,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  final int selected;
-  final bool enabled;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final ru = Localizations.localeOf(context).languageCode == 'ru';
-    final options = <int, String>{
-      0: ru ? 'В момент' : 'On time',
-      10: ru ? 'За 10 мин' : '10 min',
-      30: ru ? 'За 30 мин' : '30 min',
-      60: ru ? 'За час' : '1 hour',
-      24 * 60: ru ? 'За день' : '1 day',
-    };
-
-    return SizedBox(
-      height: 36,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          for (final entry in options.entries) ...[
-            ChoiceChip(
-              key: ValueKey('reminder_lead_${entry.key}'),
-              label: Text(entry.value),
-              selected: entry.key == selected,
-              onSelected: enabled ? (_) => onChanged(entry.key) : null,
-              visualDensity: VisualDensity.compact,
-            ),
-            if (entry.key != options.keys.last) const SizedBox(width: 6),
-          ],
-        ],
       ),
     );
   }

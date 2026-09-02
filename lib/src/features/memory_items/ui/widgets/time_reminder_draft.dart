@@ -3,7 +3,7 @@ class TimeReminderDraft {
   const TimeReminderDraft({
     required this.timeMinutes,
     required this.reminderEnabled,
-    required this.leadMinutes,
+    required this.reminderMinutes,
     required this.soundUri,
     required this.soundName,
   });
@@ -13,8 +13,11 @@ class TimeReminderDraft {
 
   final bool reminderEnabled;
 
-  /// За сколько минут до записи напомнить. Ноль — ровно в её время.
-  final int leadMinutes;
+  /// Во сколько напомнить, от полуночи того же дня.
+  ///
+  /// Часами, а не форой: «за десять минут» и «за час» — лишь два значения из
+  /// многих, а часы дают любое.
+  final int? reminderMinutes;
 
   /// Свой звук напоминания. Null — системный.
   final String? soundUri;

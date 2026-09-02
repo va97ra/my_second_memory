@@ -193,23 +193,13 @@ class MemoryEditorActions {
     });
   }
 
-  /// Насколько раньше записи стоит её напоминание.
+  /// Во сколько стоит напоминание записи, часами того же дня.
   ///
-  /// В модели хранится сам момент, а не фора: она вычисляется обратно, чтобы
-  /// лист открылся на том же выборе, что человек сделал в прошлый раз.
-  static int _leadMinutesOf(MemoryEditorForm form) {
+  /// Пусто — значит напоминания нет, и лист откроется на времени самой записи.
+  static int? _reminderMinutesOf(MemoryEditorForm form) {
     final remindAt = form.remindAt;
-    final timeMinutes = form.timeMinutes;
-    if (remindAt == null || timeMinutes == null) return 0;
-    final start = DateTime(
-      form.memoryDate.year,
-      form.memoryDate.month,
-      form.memoryDate.day,
-      timeMinutes ~/ 60,
-      timeMinutes % 60,
-    );
-    final lead = start.difference(remindAt).inMinutes;
-    return const [0, 10, 30, 60, 24 * 60].contains(lead) ? lead : 0;
+    if (remindAt == null) return null;
+    return remindAt.hour * 60 + remindAt.minute;
   }
 
   Future<void> openTimeAndReminder() async {
@@ -222,7 +212,7 @@ class MemoryEditorActions {
       builder: (context) => TimeReminderSheet(
         initialTimeMinutes: form.timeMinutes,
         initialReminderEnabled: form.remindAt != null,
-        initialLeadMinutes: _leadMinutesOf(form),
+        initialReminderMinutes: _reminderMinutesOf(form),
         initialSoundUri: form.reminderSoundUri,
         initialSoundName: form.reminderSoundName,
         memoryDate: form.memoryDate,
@@ -233,8 +223,10 @@ class MemoryEditorActions {
 
     controller.applyForm((form) {
       final remindAt = result.reminderEnabled && result.timeMinutes != null
-          ? _dateTimeFor(form.memoryDate, result.timeMinutes!)
-              .subtract(Duration(minutes: result.leadMinutes))
+          ? _dateTimeFor(
+              form.memoryDate,
+              result.reminderMinutes ?? result.timeMinutes!,
+            )
           : null;
       return form.copyWith(
         timeMinutes: result.timeMinutes,
