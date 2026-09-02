@@ -25,8 +25,10 @@ List<FeedGuideSection> feedGuideSections({required bool ru}) => [
           FeedGuideItem(
             Icons.add_box_rounded,
             ru
-                ? 'Откройте Календарь, нажмите дату и «Добавить запись».'
-                : 'Open Calendar, tap a date, then Add record.',
+                ? 'Откройте Календарь, нажмите дату, а на шкале дня — свободное '
+                    'время. Встанет рамка: потяните её за кружки и нажмите внутрь.'
+                : 'Open Calendar, tap a date, then tap a free hour on the day '
+                    'scale. Drag the frame by its dots and tap inside it.',
           ),
           FeedGuideItem(
             Icons.category_rounded,
@@ -54,14 +56,20 @@ List<FeedGuideSection> feedGuideSections({required bool ru}) => [
           FeedGuideItem(
             Icons.schedule_rounded,
             ru
-                ? 'Укажите дату и время события, при необходимости включите звуковое напоминание и выберите мелодию.'
-                : 'Set a date and time, optionally enable a sound reminder and choose a melody.',
+                ? 'Время дела задаёт рамка на шкале. Напоминание приходит '
+                    'обычным уведомлением, а будильником — только если выбрать '
+                    'мелодию.'
+                : 'The frame on the scale sets the time. A reminder arrives as '
+                    'a plain notification; it rings like an alarm only if you '
+                    'choose a melody.',
           ),
           FeedGuideItem(
             Icons.repeat_rounded,
             ru
-                ? 'Кнопка ↻ создаёт ежемесячный или ежегодный повтор.'
-                : 'The ↻ button creates a monthly or yearly recurrence.',
+                ? 'Шестерёнка в шапке записи настраивает повтор — ежемесячный '
+                    'или ежегодный — и напоминание.'
+                : 'The gear in the record header sets up recurrence — monthly '
+                    'or yearly — and the reminder.',
           ),
           FeedGuideItem(
             Icons.content_copy_rounded,
@@ -113,8 +121,10 @@ List<FeedGuideSection> feedGuideSections({required bool ru}) => [
           FeedGuideItem(
             Icons.edit_note_rounded,
             ru
-                ? 'Из ленты запись открывается для безопасного просмотра, из календарного дня — для редактирования.'
-                : 'The feed opens a safe read-only view; the calendar day opens the editor.',
+                ? 'Запись открывается сразу в редакторе — и из ленты, и со '
+                    'шкалы дня.'
+                : 'A record opens straight in the editor — from the feed and '
+                    'from the day scale alike.',
           ),
         ],
       ),
