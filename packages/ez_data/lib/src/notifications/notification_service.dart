@@ -180,13 +180,9 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
       return;
     }
 
-    final selectedUri = item.reminderSoundUri;
-    final defaultUri = selectedUri == null
-        ? await _notificationChannel.invokeMethod<String>(
-            'getDefaultAlarmSound',
-          )
-        : null;
-    final soundUri = selectedUri ?? defaultUri;
+    // Мелодия и есть согласие на будильник. Не выбрали — придёт обычное
+    // уведомление: звук будильника без спроса приложение не включает.
+    final soundUri = item.reminderSoundUri;
 
     try {
       await _scheduleWithSound(item, remindAt, soundUri);
@@ -202,38 +198,46 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     DateTime remindAt,
     String? soundUri,
   ) async {
-    final channelId = soundUri == null
-        ? 'memory_reminders_default_v1'
-        : 'memory_reminders_${stableNotificationId(soundUri)}_v1';
-    final sound =
-        soundUri == null ? null : UriAndroidNotificationSound(soundUri);
+    // Будильник звонит, пока его не выключат, и сам не смахивается. Обычное
+    // уведомление ведёт себя как все прочие: выпало, прочитали, убрали.
+    final isAlarm = soundUri != null;
+    final channelId = isAlarm
+        ? 'memory_reminders_${stableNotificationId(soundUri)}_v1'
+        : 'memory_reminders_plain_v1';
     final details = AndroidNotificationDetails(
       channelId,
-      item.reminderSoundName ?? 'Напоминания',
-      channelDescription: 'Звуковые напоминания Ежедневника V2',
-      importance: Importance.max,
-      priority: Priority.max,
-      category: AndroidNotificationCategory.alarm,
-      audioAttributesUsage: AudioAttributesUsage.alarm,
-      sound: sound,
+      isAlarm ? (item.reminderSoundName ?? 'Будильники') : 'Напоминания',
+      channelDescription: isAlarm
+          ? 'Будильники Ежедневника V2 с выбранной мелодией'
+          : 'Напоминания Ежедневника V2',
+      importance: isAlarm ? Importance.max : Importance.high,
+      priority: isAlarm ? Priority.max : Priority.high,
+      category: isAlarm
+          ? AndroidNotificationCategory.alarm
+          : AndroidNotificationCategory.reminder,
+      audioAttributesUsage: isAlarm
+          ? AudioAttributesUsage.alarm
+          : AudioAttributesUsage.notification,
+      sound: isAlarm ? UriAndroidNotificationSound(soundUri) : null,
       playSound: true,
       enableVibration: true,
-      ongoing: true,
-      autoCancel: false,
+      ongoing: isAlarm,
+      autoCancel: !isAlarm,
       visibility: NotificationVisibility.public,
-      additionalFlags: Int32List.fromList(const [4]),
-      actions: const [
-        AndroidNotificationAction(
+      additionalFlags: isAlarm ? Int32List.fromList(const [4]) : null,
+      actions: [
+        const AndroidNotificationAction(
           _openAction,
           'Открыть',
           showsUserInterface: true,
           cancelNotification: true,
         ),
-        AndroidNotificationAction(
-          _stopAction,
-          'Выключить звук',
-          cancelNotification: true,
-        ),
+        if (isAlarm)
+          const AndroidNotificationAction(
+            _stopAction,
+            'Выключить звук',
+            cancelNotification: true,
+          ),
       ],
     );
     final recurring = item.isGeneratedOccurrence && item.seriesId != null;
