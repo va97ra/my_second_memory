@@ -6,6 +6,7 @@ class MemoryEditorDraft {
     required this.title,
     required this.body,
     required this.timeMinutes,
+    required this.endMinutes,
     required this.remindAt,
     required this.reminderSoundUri,
     required this.reminderSoundName,
@@ -28,6 +29,9 @@ class MemoryEditorDraft {
   final String title;
   final String body;
   final int? timeMinutes;
+
+  /// Конец записи; пусто у всего, что стоит на шкале точкой.
+  final int? endMinutes;
   final DateTime? remindAt;
   final String? reminderSoundUri;
   final String? reminderSoundName;

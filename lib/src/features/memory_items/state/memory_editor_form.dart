@@ -16,6 +16,7 @@ class MemoryEditorForm {
     required this.status,
     required this.isUndated,
     this.timeMinutes,
+    this.endMinutes,
     this.remindAt,
     this.reminderSoundUri,
     this.reminderSoundName,
@@ -61,6 +62,7 @@ class MemoryEditorForm {
       status: item.status,
       isUndated: item.isUndated,
       timeMinutes: item.timeMinutes,
+      endMinutes: item.endMinutes,
       remindAt: item.remindAt,
       reminderSoundUri: item.reminderSoundUri,
       reminderSoundName: item.reminderSoundName,
@@ -82,6 +84,7 @@ class MemoryEditorForm {
   final MemoryStatus status;
   final bool isUndated;
   final int? timeMinutes;
+  final int? endMinutes;
   final DateTime? remindAt;
   final String? reminderSoundUri;
   final String? reminderSoundName;
@@ -200,6 +203,7 @@ class MemoryEditorForm {
       title: title,
       body: body,
       timeMinutes: timeMinutes,
+      endMinutes: endMinutes,
       remindAt: remindAt,
       reminderSoundUri: reminderSoundUri,
       reminderSoundName: reminderSoundName,
@@ -228,6 +232,7 @@ class MemoryEditorForm {
     MemoryStatus? status,
     bool? isUndated,
     int? timeMinutes,
+    int? endMinutes,
     bool clearTime = false,
     DateTime? remindAt,
     bool clearReminder = false,
@@ -254,6 +259,7 @@ class MemoryEditorForm {
       status: status ?? this.status,
       isUndated: isUndated ?? this.isUndated,
       timeMinutes: clearTime ? null : timeMinutes ?? this.timeMinutes,
+      endMinutes: clearTime ? null : endMinutes ?? this.endMinutes,
       remindAt: clearReminder ? null : remindAt ?? this.remindAt,
       reminderSoundUri: clearReminderSound
           ? null

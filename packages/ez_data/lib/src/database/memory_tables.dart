@@ -7,6 +7,7 @@ class MemoryItems extends Table {
   TextColumn get title => text()();
   TextColumn get body => text().withDefault(const Constant(''))();
   IntColumn get timeMinutes => integer().nullable()();
+  IntColumn get endMinutes => integer().nullable()();
   DateTimeColumn get memoryDate => dateTime()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();

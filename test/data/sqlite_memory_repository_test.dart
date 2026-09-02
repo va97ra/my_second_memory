@@ -19,6 +19,78 @@ void main() {
     expect(items, isEmpty);
   });
 
+  test('database upgrade from schema 11 keeps the end of a record', () async {
+    SharedPreferences.setMockInitialValues({});
+    final directory = await Directory.systemTemp.createTemp('memory_v11_');
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}/v11.sqlite');
+
+    // База без конца записи — такая уезжала в 1.0.8.
+    final oldDatabase = AppDatabase(NativeDatabase(file));
+    await oldDatabase
+        .customStatement('ALTER TABLE memory_items DROP COLUMN end_minutes');
+    await oldDatabase.customStatement('PRAGMA user_version = 11');
+    await oldDatabase.close();
+
+    final database = AppDatabase(NativeDatabase(file));
+    addTearDown(database.close);
+    expect(database.schemaVersion, 12);
+    final repository = SqliteMemoryRepository(database: database);
+    final date = DateTime(2026, 9, 2);
+    await repository.replaceAll([
+      MemoryItem(
+        id: 'shift',
+        type: MemoryType.task,
+        title: 'Смена',
+        memoryDate: date,
+        createdAt: date,
+        updatedAt: date,
+        timeMinutes: 9 * 60 + 30,
+        endMinutes: 15 * 60 + 15,
+      ),
+    ]);
+
+    final loaded = (await repository.loadAll()).single;
+    expect(loaded.timeMinutes, 9 * 60 + 30);
+    expect(loaded.endMinutes, 15 * 60 + 15);
+  });
+
+  test('the end of a record survives the trip through json', () {
+    final date = DateTime(2026, 9, 2);
+    final item = MemoryItem(
+      id: 'framed',
+      type: MemoryType.task,
+      title: 'Дело с рамкой',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+      timeMinutes: 11 * 60,
+      endMinutes: 16 * 60,
+    );
+
+    final restored = MemoryItem.fromJson(jsonDecode(jsonEncode(item.toJson()))
+        as Map<String, Object?>);
+
+    expect(restored.endMinutes, 16 * 60);
+  });
+
+  test('clearing the time clears the end as well', () {
+    final date = DateTime(2026, 9, 2);
+    final item = MemoryItem(
+      id: 'framed',
+      type: MemoryType.task,
+      title: 'Дело с рамкой',
+      memoryDate: date,
+      createdAt: date,
+      updatedAt: date,
+      timeMinutes: 11 * 60,
+      endMinutes: 16 * 60,
+    );
+
+    // Конца без начала не бывает: снятие времени убирает оба.
+    expect(item.copyWith(clearTime: true).endMinutes, isNull);
+  });
+
   test('saved records survive database reopen with media fields', () async {
     SharedPreferences.setMockInitialValues({});
     final directory = await Directory.systemTemp.createTemp('memory_sqlite_');

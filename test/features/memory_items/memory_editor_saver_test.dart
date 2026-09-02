@@ -24,6 +24,7 @@ MemoryEditorDraft _draft({
     title: body,
     body: body,
     timeMinutes: null,
+    endMinutes: null,
     remindAt: null,
     reminderSoundUri: null,
     reminderSoundName: null,

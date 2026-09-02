@@ -34,6 +34,10 @@ void main() {
     final file = File('${directory.path}/v9.sqlite');
     final oldDatabase = AppDatabase(NativeDatabase(file));
     await oldDatabase.customStatement('DROP TABLE finance_entries');
+    // База девятой версии не знает и про конец записи — иначе миграция
+    // споткнётся о колонку, которой в ней быть не должно.
+    await oldDatabase
+        .customStatement('ALTER TABLE memory_items DROP COLUMN end_minutes');
     await oldDatabase.customStatement('PRAGMA user_version = 9');
     await oldDatabase.close();
 
@@ -46,7 +50,7 @@ void main() {
     final tools = SqliteToolDataRepository(database, false);
     await tools.replaceAll(const ToolDataSnapshot());
     expect((await tools.load()).calculations, isEmpty);
-    expect(database.schemaVersion, 11);
+    expect(database.schemaVersion, 12);
   });
 
   test('SharedPreferences fallback restores independent currency journals',

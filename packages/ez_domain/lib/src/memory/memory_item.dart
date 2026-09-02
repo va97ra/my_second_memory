@@ -11,6 +11,7 @@ class MemoryItem {
     required this.updatedAt,
     this.body = '',
     this.timeMinutes,
+    this.endMinutes,
     this.status = MemoryStatus.active,
     this.priority = 0,
     this.tags = const [],
@@ -38,6 +39,13 @@ class MemoryItem {
   final String title;
   final String body;
   final int? timeMinutes;
+
+  /// Конец записи в минутах от полуночи.
+  ///
+  /// Пусто у всего, что стоит на шкале точкой: напоминание, заметка, платёж.
+  /// Заполнено там, где у дела есть длительность, — тогда на шкале дня оно
+  /// рисуется табличкой от [timeMinutes] до этого времени.
+  final int? endMinutes;
   final DateTime memoryDate;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -74,6 +82,7 @@ class MemoryItem {
     String? title,
     String? body,
     int? timeMinutes,
+    int? endMinutes,
     bool clearTime = false,
     DateTime? memoryDate,
     DateTime? createdAt,
@@ -113,6 +122,7 @@ class MemoryItem {
       title: title ?? this.title,
       body: body ?? this.body,
       timeMinutes: clearTime ? null : timeMinutes ?? this.timeMinutes,
+      endMinutes: clearTime ? null : endMinutes ?? this.endMinutes,
       memoryDate: memoryDate ?? this.memoryDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -152,6 +162,7 @@ class MemoryItem {
       'title': title,
       'body': body,
       'timeMinutes': timeMinutes,
+      'endMinutes': endMinutes,
       'memoryDate': memoryDate.toIso8601String(),
       'createdAt': createdAt.toUtc().toIso8601String(),
       'updatedAt': updatedAt.toUtc().toIso8601String(),
@@ -185,6 +196,7 @@ class MemoryItem {
       title: json['title'] as String,
       body: json['body'] as String? ?? '',
       timeMinutes: json['timeMinutes'] as int?,
+      endMinutes: json['endMinutes'] as int?,
       memoryDate: DateTime.parse(json['memoryDate'] as String),
       createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
       updatedAt: DateTime.parse(json['updatedAt'] as String).toLocal(),
