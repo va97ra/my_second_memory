@@ -95,7 +95,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
       );
     }
 
-    if (!session.hasPin || session.isUnlocked) {
+    if (session.canReadData) {
       return widget.child;
     }
 

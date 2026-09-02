@@ -33,7 +33,7 @@ final syncControllerProvider =
     remote: ref.watch(syncRemoteStoreProvider),
     keyStore: ref.watch(syncKeyStoreProvider),
     tombstones: ref.watch(syncTombstoneStoreProvider),
-    canAccessLocalData: () => ref.read(securitySessionProvider).isUnlocked,
+    canAccessLocalData: () => ref.read(securitySessionProvider).canReadData,
     data: SyncDataSources(
       readMemoryItems: () async {
         await ref.read(memoryItemsControllerProvider.notifier).load();

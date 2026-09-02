@@ -32,6 +32,13 @@ class SecuritySessionState {
   final bool biometricsEnabled;
   final AppCipher? cipher;
 
+  /// Доступны ли зашифрованные данные прямо сейчас.
+  ///
+  /// PIN не задан — скрывать нечего, доступ открыт; задан — только после
+  /// разблокировки. Это правило одно на всё приложение: по нему пускает
+  /// экран-замок и по нему же решает, можно ли синхронизироваться.
+  bool get canReadData => !hasPin || isUnlocked;
+
   SecuritySessionState copyWith({
     bool? setupCompleted,
     bool? hasPin,
