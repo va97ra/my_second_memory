@@ -21,6 +21,7 @@ import 'widgets/editor_load_gate.dart';
 import 'widgets/memory_editor_app_bar.dart';
 import 'widgets/memory_editor_body_view.dart';
 import 'widgets/missing_record_view.dart';
+import '../../../shared/state/notification_providers.dart';
 
 /// Редактор записи. Всё, что человек выбрал, живёт в [MemoryEditorController],
 /// сценарии — в [MemoryEditorActions], поля ввода — в [MemoryEditorFields];
@@ -174,12 +175,15 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
 
   void _initialize(MemoryItem? item, MemoryEditorActions actions) {
     if (item == null) {
-      _controller.initializeNew(
+      final started = _controller.initializeNew(
         date: widget.initialDate ?? DateTime.now(),
         isUndated: widget.createUndated,
         timeMinutes: widget.initialTimeMinutes,
         endMinutes: widget.initialEndMinutes,
       );
+      if (started && _controller.form.remindAt != null) {
+        unawaited(_askForReminderPermission());
+      }
       return;
     }
 
@@ -198,6 +202,18 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
         if (mounted) unawaited(actions.askScope());
       });
     }
+  }
+
+  /// Напоминание, поставленное рамкой, само же и спрашивает разрешение.
+  ///
+  /// Разрешение спрашивают на переключателе «Звуковое уведомление», а рамка
+  /// его минует: переключатель уже включён, спрашивать некому. Отказали —
+  /// напоминание снимается: обещать срабатывание, которого не будет, нельзя.
+  Future<void> _askForReminderPermission() async {
+    final allowed =
+        await ref.read(notificationServiceProvider).requestPermissions();
+    if (allowed || !mounted) return;
+    _controller.applyForm((form) => form.copyWith(clearReminder: true));
   }
 
   void _onRecordCreated(MemoryItem item) {
