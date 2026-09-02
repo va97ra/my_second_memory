@@ -9,7 +9,6 @@ import '../../../shared/ui/screen_chrome.dart';
 import '../../memory_items/memory_items.dart';
 import '../../shift_schedules/shift_schedules.dart';
 import '../state/holiday_providers.dart';
-import 'widgets/add_record_bar.dart';
 import 'widgets/day_records_list.dart';
 import 'widgets/day_timeline.dart';
 import 'widgets/holiday_summary_card.dart';
@@ -70,7 +69,6 @@ class CalendarDayScreen extends ConsumerWidget {
                   date: date,
                   locale: locale,
                 ),
-              AddRecordBar(onPressed: () => _openNewRecord(context)),
             ],
           ),
         ),

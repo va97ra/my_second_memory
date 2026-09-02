@@ -47,7 +47,21 @@ class MemoryEditorForm {
       // уже выбрано — переспрашивать его в редакторе незачем.
       timeMinutes: timeMinutes,
       endMinutes: endMinutes,
+      remindAt: _defaultReminderFor(date, timeMinutes),
     );
+  }
+
+  /// Напоминание на начало дела, выбранного рамкой.
+  ///
+  /// Рамку на шкале ставят затем, чтобы дело не пропустить, — молчаливая
+  /// запись эту задачу не решает. Момент ровно тот же, что и у напоминаний,
+  /// заведённых вручную: своей форы у рамки нет, пока в листе нельзя выбрать
+  /// «за сколько». Прошедшее время пропускаем: рамка на вчерашнем дне иначе
+  /// упиралась бы в требование будущего.
+  static DateTime? _defaultReminderFor(DateTime date, int? timeMinutes) {
+    if (timeMinutes == null) return null;
+    final moment = _reminderBefore(date, timeMinutes, Duration.zero);
+    return moment.isAfter(DateTime.now()) ? moment : null;
   }
 
   /// Форма существующей записи.

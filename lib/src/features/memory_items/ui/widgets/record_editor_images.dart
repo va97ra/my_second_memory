@@ -37,7 +37,14 @@ class RecordEditorImages extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: height),
+        // Минимум по ширине — это цель для пальца. Без него не успевшая
+        // декодироваться фотография занимает нулевую ширину, и нажать по
+        // ней нечем.
+        constraints: BoxConstraints(
+          minWidth: 56,
+          maxWidth: maxWidth,
+          maxHeight: height,
+        ),
         child: GestureDetector(
           key: ValueKey('editor_image_$path'),
           onTap: () => openMemoryImageViewer(context, path),

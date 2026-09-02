@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../navigation/page_turn_navigation.dart';
+import '../../../../shared/ui/memory_card/memory_card_attachment_icons.dart';
+import '../../../../shared/ui/memory_card/memory_card_image_thumbnail.dart';
+import '../../../../shared/ui/memory_card/memory_card_ruled_background.dart';
+import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
 import '../../../memory_items/memory_items.dart';
 import 'day_timeline_geometry.dart';
 
@@ -200,7 +204,6 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
   }
 
   Widget _block(DayTimelineBlock block) {
-    final colors = Theme.of(context).colorScheme;
     final selected = block.item.id == _selectedId;
     final short = block.height < dayTimelineHourHeight / 2;
 
@@ -215,7 +218,13 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
           '/memory/item/${Uri.encodeComponent(block.item.id)}',
         ),
         onLongPress: () => setState(() => _selectedId = block.item.id),
-        child: Stack(
+        // Табличка — отдельный листок и на тёмном блокноте остаётся светлой,
+        // как карточки в ленте. Тёмная на тёмной шкале читалась мрачно.
+        child: NotebookPaperIsland(
+          child: Builder(
+            builder: (context) {
+              final colors = Theme.of(context).colorScheme;
+              return Stack(
           clipBehavior: Clip.none,
           children: [
             Positioned.fill(
@@ -232,10 +241,69 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
                     NotebookSurfaceDepth.card,
                   ),
                 ),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(8, short ? 1 : 5, 8, 2),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: _blockBody(context, block, short: short),
+                ),
+              ),
+            ),
+            if (selected) ..._handles(block),
+          ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Нутро таблички: цветной корешок вида и содержимое записи.
+  ///
+  /// [context] обязательно из-под островка бумаги: иначе тема возьмётся
+  /// тёмная, и по светлой табличке пойдёт светлый текст.
+  Widget _blockBody(
+    BuildContext context,
+    DayTimelineBlock block, {
+    required bool short,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    final item = block.item;
+    final notebook = NotebookVisuals.maybeOf(context);
+    // Рваный край откусывает часть корешка, поэтому ширину ему добавляют.
+    final tearInset = notebook == null ? 0.0 : TornPaperShapeBorder.tearDepth;
+    // Миниатюра просит высоты: на четверти часа ей не поместиться, там
+    // о фотографии говорит значок.
+    final tall = block.height >= 2 * dayTimelineHourHeight / 3;
+    final hasImages = item.imagePaths.isNotEmpty;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        NotebookLeatherSurface(
+          color: memoryTypeColor(item.type),
+          child: SizedBox(width: 10 + tearInset),
+        ),
+        Expanded(
+          child: MemoryCardRuledBackground(
+            lineHeight: short ? 12 : 16,
+            child: Padding(
+            padding: EdgeInsets.fromLTRB(7, short ? 1 : 5, 7, 2),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (tall && hasImages) ...[
+                  SizedBox(
+                    height: 44,
+                    child: MemoryCardImageThumbnail(
+                      paths: item.imagePaths,
+                      compact: true,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Expanded(
                   child: Text(
-                    block.item.title,
+                    item.title,
                     maxLines: short ? 1 : 3,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -247,12 +315,19 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
                     ),
                   ),
                 ),
-              ),
+                if (!(tall && hasImages) || item.audioPath != null) ...[
+                  const SizedBox(width: 4),
+                  MemoryCardAttachmentIcons(
+                    imageCount: tall && hasImages ? 0 : item.imagePaths.length,
+                    hasAudio: item.audioPath != null,
+                  ),
+                ],
+              ],
             ),
-            if (selected) ..._handles(block),
-          ],
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
