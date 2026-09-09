@@ -66,19 +66,24 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
     final blocks = layOutDayTimeline(widget.items);
     _scrollToFirstBlockOnce(blocks);
 
-    return SingleChildScrollView(
-      controller: _scroll,
-      child: SizedBox(
-        height: 24 * dayTimelineHourHeight,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: CustomPaint(painter: HourRulesPainter(context)),
-            ),
-            Positioned.fill(child: _gestureLayer()),
-            for (final block in blocks) _block(block),
-            if (_draftStart != null) _draftFrame(),
-          ],
+    // Бумага кладётся заново, уже без линеек страницы: шкала рисует свои
+    // часовые линии, и вместе с общими получалась двойная разлиновка —
+    // между каждыми двумя часами шли ещё две чужие полосы.
+    return NotebookPaperFill(
+      child: SingleChildScrollView(
+        controller: _scroll,
+        child: SizedBox(
+          height: 24 * dayTimelineHourHeight,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(painter: HourRulesPainter(context)),
+              ),
+              Positioned.fill(child: _gestureLayer()),
+              for (final block in blocks) _block(block),
+              if (_draftStart != null) _draftFrame(),
+            ],
+          ),
         ),
       ),
     );

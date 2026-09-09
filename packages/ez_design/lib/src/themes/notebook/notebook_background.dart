@@ -8,6 +8,52 @@ import 'notebook_visuals.dart';
 const double notebookPageLineTop = 34;
 const double notebookPageLineHeight = 28;
 
+/// Бумага страницы без разлиновки: цвет, текстура, и больше ничего.
+///
+/// Выделено отдельно, потому что нужно в двух местах: общий фон кладёт поверх
+/// неё линейки, а шкала дня — свои часовые линии, и линейки страницы там
+/// лишние. Без этого пришлось бы держать вторую копию рисования фона.
+class NotebookPaperFill extends StatelessWidget {
+  const NotebookPaperFill({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final notebook = NotebookVisuals.maybeOf(context);
+    if (notebook != null) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: notebook.paper,
+          image: DecorationImage(
+            image: AssetImage(notebook.paperAsset),
+            fit: BoxFit.cover,
+            opacity: 0.62,
+            filterQuality: FilterQuality.low,
+          ),
+        ),
+        child: child,
+      );
+    }
+    final palette = AppSurfacePalette.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: palette.backgroundGradient,
+        image: switch (AppSurfaceTextures.maybeOf(context)) {
+          null => null,
+          final textures => DecorationImage(
+              image: AssetImage(textures.backgroundAsset),
+              fit: BoxFit.cover,
+              opacity: textures.backgroundOpacity,
+              filterQuality: FilterQuality.low,
+            ),
+        },
+      ),
+      child: child,
+    );
+  }
+}
+
 class AppBackground extends StatelessWidget {
   const AppBackground({required this.child, super.key});
 
@@ -16,53 +62,20 @@ class AppBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notebook = NotebookVisuals.maybeOf(context);
-    final palette = AppSurfacePalette.of(context);
-    if (notebook == null) {
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          RepaintBoundary(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: palette.backgroundGradient,
-                image: switch (AppSurfaceTextures.maybeOf(context)) {
-                  null => null,
-                  final textures => DecorationImage(
-                      image: AssetImage(textures.backgroundAsset),
-                      fit: BoxFit.cover,
-                      opacity: textures.backgroundOpacity,
-                      filterQuality: FilterQuality.low,
-                    ),
-                },
-              ),
-            ),
-          ),
-          RepaintBoundary(child: child),
-        ],
-      );
-    }
-
     return Stack(
       fit: StackFit.expand,
       children: [
         RepaintBoundary(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: notebook.paper,
-              image: DecorationImage(
-                image: AssetImage(notebook.paperAsset),
-                fit: BoxFit.cover,
-                opacity: 0.62,
-                filterQuality: FilterQuality.low,
-              ),
-            ),
-            child: CustomPaint(
-              painter: NotebookPaperLinesPainter(
-                color: notebook.line,
-                top: notebookPageLineTop,
-                lineHeight: notebookPageLineHeight,
-              ),
-            ),
+          child: NotebookPaperFill(
+            child: notebook == null
+                ? const SizedBox.expand()
+                : CustomPaint(
+                    painter: NotebookPaperLinesPainter(
+                      color: notebook.line,
+                      top: notebookPageLineTop,
+                      lineHeight: notebookPageLineHeight,
+                    ),
+                  ),
           ),
         ),
         RepaintBoundary(child: child),
