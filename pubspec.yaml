@@ -44,6 +44,10 @@ dependencies:
   timezone: ^0.9.4
   record: ^7.1.1
   just_audio: ^0.9.40
+  # Проигрывателя для Windows у just_audio нет: он объявляет только android,
+  # ios, macos и web. Без этой реализации нажатие на голосовую заметку на
+  # настольной версии молча ничего не делало.
+  just_audio_windows: ^0.2.3
   local_auth: ^2.3.0
   flutter_secure_storage: ^10.3.1
   file_selector: ^1.0.3
