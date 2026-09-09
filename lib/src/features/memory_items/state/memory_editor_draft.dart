@@ -12,8 +12,7 @@ class MemoryEditorDraft {
     required this.reminderSoundName,
     required this.memoryDate,
     required this.status,
-    required this.audioPath,
-    required this.audioDurationSeconds,
+    required this.voiceNotes,
     required this.imagePaths,
     required this.savedAt,
     required this.repeatRule,
@@ -37,8 +36,7 @@ class MemoryEditorDraft {
   final String? reminderSoundName;
   final DateTime memoryDate;
   final MemoryStatus status;
-  final String? audioPath;
-  final int? audioDurationSeconds;
+  final List<VoiceNote> voiceNotes;
   final List<String> imagePaths;
   final DateTime savedAt;
   final String? repeatRule;

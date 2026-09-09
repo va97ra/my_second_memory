@@ -111,9 +111,10 @@ class SecurityDataMigrationService {
         _mediaPaths(sourceItems),
         cipher,
       );
-      await repositories.memory.replaceAll(
-        _mapMediaPaths(sourceItems, mediaMigration),
-      );
+      // Записи не переписываются: в них лежит чистое имя вложения, а
+      // шифрование на диске — дело устройства. Раньше сюда попадал хвост
+      // `.ezm`, и телефон с PIN рассылал остальным имена, которых у них нет.
+      await repositories.memory.replaceAll(sourceItems);
       final verifiedItems = await repositories.memory.loadAll();
       if (verifiedItems.length != sourceItems.length) {
         throw StateError('Encrypted memory verification failed');
@@ -189,9 +190,7 @@ class SecurityDataMigrationService {
       cipher,
     );
     try {
-      await plainMemory.replaceAll(
-        _mapMediaPaths(encryptedItems, mediaMigration),
-      );
+      await plainMemory.replaceAll(encryptedItems);
       await backend?.replaceSecureEntities(
         EncryptedMemoryRepository.entityKind,
         const [],
@@ -306,26 +305,8 @@ bool _sameToolData(ToolDataSnapshot first, ToolDataSnapshot second) =>
     jsonEncode(first.toJson()) == jsonEncode(second.toJson());
 
 Set<String> _mediaPaths(List<MemoryItem> items) => {
-      for (final item in items) ...[
-        ...item.imagePaths,
-        if (item.audioPath != null) item.audioPath!,
-      ],
+      for (final item in items) ...item.mediaReferences,
     };
-
-List<MemoryItem> _mapMediaPaths(
-  List<MemoryItem> items,
-  Map<String, String> mapping,
-) {
-  return [
-    for (final item in items)
-      item.copyWith(
-        imagePaths: [for (final path in item.imagePaths) mapping[path] ?? path],
-        audioPath: item.audioPath == null
-            ? null
-            : mapping[item.audioPath!] ?? item.audioPath,
-      ),
-  ];
-}
 
 class _EncryptedRepositories {
   _EncryptedRepositories(AppCipher cipher, LocalStorageScope storage)

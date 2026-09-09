@@ -20,7 +20,7 @@ class MemoryCardDenseContent extends StatelessWidget {
     final body = item.body.trim();
     // Заголовок, повторяющий начало записи, показывать дважды незачем.
     final showBody = body.isNotEmpty && _normalized(body) != _normalized(title);
-    final hasAudio = item.audioPath != null;
+    final hasAudio = item.voiceNotes.isNotEmpty;
     final hasAttachments = hasAudio || item.imagePaths.isNotEmpty;
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;

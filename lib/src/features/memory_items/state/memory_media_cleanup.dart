@@ -37,7 +37,4 @@ class MemoryMediaCleanup {
 }
 
 /// Все файлы, на которые ссылается запись.
-Set<String> mediaPathsOf(MemoryItem item) => {
-      ...item.imagePaths,
-      if (item.audioPath != null) item.audioPath!,
-    };
+Set<String> mediaPathsOf(MemoryItem item) => item.mediaReferences.toSet();

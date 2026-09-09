@@ -88,7 +88,9 @@ void main() {
       createdAt: now,
       updatedAt: now,
       imagePaths: const ['photo.jpg'],
-      audioPath: 'voice.m4a',
+      voiceNotes: const [
+        VoiceNote(reference: 'voice.m4a', durationSeconds: 4),
+      ],
     );
     final media = TrackingMediaStorage();
     final controller = MemoryItemsController(
@@ -103,7 +105,7 @@ void main() {
     final archived = controller.items.single;
     expect(archived.status, MemoryStatus.archived);
     expect(archived.imagePaths, ['photo.jpg']);
-    expect(archived.audioPath, 'voice.m4a');
+    expect(archived.voiceNotes.single.reference, 'voice.m4a');
     expect(media.deleted, isEmpty);
   });
 

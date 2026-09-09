@@ -9,6 +9,13 @@ import 'package:ez_domain/ez_domain.dart';
 import '../support/backup_test_support.dart';
 
 void main() {
+  setUpAll(() {
+    // Вложения теперь ищутся в каталоге приложения, а не по пути из записи:
+    // в тесте каталога нет, подменяем временным.
+    MediaStorage.debugRoot =
+        Directory.systemTemp.createTempSync('backup_media').path;
+  });
+
   test('exports and parses memory records and shift schedules', () async {
     final date = DateTime(2026, 7, 3);
     final memoryRepository = FakeMemoryRepository([

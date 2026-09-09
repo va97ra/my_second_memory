@@ -21,6 +21,10 @@ class MemoryItems extends Table {
   TextColumn get projectId => text().nullable()();
   TextColumn get personIdsJson => text().withDefault(const Constant('[]'))();
   TextColumn get placeId => text().nullable()();
+  /// Голосовые заметки записи списком. Старые колонки остались ради
+  /// перехода: в них лежит первая заметка, и читаются они только тогда,
+  /// когда списка ещё нет. Убрать вместе с переходом.
+  TextColumn get voiceNotesJson => text().nullable()();
   TextColumn get audioPath => text().nullable()();
   IntColumn get audioDurationSeconds => integer().nullable()();
   TextColumn get imagePathsJson => text().withDefault(const Constant('[]'))();

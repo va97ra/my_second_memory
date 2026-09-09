@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 
 import '../../calendar/calendar.dart';
 import '../../recurrence/recurrence.dart';
+import '../../security/security.dart';
 import '../state/memory_attachment_service.dart';
 import '../state/memory_editor_controller.dart';
 import '../state/memory_editor_fields.dart';
@@ -55,7 +56,9 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   final _fields = MemoryEditorFields();
-  final _attachments = MemoryAttachmentService();
+  late final _attachments = MemoryAttachmentService(
+    atRest: () => ref.read(securitySessionProvider).cipher,
+  );
   final _imagePicker = ImagePicker();
   late final MemoryEditorController _controller;
 

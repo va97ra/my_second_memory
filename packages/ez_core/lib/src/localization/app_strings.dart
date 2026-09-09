@@ -243,6 +243,9 @@ class AppStrings {
       isRu ? 'Синхронизация включена' : 'Synchronization enabled';
   String get syncInProgress => isRu ? 'Синхронизация…' : 'Synchronizing…';
   String get syncNever => isRu ? 'Ещё не выполнялась' : 'Not synchronized yet';
+  String get syncFiles => isRu ? 'файлы' : 'files';
+  String syncFilesLeft(int count) =>
+      isRu ? 'не доехало: $count' : 'not delivered: $count';
   String get syncNewVault => isRu
       ? 'Создайте пароль синхронизации. Он может отличаться от PIN.'
       : 'Create a synchronization password. It may differ from your PIN.';

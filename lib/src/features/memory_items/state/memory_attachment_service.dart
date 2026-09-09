@@ -5,6 +5,8 @@ import 'package:ez_data/ez_data.dart';
 import 'package:flutter/foundation.dart';
 import 'package:record/record.dart';
 
+import '../../../platform/windows/windows_audio_input.dart';
+
 /// Записанная голосовая заметка.
 class VoiceRecording {
   const VoiceRecording({required this.path, required this.durationSeconds});
@@ -19,9 +21,24 @@ class VoiceRecording {
 /// выбирают: диалог с камерой и галереей остаётся экрану, потому что это
 /// разговор с человеком, а не работа с данными.
 class MemoryAttachmentService {
-  MemoryAttachmentService({MediaStorage? storage, AudioRecorder? recorder})
-      : _storage = storage ?? MediaStorage(),
+  MemoryAttachmentService({
+    AppCipher? Function()? atRest,
+    MediaStorage? storage,
+    AudioRecorder? recorder,
+    WindowsAudioInput audioInput = const WindowsAudioInput(),
+  })  : _audioInput = audioInput,
+        _atRest = atRest ?? _noCipher,
+        _storage = storage ?? MediaStorage(),
         _recorder = recorder ?? AudioRecorder();
+
+  /// Ключ местного шифрования вложений. Спрашивается в момент обращения, а не
+  /// запоминается: замок могли открыть уже после того, как экран построился.
+  /// Null означает, что PIN не задан и файлы лежат открытыми.
+  final AppCipher? Function() _atRest;
+
+  static AppCipher? _noCipher() => null;
+
+  final WindowsAudioInput _audioInput;
 
   final MediaStorage _storage;
   final AudioRecorder _recorder;
@@ -40,7 +57,7 @@ class MemoryAttachmentService {
       final mimeType = file.mimeType ?? mimeTypeForName(file.name);
       return 'data:$mimeType;base64,${base64Encode(bytes)}';
     }
-    return _storage.saveImage(file);
+    return _storage.saveImage(file, _atRest());
   }
 
   /// Начинает запись голоса. Возвращает false, если разрешение не дано:
@@ -48,9 +65,25 @@ class MemoryAttachmentService {
   Future<bool> startVoice() async {
     if (!await _recorder.hasPermission()) return false;
     final path = await _storage.createVoicePath();
-    await _recorder.start(const RecordConfig(), path: path);
+    await _recorder.start(
+      RecordConfig(device: await _defaultInputDevice()),
+      path: path,
+    );
     _recordingStartedAt = DateTime.now();
     return true;
+  }
+
+  /// Микрофон, выбранный в параметрах звука Windows.
+  ///
+  /// Null — устройство назвать не удалось; тогда его выбирает система, как и
+  /// раньше. На телефоне это всегда так: там микрофон один.
+  Future<InputDevice?> _defaultInputDevice() async {
+    final id = await _audioInput.defaultCaptureDeviceId();
+    if (id == null) return null;
+    for (final device in await _recorder.listInputDevices()) {
+      if (device.id == id) return device;
+    }
+    return null;
   }
 
   /// Останавливает запись. Null означает, что записывать было нечего.
@@ -59,8 +92,11 @@ class MemoryAttachmentService {
     _recordingStartedAt = null;
     final path = await _recorder.stop();
     if (path == null) return null;
+    final reference = MediaStorage.referenceFor(path);
+    await _storage.protectRecording(reference, _atRest());
     return VoiceRecording(
-      path: path,
+      // В записи живёт имя файла, а не путь: путь свой у каждого устройства.
+      path: reference,
       durationSeconds:
           startedAt == null ? 0 : DateTime.now().difference(startedAt).inSeconds,
     );

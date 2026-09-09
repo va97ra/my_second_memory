@@ -160,8 +160,12 @@ void main() {
                 createdAt: now,
                 updatedAt: now,
                 imagePaths: const [pixelImageDataUrl],
-                audioPath: 'voice-test.m4a',
-                audioDurationSeconds: 15,
+                voiceNotes: const [
+                  VoiceNote(
+                    reference: 'voice-test.m4a',
+                    durationSeconds: 15,
+                  ),
+                ],
               ),
               showDate: false,
               compact: true,

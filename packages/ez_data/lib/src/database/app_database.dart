@@ -23,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -94,6 +94,19 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 12) {
             await migrator.addColumn(memoryItems, memoryItems.endMinutes);
+          }
+          if (from < 13) {
+            // Голосовая заметка была одна на запись. Старое поле переносится
+            // в список одним запросом: ничего не теряется, а вторая запись
+            // голоса больше не затирает первую.
+            await migrator.addColumn(memoryItems, memoryItems.voiceNotesJson);
+            await customStatement(
+              'update memory_items set voice_notes_json = '
+              'json_array(json_object('
+              "'reference', audio_path, "
+              "'durationSeconds', coalesce(audio_duration_seconds, 0))) "
+              'where audio_path is not null',
+            );
           }
         },
       );

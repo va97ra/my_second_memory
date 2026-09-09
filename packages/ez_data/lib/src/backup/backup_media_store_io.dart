@@ -2,40 +2,35 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import 'package:ez_domain/ez_domain.dart';
 
+import '../media/media_storage_io.dart';
+
+/// Вложения записей для резервной копии.
+///
+/// Ссылка в записи — имя файла, а не путь: где файл лежит и в каком он виде,
+/// знает хранилище. Имя и есть то, что связывает копию с записью, поэтому при
+/// восстановлении ссылки не переписываются.
 Future<List<Map<String, Object?>>> collectBackupMedia(
   List<MemoryItem> items,
 ) async {
   final media = <Map<String, Object?>>[];
+  final storage = MediaStorage();
   final seen = <String>{};
 
   for (final item in items) {
-    final paths = [
-      ...item.imagePaths,
-      if (item.audioPath != null) item.audioPath!,
-    ];
-
-    for (final path in paths) {
-      if (path.startsWith('data:') ||
-          path.startsWith('http') ||
-          path.startsWith('blob:') ||
-          !seen.add(path)) {
-        continue;
-      }
-
-      final file = File(path);
-      if (!await file.exists()) {
-        continue;
-      }
-
-      final bytes = await file.readAsBytes();
+    for (final reference in item.mediaReferences) {
+      if (MediaStorage.isExternal(reference)) continue;
+      final name = MediaStorage.referenceFor(reference);
+      if (!seen.add(name)) continue;
+      final file = await storage.storedFile(name);
+      if (file == null) continue;
       media.add({
-        'originalPath': path,
-        'fileName': p.basename(path),
-        'bytesBase64': base64Encode(bytes),
+        // Имя сохраняется тем, какое на диске: с хвостом `.ezm`, если файл
+        // лежит зашифрованным, — тогда копия восстановится в том же виде.
+        'fileName': p.basename(file.path),
+        'bytesBase64': base64Encode(await file.readAsBytes()),
       });
     }
   }
@@ -47,40 +42,27 @@ Future<List<MemoryItem>> restoreBackupMedia(
   List<MemoryItem> items,
   List<dynamic> mediaFiles,
 ) async {
-  if (mediaFiles.isEmpty) {
-    return items;
-  }
-
-  final directory = await getApplicationDocumentsDirectory();
-  final pathMap = <String, String>{};
+  if (mediaFiles.isEmpty) return items;
+  await MediaStorage.initialize();
 
   for (final entry in mediaFiles) {
     final media = Map<String, Object?>.from(entry as Map);
-    final originalPath = media['originalPath'] as String?;
-    final fileName = media['fileName'] as String? ?? 'media.bin';
     final bytesBase64 = media['bytesBase64'] as String?;
-    if (originalPath == null || bytesBase64 == null) {
-      continue;
-    }
+    // В копиях до 1.1.0 имя лежит рядом с исходным путём; берётся имя, оно и
+    // тогда было тем же, что в ссылке.
+    final fileName = media['fileName'] as String? ??
+        (media['originalPath'] as String?)?.split(RegExp(r'[\/]')).last;
+    if (fileName == null || bytesBase64 == null) continue;
 
     final safeName = fileName.replaceAll(RegExp(r'[^\w.\-]+'), '_');
-    final restoredPath = p.join(
-      directory.path,
-      'restored_${DateTime.now().microsecondsSinceEpoch}_$safeName',
-    );
-    await File(restoredPath).writeAsBytes(base64Decode(bytesBase64));
-    pathMap[originalPath] = restoredPath;
+    await File(
+      MediaStorage.resolve(
+        safeName,
+        encrypted: safeName.endsWith(MediaStorage.encryptedExtension),
+      ),
+    ).writeAsBytes(base64Decode(bytesBase64));
   }
 
-  return [
-    for (final item in items)
-      item.copyWith(
-        imagePaths: [
-          for (final path in item.imagePaths) pathMap[path] ?? path,
-        ],
-        audioPath: item.audioPath == null
-            ? null
-            : pathMap[item.audioPath!] ?? item.audioPath,
-      ),
-  ];
+  // Ссылки в записях не трогаются: файл вернулся под своим именем.
+  return items;
 }

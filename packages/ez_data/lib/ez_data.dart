@@ -51,6 +51,7 @@ export 'src/tools/local_tool_data_repository.dart';
 export 'src/tools/tool_data_repository.dart';
 export 'src/sync/app_sync_engine.dart';
 export 'src/sync/encrypted_entity_sync_engine.dart';
+export 'src/sync/media_sync_engine.dart';
 export 'src/sync/supabase_sync_remote_store.dart';
 export 'src/sync/sync_local_store.dart';
 export 'src/sync/sync_remote_store.dart';

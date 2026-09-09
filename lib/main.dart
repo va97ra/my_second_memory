@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'src/app/app.dart';
+import 'package:ez_data/ez_data.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'src/features/sync/sync.dart';
@@ -16,6 +17,9 @@ import 'src/app/theme/app_theme_controller.dart';
 
 Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Каталог вложений читается один раз здесь: превью записи достаёт путь
+  // синхронно, в самом build.
+  await MediaStorage.initialize();
   await windowsDesktopPlatform.initialize(arguments);
   var syncConfig = SyncBackendConfig.fromEnvironment(
     useBundledDefaults: true,

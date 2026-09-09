@@ -219,8 +219,8 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
   void _carry(DayTimelineBlock block, double travelled) {
     if (_movingId != block.item.id) return;
     final length = block.end - block.start;
-    final moved = dayTimelineMinutesAt(block.top + travelled)
-        .clamp(0, 24 * 60 - length);
+    final moved =
+        dayTimelineMinutesAt(block.top + travelled).clamp(0, 24 * 60 - length);
     if (moved == _movedStart) return;
     setState(() => _movedStart = moved);
   }
@@ -243,9 +243,7 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
     final selected = block.item.id == _selectedId;
     final short = block.height < dayTimelineHourHeight / 2;
     final carried = block.item.id == _movingId ? _movedStart : null;
-    final top = carried == null
-        ? block.top
-        : dayTimelineOffsetOf(carried);
+    final top = carried == null ? block.top : dayTimelineOffsetOf(carried);
 
     return Positioned(
       top: top,
@@ -277,30 +275,31 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
             builder: (context) {
               final colors = Theme.of(context).colorScheme;
               return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colors.surface.withValues(alpha: 0.94),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: selected ? colors.primary : colors.outlineVariant,
-                    width: selected ? 2 : 1,
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.surface.withValues(alpha: 0.94),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color:
+                              selected ? colors.primary : colors.outlineVariant,
+                          width: selected ? 2 : 1,
+                        ),
+                        boxShadow: notebookSurfaceShadow(
+                          context,
+                          NotebookSurfaceDepth.card,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(7),
+                        child: _blockBody(context, block, short: short),
+                      ),
+                    ),
                   ),
-                  boxShadow: notebookSurfaceShadow(
-                    context,
-                    NotebookSurfaceDepth.card,
-                  ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: _blockBody(context, block, short: short),
-                ),
-              ),
-            ),
-            if (selected) ..._handles(block),
-          ],
+                  if (selected) ..._handles(block),
+                ],
               );
             },
           ),
@@ -339,46 +338,47 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
           child: MemoryCardRuledBackground(
             lineHeight: short ? 12 : 16,
             child: Padding(
-            padding: EdgeInsets.fromLTRB(7, short ? 1 : 5, 7, 2),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (tall && hasImages) ...[
-                  SizedBox(
-                    height: 44,
-                    child: MemoryCardImageThumbnail(
-                      paths: item.imagePaths,
-                      compact: true,
+              padding: EdgeInsets.fromLTRB(7, short ? 1 : 5, 7, 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (tall && hasImages) ...[
+                    SizedBox(
+                      height: 44,
+                      child: MemoryCardImageThumbnail(
+                        paths: item.imagePaths,
+                        compact: true,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Expanded(
+                    child: Text(
+                      item.title,
+                      maxLines: short ? 1 : 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.onSurface,
+                        // На четверти часа подпись живёт одной мелкой строкой.
+                        fontSize: short ? 11 : 13,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 6),
-                ],
-                Expanded(
-                  child: Text(
-                    item.title,
-                    maxLines: short ? 1 : 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: colors.onSurface,
-                      // На четверти часа подпись живёт одной мелкой строкой.
-                      fontSize: short ? 11 : 13,
-                      fontWeight: FontWeight.w800,
-                      height: 1.1,
+                  if (!(tall && hasImages) ||
+                      item.voiceNotes.isNotEmpty ||
+                      item.remindAt != null) ...[
+                    const SizedBox(width: 4),
+                    MemoryCardAttachmentIcons(
+                      imageCount:
+                          tall && hasImages ? 0 : item.imagePaths.length,
+                      hasAudio: item.voiceNotes.isNotEmpty,
+                      hasReminder: item.remindAt != null,
                     ),
-                  ),
-                ),
-                if (!(tall && hasImages) ||
-                    item.audioPath != null ||
-                    item.remindAt != null) ...[
-                  const SizedBox(width: 4),
-                  MemoryCardAttachmentIcons(
-                    imageCount: tall && hasImages ? 0 : item.imagePaths.length,
-                    hasAudio: item.audioPath != null,
-                    hasReminder: item.remindAt != null,
-                  ),
+                  ],
                 ],
-              ],
-            ),
+              ),
             ),
           ),
         ),

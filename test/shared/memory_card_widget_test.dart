@@ -17,8 +17,9 @@ void main() {
       type: MemoryType.note,
       title: 'Запись с фотографией и голосом',
       body: 'Запись с фотографией и голосом',
-      audioPath: 'voice.m4a',
-      audioDurationSeconds: 42,
+      voiceNotes: const [
+        VoiceNote(reference: 'voice.m4a', durationSeconds: 42),
+      ],
       imagePaths: const [pixelImageDataUrl],
       memoryDate: DateTime(2026, 7, 10),
       createdAt: now,

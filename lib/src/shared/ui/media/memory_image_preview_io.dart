@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:ez_data/ez_data.dart';
 import 'package:flutter/material.dart';
 
 import 'broken_image_placeholder.dart';
@@ -27,8 +28,12 @@ class MemoryImagePreview extends ConsumerWidget {
     final isRemoteLike = path.startsWith('http') ||
         path.startsWith('blob:') ||
         path.startsWith('data:');
-    final child = path.endsWith('.ezm')
-        ? ref.watch(encryptedMediaBytesProvider(path)).when(
+    // Файл читается через хранилище, а не напрямую: оно одно знает, лежит
+    // вложение открытым или зашифрованным. Раньше эту развилку решал флаг
+    // «на устройстве задан PIN», и на приехавшем синхронизацией файле он
+    // расходился с тем, что на диске, — картинка не открывалась.
+    final child = !MediaStorage.isExternal(path)
+        ? ref.watch(mediaBytesProvider(path)).when(
               data: (bytes) => Image.memory(
                 bytes,
                 fit: fit,
@@ -57,7 +62,9 @@ class MemoryImagePreview extends ConsumerWidget {
                         const BrokenImagePlaceholder(),
                   )
                 : Image.file(
-                    File(path),
+                    // Каталог свой у каждого устройства: в записи лежит
+                    // имя, путь собирается здесь.
+                    File(MediaStorage.resolve(path)),
                     fit: fit,
                     cacheWidth: cacheWidth,
                     cacheHeight: cacheHeight,

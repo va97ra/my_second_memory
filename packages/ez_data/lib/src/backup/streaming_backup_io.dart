@@ -9,6 +9,8 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:ez_domain/ez_domain.dart';
 
+import '../media/media_storage_io.dart';
+
 Future<String?> createStreamingBackup({
   required String password,
   required String format,
@@ -37,18 +39,13 @@ Future<String?> createStreamingBackup({
   final secretKey = await _keyFromPassword(password, salt);
 
   for (final item in memoryItems) {
-    for (final sourcePath in [
-      ...item.imagePaths,
-      if (item.audioPath != null) item.audioPath!,
-    ]) {
-      if (sourcePath.startsWith('data:') ||
-          sourcePath.startsWith('http') ||
-          sourcePath.startsWith('blob:') ||
-          !seen.add(sourcePath)) {
-        continue;
-      }
-      final source = File(sourcePath);
-      if (!await source.exists()) continue;
+    for (final reference in item.mediaReferences) {
+      if (MediaStorage.isExternal(reference)) continue;
+      final name = MediaStorage.referenceFor(reference);
+      if (!seen.add(name)) continue;
+      // Где файл лежит и в каком он виде, знает хранилище: в записи только имя.
+      final source = await MediaStorage().storedFile(name);
+      if (source == null) continue;
       final archivePath = 'media/${mediaIndex++}.bin';
       final nonce = _randomBytes(12);
       final box = await AesGcm.with256bits().encrypt(
@@ -60,8 +57,9 @@ Future<String?> createStreamingBackup({
         box.cipherText,
       );
       mediaEntries.add({
-        'originalPath': sourcePath,
-        'fileName': p.basename(sourcePath),
+        // Имя сохраняется тем, какое на диске: с хвостом `.ezm`, если файл
+        // лежит зашифрованным, — тогда копия вернётся в том же виде.
+        'fileName': p.basename(source.path),
         'archivePath': archivePath,
         'nonce': base64Encode(nonce),
         'mac': base64Encode(box.mac.bytes),
@@ -115,14 +113,12 @@ Future<List<MemoryItem>> restoreStreamingMedia({
   SecretKey? encryptionKey,
 }) async {
   if (mediaEntries.isEmpty) return items;
-  final directory = await getApplicationDocumentsDirectory();
-  final pathMap = <String, String>{};
+  await MediaStorage.initialize();
   for (final rawEntry in mediaEntries) {
     final entry = Map<String, Object?>.from(rawEntry as Map);
-    final originalPath = entry['originalPath'] as String?;
     final archivePath = entry['archivePath'] as String?;
     var bytes = archivePath == null ? null : archiveFiles[archivePath];
-    if (originalPath == null || archivePath == null || bytes == null) continue;
+    if (archivePath == null || bytes == null) continue;
     if (encryptionKey != null) {
       final nonce = base64Decode(entry['nonce'] as String);
       final mac = Mac(base64Decode(entry['mac'] as String));
@@ -133,22 +129,16 @@ Future<List<MemoryItem>> restoreStreamingMedia({
     }
     final fileName = entry['fileName'] as String? ?? p.basename(archivePath);
     final safeName = fileName.replaceAll(RegExp(r'[^\w.\-]+'), '_');
-    final restoredPath = p.join(
-      directory.path,
-      'restored_${DateTime.now().microsecondsSinceEpoch}_$safeName',
-    );
-    await File(restoredPath).writeAsBytes(bytes);
-    pathMap[originalPath] = restoredPath;
-  }
-  return [
-    for (final item in items)
-      item.copyWith(
-        imagePaths: [for (final path in item.imagePaths) pathMap[path] ?? path],
-        audioPath: item.audioPath == null
-            ? null
-            : pathMap[item.audioPath!] ?? item.audioPath,
+    await File(
+      MediaStorage.resolve(
+        safeName,
+        encrypted: safeName.endsWith(MediaStorage.encryptedExtension),
       ),
-  ];
+    ).writeAsBytes(bytes);
+  }
+  // Ссылки в записях не трогаются: файл вернулся под своим именем, а имя и
+  // есть ссылка.
+  return items;
 }
 
 Future<SecretKey> _keyFromPassword(String password, List<int> salt) {

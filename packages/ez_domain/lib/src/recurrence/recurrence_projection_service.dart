@@ -352,9 +352,7 @@ bool isUntouchedGeneratedOccurrence(MemoryItem item, MemoryItem expected) {
       item.projectId == expected.projectId &&
       _sameStrings(item.personIds, expected.personIds) &&
       item.placeId == expected.placeId &&
-      item.audioPath == expected.audioPath &&
-      item.audioDurationSeconds == expected.audioDurationSeconds &&
-      _sameStrings(item.imagePaths, expected.imagePaths) &&
+      _sameStrings(item.mediaReferences, expected.mediaReferences) &&
       item.transcript == expected.transcript &&
       item.amountMinor == expected.amountMinor &&
       item.paymentCategory == expected.paymentCategory &&

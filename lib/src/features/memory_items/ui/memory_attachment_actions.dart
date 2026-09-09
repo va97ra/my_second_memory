@@ -1,3 +1,4 @@
+import 'package:ez_domain/ez_domain.dart';
 import 'package:file_selector/file_selector.dart' as file_selector;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -22,7 +23,9 @@ class MemoryAttachmentActions {
   final ImagePicker imagePicker;
 
   Future<void> pickImage() async {
-    final file = kIsWeb ? await _pickImageForWeb() : await _pickImageForIo();
+    final file = _picksFromFiles
+        ? await _pickFromFiles()
+        : await _pickFromCameraOrGallery();
     if (file == null) return;
     final stored = await attachments.importImage(file);
     controller.applyForm(
@@ -30,8 +33,17 @@ class MemoryAttachmentActions {
     );
   }
 
-  /// В вебе камеры нет, а выбор файла идёт системным диалогом.
-  Future<XFile?> _pickImageForWeb() {
+  /// Где снимок берут из файлов, а где спрашивают камеру.
+  ///
+  /// На настольной системе нет ни камеры, ни галереи — есть проводник, и
+  /// вопрос «камера или галерея» там задавать некому. В вебе то же самое.
+  bool get _picksFromFiles =>
+      kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux ||
+      defaultTargetPlatform == TargetPlatform.macOS;
+
+  Future<XFile?> _pickFromFiles() {
     const imageGroup = file_selector.XTypeGroup(
       label: 'Images',
       extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
@@ -39,7 +51,7 @@ class MemoryAttachmentActions {
     return file_selector.openFile(acceptedTypeGroups: [imageGroup]);
   }
 
-  Future<XFile?> _pickImageForIo() async {
+  Future<XFile?> _pickFromCameraOrGallery() async {
     final source = await askImageSource(context);
     if (source == null) return null;
     return imagePicker.pickImage(source: source, imageQuality: 92);
@@ -55,9 +67,16 @@ class MemoryAttachmentActions {
     controller.update(() {
       controller.isRecording = false;
       if (recording != null) {
+        // Дописывается к прежним, а не заменяет их: раньше поле было одно, и
+        // вторая запись голоса затирала первую.
         controller.form = controller.form.copyWith(
-          audioPath: recording.path,
-          audioDurationSeconds: recording.durationSeconds,
+          voiceNotes: [
+            ...controller.form.voiceNotes,
+            VoiceNote(
+              reference: recording.path,
+              durationSeconds: recording.durationSeconds,
+            ),
+          ],
         );
       }
     });

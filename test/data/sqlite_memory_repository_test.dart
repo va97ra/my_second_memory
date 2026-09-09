@@ -19,22 +19,66 @@ void main() {
     expect(items, isEmpty);
   });
 
+  test('database upgrade from schema 12 keeps the single voice note',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final directory = await Directory.systemTemp.createTemp('memory_v12_');
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}/v12.sqlite');
+    final date = DateTime(2026, 9, 9);
+
+    // База двенадцатой версии: голосовая заметка одна и лежит отдельным полем.
+    final oldDatabase = AppDatabase(NativeDatabase(file));
+    final oldRepository = SqliteMemoryRepository(database: oldDatabase);
+    await oldRepository.upsert(
+      MemoryItem(
+        id: 'old-voice',
+        type: MemoryType.note,
+        title: 'Голос',
+        memoryDate: date,
+        createdAt: date,
+        updatedAt: date,
+      ),
+    );
+    await oldDatabase.customStatement(
+      "update memory_items set audio_path = 'voice_old.m4a', "
+      'audio_duration_seconds = 9',
+    );
+    await oldDatabase.customStatement(
+      'ALTER TABLE memory_items DROP COLUMN voice_notes_json',
+    );
+    await oldDatabase.customStatement('PRAGMA user_version = 12');
+    await oldDatabase.close();
+
+    final database = AppDatabase(NativeDatabase(file));
+    addTearDown(database.close);
+    final restored =
+        await SqliteMemoryRepository(database: database).loadAll();
+
+    expect(restored.single.voiceNotes, const [
+      VoiceNote(reference: 'voice_old.m4a', durationSeconds: 9),
+    ]);
+  });
+
   test('database upgrade from schema 11 keeps the end of a record', () async {
     SharedPreferences.setMockInitialValues({});
     final directory = await Directory.systemTemp.createTemp('memory_v11_');
     addTearDown(() => directory.delete(recursive: true));
     final file = File('${directory.path}/v11.sqlite');
 
-    // База без конца записи — такая уезжала в 1.0.8.
+    // База без конца записи и без списка голосовых — такая уезжала в 1.0.8.
     final oldDatabase = AppDatabase(NativeDatabase(file));
     await oldDatabase
         .customStatement('ALTER TABLE memory_items DROP COLUMN end_minutes');
+    await oldDatabase.customStatement(
+      'ALTER TABLE memory_items DROP COLUMN voice_notes_json',
+    );
     await oldDatabase.customStatement('PRAGMA user_version = 11');
     await oldDatabase.close();
 
     final database = AppDatabase(NativeDatabase(file));
     addTearDown(database.close);
-    expect(database.schemaVersion, 12);
+    expect(database.schemaVersion, 13);
     final repository = SqliteMemoryRepository(database: database);
     final date = DateTime(2026, 9, 2);
     await repository.replaceAll([
@@ -116,8 +160,10 @@ void main() {
       projectId: 'project-1',
       personIds: const ['person-1'],
       placeId: 'shop',
-      audioPath: '/local/voice.m4a',
-      audioDurationSeconds: 42,
+      voiceNotes: const [
+        VoiceNote(reference: 'voice_1.m4a', durationSeconds: 42),
+        VoiceNote(reference: 'voice_2.m4a', durationSeconds: 7),
+      ],
       imagePaths: const ['/local/photo.jpg'],
       transcript: 'текст голоса',
       isUndated: true,
@@ -137,8 +183,10 @@ void main() {
     expect(restored.single.id, 'saved-note');
     expect(restored.single.timeMinutes, 18 * 60);
     expect(restored.single.status, MemoryStatus.done);
-    expect(restored.single.audioPath, '/local/voice.m4a');
-    expect(restored.single.audioDurationSeconds, 42);
+    expect(restored.single.voiceNotes, const [
+      VoiceNote(reference: 'voice_1.m4a', durationSeconds: 42),
+      VoiceNote(reference: 'voice_2.m4a', durationSeconds: 7),
+    ]);
     expect(restored.single.imagePaths, ['/local/photo.jpg']);
     expect(restored.single.tags, ['дом']);
     expect(restored.single.personIds, ['person-1']);

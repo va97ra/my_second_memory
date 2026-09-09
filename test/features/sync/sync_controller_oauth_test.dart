@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:async';
 
 import 'package:ez_domain/ez_domain.dart';
@@ -207,6 +208,18 @@ class _RecordingTombstoneStore extends SyncTombstoneStore {
 
 class _OAuthRemoteStore implements SyncRemoteStore {
   final _authChanges = StreamController<void>.broadcast();
+
+  @override
+  Future<Set<String>> listMediaNames() async => const {};
+
+  @override
+  Future<void> uploadMedia(String name, Uint8List bytes) async {}
+
+  @override
+  Future<Uint8List> downloadMedia(String name) async => Uint8List(0);
+
+  @override
+  Future<void> deleteMedia(Iterable<String> names) async {}
   String? _userId;
   @override
   String? get currentUserEmail => _userId == null ? null : 'test@example.com';

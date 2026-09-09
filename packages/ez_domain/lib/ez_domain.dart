@@ -23,6 +23,7 @@ export 'src/memory/reminder_rules.dart';
 export 'src/memory/memory_status.dart';
 export 'src/memory/memory_title.dart';
 export 'src/memory/memory_type.dart';
+export 'src/memory/voice_note.dart';
 export 'src/recurrence/recurrence_occurrence_exception.dart';
 export 'src/recurrence/recurrence_dates.dart';
 export 'src/recurrence/recurrence_projection_service.dart';

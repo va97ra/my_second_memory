@@ -11,6 +11,12 @@ class SupabaseSyncRemoteStore implements SyncRemoteStore {
 
   static const oauthRedirectUrl = 'io.supabase.ezhednevnik://login-callback/';
 
+  /// Приватный бакет вложений. Каждый пользователь видит только свою папку —
+  /// это задаёт миграция `202609090001_sync_media.sql`.
+  static const mediaBucket = 'sync-media';
+
+  static const _mediaPageSize = 100;
+
   final SupabaseClient _client;
 
   @override
@@ -115,6 +121,52 @@ class SupabaseSyncRemoteStore implements SyncRemoteStore {
         )
         .subscribe();
     return controller.stream;
+  }
+
+  @override
+  Future<Set<String>> listMediaNames() async {
+    final userId = _requireUserId();
+    final names = <String>{};
+    // Список приходит страницами: у человека с многолетним дневником вложений
+    // больше, чем отдаёт один запрос, и без страниц часть файлов выглядела бы
+    // отсутствующей в облаке — то есть заливалась бы заново каждый прогон.
+    for (var offset = 0;; offset += _mediaPageSize) {
+      final page = await _client.storage.from(mediaBucket).list(
+            path: userId,
+            searchOptions: SearchOptions(
+              limit: _mediaPageSize,
+              offset: offset,
+            ),
+          );
+      names.addAll(page.map((file) => file.name));
+      if (page.length < _mediaPageSize) break;
+    }
+    return names;
+  }
+
+  @override
+  Future<void> uploadMedia(String name, Uint8List bytes) async {
+    await _client.storage.from(mediaBucket).uploadBinary(
+          '${_requireUserId()}/$name',
+          bytes,
+          fileOptions: const FileOptions(upsert: true),
+        );
+  }
+
+  @override
+  Future<Uint8List> downloadMedia(String name) {
+    return _client.storage.from(mediaBucket).download(
+          '${_requireUserId()}/$name',
+        );
+  }
+
+  @override
+  Future<void> deleteMedia(Iterable<String> names) async {
+    if (names.isEmpty) return;
+    final userId = _requireUserId();
+    await _client.storage.from(mediaBucket).remove([
+      for (final name in names) '$userId/$name',
+    ]);
   }
 
   String _requireUserId() {

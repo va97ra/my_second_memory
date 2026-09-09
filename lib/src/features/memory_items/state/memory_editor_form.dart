@@ -20,8 +20,7 @@ class MemoryEditorForm {
     this.remindAt,
     this.reminderSoundUri,
     this.reminderSoundName,
-    this.audioPath,
-    this.audioDurationSeconds,
+    this.voiceNotes = const [],
     this.imagePaths = const [],
     this.recurrenceFrequency,
     this.paymentCategory = PaymentCategory.other,
@@ -86,8 +85,7 @@ class MemoryEditorForm {
       remindAt: item.remindAt,
       reminderSoundUri: item.reminderSoundUri,
       reminderSoundName: item.reminderSoundName,
-      audioPath: item.audioPath,
-      audioDurationSeconds: item.audioDurationSeconds,
+      voiceNotes: List.unmodifiable(item.voiceNotes),
       imagePaths: List.unmodifiable(item.imagePaths),
       recurrenceFrequency: recurrenceFrequencyOf(item),
       paymentCategory: _paymentCategoryOf(item),
@@ -108,8 +106,7 @@ class MemoryEditorForm {
   final DateTime? remindAt;
   final String? reminderSoundUri;
   final String? reminderSoundName;
-  final String? audioPath;
-  final int? audioDurationSeconds;
+  final List<VoiceNote> voiceNotes;
   final List<String> imagePaths;
   final RecurrenceFrequency? recurrenceFrequency;
   final PaymentCategory paymentCategory;
@@ -122,7 +119,7 @@ class MemoryEditorForm {
   final DateTime? originalOccurrenceDate;
 
   /// Есть ли во вложениях хоть что-то, что стоит сохранить само по себе.
-  bool get hasAttachments => imagePaths.isNotEmpty || audioPath != null;
+  bool get hasAttachments => imagePaths.isNotEmpty || voiceNotes.isNotEmpty;
 
   /// Смена вида записи.
   ///
@@ -229,8 +226,7 @@ class MemoryEditorForm {
       reminderSoundName: reminderSoundName,
       memoryDate: DateTime(memoryDate.year, memoryDate.month, memoryDate.day),
       status: status,
-      audioPath: audioPath,
-      audioDurationSeconds: audioDurationSeconds,
+      voiceNotes: List.unmodifiable(voiceNotes),
       imagePaths: List.unmodifiable(imagePaths),
       savedAt: savedAt,
       repeatRule: recurrenceFrequency?.name,
@@ -259,8 +255,7 @@ class MemoryEditorForm {
     String? reminderSoundUri,
     String? reminderSoundName,
     bool clearReminderSound = false,
-    String? audioPath,
-    int? audioDurationSeconds,
+    List<VoiceNote>? voiceNotes,
     bool clearAudio = false,
     List<String>? imagePaths,
     RecurrenceFrequency? recurrenceFrequency,
@@ -287,10 +282,7 @@ class MemoryEditorForm {
       reminderSoundName: clearReminderSound
           ? null
           : reminderSoundName ?? this.reminderSoundName,
-      audioPath: clearAudio ? null : audioPath ?? this.audioPath,
-      audioDurationSeconds: clearAudio
-          ? null
-          : audioDurationSeconds ?? this.audioDurationSeconds,
+      voiceNotes: voiceNotes ?? this.voiceNotes,
       imagePaths: imagePaths ?? this.imagePaths,
       recurrenceFrequency: clearRecurrence
           ? null

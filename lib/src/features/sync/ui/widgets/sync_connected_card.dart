@@ -68,12 +68,22 @@ class SyncConnectedCard extends StatelessWidget {
   }
 
   /// Время прошлой синхронизации, а рядом — сколько записей пришло и ушло.
+  ///
+  /// Вложения считаются отдельно и показываются, только когда они ездили:
+  /// пустая строка «файлов 0» — это шум, а не сведения.
   String _lastSyncLabel(BuildContext context, AppStrings strings) {
     final time = lastSyncedAt;
     if (time == null) return strings.syncNever;
     final value = TimeOfDay.fromDateTime(time).format(context);
     final result = lastResult;
     if (result == null) return value;
-    return '$value · ↓${result.downloaded} ↑${result.uploaded}';
+    final line = '$value · ↓${result.downloaded} ↑${result.uploaded}';
+    final media = result.mediaDownloaded + result.mediaUploaded;
+    if (media == 0 && result.mediaFailed == 0) return line;
+    final files = '${strings.syncFiles} '
+        '↓${result.mediaDownloaded} ↑${result.mediaUploaded}';
+    return result.mediaFailed == 0
+        ? '$line · $files'
+        : '$line · $files · ${strings.syncFilesLeft(result.mediaFailed)}';
   }
 }

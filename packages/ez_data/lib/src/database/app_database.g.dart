@@ -128,6 +128,12 @@ class $MemoryItemsTable extends MemoryItems
   late final GeneratedColumn<String> placeId = GeneratedColumn<String>(
       'place_id', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _voiceNotesJsonMeta =
+      const VerificationMeta('voiceNotesJson');
+  @override
+  late final GeneratedColumn<String> voiceNotesJson = GeneratedColumn<String>(
+      'voice_notes_json', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _audioPathMeta =
       const VerificationMeta('audioPath');
   @override
@@ -219,6 +225,7 @@ class $MemoryItemsTable extends MemoryItems
         projectId,
         personIdsJson,
         placeId,
+        voiceNotesJson,
         audioPath,
         audioDurationSeconds,
         imagePathsJson,
@@ -341,6 +348,12 @@ class $MemoryItemsTable extends MemoryItems
       context.handle(_placeIdMeta,
           placeId.isAcceptableOrUnknown(data['place_id']!, _placeIdMeta));
     }
+    if (data.containsKey('voice_notes_json')) {
+      context.handle(
+          _voiceNotesJsonMeta,
+          voiceNotesJson.isAcceptableOrUnknown(
+              data['voice_notes_json']!, _voiceNotesJsonMeta));
+    }
     if (data.containsKey('audio_path')) {
       context.handle(_audioPathMeta,
           audioPath.isAcceptableOrUnknown(data['audio_path']!, _audioPathMeta));
@@ -440,6 +453,8 @@ class $MemoryItemsTable extends MemoryItems
           DriftSqlType.string, data['${effectivePrefix}person_ids_json'])!,
       placeId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}place_id']),
+      voiceNotesJson: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}voice_notes_json']),
       audioPath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}audio_path']),
       audioDurationSeconds: attachedDatabase.typeMapping.read(
@@ -490,6 +505,11 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
   final String? projectId;
   final String personIdsJson;
   final String? placeId;
+
+  /// Голосовые заметки записи списком. Старые колонки остались ради
+  /// перехода: в них лежит первая заметка, и читаются они только тогда,
+  /// когда списка ещё нет. Убрать вместе с переходом.
+  final String? voiceNotesJson;
   final String? audioPath;
   final int? audioDurationSeconds;
   final String imagePathsJson;
@@ -520,6 +540,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       this.projectId,
       required this.personIdsJson,
       this.placeId,
+      this.voiceNotesJson,
       this.audioPath,
       this.audioDurationSeconds,
       required this.imagePathsJson,
@@ -567,6 +588,9 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
     map['person_ids_json'] = Variable<String>(personIdsJson);
     if (!nullToAbsent || placeId != null) {
       map['place_id'] = Variable<String>(placeId);
+    }
+    if (!nullToAbsent || voiceNotesJson != null) {
+      map['voice_notes_json'] = Variable<String>(voiceNotesJson);
     }
     if (!nullToAbsent || audioPath != null) {
       map['audio_path'] = Variable<String>(audioPath);
@@ -632,6 +656,9 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       placeId: placeId == null && nullToAbsent
           ? const Value.absent()
           : Value(placeId),
+      voiceNotesJson: voiceNotesJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(voiceNotesJson),
       audioPath: audioPath == null && nullToAbsent
           ? const Value.absent()
           : Value(audioPath),
@@ -683,6 +710,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       projectId: serializer.fromJson<String?>(json['projectId']),
       personIdsJson: serializer.fromJson<String>(json['personIdsJson']),
       placeId: serializer.fromJson<String?>(json['placeId']),
+      voiceNotesJson: serializer.fromJson<String?>(json['voiceNotesJson']),
       audioPath: serializer.fromJson<String?>(json['audioPath']),
       audioDurationSeconds:
           serializer.fromJson<int?>(json['audioDurationSeconds']),
@@ -720,6 +748,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
       'projectId': serializer.toJson<String?>(projectId),
       'personIdsJson': serializer.toJson<String>(personIdsJson),
       'placeId': serializer.toJson<String?>(placeId),
+      'voiceNotesJson': serializer.toJson<String?>(voiceNotesJson),
       'audioPath': serializer.toJson<String?>(audioPath),
       'audioDurationSeconds': serializer.toJson<int?>(audioDurationSeconds),
       'imagePathsJson': serializer.toJson<String>(imagePathsJson),
@@ -753,6 +782,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           Value<String?> projectId = const Value.absent(),
           String? personIdsJson,
           Value<String?> placeId = const Value.absent(),
+          Value<String?> voiceNotesJson = const Value.absent(),
           Value<String?> audioPath = const Value.absent(),
           Value<int?> audioDurationSeconds = const Value.absent(),
           String? imagePathsJson,
@@ -787,6 +817,8 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
         projectId: projectId.present ? projectId.value : this.projectId,
         personIdsJson: personIdsJson ?? this.personIdsJson,
         placeId: placeId.present ? placeId.value : this.placeId,
+        voiceNotesJson:
+            voiceNotesJson.present ? voiceNotesJson.value : this.voiceNotesJson,
         audioPath: audioPath.present ? audioPath.value : this.audioPath,
         audioDurationSeconds: audioDurationSeconds.present
             ? audioDurationSeconds.value
@@ -834,6 +866,9 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           ? data.personIdsJson.value
           : this.personIdsJson,
       placeId: data.placeId.present ? data.placeId.value : this.placeId,
+      voiceNotesJson: data.voiceNotesJson.present
+          ? data.voiceNotesJson.value
+          : this.voiceNotesJson,
       audioPath: data.audioPath.present ? data.audioPath.value : this.audioPath,
       audioDurationSeconds: data.audioDurationSeconds.present
           ? data.audioDurationSeconds.value
@@ -879,6 +914,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           ..write('projectId: $projectId, ')
           ..write('personIdsJson: $personIdsJson, ')
           ..write('placeId: $placeId, ')
+          ..write('voiceNotesJson: $voiceNotesJson, ')
           ..write('audioPath: $audioPath, ')
           ..write('audioDurationSeconds: $audioDurationSeconds, ')
           ..write('imagePathsJson: $imagePathsJson, ')
@@ -914,6 +950,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
         projectId,
         personIdsJson,
         placeId,
+        voiceNotesJson,
         audioPath,
         audioDurationSeconds,
         imagePathsJson,
@@ -948,6 +985,7 @@ class MemoryItemRow extends DataClass implements Insertable<MemoryItemRow> {
           other.projectId == this.projectId &&
           other.personIdsJson == this.personIdsJson &&
           other.placeId == this.placeId &&
+          other.voiceNotesJson == this.voiceNotesJson &&
           other.audioPath == this.audioPath &&
           other.audioDurationSeconds == this.audioDurationSeconds &&
           other.imagePathsJson == this.imagePathsJson &&
@@ -980,6 +1018,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
   final Value<String?> projectId;
   final Value<String> personIdsJson;
   final Value<String?> placeId;
+  final Value<String?> voiceNotesJson;
   final Value<String?> audioPath;
   final Value<int?> audioDurationSeconds;
   final Value<String> imagePathsJson;
@@ -1011,6 +1050,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     this.projectId = const Value.absent(),
     this.personIdsJson = const Value.absent(),
     this.placeId = const Value.absent(),
+    this.voiceNotesJson = const Value.absent(),
     this.audioPath = const Value.absent(),
     this.audioDurationSeconds = const Value.absent(),
     this.imagePathsJson = const Value.absent(),
@@ -1043,6 +1083,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     this.projectId = const Value.absent(),
     this.personIdsJson = const Value.absent(),
     this.placeId = const Value.absent(),
+    this.voiceNotesJson = const Value.absent(),
     this.audioPath = const Value.absent(),
     this.audioDurationSeconds = const Value.absent(),
     this.imagePathsJson = const Value.absent(),
@@ -1080,6 +1121,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     Expression<String>? projectId,
     Expression<String>? personIdsJson,
     Expression<String>? placeId,
+    Expression<String>? voiceNotesJson,
     Expression<String>? audioPath,
     Expression<int>? audioDurationSeconds,
     Expression<String>? imagePathsJson,
@@ -1112,6 +1154,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       if (projectId != null) 'project_id': projectId,
       if (personIdsJson != null) 'person_ids_json': personIdsJson,
       if (placeId != null) 'place_id': placeId,
+      if (voiceNotesJson != null) 'voice_notes_json': voiceNotesJson,
       if (audioPath != null) 'audio_path': audioPath,
       if (audioDurationSeconds != null)
         'audio_duration_seconds': audioDurationSeconds,
@@ -1148,6 +1191,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       Value<String?>? projectId,
       Value<String>? personIdsJson,
       Value<String?>? placeId,
+      Value<String?>? voiceNotesJson,
       Value<String?>? audioPath,
       Value<int?>? audioDurationSeconds,
       Value<String>? imagePathsJson,
@@ -1179,6 +1223,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
       projectId: projectId ?? this.projectId,
       personIdsJson: personIdsJson ?? this.personIdsJson,
       placeId: placeId ?? this.placeId,
+      voiceNotesJson: voiceNotesJson ?? this.voiceNotesJson,
       audioPath: audioPath ?? this.audioPath,
       audioDurationSeconds: audioDurationSeconds ?? this.audioDurationSeconds,
       imagePathsJson: imagePathsJson ?? this.imagePathsJson,
@@ -1254,6 +1299,9 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
     if (placeId.present) {
       map['place_id'] = Variable<String>(placeId.value);
     }
+    if (voiceNotesJson.present) {
+      map['voice_notes_json'] = Variable<String>(voiceNotesJson.value);
+    }
     if (audioPath.present) {
       map['audio_path'] = Variable<String>(audioPath.value);
     }
@@ -1313,6 +1361,7 @@ class MemoryItemsCompanion extends UpdateCompanion<MemoryItemRow> {
           ..write('projectId: $projectId, ')
           ..write('personIdsJson: $personIdsJson, ')
           ..write('placeId: $placeId, ')
+          ..write('voiceNotesJson: $voiceNotesJson, ')
           ..write('audioPath: $audioPath, ')
           ..write('audioDurationSeconds: $audioDurationSeconds, ')
           ..write('imagePathsJson: $imagePathsJson, ')
@@ -3432,6 +3481,7 @@ typedef $$MemoryItemsTableCreateCompanionBuilder = MemoryItemsCompanion
   Value<String?> projectId,
   Value<String> personIdsJson,
   Value<String?> placeId,
+  Value<String?> voiceNotesJson,
   Value<String?> audioPath,
   Value<int?> audioDurationSeconds,
   Value<String> imagePathsJson,
@@ -3465,6 +3515,7 @@ typedef $$MemoryItemsTableUpdateCompanionBuilder = MemoryItemsCompanion
   Value<String?> projectId,
   Value<String> personIdsJson,
   Value<String?> placeId,
+  Value<String?> voiceNotesJson,
   Value<String?> audioPath,
   Value<int?> audioDurationSeconds,
   Value<String> imagePathsJson,
@@ -3545,6 +3596,10 @@ class $$MemoryItemsTableFilterComposer
 
   ColumnFilters<String> get placeId => $composableBuilder(
       column: $table.placeId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get voiceNotesJson => $composableBuilder(
+      column: $table.voiceNotesJson,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get audioPath => $composableBuilder(
       column: $table.audioPath, builder: (column) => ColumnFilters(column));
@@ -3650,6 +3705,10 @@ class $$MemoryItemsTableOrderingComposer
   ColumnOrderings<String> get placeId => $composableBuilder(
       column: $table.placeId, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get voiceNotesJson => $composableBuilder(
+      column: $table.voiceNotesJson,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get audioPath => $composableBuilder(
       column: $table.audioPath, builder: (column) => ColumnOrderings(column));
 
@@ -3751,6 +3810,9 @@ class $$MemoryItemsTableAnnotationComposer
   GeneratedColumn<String> get placeId =>
       $composableBuilder(column: $table.placeId, builder: (column) => column);
 
+  GeneratedColumn<String> get voiceNotesJson => $composableBuilder(
+      column: $table.voiceNotesJson, builder: (column) => column);
+
   GeneratedColumn<String> get audioPath =>
       $composableBuilder(column: $table.audioPath, builder: (column) => column);
 
@@ -3827,6 +3889,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             Value<String?> projectId = const Value.absent(),
             Value<String> personIdsJson = const Value.absent(),
             Value<String?> placeId = const Value.absent(),
+            Value<String?> voiceNotesJson = const Value.absent(),
             Value<String?> audioPath = const Value.absent(),
             Value<int?> audioDurationSeconds = const Value.absent(),
             Value<String> imagePathsJson = const Value.absent(),
@@ -3859,6 +3922,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             projectId: projectId,
             personIdsJson: personIdsJson,
             placeId: placeId,
+            voiceNotesJson: voiceNotesJson,
             audioPath: audioPath,
             audioDurationSeconds: audioDurationSeconds,
             imagePathsJson: imagePathsJson,
@@ -3891,6 +3955,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             Value<String?> projectId = const Value.absent(),
             Value<String> personIdsJson = const Value.absent(),
             Value<String?> placeId = const Value.absent(),
+            Value<String?> voiceNotesJson = const Value.absent(),
             Value<String?> audioPath = const Value.absent(),
             Value<int?> audioDurationSeconds = const Value.absent(),
             Value<String> imagePathsJson = const Value.absent(),
@@ -3923,6 +3988,7 @@ class $$MemoryItemsTableTableManager extends RootTableManager<
             projectId: projectId,
             personIdsJson: personIdsJson,
             placeId: placeId,
+            voiceNotesJson: voiceNotesJson,
             audioPath: audioPath,
             audioDurationSeconds: audioDurationSeconds,
             imagePathsJson: imagePathsJson,

@@ -1,5 +1,6 @@
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
+import 'package:flutter/foundation.dart';
 
 import 'sync_data_sources.dart';
 
@@ -13,11 +14,16 @@ class SyncRunner {
     required this.remote,
     required this.tombstones,
     required this.data,
+    this.atRestCipher,
   });
 
   final SyncRemoteStore remote;
   final SyncTombstoneStore tombstones;
   final SyncDataSources data;
+
+  /// Ключ местного шифрования вложений на диске: он свой у каждого устройства
+  /// и не тот, которым шифруется облако. Null — PIN не задан.
+  final AppCipher? Function()? atRestCipher;
 
   Future<SyncRunResult> run(AppCipher cipher) async {
     // Всё читается до слияния: движку нужно и то, что лежит сейчас, и то, что
@@ -34,6 +40,17 @@ class SyncRunner {
       remote: remote,
       cipher: cipher,
       tombstones: tombstones,
+      // В вебе отдельных файлов нет: снимок лежит строкой внутри записи и
+      // уезжает вместе с ней. Движок вложений там не просто лишний — он
+      // счёл бы всё облако ничейным и вычистил бы его.
+      media: kIsWeb
+          ? null
+          : MediaSyncEngine(
+              remote: remote,
+              storage: MediaStorage(),
+              vault: cipher,
+              atRest: atRestCipher?.call(),
+            ),
     ).synchronize(
       memoryItems: memoryItems,
       replaceMemoryItems: (items) => data.mergeMemoryItems(items, memoryItems),

@@ -17,30 +17,28 @@ class RecordEditor extends StatelessWidget {
     super.key,
     required this.controller,
     required this.imagePaths,
-    required this.audioPath,
-    required this.audioDurationSeconds,
+    required this.voiceNotes,
     required this.memoryDate,
     required this.isRecording,
     required this.recurrenceFrequency,
     required this.onRecurrenceTap,
     required this.onPickImage,
     required this.onRemoveImage,
-    required this.onRemoveAudio,
+    required this.onRemoveVoiceNote,
     required this.onVoicePressed,
     required this.onChanged,
   });
 
   final TextEditingController controller;
   final List<String> imagePaths;
-  final String? audioPath;
-  final int? audioDurationSeconds;
+  final List<VoiceNote> voiceNotes;
   final DateTime memoryDate;
   final bool isRecording;
   final RecurrenceFrequency? recurrenceFrequency;
   final VoidCallback onRecurrenceTap;
   final VoidCallback onPickImage;
   final ValueChanged<String> onRemoveImage;
-  final VoidCallback onRemoveAudio;
+  final ValueChanged<VoiceNote> onRemoveVoiceNote;
   final VoidCallback onVoicePressed;
   final VoidCallback onChanged;
 
@@ -76,10 +74,13 @@ class RecordEditor extends StatelessWidget {
                       ),
                       gap,
                     ],
-                    if (audioPath != null) ...[
-                      _voice(context),
-                      gap,
-                    ] else if (isRecording) ...[
+                    if (voiceNotes.isNotEmpty) ...[
+                      for (final note in voiceNotes) ...[
+                        _voice(context, note),
+                        gap,
+                      ],
+                    ],
+                    if (isRecording) ...[
                       RecordingPill(text: AppStrings.of(context).recordingNow),
                       gap,
                     ],
@@ -108,17 +109,17 @@ class RecordEditor extends StatelessWidget {
     );
   }
 
-  Widget _voice(BuildContext context) {
+  Widget _voice(BuildContext context, VoiceNote note) {
     return GestureDetector(
       onLongPressStart: (details) => showMediaDeleteMenu(
         context,
         details.globalPosition,
-        onDelete: onRemoveAudio,
+        onDelete: () => onRemoveVoiceNote(note),
       ),
       child: VoiceNotePlayer(
-        path: audioPath!,
+        path: note.reference,
         recordedAt: memoryDate,
-        durationSeconds: audioDurationSeconds,
+        durationSeconds: note.durationSeconds,
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../accounts/accounts.dart';
 import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
+import '../../../shared/state/encrypted_media_provider.dart';
 import '../../security/security.dart';
 import '../../shift_schedules/shift_schedules.dart';
 import '../../finance/finance.dart';
@@ -34,6 +35,8 @@ final syncControllerProvider =
     keyStore: ref.watch(syncKeyStoreProvider),
     tombstones: ref.watch(syncTombstoneStoreProvider),
     canAccessLocalData: () => ref.read(securitySessionProvider).canReadData,
+    atRestCipher: () => ref.read(securitySessionProvider).cipher,
+    onMediaArrived: () => ref.invalidate(mediaBytesProvider),
     data: SyncDataSources(
       readMemoryItems: () async {
         await ref.read(memoryItemsControllerProvider.notifier).load();

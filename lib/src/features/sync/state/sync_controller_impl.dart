@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_domain/ez_domain.dart';
@@ -15,12 +17,16 @@ class SyncController extends StateNotifier<SyncState> {
     required SyncKeyStore keyStore,
     required SyncTombstoneStore tombstones,
     required SyncDataSources data,
+    AppCipher? Function()? atRestCipher,
+    VoidCallback? onMediaArrived,
     bool Function()? canAccessLocalData,
   })  : _remote = remote,
         _keyStore = keyStore,
         _tombstones = tombstones,
         _data = data,
         _canAccessLocalData = canAccessLocalData ?? _alwaysAccessible,
+        _atRestCipher = atRestCipher,
+        _onMediaArrived = onMediaArrived,
         super(remote == null
             ? const SyncState.unconfigured()
             : const SyncState(status: SyncStatus.loading)) {
@@ -35,6 +41,11 @@ class SyncController extends StateNotifier<SyncState> {
   final SyncTombstoneStore _tombstones;
   final SyncDataSources _data;
   final bool Function() _canAccessLocalData;
+  final AppCipher? Function()? _atRestCipher;
+
+  /// Приехали новые файлы вложений. Экран, который уже показал пустое место,
+  /// сам о них не узнает — его нужно попросить перечитать.
+  final VoidCallback? _onMediaArrived;
   late final SyncScheduler _scheduler;
   final SyncVaultCrypto _vaultCrypto = const SyncVaultCrypto();
   StreamSubscription<void>? _authSubscription;
@@ -191,6 +202,7 @@ class SyncController extends StateNotifier<SyncState> {
         remote: _remote!,
         tombstones: _tombstones,
         data: _data,
+        atRestCipher: _atRestCipher,
       ).run(state.cipher!);
       state = state.copyWith(
         status: SyncStatus.ready,
@@ -198,6 +210,7 @@ class SyncController extends StateNotifier<SyncState> {
         lastResult: result,
         clearError: true,
       );
+      if (result.mediaDownloaded > 0) _onMediaArrived?.call();
     } catch (error) {
       _setError(error);
     }

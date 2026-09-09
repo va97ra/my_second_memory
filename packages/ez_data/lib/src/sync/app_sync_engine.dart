@@ -3,17 +3,23 @@ import '../security/app_cipher.dart';
 import 'sync_local_store.dart';
 import 'sync_remote_store.dart';
 import 'encrypted_entity_sync_engine.dart';
+import 'media_sync_engine.dart';
 
 class AppSyncEngine {
   const AppSyncEngine({
     required this.remote,
     required this.cipher,
     required this.tombstones,
+    this.media,
   });
 
   final SyncRemoteStore remote;
   final AppCipher cipher;
   final SyncTombstoneStore tombstones;
+
+  /// Вложения. Null означает, что на этой платформе файлов нет — в вебе
+  /// снимок живёт строкой внутри самой записи и уезжает вместе с ней.
+  final MediaSyncEngine? media;
 
   Future<SyncRunResult> synchronize({
     required List<MemoryItem> memoryItems,
@@ -34,6 +40,14 @@ class AppSyncEngine {
     Future<void> Function(List<SavedToolCalculation>)? replaceToolCalculations,
   }) async {
     final remoteEntities = await remote.fetchEntities();
+    // Слитый список записей нужен вложениям: по нему видно, какие файлы ещё
+    // кому-то принадлежат, а какие остались в облаке ничьими.
+    var mergedMemoryItems = memoryItems;
+    Future<void> replaceMergedMemoryItems(List<MemoryItem> items) async {
+      mergedMemoryItems = items;
+      await replaceMemoryItems(items);
+    }
+
     final memoryOutcome = await EncryptedEntitySyncEngine<MemoryItem>(
       remote: remote,
       cipher: cipher,
@@ -47,7 +61,7 @@ class AppSyncEngine {
     ).merge(
       localItems: memoryItems,
       remoteEntities: remoteEntities,
-      replaceLocal: replaceMemoryItems,
+      replaceLocal: replaceMergedMemoryItems,
     );
     final shiftsEngine = EncryptedEntitySyncEngine<ShiftSchedule>(
       remote: remote,
@@ -228,7 +242,11 @@ class AppSyncEngine {
       ...financeOutcome.changesToUpload,
       ...toolCalculationsOutcome.changesToUpload,
     ]);
+    // Вложения идут после записей: пока запись не слита, неизвестно, какие
+    // файлы ей нужны и какие в облаке уже ничьи.
+    final mediaResult = await media?.synchronize(mergedMemoryItems);
     return _combine([
+      if (mediaResult != null) mediaResult,
       memoryOutcome.result,
       shiftsOutcome.result,
       accountsOutcome.result,
@@ -244,6 +262,11 @@ class AppSyncEngine {
       downloaded: results.fold(0, (total, item) => total + item.downloaded),
       uploaded: results.fold(0, (total, item) => total + item.uploaded),
       deleted: results.fold(0, (total, item) => total + item.deleted),
+      mediaDownloaded:
+          results.fold(0, (total, item) => total + item.mediaDownloaded),
+      mediaUploaded:
+          results.fold(0, (total, item) => total + item.mediaUploaded),
+      mediaFailed: results.fold(0, (total, item) => total + item.mediaFailed),
     );
   }
 }

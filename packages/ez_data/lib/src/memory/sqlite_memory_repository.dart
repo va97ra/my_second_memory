@@ -171,8 +171,15 @@ class SqliteMemoryRepository implements MemoryRepository {
       projectId: Value(item.projectId),
       personIdsJson: Value(jsonEncode(item.personIds)),
       placeId: Value(item.placeId),
-      audioPath: Value(item.audioPath),
-      audioDurationSeconds: Value(item.audioDurationSeconds),
+      voiceNotesJson: Value(
+        jsonEncode([for (final note in item.voiceNotes) note.toJson()]),
+      ),
+      audioPath: Value(
+        item.voiceNotes.isEmpty ? null : item.voiceNotes.first.reference,
+      ),
+      audioDurationSeconds: Value(
+        item.voiceNotes.isEmpty ? null : item.voiceNotes.first.durationSeconds,
+      ),
       imagePathsJson: Value(jsonEncode(item.imagePaths)),
       transcript: Value(item.transcript),
       seriesId: Value(item.seriesId),
@@ -205,8 +212,7 @@ class SqliteMemoryRepository implements MemoryRepository {
       projectId: row.projectId,
       personIds: _decodeStringList(row.personIdsJson),
       placeId: row.placeId,
-      audioPath: row.audioPath,
-      audioDurationSeconds: row.audioDurationSeconds,
+      voiceNotes: _decodeVoiceNotes(row),
       imagePaths: _decodeStringList(row.imagePathsJson),
       transcript: row.transcript,
       seriesId: row.seriesId,
@@ -216,6 +222,30 @@ class SqliteMemoryRepository implements MemoryRepository {
       isGeneratedOccurrence: row.isGeneratedOccurrence,
       isUndated: row.isUndated,
     );
+  }
+
+  /// Голосовые заметки строки.
+  ///
+  /// Список появился в 1.1.0. У строк, записанных раньше, его нет — тогда
+  /// берётся одиночное поле, каким оно и было. Условие уйдёт вместе со
+  /// старыми колонками.
+  List<VoiceNote> _decodeVoiceNotes(MemoryItemRow row) {
+    final encoded = row.voiceNotesJson;
+    if (encoded != null && encoded.isNotEmpty) {
+      return [
+        for (final note in jsonDecode(encoded) as List<dynamic>)
+          VoiceNote.fromJson(Map<String, Object?>.from(note as Map)),
+      ];
+    }
+    if (row.audioPath case final reference?) {
+      return [
+        VoiceNote(
+          reference: reference,
+          durationSeconds: row.audioDurationSeconds ?? 0,
+        ),
+      ];
+    }
+    return const [];
   }
 
   List<String> _decodeStringList(String raw) {

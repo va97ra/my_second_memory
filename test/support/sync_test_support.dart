@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 
@@ -86,6 +88,31 @@ class MemoryTombstoneStore extends SyncTombstoneStore {
 
 class SyncRemote implements SyncRemoteStore {
   final storedEntities = <String, SyncRemoteEntity>{};
+
+  /// Облачные вложения: имя → уже зашифрованные байты, как в бакете.
+  final storedMedia = <String, Uint8List>{};
+
+  @override
+  Future<Set<String>> listMediaNames() async => storedMedia.keys.toSet();
+
+  @override
+  Future<void> uploadMedia(String name, Uint8List bytes) async {
+    storedMedia[name] = bytes;
+  }
+
+  @override
+  Future<Uint8List> downloadMedia(String name) async {
+    final bytes = storedMedia[name];
+    if (bytes == null) throw StateError('No media named $name');
+    return bytes;
+  }
+
+  @override
+  Future<void> deleteMedia(Iterable<String> names) async {
+    for (final name in names) {
+      storedMedia.remove(name);
+    }
+  }
 
   @override
   String? get currentUserEmail => 'test@example.com';

@@ -1,5 +1,6 @@
 import 'memory_status.dart';
 import 'memory_type.dart';
+import 'voice_note.dart';
 
 class MemoryItem {
   const MemoryItem({
@@ -22,8 +23,7 @@ class MemoryItem {
     this.projectId,
     this.personIds = const [],
     this.placeId,
-    this.audioPath,
-    this.audioDurationSeconds,
+    this.voiceNotes = const [],
     this.imagePaths = const [],
     this.transcript,
     this.seriesId,
@@ -59,8 +59,11 @@ class MemoryItem {
   final String? projectId;
   final List<String> personIds;
   final String? placeId;
-  final String? audioPath;
-  final int? audioDurationSeconds;
+  /// Голосовые заметки записи по порядку записи.
+  ///
+  /// Их может быть несколько: раньше поле было одно, и вторая запись голоса
+  /// затирала первую.
+  final List<VoiceNote> voiceNotes;
   final List<String> imagePaths;
   final String? transcript;
   final String? seriesId;
@@ -75,6 +78,16 @@ class MemoryItem {
   bool get isDone => status == MemoryStatus.done;
 
   bool get isVoiceNote => type == MemoryType.voiceNote;
+
+  /// Все вложения записи одним списком: снимки и голосовые.
+  ///
+  /// Перечисление живёт здесь, а не у каждого, кому оно понадобилось: уборка
+  /// файлов, резервная копия и синхронизация раньше повторяли его каждая
+  /// по-своему, и добавление голосовых пришлось бы вносить в пять мест.
+  List<String> get mediaReferences => [
+        ...imagePaths,
+        for (final note in voiceNotes) note.reference,
+      ];
 
   MemoryItem copyWith({
     String? id,
@@ -100,9 +113,7 @@ class MemoryItem {
     String? projectId,
     List<String>? personIds,
     String? placeId,
-    String? audioPath,
-    int? audioDurationSeconds,
-    bool clearAudio = false,
+    List<VoiceNote>? voiceNotes,
     List<String>? imagePaths,
     String? transcript,
     String? seriesId,
@@ -139,9 +150,7 @@ class MemoryItem {
       projectId: projectId ?? this.projectId,
       personIds: personIds ?? this.personIds,
       placeId: placeId ?? this.placeId,
-      audioPath: clearAudio ? null : audioPath ?? this.audioPath,
-      audioDurationSeconds:
-          clearAudio ? null : audioDurationSeconds ?? this.audioDurationSeconds,
+      voiceNotes: voiceNotes ?? this.voiceNotes,
       imagePaths: imagePaths ?? this.imagePaths,
       transcript: transcript ?? this.transcript,
       seriesId: clearSeries ? null : seriesId ?? this.seriesId,
@@ -176,8 +185,13 @@ class MemoryItem {
       'projectId': projectId,
       'personIds': personIds,
       'placeId': placeId,
-      'audioPath': audioPath,
-      'audioDurationSeconds': audioDurationSeconds,
+      'voiceNotes': [for (final note in voiceNotes) note.toJson()],
+      // Первая заметка дублируется старыми полями, чтобы устройство со
+      // сборкой до 1.1.0 не потеряло голос совсем. Убрать, когда все
+      // устройства обновятся.
+      'audioPath': voiceNotes.isEmpty ? null : voiceNotes.first.reference,
+      'audioDurationSeconds':
+          voiceNotes.isEmpty ? null : voiceNotes.first.durationSeconds,
       'imagePaths': imagePaths,
       'transcript': transcript,
       'seriesId': seriesId,
@@ -214,8 +228,7 @@ class MemoryItem {
       personIds:
           (json['personIds'] as List<dynamic>? ?? const []).cast<String>(),
       placeId: json['placeId'] as String?,
-      audioPath: json['audioPath'] as String?,
-      audioDurationSeconds: json['audioDurationSeconds'] as int?,
+      voiceNotes: _voiceNotesFromJson(json),
       imagePaths:
           (json['imagePaths'] as List<dynamic>? ?? const []).cast<String>(),
       transcript: json['transcript'] as String?,
@@ -227,6 +240,29 @@ class MemoryItem {
       isUndated: json['isUndated'] as bool? ?? false,
     );
   }
+}
+
+/// Голосовые заметки из слепка записи.
+///
+/// Записи со сборок до 1.1.0 несут одно поле `audioPath`; из него получается
+/// список из одной заметки. Условие уйдёт вместе с обратной совместимостью в
+/// [MemoryItem.toJson].
+List<VoiceNote> _voiceNotesFromJson(Map<String, Object?> json) {
+  if (json['voiceNotes'] case final List<dynamic> notes) {
+    return [
+      for (final note in notes)
+        VoiceNote.fromJson(Map<String, Object?>.from(note as Map)),
+    ];
+  }
+  if (json['audioPath'] case final String reference) {
+    return [
+      VoiceNote(
+        reference: reference,
+        durationSeconds: json['audioDurationSeconds'] as int? ?? 0,
+      ),
+    ];
+  }
+  return const [];
 }
 
 /// Порядок записей внутри одного дня: по времени, а при равном времени — по

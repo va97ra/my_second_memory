@@ -35,10 +35,13 @@ class VoiceNotePlaybackController {
       await _clearTemporaryAudio();
       activePath = path;
       final cipher = _cipher;
-      final playablePath = path.endsWith('.ezm') && cipher != null
-          ? await _mediaStorage.materializeAudio(path, cipher)
-          : path;
-      if (playablePath != path) _temporaryPath = playablePath;
+      // Зашифрован файл или нет, решает не имя в записи, а то, как он
+      // лежит на этом устройстве: хранилище само найдёт нужную форму и,
+      // если надо, распакует её во временный файл.
+      final playablePath = await _mediaStorage.materializeAudio(path, cipher);
+      if (playablePath != MediaStorage.resolve(path)) {
+        _temporaryPath = playablePath;
+      }
       await player.setFilePath(playablePath);
     }
     if (player.processingState == ProcessingState.completed) {

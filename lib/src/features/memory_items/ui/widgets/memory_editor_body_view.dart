@@ -42,8 +42,7 @@ class MemoryEditorBodyView extends StatelessWidget {
       recordEditor: RecordEditor(
         controller: bodyController,
         imagePaths: form.imagePaths,
-        audioPath: form.audioPath,
-        audioDurationSeconds: form.audioDurationSeconds,
+        voiceNotes: form.voiceNotes,
         memoryDate: form.memoryDate,
         isRecording: controller.isRecording,
         recurrenceFrequency: form.recurrenceFrequency,
@@ -57,8 +56,14 @@ class MemoryEditorBodyView extends StatelessWidget {
             ],
           ),
         ),
-        onRemoveAudio: () =>
-            controller.applyForm((form) => form.copyWith(clearAudio: true)),
+        onRemoveVoiceNote: (note) => controller.applyForm(
+          (form) => form.copyWith(
+            voiceNotes: [
+              for (final existing in form.voiceNotes)
+                if (existing.reference != note.reference) existing,
+            ],
+          ),
+        ),
         onVoicePressed: controller.isRecording
             ? actions.media.stopAndSaveVoice
             : actions.media.startVoice,

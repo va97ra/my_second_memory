@@ -74,9 +74,22 @@ class SyncRunResult {
     required this.downloaded,
     required this.uploaded,
     required this.deleted,
+    this.mediaDownloaded = 0,
+    this.mediaUploaded = 0,
+    this.mediaFailed = 0,
   });
 
   final int downloaded;
   final int uploaded;
   final int deleted;
+
+  /// Вложения считаются отдельно от записей: это разные единицы, и сложить их
+  /// в один счётчик значит показать человеку число, которое ничего не значит.
+  final int mediaDownloaded;
+  final int mediaUploaded;
+
+  /// Сколько файлов не доехало. Один сорвавшийся снимок не должен ронять весь
+  /// прогон, но и молчать о нём нельзя: на следующем прогоне попробуем снова,
+  /// а пока это видно в итоге.
+  final int mediaFailed;
 }

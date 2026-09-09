@@ -23,7 +23,9 @@ class MemoryCardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = item.title.trim().isNotEmpty ? item.title.trim() : item.body;
-    final hasAudio = item.audioPath != null;
+    final voiceNote =
+        item.voiceNotes.isEmpty ? null : item.voiceNotes.first;
+    final hasAudio = voiceNote != null;
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final typography = AppContentTypography.of(context);
@@ -91,12 +93,15 @@ class MemoryCardContent extends StatelessWidget {
                       hasReminder: true,
                     ),
                   ],
-                  if (hasAudio) ...[
+                  // В карточке показывается первая заметка: их может быть
+                  // несколько, но карточка — это взгляд мельком, а не
+                  // проигрыватель. Остальные видны в самой записи.
+                  if (voiceNote case final note?) ...[
                     const Spacer(),
                     VoiceNotePlayer(
-                      path: item.audioPath!,
+                      path: note.reference,
                       recordedAt: item.memoryDate,
-                      durationSeconds: item.audioDurationSeconds,
+                      durationSeconds: note.durationSeconds,
                       compact: true,
                     ),
                   ],
