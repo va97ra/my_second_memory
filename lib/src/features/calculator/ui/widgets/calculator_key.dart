@@ -6,18 +6,28 @@ import 'package:flutter/material.dart';
 ///
 /// Роль решает цвет: столбец действий должно быть видно, не читая знаков, а
 /// «равно» заканчивает счёт и потому закрашено целиком, а не вполсилы.
-enum CalculatorKeyRole { plain, operation, result }
+/// Служебные клавиши, наоборот, тише цифр: акцент на клавиатуре держат только
+/// действия и «равно» — так устроены и айфоновский, и гугловский, и виндовый
+/// калькуляторы. Ряд памяти был закрашен как действия и перетягивал взгляд
+/// сильнее самих действий.
+enum CalculatorKeyRole { service, plain, operation, result }
 
 class CalculatorKey extends StatefulWidget {
   const CalculatorKey({
     required this.label,
     required this.onPressed,
+    this.icon,
     this.selected = false,
     this.role = CalculatorKeyRole.plain,
     super.key,
   });
 
   final String label;
+
+  /// Значок вместо подписи. Нужен там, где знака нет в шрифте: `⌫` приезжал
+  /// из системного набора символов и выделялся чужим рисунком среди остальных
+  /// клавиш.
+  final IconData? icon;
   final VoidCallback onPressed;
   final bool selected;
   final CalculatorKeyRole role;
@@ -43,6 +53,10 @@ class _CalculatorKeyState extends State<CalculatorKey> {
             CalculatorKeyRole.plain => (
                 colors.surfaceContainerHighest,
                 colors.onSurface,
+              ),
+            CalculatorKeyRole.service => (
+                colors.surfaceContainer,
+                colors.onSurfaceVariant,
               ),
           };
     final topColor = Color.alphaBlend(
@@ -87,15 +101,27 @@ class _CalculatorKeyState extends State<CalculatorKey> {
                   padding: const EdgeInsets.all(4),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text(
-                      widget.label,
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            fontSize: _labelSize(constraints),
+                    // Подпись рисуется системным шрифтом, а не Manrope: у
+                    // того при жирном начертании нижняя точка знака деления
+                    // срастается с чертой, и `÷` читается как крестик, а
+                    // надстрочных `ˣ ʸ ⁻` в нём нет вовсе — они и так
+                    // приезжали из чужого шрифта. Стиль задан целиком через
+                    // `DefaultTextStyle`, а не `copyWith` от темы: иначе
+                    // Manrope подмешался бы обратно.
+                    child: widget.icon == null
+                        ? DefaultTextStyle(
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: _labelSize(constraints),
+                              color: inkColor,
+                            ),
+                            child: Text(widget.label, maxLines: 1),
+                          )
+                        : Icon(
+                            widget.icon,
+                            size: _labelSize(constraints),
                             color: inkColor,
                           ),
-                    ),
                   ),
                 ),
               ),

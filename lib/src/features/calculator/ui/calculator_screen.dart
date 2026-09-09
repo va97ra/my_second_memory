@@ -11,7 +11,6 @@ import 'widgets/calculator_display.dart';
 import 'widgets/calculator_key.dart';
 import 'widgets/calculator_key_grid.dart';
 import 'widgets/calculator_mode_bar.dart';
-import 'widgets/calculator_scientific_grid.dart';
 
 class CalculatorScreen extends ConsumerStatefulWidget {
   const CalculatorScreen({super.key});
@@ -53,8 +52,13 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
     return WarmGradientBackground(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final wideScientific =
-              state.scientific && constraints.maxWidth >= 600;
+          // Раскладку выбирает форма места под клавиатуру, а не ширина экрана.
+          // Порог по ширине давал широкую раскладку и планшету в портрете,
+          // где высоты вдвое больше ширины: пять рядов растягивались на всю
+          // высоту, а клавиши превращались в вертикальные плашки.
+          final keyboardHeight = constraints.maxHeight - _chromeHeight;
+          final wideScientific = state.scientific &&
+              constraints.maxWidth - 24 > keyboardHeight;
           // Потолок ширины держит клавиатуру осмысленной на десктопе, но не
           // должен обрезать её на телефоне: 360 совпадали ровно с узким
           // экраном, и всё, что шире, получало поля по бокам. 480 перекрывают
@@ -102,19 +106,17 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                     SizedBox(height: 48, child: _memoryRow()),
                     const SizedBox(height: 2),
                     Expanded(
-                      child: state.scientific
-                          ? CalculatorScientificGrid(
-                              keys: scientificCalculatorKeys(state),
-                              wide: wideScientific,
-                              selectedKeys: _selectedKeys(state),
-                              labels: _scientificLabels(state),
-                              onKey: (key) => _input.handle(key, state),
-                            )
-                          : CalculatorKeyGrid(
-                              columns: 4,
-                              keys: standardCalculatorKeys,
-                              onKey: (key) => _input.handle(key, state),
-                            ),
+                      child: CalculatorKeyGrid(
+                        layout: state.scientific
+                            ? scientificCalculatorLayout(
+                                state,
+                                wide: wideScientific,
+                              )
+                            : standardCalculatorLayout,
+                        selectedKeys: _selectedKeys(state),
+                        labels: _keyLabels(state, strings),
+                        onKey: (key) => _input.handle(key, state),
+                      ),
                     ),
                   ],
                 ),
@@ -128,7 +130,8 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
 
   /// Память: те же клавиши, что и остальные, а не подписи без кнопок.
   /// Голый текст не читался нажимаемым — было непонятно, что по нему вообще
-  /// можно ударить пальцем.
+  /// можно ударить пальцем. Но и кричать им не о чем: это служебный ряд, а не
+  /// действия.
   Widget _memoryRow() => Row(
         children: [
           for (final command in const ['MC', 'MR', 'M+', 'M-', 'MS']) ...[
@@ -136,7 +139,7 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
             Expanded(
               child: CalculatorKey(
                 label: command,
-                role: CalculatorKeyRole.operation,
+                role: CalculatorKeyRole.service,
                 onPressed: () => ref
                     .read(calculatorControllerProvider.notifier)
                     .memoryCommand(command),
@@ -156,18 +159,30 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
         if (state.hyperbolic) 'Hyp',
       };
 
-  Map<String, String> _scientificLabels(CalculatorState state) => {
-        'angle': switch (state.angleUnit) {
-          CalculatorAngleUnit.degrees => 'DEG',
-          CalculatorAngleUnit.radians => 'RAD',
-          CalculatorAngleUnit.gradians => 'GRAD',
+  /// Подписи, которые зависят от состояния или от языка. Постоянные знаки
+  /// живут в самой сетке.
+  ///
+  /// `π` больше не превращается в `e` по «2nd»: у `e` своя клавиша, и вторая
+  /// подпись плодила два одинаковых знака на одной клавиатуре. По той же
+  /// причине убрана отдельная клавиша `eˣ` — она повторяла `ln` при «2nd».
+  Map<String, String> _keyLabels(CalculatorState state, AppStrings strings) => {
+        'backspace': strings.calculatorBackspace,
+        if (state.scientific) ...{
+          'angle': switch (state.angleUnit) {
+            CalculatorAngleUnit.degrees => 'DEG',
+            CalculatorAngleUnit.radians => 'RAD',
+            CalculatorAngleUnit.gradians => 'GRAD',
+          },
+          'sin': _functionLabel('sin', state),
+          'cos': _functionLabel('cos', state),
+          'tan': _functionLabel('tan', state),
+          'ln': state.second ? 'eˣ' : 'ln',
+          'log': state.second ? '10ˣ' : 'log',
+          '10ˣ': state.second ? '2ˣ' : '10ˣ',
         },
-        'sin': _functionLabel('sin', state),
-        'cos': _functionLabel('cos', state),
-        'tan': _functionLabel('tan', state),
-        'ln': state.second ? 'eˣ' : 'ln',
-        'log': state.second ? '10ˣ' : 'log',
-        '10ˣ': state.second ? '2ˣ' : '10ˣ',
-        'pi': state.second ? 'e' : 'π',
       };
 }
+
+/// Высота всего, что стоит над клавиатурой: полоса режима, табло, ряд памяти
+/// и зазоры между ними вместе с полями колонки.
+const double _chromeHeight = 2 + calculatorModeBarHeight + 2 + 100 + 2 + 48 + 2 + 2;

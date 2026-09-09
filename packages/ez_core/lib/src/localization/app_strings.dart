@@ -52,6 +52,7 @@ class AppStrings {
   String get calculatorScientific => isRu ? 'Инженерный' : 'Scientific';
   String get calculatorCopyResult =>
       isRu ? 'Копировать результат' : 'Copy result';
+  String get calculatorBackspace => isRu ? 'Стереть' : 'Backspace';
   String get calculatorIncomplete => '';
   String calculatorError(String code) => switch (code) {
         'divisionByZero' => isRu ? 'Деление на ноль' : 'Cannot divide by zero',

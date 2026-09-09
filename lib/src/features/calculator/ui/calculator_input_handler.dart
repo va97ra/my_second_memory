@@ -16,7 +16,9 @@ class CalculatorInputHandler {
       case 'C':
         replace('');
       case 'CE':
-        replace(state.expression.replaceFirst(RegExp(r'[\d.]+$'), ''));
+        // Число стирается тем же набором знаков, каким его набирают: клавиша
+        // разделителя ставит запятую, и без неё «12,5» теряло только пятёрку.
+        replace(state.expression.replaceFirst(RegExp(r'[\d.,]+$'), ''));
       case 'backspace':
         _deleteSelection();
       case '=':
@@ -50,9 +52,11 @@ class CalculatorInputHandler {
       case 'root':
         replace('root(${state.expression};');
       case 'pi':
-        _insert(state.second ? 'e' : 'π');
+        _insert('π');
+      case 'e':
+        _insert('e');
       case 'Exp':
-        _insert('E');
+        _insertExponent();
       case 'Mod':
         _insert('mod');
       case 'sin' || 'cos' || 'tan':
@@ -64,8 +68,6 @@ class CalculatorInputHandler {
         _function(state.second ? 'exp10' : 'log', state);
       case '10ˣ':
         _function(state.second ? 'exp2' : 'exp10', state);
-      case 'eˣ':
-        _function('exp', state);
       default:
         _insert(key);
     }
@@ -91,6 +93,18 @@ class CalculatorInputHandler {
     state.evaluation.isValid
         ? replace('$name(${state.expression})')
         : _insert('$name(');
+  }
+
+  /// Порядок десятки пишется к числу, поэтому `E` без цифры перед ним не
+  /// имеет смысла: одинокая буква читалась как число Эйлера, и «Exp» на
+  /// пустом поле показывал 2,718. Числа перед курсором нет — значит, порядок
+  /// приписывается к нулю, как на клавише и написано.
+  void _insertExponent() {
+    final selection = textController.selection;
+    final start =
+        selection.isValid ? selection.start : textController.text.length;
+    final previous = start > 0 ? textController.text[start - 1] : '';
+    _insert(RegExp(r'\d').hasMatch(previous) ? 'E' : '0E');
   }
 
   void _insert(String value) {

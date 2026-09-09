@@ -2,7 +2,6 @@ import 'package:ezhednevnik_v2/src/app/app.dart';
 import 'package:ezhednevnik_v2/src/features/calculator/ui/widgets/calculator_key.dart';
 import 'package:ezhednevnik_v2/src/features/calculator/ui/widgets/calculator_key_grid.dart';
 import 'package:ezhednevnik_v2/src/features/calculator/ui/widgets/calculator_mode_bar.dart';
-import 'package:ezhednevnik_v2/src/features/calculator/ui/widgets/calculator_scientific_grid.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
@@ -137,14 +136,138 @@ void main() {
     );
   });
 
-  testWidgets('wide scientific layout places functions beside number keys',
-      (tester) async {
-    await _openCalculator(tester, const Size(840, 720));
+  testWidgets('only actions and equals carry the accent', (tester) async {
+    await _openCalculator(tester, const Size(360, 800));
+
+    CalculatorKeyRole roleOf(String label) => tester
+        .widgetList<CalculatorKey>(find.byType(CalculatorKey))
+        .firstWhere((key) => key.label == label)
+        .role;
+
+    for (final command in ['MC', 'MR', 'M+', 'M-', 'MS']) {
+      expect(roleOf(command), CalculatorKeyRole.service);
+    }
+    for (final action in ['÷', '×', '−', '+']) {
+      expect(roleOf(action), CalculatorKeyRole.operation);
+    }
+    expect(roleOf('='), CalculatorKeyRole.result);
+    for (final quiet in ['7', 'C', 'CE', '%']) {
+      expect(roleOf(quiet), CalculatorKeyRole.plain);
+    }
+  });
+
+  testWidgets('clear entry takes the comma with the number', (tester) async {
+    await _openCalculator(tester, const Size(360, 800));
+    final expression = find.byKey(const ValueKey('calculator_expression'));
+    final field = tester.widget<TextField>(expression);
+
+    for (final key in ['8', '+', '1', '2', ',', '5']) {
+      await tester.tap(find.text(key).last);
+      await tester.pump();
+    }
+    expect(field.controller!.text, '8+12,5');
+
+    await tester.tap(find.text('CE'));
+    await tester.pump();
+    expect(field.controller!.text, '8+');
+  });
+
+  testWidgets('the exponent key writes an order, not Euler', (tester) async {
+    await _openCalculator(tester, const Size(360, 800));
+    await _selectScientific(tester);
+    final field = tester.widget<TextField>(
+      find.byKey(const ValueKey('calculator_expression')),
+    );
+
+    await tester.tap(find.text('Exp'));
+    await tester.pump();
+    expect(field.controller!.text, '0E');
+    await tester.tap(find.text('3'));
+    await tester.pump();
+    expect(find.text('0'), findsWidgets);
+
+    await tester.tap(find.text('C'));
+    await tester.pump();
+    for (final key in ['2', 'Exp', '3']) {
+      await tester.tap(find.text(key).last);
+      await tester.pump();
+    }
+    expect(field.controller!.text, '2E3');
+    expect(find.text('2000'), findsOneWidget);
+  });
+
+  testWidgets('the constant e has its own key', (tester) async {
+    await _openCalculator(tester, const Size(360, 800));
     await _selectScientific(tester);
 
-    expect(find.byType(CalculatorScientificGrid), findsOneWidget);
-    expect(find.byType(CalculatorKeyGrid), findsNWidgets(2));
+    await tester.tap(find.text('e'));
+    await tester.pump();
+    expect(find.text('2.71828182845905'), findsOneWidget);
+  });
+
+  testWidgets('wide scientific layout keeps the action column whole',
+      (tester) async {
+    await _openCalculator(tester, const Size(960, 540));
+    await _selectScientific(tester);
+
     expect(_gridKeys(), findsNWidgets(40));
+    final actions = [
+      for (final label in ['÷', '×', '−', '+', '='])
+        tester.getCenter(find.text(label).last),
+    ];
+    for (final action in actions) {
+      expect(action.dx, closeTo(actions.first.dx, 0.1));
+    }
+    for (var i = 1; i < actions.length; i++) {
+      expect(actions[i].dy, greaterThan(actions[i - 1].dy));
+    }
+    // Столбец действий стоит у правого края, а `C` — над цифрами, а не
+    // посреди клавиатуры.
+    expect(actions.first.dx, greaterThan(tester.getCenter(find.text('7')).dx));
+    expect(tester.getCenter(find.text('C')).dy,
+        lessThan(tester.getCenter(find.text('7')).dy));
+    expect(tester.getCenter(find.text('C')).dx,
+        greaterThan(tester.getCenter(find.text('sin')).dx));
+  });
+
+  testWidgets('a tall tablet keeps the five-column layout', (tester) async {
+    await _openCalculator(tester, const Size(800, 1280));
+    await _selectScientific(tester);
+
+    final grid = tester.widget<CalculatorKeyGrid>(
+      find.byType(CalculatorKeyGrid),
+    );
+    expect(grid.columns, 5);
+    // Клавиша не вытягивается в плашку, даже когда высоты вдоволь.
+    final size = tester.getSize(_gridKeys().first);
+    expect(size.height, lessThanOrEqualTo(size.width * 1.25 + 0.1));
+  });
+
+  testWidgets('a wide tablet switches to the eight-column layout',
+      (tester) async {
+    await _openCalculator(tester, const Size(1280, 800));
+    await _selectScientific(tester);
+
+    expect(
+      tester.widget<CalculatorKeyGrid>(find.byType(CalculatorKeyGrid)).columns,
+      8,
+    );
+  });
+
+  testWidgets('second function never shows the same label twice',
+      (tester) async {
+    await _openCalculator(tester, const Size(360, 800));
+    await _selectScientific(tester);
+    await tester.tap(find.text('2nd'));
+    await tester.pump();
+
+    final labels = _gridKeys()
+        .evaluate()
+        .map((element) => (element.widget as CalculatorKey).label)
+        .toList();
+    expect(labels.toSet().length, labels.length);
+    expect(find.text('eˣ'), findsOneWidget);
+    expect(find.text('e'), findsOneWidget);
   });
 
   for (final width in [320.0, 360.0, 600.0, 840.0]) {
