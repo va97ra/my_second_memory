@@ -29,8 +29,9 @@ MinVersion=10.0
 WizardStyle=modern dynamic
 Compression=lzma2/ultra64
 SolidCompression=yes
-CloseApplications=yes
-RestartApplications=no
+; Restart Manager здесь бесполезен: приложение живёт в трее и на его вежливую
+; просьбу закрыться не выходит, а прячется. Закрываем сами, в [Code].
+CloseApplications=no
 UsePreviousAppDir=yes
 UsePreviousTasks=yes
 OutputDir=..\windows\release
@@ -59,3 +60,46 @@ Root: HKCU; Subkey: "Software\Classes\{#AppUrlScheme}\shell\open\command"; Value
 
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(AppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+// Приложение сворачивается в трей и продолжает держать свои файлы: в Windows
+// у окна стоит setPreventClose, и закрытие окна его не завершает. Поэтому
+// перед установкой поверх старой версии и перед удалением процесс гасится
+// явно — иначе установщик упирается в занятый файл и просит перезагрузку.
+procedure StopRunningApp;
+var
+  ResultCode: Integer;
+begin
+  // Сначала по-хорошему: вдруг когда-нибудь научится выходить сам.
+  Exec(
+    ExpandConstant('{sys}\taskkill.exe'),
+    '/IM "{#AppExeName}"',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  );
+  Sleep(1500);
+  // Затем принудительно. Если процесса уже нет, taskkill просто ничего не
+  // сделает — отдельная проверка не нужна.
+  Exec(
+    ExpandConstant('{sys}\taskkill.exe'),
+    '/F /IM "{#AppExeName}"',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  );
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  StopRunningApp;
+  Result := '';
+end;
+
+function InitializeUninstall(): Boolean;
+begin
+  StopRunningApp;
+  Result := True;
+end;
