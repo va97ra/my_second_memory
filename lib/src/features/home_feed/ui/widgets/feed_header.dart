@@ -42,9 +42,16 @@ class FeedHeader extends StatelessWidget {
         NotebookHeaderBand(
           child: Row(
             children: [
-              PageHintButton(hint: strings.feedPageHint),
-              // Уравновешивает кнопку «сегодня» справа.
-              const SizedBox(width: notebookHeaderSlot),
+              // Два слота уравновешивают «сегодня» и фильтр справа, и
+              // держатся, даже когда подсказки выключены и кнопки в них нет:
+              // иначе название закладки съезжает от одной настройки.
+              SizedBox(
+                width: notebookHeaderSlot * 2,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: PageHintButton(hint: strings.feedPageHint),
+                ),
+              ),
               Expanded(
                 // Длинное название закладки ужимается целиком, а не теряет
                 // хвост в многоточии; короткое остаётся полного размера.
