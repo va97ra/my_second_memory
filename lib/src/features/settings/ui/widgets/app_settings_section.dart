@@ -14,6 +14,7 @@ import 'settings_section.dart';
 import 'settings_switch_tile.dart';
 import 'settings_tile.dart';
 import 'theme_picker_sheet.dart';
+import 'theme_style_label.dart';
 import 'windows_startup_tile.dart';
 import 'settings_chevron.dart';
 
@@ -58,10 +59,7 @@ class AppSettingsSection extends ConsumerWidget {
               ? Icons.dark_mode_rounded
               : Icons.light_mode_rounded,
           title: strings.appearance,
-          subtitle: switch (themeStyle) {
-            AppThemeStyle.notebookLight => strings.lightTheme,
-            AppThemeStyle.notebookDark => strings.darkTheme,
-          },
+          subtitle: themeStyleLabel(themeStyle, isRu: isRu),
           trailing: const SettingsChevron(),
           onTap: () => _pickTheme(context, ref, themeStyle, isRu),
         ),

@@ -1,10 +1,14 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
-import 'theme_preview_bar.dart';
-import 'theme_preview_paper.dart';
+import 'theme_preview_notebook.dart';
+import 'theme_preview_screen.dart';
 
-/// Как выглядит тема: обложка, лист и строка текста на нём.
+/// Образец темы: как она выглядит, и подпись под ним.
+///
+/// Обложку рисует та миниатюра, которая теме подходит: блокнотная — дерево
+/// с листом, экранная — сетку дней на тёмном фоне. Рамка, подпись и галочка
+/// общие: выбор должен читаться одинаково, чем бы тема ни была внутри.
 class ThemePreview extends StatelessWidget {
   const ThemePreview({
     super.key,
@@ -21,22 +25,8 @@ class ThemePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = switch (style) {
-      AppThemeStyle.notebookLight => const [
-          Color(0xFFC98D57),
-          Color(0xFFFFF0CD),
-        ],
-      AppThemeStyle.notebookDark => const [
-          Color(0xFF1C1512),
-          Color(0xFF3A332C),
-        ],
-    };
-    final ink =
-        style.isDark ? const Color(0xFFEDE6DA) : const Color(0xFF201712);
-    final backgroundTexture =
-        style.isDark ? NotebookAssets.darkWood : NotebookAssets.wood;
-    final panelTexture =
-        style.isDark ? NotebookAssets.darkPaper : NotebookAssets.paper;
+    final screenColors = screenColorsOf(style);
+
     return NotebookPressable(
       onTap: onTap,
       child: AnimatedContainer(
@@ -57,54 +47,9 @@ class ThemePreview extends StatelessWidget {
               aspectRatio: 0.82,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: colors,
-                    ),
-                    image: DecorationImage(
-                      image: AssetImage(backgroundTexture),
-                      fit: BoxFit.cover,
-                      opacity: style.isDark ? 0.9 : 0.75,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(7),
-                    child: Column(
-                      children: [
-                        ThemePreviewPaper(
-                          color: colors.last,
-                          texture: panelTexture,
-                          ink: ink,
-                          height: 15,
-                          bordered: false,
-                        ),
-                        const SizedBox(height: 6),
-                        Expanded(
-                          child: ThemePreviewPaper(
-                            color: colors.last,
-                            texture: panelTexture,
-                            ink: ink,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const ThemePreviewBar(),
-                        const SizedBox(height: 6),
-                        Expanded(
-                          child: ThemePreviewPaper(
-                            color: colors.last,
-                            texture: panelTexture,
-                            ink: ink,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const ThemePreviewBar(raised: true),
-                      ],
-                    ),
-                  ),
-                ),
+                child: screenColors == null
+                    ? ThemePreviewNotebook(dark: style.isDark)
+                    : ThemePreviewScreen(colors: screenColors),
               ),
             ),
             const SizedBox(height: 7),

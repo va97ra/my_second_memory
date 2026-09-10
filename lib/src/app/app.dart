@@ -135,12 +135,15 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     }
     final themeStyle = ref.watch(appThemeControllerProvider);
     final contentFont = ref.watch(appContentFontControllerProvider);
-    final baseTheme = switch (themeStyle) {
-      AppThemeStyle.notebookLight =>
-        buildNotebookTheme(brightness: Brightness.light),
-      AppThemeStyle.notebookDark =>
-        buildNotebookTheme(brightness: Brightness.dark),
-    };
+    // Тема-экран собирается из своих значений, блокнотная — из яркости.
+    // Новая экранная тема добавляется в `screenColorsOf`, и сюда не заходит.
+    final screenColors = screenColorsOf(themeStyle);
+    final baseTheme = screenColors == null
+        ? buildNotebookTheme(
+            brightness:
+                themeStyle.isDark ? Brightness.dark : Brightness.light,
+          )
+        : buildScreenTheme(screenColors);
     final selectedTheme = baseTheme.copyWith(
       extensions: [
         ...baseTheme.extensions.values,

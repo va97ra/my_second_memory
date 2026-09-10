@@ -564,8 +564,6 @@ class AppStrings {
   String get workingToday => isRu ? 'Рабочий день' : 'Workday';
   String get language => isRu ? 'Язык' : 'Language';
   String get appearance => isRu ? 'Оформление' : 'Appearance';
-  String get lightTheme => isRu ? 'Светлая тема' : 'Light theme';
-  String get darkTheme => isRu ? 'Тёмная тема' : 'Dark theme';
   String get unlock => isRu ? 'Открыть' : 'Unlock';
   String get setupPinTitle =>
       isRu ? 'Создайте PIN для защиты данных' : 'Create a PIN to protect data';
