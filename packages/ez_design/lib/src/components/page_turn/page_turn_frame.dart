@@ -48,6 +48,9 @@ class PageTurnFrameState extends State<PageTurnFrame>
   bool _preparingBackward = false;
   PageTurnCoordinator? _activeCoordinator;
 
+  /// Идёт затухание страницы вместо переворота листа.
+  bool _fading = false;
+
   bool get isTurning => _isTurning;
 
   @visibleForTesting
@@ -77,6 +80,26 @@ class PageTurnFrameState extends State<PageTurnFrame>
     super.dispose();
   }
 
+  /// Смена страницы затуханием: она уходит, содержимое подменяется, приходит
+  /// новая. Ничего не снимается в картинку, поэтому задник под ней не мигает.
+  Future<void> _fadeThrough(VoidCallback switchContent) async {
+    if (mounted) setState(() => _fading = true);
+    _controller.value = 0;
+    await _controller.animateTo(
+      0.5,
+      duration: const Duration(milliseconds: 110),
+      curve: Curves.easeOut,
+    );
+    switchContent();
+    await _controller.animateTo(
+      1,
+      duration: const Duration(milliseconds: 170),
+      curve: Curves.easeOut,
+    );
+    _controller.value = 0;
+    if (mounted) setState(() => _fading = false);
+  }
+
   /// Runs [switchContent] after the current page is safely frozen above it.
   /// Returns false when another turn is already in progress.
   Future<bool> beginTurn({
@@ -93,9 +116,17 @@ class PageTurnFrameState extends State<PageTurnFrame>
     // Переворот листа — жест блокнота: лист есть только там. На стеклянных
     // темах страница снимается в картинку и на время анимации заливается
     // сплошным цветом — задник на долю секунды пропадает, и это читается
-    // недоделкой, а не перелистыванием.
-    if (MediaQuery.disableAnimationsOf(context) ||
+    // недоделкой, а не перелистыванием. Им положено своё движение: страница
+    // уходит и приходит затуханием со сдвигом, снимка для этого не нужно.
+    if (!MediaQuery.disableAnimationsOf(context) &&
         ScreenVisuals.maybeOf(context) != null) {
+      await _fadeThrough(switchContent);
+      _isTurning = false;
+      _releaseCoordinator();
+      return true;
+    }
+
+    if (MediaQuery.disableAnimationsOf(context)) {
       switchContent();
       _isTurning = false;
       _releaseCoordinator();
@@ -219,6 +250,25 @@ class PageTurnFrameState extends State<PageTurnFrame>
       key: _boundaryKey,
       child: widget.child,
     );
+    if (_fading) {
+      livePage = AnimatedBuilder(
+        animation: _controller,
+        child: livePage,
+        builder: (context, child) {
+          // Первая половина — уход, вторая — приход. Сдвиг маленький: это
+          // смена страницы, а не её отъезд.
+          final t = _controller.value;
+          final shown = t <= 0.5 ? 1 - t * 2 : (t - 0.5) * 2;
+          return Opacity(
+            opacity: shown.clamp(0, 1),
+            child: Transform.translate(
+              offset: Offset(0, (1 - shown) * 10),
+              child: child,
+            ),
+          );
+        },
+      );
+    }
     if (widget.provideNavigation) {
       livePage = PageTurnNavigationScope(
         frameState: this,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'glass_surface.dart';
 import 'screen_theme_colors.dart';
 
 /// Полоса матового стекла, на которой стоят кнопки панелей.
@@ -43,21 +44,12 @@ class ScreenPanel extends StatelessWidget {
       bottom: top ? rounded : Radius.zero,
     );
     final panel = DecoratedBox(
-      decoration: BoxDecoration(
-        // Полоса просвечивает нарочно: это матовое стекло на заднике, а не
-        // белая планка поверх него. Цвет панели берётся с ослабленной
-        // непрозрачностью, а не заводится отдельным значением: сквозь стекло
-        // видно тот же задник, что и вокруг.
-        color: colors.panel.withValues(alpha: colors.isDark ? 0.7 : 0.55),
-        borderRadius: shape,
-        border: Border.all(color: colors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: colors.isDark ? 0.4 : 0.1),
-            blurRadius: 12,
-            offset: Offset(0, top ? 3 : -3),
-          ),
-        ],
+      // Полоса — та же пластина стекла, что и плитки дней: одно стекло на всё
+      // приложение, чтобы панели и сетка не расходились между собой.
+      decoration: GlassSurface.decoration(
+        colors,
+        radius: shape,
+        opacity: colors.isDark ? 0.7 : 0.55,
       ),
       // Нижняя полоса доходит до самого низа экрана, а системную зону жеста
       // держит внутри себя: висящая над краем полоса оставляет под собой

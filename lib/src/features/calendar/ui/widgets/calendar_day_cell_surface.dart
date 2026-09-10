@@ -71,44 +71,16 @@ class CalendarDayCellSurface {
                 ? colors.onSurface
                 : hasItems && isInVisibleMonth
                     ? colors.outline
-                    : screen != null && isInVisibleMonth
-                        ? screen!.glint.withValues(
-                            alpha: screen!.isDark ? 0.2 : 0.55,
-                          )
-                        : Colors.transparent,
+                    : Colors.transparent,
         width: _ringsToday ? 1.8 : (isSelected ? 2 : 1),
       ),
       boxShadow: _shadow(context, colors),
     );
   }
 
-  /// Плитка дня как пластина стекла.
-  ///
-  /// Стекло толщиной три миллиметра при ширине плитки в двадцать пять — так
-  /// её мерил владелец, — то есть ребро занимает двенадцать сотых ширины.
-  /// Свет падает сверху слева: там ребро светится, на противоположном оно
-  /// притенено, а между ними ровное матовое поле. Отсюда и стопы: 0.12 и 0.88.
-  ///
-  /// Светится ребро не белым, а светом задника: тёплым от планет, холодным от
-  /// неона. Белое ребро выдаёт накладку — так стекло не ведёт себя ни на одном
-  /// фоне.
-  LinearGradient _glass(Color tile) {
-    final c = screen!;
-    return LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        Color.alphaBlend(c.glint.withValues(alpha: 0.62), tile),
-        tile,
-        tile,
-        Color.alphaBlend(
-          Colors.black.withValues(alpha: c.isDark ? 0.3 : 0.11),
-          tile,
-        ),
-      ],
-      stops: const [0, 0.12, 0.88, 1],
-    );
-  }
+  /// Плитка дня — та же пластина стекла, что и панели: одно стекло на всё
+  /// приложение, чтобы сетка и панели не расходились между собой.
+  LinearGradient _glass(Color tile) => GlassSurface.gradient(screen!, tile);
 
   List<BoxShadow>? _shadow(BuildContext context, ColorScheme colors) {
     final screen = this.screen;
@@ -124,11 +96,7 @@ class CalendarDayCellSurface {
       // Пластина лежит на заднике, а не врезана в него: под ней тень в свою
       // же толщину.
       return [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: screen.isDark ? 0.45 : 0.12),
-          blurRadius: 6,
-          offset: const Offset(0, 2),
-        ),
+        ...GlassSurface.shadow(screen),
       ];
     }
     if (isSelected) {

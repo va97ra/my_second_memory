@@ -159,6 +159,42 @@ void main() {
     expect(find.byKey(const ValueKey('app_page_turn_overlay')), findsNothing);
   });
 
+  testWidgets('a glass theme switches content without turning a sheet',
+      (tester) async {
+    final frameKey = GlobalKey<PageTurnFrameState>();
+    var switched = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildScreenTheme(cosmosColors),
+        home: PageTurnFrame(
+          key: frameKey,
+          child: const ColoredBox(color: Colors.white),
+        ),
+      ),
+    );
+
+    // Переворот снимает страницу в картинку и на время анимации заливает её
+    // сплошным цветом. В блокноте это бумага и читается листом; на стекле
+    // задник на долю секунды пропадает, и владелец видит недоделку. Лист есть
+    // только в блокноте — см. `press-must-not-flash` и `docs/layout.md`.
+    final turn = frameKey.currentState!.beginTurn(
+      direction: PageTurnDirection.forward,
+      switchContent: () => switched = true,
+    );
+    // Посреди перехода: страница уже затухает, но снимка её никто не делал.
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(find.byKey(const ValueKey('app_page_turn_overlay')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('app_page_turn_composited_layer')),
+      findsNothing,
+    );
+    expect(find.byType(Opacity), findsWidgets);
+
+    await tester.pumpAndSettle();
+    expect(await turn, isTrue);
+    expect(switched, isTrue);
+  });
+
   for (final platform in [TargetPlatform.windows, TargetPlatform.android]) {
     testWidgets(
         '${platform.name} route starts immediately and finishes quickly',

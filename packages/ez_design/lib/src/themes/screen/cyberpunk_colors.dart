@@ -17,7 +17,7 @@ const cyberpunkColors = ScreenThemeColors(
   panel: Color(0xFF0D1A28),
   raised: Color(0xFF12212F),
   nested: Color(0xFF17293A),
-  tile: Color(0x8C101E2C),
+  tile: Color(0x6B101E2C),
   weekday: Color(0x8C0D1A28),
   border: Color(0xFF1F5C7A),
   divider: Color(0xFF163A4E),

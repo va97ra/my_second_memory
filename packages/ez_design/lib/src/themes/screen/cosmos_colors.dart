@@ -25,7 +25,7 @@ const cosmosColors = ScreenThemeColors(
   panel: Color(0xF7FFFFFF),
   raised: Color(0xFFF3F8FF),
   nested: Color(0xFFE7EFFC),
-  tile: Color(0x8CFFFFFF),
+  tile: Color(0x4DFFFFFF),
   weekday: Color(0x8CFFFFFF),
   border: Color(0xFFC9D8EE),
   divider: Color(0xFFDDE7F6),
