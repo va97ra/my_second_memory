@@ -26,12 +26,15 @@ class MemoryCardTypeRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
-    final notebook = NotebookVisuals.maybeOf(context);
+    // Спрашиваем страницу, а не бумагу под собой: внутри листа блокнот есть
+    // всегда — им бумага и нарисована, — а кожаная полоса положена только на
+    // блокнотной странице.
+    final notebookPage = PaperSheet.pageIsNotebook(context);
     final foreground =
-        notebook == null ? Colors.white : notebookLeatherForeground(color);
+        notebookPage ? notebookLeatherForeground(color) : Colors.white;
     // Рваный край откусывает часть этой полосы, поэтому её содержимое
     // отодвинуто от него.
-    final tearInset = notebook == null ? 0.0 : TornPaperShapeBorder.tearDepth;
+    final tearInset = notebookPage ? TornPaperShapeBorder.tearDepth : 0.0;
     final verticalPadding = denseFeedLayout
         ? 4.0
         : compact
@@ -41,75 +44,79 @@ class MemoryCardTypeRail extends StatelessWidget {
         ? DateFormat.Hm(locale).format(item.createdAt)
         : formatMinutesOfDay(item.timeMinutes!);
 
-    return NotebookLeatherSurface(
-      color: color,
-      child: SizedBox(
-        width: (compact ? 50 : 54) + tearInset,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            3 + tearInset,
-            verticalPadding,
-            3,
-            verticalPadding,
-          ),
-          child: Column(
-            children: [
-              // Значок и подпись всегда прижаты к верху — и у датированных, и
-              // у записок. Раньше записка центрировалась распоркой сверху, и
-              // подписи соседних карточек стояли на разной высоте.
-              Icon(
-                memoryTypeIcon(item.type),
-                color: foreground,
-                size: denseFeedLayout
-                    ? 17
-                    : compact
-                        ? 19
-                        : 21,
-              ),
-              SizedBox(height: denseFeedLayout ? 2 : (compact ? 3 : 5)),
+    // Кожа — примета блокнота. На странице другой темы полоса ровного цвета:
+    // тиснению там взяться неоткуда. Спрашивать об этом саму поверхность
+    // нельзя — внутри листа блокнот есть всегда.
+    final rail = SizedBox(
+      width: (compact ? 50 : 54) + tearInset,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          3 + tearInset,
+          verticalPadding,
+          3,
+          verticalPadding,
+        ),
+        child: Column(
+          children: [
+            // Значок и подпись всегда прижаты к верху — и у датированных, и
+            // у записок. Раньше записка центрировалась распоркой сверху, и
+            // подписи соседних карточек стояли на разной высоте.
+            Icon(
+              memoryTypeIcon(item.type),
+              color: foreground,
+              size: denseFeedLayout
+                  ? 17
+                  : compact
+                      ? 19
+                      : 21,
+            ),
+            SizedBox(height: denseFeedLayout ? 2 : (compact ? 3 : 5)),
+            Text(
+              item.isUndated
+                  ? AppStrings.of(context).noteCard
+                  : item.type.label(locale),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: foreground,
+                    fontSize: denseFeedLayout
+                        ? 7.8
+                        : compact
+                            ? 8.2
+                            : 8.8,
+                    fontWeight: FontWeight.w900,
+                    height: 1.05,
+                  ),
+            ),
+            const Spacer(),
+            if (!item.isUndated && showDate)
               Text(
-                item.isUndated
-                    ? AppStrings.of(context).noteCard
-                    : item.type.label(locale),
-                maxLines: 2,
+                DateFormat.MMMd(locale).format(item.memoryDate),
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: foreground,
-                      fontSize: denseFeedLayout
-                          ? 7.8
-                          : compact
-                              ? 8.2
-                              : 8.8,
-                      fontWeight: FontWeight.w900,
-                      height: 1.05,
+                      color: foreground.withValues(alpha: 0.88),
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w800,
                     ),
               ),
-              const Spacer(),
-              if (!item.isUndated && showDate)
-                Text(
-                  DateFormat.MMMd(locale).format(item.memoryDate),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: foreground.withValues(alpha: 0.88),
-                        fontSize: 8.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              if (!item.isUndated)
-                Text(
-                  time,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: foreground,
-                        fontSize: compact ? 10 : 10.5,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-            ],
-          ),
+            if (!item.isUndated)
+              Text(
+                time,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: foreground,
+                      fontSize: compact ? 10 : 10.5,
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
+          ],
         ),
       ),
     );
+
+    return notebookPage
+        ? NotebookLeatherSurface(color: color, child: rail)
+        : ColoredBox(color: color, child: rail);
   }
 }

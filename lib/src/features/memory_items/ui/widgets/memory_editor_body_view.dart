@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
@@ -33,35 +34,40 @@ class MemoryEditorBodyView extends StatelessWidget {
     return EditorBody(
       isUndated: form.isUndated,
       specialFields: _specialFields(),
-      recordEditor: RecordEditor(
-        controller: bodyController,
-        imagePaths: form.imagePaths,
-        voiceNotes: form.voiceNotes,
-        memoryDate: form.memoryDate,
-        isRecording: controller.isRecording,
-        recurrenceFrequency: form.recurrenceFrequency,
-        onRecurrenceTap: actions.openRepeatPicker,
-        onPickImage: actions.media.pickImage,
-        onRemoveImage: (path) => controller.applyForm(
-          (form) => form.copyWith(
-            imagePaths: [
-              for (final image in form.imagePaths)
-                if (image != path) image,
-            ],
+      // Редактор — лист бумаги в любой теме, в тёмной тоже: правило в
+      // `docs/layout.md`. Обёртка стоит здесь, а не внутри редактора, чтобы
+      // сам редактор строился уже на бумаге и брал её чернила и линейку.
+      recordEditor: PaperSheet(
+        child: RecordEditor(
+          controller: bodyController,
+          imagePaths: form.imagePaths,
+          voiceNotes: form.voiceNotes,
+          memoryDate: form.memoryDate,
+          isRecording: controller.isRecording,
+          recurrenceFrequency: form.recurrenceFrequency,
+          onRecurrenceTap: actions.openRepeatPicker,
+          onPickImage: actions.media.pickImage,
+          onRemoveImage: (path) => controller.applyForm(
+            (form) => form.copyWith(
+              imagePaths: [
+                for (final image in form.imagePaths)
+                  if (image != path) image,
+              ],
+            ),
           ),
-        ),
-        onRemoveVoiceNote: (note) => controller.applyForm(
-          (form) => form.copyWith(
-            voiceNotes: [
-              for (final existing in form.voiceNotes)
-                if (existing.reference != note.reference) existing,
-            ],
+          onRemoveVoiceNote: (note) => controller.applyForm(
+            (form) => form.copyWith(
+              voiceNotes: [
+                for (final existing in form.voiceNotes)
+                  if (existing.reference != note.reference) existing,
+              ],
+            ),
           ),
+          onVoicePressed: controller.isRecording
+              ? actions.media.stopAndSaveVoice
+              : actions.media.startVoice,
+          onChanged: controller.scheduleAutosave,
         ),
-        onVoicePressed: controller.isRecording
-            ? actions.media.stopAndSaveVoice
-            : actions.media.startVoice,
-        onChanged: controller.scheduleAutosave,
       ),
     );
   }

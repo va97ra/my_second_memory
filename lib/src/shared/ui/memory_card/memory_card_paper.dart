@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 
 /// Лист, на котором лежит запись: форма, фон и граница.
 ///
-/// В блокнотной теме лист вырван из тетради и рисует рваный край сам; в
-/// остальных это ровный прямоугольник, и границу ему кладут сверху.
+/// Лист бумажный во всех темах — и в тёмных тоже: см. `PaperSheet` и правило
+/// в `docs/layout.md`. Меняется от темы только форма: в блокноте лист вырван
+/// из тетради и рисует рваный край сам, в остальных это ровный прямоугольник,
+/// и границу ему кладут сверху.
 class MemoryCardPaper extends StatelessWidget {
   const MemoryCardPaper({
     super.key,
     required this.cardKey,
     required this.variantKey,
-    required this.cardColor,
+    required this.tint,
     required this.borderColor,
     required this.height,
     required this.margin,
@@ -23,7 +25,8 @@ class MemoryCardPaper extends StatelessWidget {
   /// один и тот же.
   final String variantKey;
 
-  final Color cardColor;
+  /// Подкраска бумаги или null у обычной записи.
+  final Color? tint;
   final Color borderColor;
   final double height;
   final EdgeInsetsGeometry margin;
@@ -35,13 +38,11 @@ class MemoryCardPaper extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final roundedBorder = BorderRadius.circular(8);
 
-    // Карточка — отдельный листок: он остаётся светлым даже на тёмном
-    // блокноте.
-    return NotebookPaperIsland(
+    return PaperSheet(
       child: Padding(
         padding: margin,
         child: Material(
-          color: cardColor,
+          color: paper,
           elevation: 6,
           shadowColor:
               _shadowColor(isNotebook: notebook != null, isDark: isDark),
@@ -87,30 +88,26 @@ class MemoryCardPaper extends StatelessWidget {
         : const Color(0xFF536575).withValues(alpha: 0.34);
   }
 
-  /// Фон листка: своё зерно в блокноте, текстура темы в остальных.
+  /// Цвет листа: бумага, подкрашенная тем, что передала карточка.
+  ///
+  /// Бумага одна на все темы, а оттенок — состояние записи: выполненная
+  /// зеленеет. Поэтому карточка передаёт подкраску, а не готовый цвет: иначе
+  /// в тёмной теме она передала бы тёмную поверхность.
+  Color get paper => tint == null
+      ? notebookCardSurface
+      : Color.alphaBlend(tint!, notebookCardSurface);
+
+  /// Фон листка: зерно бумаги, одно во всех темах.
   BoxDecoration _surface(BuildContext context, BorderRadius roundedBorder) {
-    if (NotebookVisuals.maybeOf(context) != null) {
-      return BoxDecoration(
-        color: cardColor,
-        image: const DecorationImage(
-          image: AssetImage(NotebookAssets.paper),
-          fit: BoxFit.cover,
-          opacity: 0.5,
-        ),
-      );
-    }
-    final textures = AppSurfaceTextures.maybeOf(context);
     return BoxDecoration(
-      gradient: AppSurfacePalette.of(context).surfaceGradient(base: cardColor),
-      image: textures == null
-          ? null
-          : DecorationImage(
-              image: AssetImage(textures.surfaceAsset),
-              fit: BoxFit.cover,
-              opacity: textures.surfaceOpacity,
-              filterQuality: FilterQuality.low,
-            ),
-      borderRadius: roundedBorder,
+      color: paper,
+      image: const DecorationImage(
+        image: AssetImage(NotebookAssets.paper),
+        fit: BoxFit.cover,
+        opacity: 0.5,
+      ),
+      borderRadius:
+          PaperSheet.pageIsNotebook(context) ? null : roundedBorder,
     );
   }
 }

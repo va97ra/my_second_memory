@@ -39,18 +39,14 @@ class MemoryItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typeColor = memoryTypeColor(item.type);
-    final colors = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return MemoryCardPaper(
       cardKey: ValueKey('memory_card_${item.id}'),
       variantKey: item.id,
-      cardColor: item.isDone
-          ? Color.alphaBlend(
-              const Color(0xFF16A34A).withValues(alpha: isDark ? 0.14 : 0.08),
-              colors.surface,
-            )
-          : colors.surface,
+      // Выполненная запись зеленеет, обычная остаётся чистой бумагой. Цвет
+      // самой бумаги карточка не выбирает: он один на все темы.
+      tint: item.isDone
+          ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+          : null,
       borderColor: item.isDone
           ? const Color(0xFF86EFAC)
           : typeColor.withValues(alpha: 0.34),
