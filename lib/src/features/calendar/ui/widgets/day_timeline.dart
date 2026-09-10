@@ -66,10 +66,11 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
     final blocks = layOutDayTimeline(widget.items);
     _scrollToFirstBlockOnce(blocks);
 
-    // Бумага кладётся заново, уже без линеек страницы: шкала рисует свои
-    // часовые линии, и вместе с общими получалась двойная разлиновка —
-    // между каждыми двумя часами шли ещё две чужие полосы.
-    return NotebookPaperFill(
+    // Шкала лежит на своей пластине стекла. Без неё часовые линии и подписи
+    // времени рисуются прямо на заднике: на ровном фоне их видно, а на
+    // городской улице они пропадают в вывесках.
+    final screen = ScreenVisuals.maybeOf(context)?.colors;
+    final scale = NotebookPaperFill(
       child: SingleChildScrollView(
         controller: _scroll,
         child: SizedBox(
@@ -86,6 +87,20 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
           ),
         ),
       ),
+    );
+
+    if (screen == null) return scale;
+    final radius = BorderRadius.circular(8);
+    return DecoratedBox(
+      decoration: GlassSurface.decoration(
+        screen,
+        radius: radius,
+        // Плотнее обычного стекла. Шкала — разметка: по ней ищут час, и
+        // читаться она должна на любом заднике. Сквозь редкое стекло вывески
+        // города проступают ровно там, где идут часовые линии.
+        opacity: screen.isDark ? 0.74 : 0.62,
+      ),
+      child: ClipRRect(borderRadius: radius, child: scale),
     );
   }
 
@@ -494,9 +509,20 @@ class _HandleState extends State<_Handle> {
 
 /// Часы слева и линии, по которым читается время.
 class HourRulesPainter extends CustomPainter {
+  /// Линии и подписи рисуются чернилами — одним и тем же цветом.
+  ///
+  /// Цвет границ, который стоял здесь раньше, идёт от темы и повторяет её
+  /// фон: на светлой теме он светлый, на тёмной тёмный — и в обеих шкала
+  /// сливалась с задником. Чернила противоположны фону по определению:
+  /// в «Киберпанке» линии белые, в «Космосе» чёрные, как и цифры часов.
+  /// Линия чуть приглушена — их двадцать четыре, и в полную силу они спорят
+  /// с записями поверх них.
   HourRulesPainter(BuildContext context)
-      : _line = Theme.of(context).colorScheme.outlineVariant,
-        _text = Theme.of(context).colorScheme.onSurfaceVariant;
+      : _line = Theme.of(context)
+            .colorScheme
+            .onSurface
+            .withValues(alpha: 0.42),
+        _text = Theme.of(context).colorScheme.onSurface;
 
   final Color _line;
   final Color _text;
@@ -518,7 +544,14 @@ class HourRulesPainter extends CustomPainter {
       final label = TextPainter(
         text: TextSpan(
           text: formatDayTimelineHour(hour),
-          style: TextStyle(color: _text, fontSize: 11, height: 1),
+          style: TextStyle(
+            color: _text,
+            // Крупнее и жирнее подписей внутри записей: это разметка шкалы,
+            // по ней ищут глазами час, а не читают её подряд.
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            height: 1,
+          ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
