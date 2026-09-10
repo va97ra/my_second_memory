@@ -104,7 +104,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           // была первым ребёнком body, создание композитного слоя
           // перелистывания страницы на кадр сбрасывало её кожаную текстуру.
           appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(NavBarMetrics.toolHeight),
+            preferredSize: Size.fromHeight(AppToolBar.heightOf(context)),
             child: AppToolBar(
               items: [for (final item in tools) item.barItem],
               selectedIndex: _indexOf(tools, activeToolId),

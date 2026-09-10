@@ -32,6 +32,7 @@ class ScreenThemeColors {
     required this.purchase,
     required this.shift,
     required this.holiday,
+    required this.toolTints,
   });
 
   /// Фон страницы: сверху темнее, снизу глубже — свет идёт из верхнего угла.
@@ -74,4 +75,9 @@ class ScreenThemeColors {
   final Color purchase;
   final Color shift;
   final Color holiday;
+
+  /// Цвета кнопок инструментов сверху, по порядку кнопок. Инструментов три,
+  /// и каждый узнаётся по своему цвету раньше, чем прочитана подпись; если
+  /// инструментов станет больше, цвета пойдут по кругу.
+  final List<Color> toolTints;
 }

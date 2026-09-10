@@ -15,6 +15,7 @@ export 'src/components/nav_bar/app_tool_bar.dart';
 export 'src/components/nav_bar/nav_bar_item.dart';
 export 'src/components/nav_bar/nav_bar_metrics.dart';
 export 'src/components/nav_bar/nav_bar_style.dart';
+export 'src/components/nav_bar/screen_tool_bar.dart';
 export 'src/components/notebook_action_button.dart';
 export 'src/components/notebook_icon_button.dart';
 export 'src/components/notebook_page_header.dart';

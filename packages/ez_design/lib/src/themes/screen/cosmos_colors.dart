@@ -29,4 +29,9 @@ const cosmosColors = ScreenThemeColors(
   purchase: Color(0xFF2F5AA8),
   shift: Color(0xFF1E7A5A),
   holiday: Color(0xFFE0392C),
+  toolTints: [
+    Color(0xFFF4552E),
+    Color(0xFF2B7FFF),
+    Color(0xFF2AC4A8),
+  ],
 );
