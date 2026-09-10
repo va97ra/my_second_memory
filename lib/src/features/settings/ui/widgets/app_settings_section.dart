@@ -7,6 +7,7 @@ import '../../../../app/locale/app_locale_controller.dart';
 import '../../../../app/theme/app_content_font_controller.dart';
 import '../../../../app/theme/app_theme_controller.dart';
 import '../../../../platform/windows/windows_startup_controller.dart';
+import '../../../../shared/state/app_hints_provider.dart';
 import '../../../calendar/calendar.dart';
 import 'content_font_picker_sheet.dart';
 import 'settings_section.dart';
@@ -70,6 +71,14 @@ class AppSettingsSection extends ConsumerWidget {
           subtitle: contentFont.label,
           trailing: const SettingsChevron(),
           onTap: () => _pickFont(context, ref, contentFont, isRu),
+        ),
+        SettingsSwitchTile(
+          icon: Icons.tips_and_updates_rounded,
+          title: isRu ? 'Показывать подсказки' : 'Show hints',
+          subtitle: isRu
+              ? 'Кнопка «?» в шапке страницы'
+              : 'The “?” button in the page header',
+          setting: appHintsProvider,
         ),
         SettingsSwitchTile(
           icon: Icons.celebration_rounded,

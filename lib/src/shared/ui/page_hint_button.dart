@@ -1,6 +1,9 @@
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../state/app_hints_provider.dart';
 
 /// Кнопка подсказки страницы: что здесь можно сделать.
 ///
@@ -10,7 +13,11 @@ import 'package:flutter/material.dart';
 ///
 /// Кнопка стоит в том же слоте шапки, что и остальные значки страницы, —
 /// одинаково на всех страницах, чтобы её не приходилось искать заново.
-class PageHintButton extends StatefulWidget {
+///
+/// Настройка «Показывать подсказки» убирает кнопку совсем: освоившему
+/// приложение она больше ничего не сообщает, а место занимает. Место при
+/// этом не остаётся пустым — кнопка исчезает из раскладки, а не прячется.
+class PageHintButton extends ConsumerStatefulWidget {
   const PageHintButton({required this.hint, super.key});
 
   /// Что можно сделать на этой странице. Одна-две фразы: подсказка, а не
@@ -18,14 +25,16 @@ class PageHintButton extends StatefulWidget {
   final String hint;
 
   @override
-  State<PageHintButton> createState() => _PageHintButtonState();
+  ConsumerState<PageHintButton> createState() => _PageHintButtonState();
 }
 
-class _PageHintButtonState extends State<PageHintButton> {
+class _PageHintButtonState extends ConsumerState<PageHintButton> {
   final _controller = MenuController();
 
   @override
   Widget build(BuildContext context) {
+    if (!ref.watch(appHintsProvider)) return const SizedBox.shrink();
+
     final strings = AppStrings.of(context);
     final colors = Theme.of(context).colorScheme;
 
