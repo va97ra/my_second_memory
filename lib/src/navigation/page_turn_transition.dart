@@ -118,10 +118,15 @@ class PageTurnTransition extends StatelessWidget {
     }
 
     if (fast) {
-      final curve = animation.status == AnimationStatus.reverse
-          ? Curves.easeInCubic
-          : Curves.easeOutCubic;
-      return curve.transform(animation.value.clamp(0.0, 1.0));
+      // Не перекрёстное затухание, а «сначала ушла, потом пришла». Пока обе
+      // страницы видны одновременно, на входе в день сквозь шкалу проступает
+      // календарь, а на выходе шкала висит поверх него. Приходящая держится
+      // невидимой первую половину перехода, уходящая за неё же исчезает.
+      const half = 0.45;
+      final appearing =
+          ((animation.value - half) / (1 - half)).clamp(0.0, 1.0);
+      final leaving = (1 - secondaryAnimation.value / half).clamp(0.0, 1.0);
+      return Curves.easeOut.transform(appearing) * leaving;
     }
 
     final appearing = _routeOpacity(animation);

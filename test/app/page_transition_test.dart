@@ -197,7 +197,7 @@ void main() {
 
   for (final platform in [TargetPlatform.windows, TargetPlatform.android]) {
     testWidgets(
-        '${platform.name} route starts immediately and finishes quickly',
+        '${platform.name} route swaps without showing both pages at once',
         (tester) async {
       final router = GoRouter(
         routes: [
@@ -242,7 +242,9 @@ void main() {
             )
             .first,
       );
-      expect(transition.opacity, greaterThan(0));
+      // Приходящая страница держится невидимой, пока уходит предыдущая:
+      // пока обе видны разом, сквозь шкалу дня проступает календарь под ней.
+      expect(transition.opacity, 0);
 
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('next page'), findsOneWidget);

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +38,14 @@ class DayTimeline extends ConsumerStatefulWidget {
 }
 
 class _DayTimelineState extends ConsumerState<DayTimeline> {
-  final ScrollController _scroll = ScrollController();
+  /// Шкала открывается сразу на первом деле дня.
+  ///
+  /// Положение задаётся при создании, а не после первого кадра: пока его
+  /// ставили callback'ом, первый кадр рисовался на полуночи, следующий уже
+  /// на утре, и вход в день выглядел рывком.
+  late final ScrollController _scroll = ScrollController(
+    initialScrollOffset: _startOffset(),
+  );
 
   /// Рамка, поставленная нажатием. Держится на шкале, пока её не откроют
   /// в редакторе или не поставят другую.
@@ -53,18 +62,23 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
   String? _movingId;
   int? _movedStart;
 
-  bool _scrolledToStart = false;
-
   @override
   void dispose() {
     _scroll.dispose();
     super.dispose();
   }
 
+  /// Отступ, с которого открывается шкала: час до первого дела, а если дел
+  /// нет — до восьми утра.
+  double _startOffset() {
+    final blocks = layOutDayTimeline(widget.items);
+    final first = blocks.isEmpty ? 8 * 60 : blocks.first.start;
+    return math.max(0, dayTimelineOffsetOf(first) - dayTimelineHourHeight);
+  }
+
   @override
   Widget build(BuildContext context) {
     final blocks = layOutDayTimeline(widget.items);
-    _scrollToFirstBlockOnce(blocks);
 
     // Шкала лежит на своей пластине стекла. Без неё часовые линии и подписи
     // времени рисуются прямо на заднике: на ровном фоне их видно, а на
@@ -102,18 +116,6 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
       ),
       child: ClipRRect(borderRadius: radius, child: scale),
     );
-  }
-
-  /// Шкала открывается на первом деле дня, а не на полуночи.
-  void _scrollToFirstBlockOnce(List<DayTimelineBlock> blocks) {
-    if (_scrolledToStart) return;
-    _scrolledToStart = true;
-    final first = blocks.isEmpty ? 8 * 60 : blocks.first.start;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scroll.hasClients) return;
-      final target = dayTimelineOffsetOf(first) - dayTimelineHourHeight;
-      _scroll.jumpTo(target.clamp(0, _scroll.position.maxScrollExtent));
-    });
   }
 
   Widget _gestureLayer() {
