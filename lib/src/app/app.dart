@@ -138,10 +138,9 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     // Тема-экран собирается из своих значений, блокнотная — из яркости.
     // Новая экранная тема добавляется в `screenColorsOf`, и сюда не заходит.
     final screenColors = screenColorsOf(themeStyle);
+    final brightness = brightnessOf(themeStyle);
     final baseTheme = screenColors == null
-        ? buildNotebookTheme(
-            brightness: themeStyle.isDark ? Brightness.dark : Brightness.light,
-          )
+        ? buildNotebookTheme(brightness: brightness)
         : buildScreenTheme(screenColors);
     final selectedTheme = baseTheme.copyWith(
       extensions: [
@@ -160,7 +159,9 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
         onGenerateTitle: (context) => AppStrings.of(context).appTitle,
         theme: selectedTheme,
         darkTheme: selectedTheme,
-        themeMode: themeStyle.isDark ? ThemeMode.dark : ThemeMode.light,
+        themeMode: brightness == Brightness.dark
+            ? ThemeMode.dark
+            : ThemeMode.light,
         locale: locale,
         supportedLocales: AppStrings.supportedLocales,
         localizationsDelegates: const [

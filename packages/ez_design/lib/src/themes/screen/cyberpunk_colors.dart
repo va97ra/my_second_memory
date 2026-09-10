@@ -8,6 +8,7 @@ import 'screen_theme_colors.dart';
 /// закладка и активная кнопка панели. Бирюза — цвет границ и рамок: она не
 /// обозначает действие, а очерчивает то, на чём оно происходит.
 const cyberpunkColors = ScreenThemeColors(
+  brightness: Brightness.dark,
   backgroundStart: Color(0xFF050B14),
   backgroundEnd: Color(0xFF0A1522),
   navigation: Color(0xFF07101B),
@@ -24,6 +25,7 @@ const cyberpunkColors = ScreenThemeColors(
   accent: Color(0xFFFF2E6A),
   accentDeep: Color(0xFFB8004A),
   onAccent: Color(0xFFFFFFFF),
+  today: Color(0xFFFF2E6A),
   glow: Color(0xFFFF2E6A),
   event: Color(0xFF1E7BFF),
   task: Color(0xFF9B4DFF),

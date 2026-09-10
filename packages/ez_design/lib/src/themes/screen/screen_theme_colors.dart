@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 @immutable
 class ScreenThemeColors {
   const ScreenThemeColors({
+    required this.brightness,
     required this.backgroundStart,
     required this.backgroundEnd,
     required this.navigation,
@@ -25,6 +26,7 @@ class ScreenThemeColors {
     required this.accent,
     required this.accentDeep,
     required this.onAccent,
+    required this.today,
     required this.glow,
     required this.event,
     required this.task,
@@ -35,6 +37,13 @@ class ScreenThemeColors {
     required this.toolTints,
     required this.backdrop,
   });
+
+  /// Светлая тема-экран или тёмная. От неё зависят не только цвета: на
+  /// светлой сегодняшний день красят подложкой, на тёмной — цветной шапкой,
+  /// потому что подмешанный к тёмной плитке акцент даёт грязное пятно.
+  final Brightness brightness;
+
+  bool get isDark => brightness == Brightness.dark;
 
   /// Фон страницы: сверху темнее, снизу глубже — свет идёт из верхнего угла.
   final Color backgroundStart;
@@ -65,6 +74,10 @@ class ScreenThemeColors {
   final Color accentDeep;
   final Color onAccent;
 
+  /// Отметка сегодняшнего дня. Отдельно от акцента: акцентом красят то, что
+  /// выбрал человек, а сегодня выбирает календарь.
+  final Color today;
+
   /// Свечение вокруг сегодняшнего дня и под выбранной кнопкой панели.
   final Color glow;
 
@@ -82,11 +95,13 @@ class ScreenThemeColors {
   /// инструментов станет больше, цвета пойдут по кругу.
   final List<Color> toolTints;
 
-  /// Задник темы: снимок во всё окно, поверх которого лежит приложение.
+  /// Задник темы или null, если его нет: тогда фон заливается переходом от
+  /// [backgroundStart] к [backgroundEnd].
+  ///
   ///
   /// Не бесшовная текстура, а готовый кадр — светящаяся рамка по краям и
   /// пустая середина. Поэтому он растягивается по `cover` и на широком окне
   /// теряет края: рисунок там по краям и есть. Экран под ним всё равно залит
   /// цветом фона, так что не доехавшая картинка ничего не ломает.
-  final String backdrop;
+  final String? backdrop;
 }

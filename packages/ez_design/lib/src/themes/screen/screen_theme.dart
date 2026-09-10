@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../app_theme.dart';
@@ -14,7 +16,7 @@ import 'screen_visuals.dart';
 /// и размеры шрифтов, и переписывать их ради цвета незачем. Отсюда уходят
 /// древесные текстуры — экран не бумага и не лежит на столе.
 ThemeData buildScreenTheme(ScreenThemeColors c) {
-  final base = buildAppTheme(brightness: Brightness.dark);
+  final base = buildAppTheme(brightness: c.brightness);
   final palette = AppSurfacePalette(
     backgroundStart: c.backgroundStart,
     backgroundEnd: c.backgroundEnd,
@@ -30,6 +32,7 @@ ThemeData buildScreenTheme(ScreenThemeColors c) {
     accentEnd: c.accentDeep,
   );
   final scheme = base.colorScheme.copyWith(
+    brightness: c.brightness,
     primary: c.accent,
     onPrimary: c.onAccent,
     primaryContainer: c.accentDeep,
@@ -149,3 +152,41 @@ ScreenThemeColors? screenColorsOf(AppThemeStyle style) => switch (style) {
       AppThemeStyle.cyberpunk => cyberpunkColors,
       AppThemeStyle.notebookLight || AppThemeStyle.notebookDark => null,
     };
+
+/// Светлая тема или тёмная. У блокнотных яркость записана в самом
+/// перечислении, у экранных — в их значениях: «Космос» светлый, «Киберпанк»
+/// тёмный, и одного правила «всё, кроме светлого блокнота, тёмное» больше
+/// не хватает.
+Brightness brightnessOf(AppThemeStyle style) {
+  final screen = screenColorsOf(style);
+  if (screen != null) return screen.brightness;
+  return style == AppThemeStyle.notebookLight
+      ? Brightness.light
+      : Brightness.dark;
+}
+
+/// Готовит задник темы к первому кадру.
+///
+/// Без этого картинка декодируется уже во время показа: первый кадр рисуется
+/// одним переходом, следующий — с изображением, и это видно как моргание при
+/// запуске и при смене темы. Ошибку глотаем: тема без задника обходится
+/// переходом, и падать из-за картинки нечему.
+Future<void> preloadScreenBackdrop(AppThemeStyle style) async {
+  final backdrop = screenColorsOf(style)?.backdrop;
+  if (backdrop == null) return;
+  final completer = Completer<void>();
+  final stream = AssetImage(backdrop).resolve(ImageConfiguration.empty);
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener(
+    (_, __) {
+      stream.removeListener(listener);
+      if (!completer.isCompleted) completer.complete();
+    },
+    onError: (_, __) {
+      stream.removeListener(listener);
+      if (!completer.isCompleted) completer.complete();
+    },
+  );
+  stream.addListener(listener);
+  await completer.future;
+}

@@ -47,10 +47,16 @@ Future<void> main(List<String> arguments) async {
   // Decode only what the first frame uses. The alternate notebook is warmed
   // once the current one is already visible.
   try {
-    await NotebookAssets.preloadCurrent(dark: initialStyle.isDark);
+    await NotebookAssets.preloadCurrent(
+      dark: brightnessOf(initialStyle) == Brightness.dark,
+    );
   } catch (_) {
     // The notebook falls back to flat colour when a texture cannot load.
   }
+  // Задник экранной темы декодируется до первого кадра: иначе первый кадр
+  // рисуется одним переходом, а следующий — уже с картинкой, и запуск
+  // выглядит морганием фона.
+  await preloadScreenBackdrop(initialStyle);
   runApp(
     ProviderScope(
       overrides: [
@@ -78,7 +84,9 @@ Future<void> main(List<String> arguments) async {
   );
   WidgetsBinding.instance.addPostFrameCallback((_) {
     unawaited(
-      NotebookAssets.preloadDeferred(currentIsDark: initialStyle.isDark)
+      NotebookAssets.preloadDeferred(
+        currentIsDark: brightnessOf(initialStyle) == Brightness.dark,
+      )
           .catchError((_) {}),
     );
   });

@@ -25,16 +25,24 @@ class ScreenBackdrop extends StatelessWidget {
     final colors = this.colors;
     if (colors == null) return child;
 
+    final backdrop = colors.backdrop;
     return DecoratedBox(
       decoration: BoxDecoration(
-        // Заливка под изображением держит экран, пока оно не декодировано, и
-        // закрывает края, если кадр не совпал с формой окна.
-        color: colors.backgroundStart,
-        image: DecorationImage(
-          image: AssetImage(colors.backdrop),
-          fit: BoxFit.cover,
-          filterQuality: FilterQuality.medium,
+        // Переход держит экран, пока изображение не декодировано, и закрывает
+        // края, если кадр не совпал с формой окна. Тема без задника обходится
+        // им одним.
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [colors.backgroundStart, colors.backgroundEnd],
         ),
+        image: backdrop == null
+            ? null
+            : DecorationImage(
+                image: AssetImage(backdrop),
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.medium,
+              ),
       ),
       child: child,
     );

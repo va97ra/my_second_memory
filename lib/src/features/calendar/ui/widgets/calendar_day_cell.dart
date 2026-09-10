@@ -47,12 +47,16 @@ class CalendarDayCell extends StatelessWidget {
   Widget _buildCell(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final palette = AppSurfacePalette.of(context);
-    final screenAccent = ScreenVisuals.maybeOf(context)?.colors.accent;
-    // Сегодня получает такую же цветную шапку, какую день со сменой получает
-    // от графика. Своей шапки ему не положено, когда график уже занял её:
-    // цвет графика выбрал человек, и подменять его нельзя.
-    final todayCap = isToday && isInVisibleMonth && shiftSchedules.isEmpty
-        ? screenAccent
+    final screen = ScreenVisuals.maybeOf(context)?.colors;
+    // На тёмной теме сегодня получает такую же цветную шапку, какую день со
+    // сменой получает от графика. Своей шапки ему не положено, когда график
+    // уже занял её: цвет графика выбрал человек, и подменять его нельзя. На
+    // светлой шапка не нужна — там сегодня видно по подложке.
+    final todayCap = isToday &&
+            isInVisibleMonth &&
+            shiftSchedules.isEmpty &&
+            (screen?.isDark ?? false)
+        ? screen!.today
         : null;
     // Число, будильник и отметка архива стоят на шапке графика, а цвет ей
     // задаёт человек: чернила выбираются по её светлоте, иначе на светлом
@@ -70,7 +74,7 @@ class CalendarDayCell extends StatelessWidget {
     final usesGradientBorder = isInVisibleMonth &&
         !isSelected &&
         items.isEmpty &&
-        !(isToday && screenAccent != null);
+        !(isToday && screen != null);
 
     return InkWell(
       borderRadius: BorderRadius.circular(cornerRadius),
@@ -93,7 +97,7 @@ class CalendarDayCell extends StatelessWidget {
             isSelected: isSelected,
             isToday: isToday,
             hasItems: items.isNotEmpty,
-            screenAccent: screenAccent,
+            screen: screen,
           ).decoration(context, colors, palette),
           child: CalendarDayCellBody(
             date: date,
@@ -107,6 +111,7 @@ class CalendarDayCell extends StatelessWidget {
             hasAlarm: hasAlarm,
             foreground: foreground,
             todayCap: todayCap,
+            outlinedNumber: screen == null,
           ),
         ),
       ),

@@ -48,7 +48,9 @@ class ThemePreview extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: screenColors == null
-                    ? ThemePreviewNotebook(dark: style.isDark)
+                    ? ThemePreviewNotebook(
+                        dark: style == AppThemeStyle.notebookDark,
+                      )
                     : ThemePreviewScreen(colors: screenColors),
               ),
             ),

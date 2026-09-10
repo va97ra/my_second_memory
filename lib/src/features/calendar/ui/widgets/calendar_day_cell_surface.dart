@@ -14,7 +14,7 @@ class CalendarDayCellSurface {
     required this.isSelected,
     required this.isToday,
     required this.hasItems,
-    this.screenAccent,
+    this.screen,
   });
 
   final bool isInVisibleMonth;
@@ -22,16 +22,17 @@ class CalendarDayCellSurface {
   final bool isToday;
   final bool hasItems;
 
-  /// Акцент экранной темы или null в блокноте.
+  /// Значения экранной темы или null в блокноте.
   ///
-  /// Заливка сегодняшнего дня рассчитана на бумагу: подмешанный к ней акцент
-  /// светлеет и день выступает вперёд. На тёмной плитке та же примесь темнеет
-  /// и даёт грязное бордовое пятно — день выглядит не отмеченным, а
-  /// испачканным. Поэтому на экране сегодня отмечен цветной шапкой, обводкой
-  /// и свечением, а плитка под ними остаётся обычной.
-  final Color? screenAccent;
+  /// Заливка сегодняшнего дня рассчитана на светлую плитку: подмешанная к ней
+  /// отметка светлеет, и день выступает вперёд. На тёмной плитке та же
+  /// примесь темнеет и даёт грязное пятно — день выглядит не отмеченным, а
+  /// испачканным. Поэтому на тёмной теме сегодня получает цветную шапку и
+  /// свечение, а плитка остаётся обычной; на светлой — подложку, как и на
+  /// бумаге. Обводка отметкой есть в обеих.
+  final ScreenThemeColors? screen;
 
-  bool get _ringsToday => isToday && isInVisibleMonth && screenAccent != null;
+  bool get _ringsToday => isToday && isInVisibleMonth && screen != null;
 
   /// Насколько сегодняшний день отделён от соседних.
   ///
@@ -62,7 +63,7 @@ class CalendarDayCellSurface {
         color: isSelected
             ? colors.onSurface
             : _ringsToday
-                ? screenAccent!
+                ? screen!.today
                 : hasItems && isInVisibleMonth
                     ? colors.outline
                     : Colors.transparent,
@@ -76,7 +77,7 @@ class CalendarDayCellSurface {
     if (_ringsToday && !isSelected) {
       return [
         BoxShadow(
-          color: screenAccent!.withValues(alpha: 0.45),
+          color: screen!.glow.withValues(alpha: screen!.isDark ? 0.45 : 0.3),
           blurRadius: 10,
         ),
       ];
@@ -99,9 +100,17 @@ class CalendarDayCellSurface {
   /// Сегодняшний день — та же бумага, подкрашенная акцентом.
   Color _paper(ColorScheme colors, AppSurfacePalette palette) {
     if (!isInVisibleMonth) return Colors.transparent;
-    if (!isToday || screenAccent != null) return palette.calendarTile;
+    if (!isToday) return palette.calendarTile;
+    final screen = this.screen;
+    if (screen == null) {
+      return Color.alphaBlend(
+        colors.primary.withValues(alpha: todayTintOpacity),
+        palette.calendarTile,
+      );
+    }
+    if (screen.isDark) return palette.calendarTile;
     return Color.alphaBlend(
-      colors.primary.withValues(alpha: todayTintOpacity),
+      screen.today.withValues(alpha: 0.12),
       palette.calendarTile,
     );
   }

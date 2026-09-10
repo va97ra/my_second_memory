@@ -26,6 +26,7 @@ class CalendarDayCellBody extends StatelessWidget {
     required this.hasAlarm,
     required this.foreground,
     this.todayCap,
+    this.outlinedNumber = true,
   });
 
   final DateTime date;
@@ -42,6 +43,9 @@ class CalendarDayCellBody extends StatelessWidget {
   /// Цвет шапки сегодняшнего дня или null, если шапки не будет: в блокноте
   /// сегодня отмечен заливкой, а в дне со сменой шапку уже занял график.
   final Color? todayCap;
+
+  /// См. [CalendarDayHeaderRow.outlinedNumber].
+  final bool outlinedNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +96,7 @@ class CalendarDayCellBody extends StatelessWidget {
                     isToday: isToday,
                     hasAlarm: hasAlarm,
                     items: items,
-                    outlinedNumber: todayCap == null,
+                    outlinedNumber: outlinedNumber,
                   ),
                   if (layout.showsEvents) ...[
                     const SizedBox(height: 3),

@@ -9,8 +9,6 @@ enum AppThemeStyle {
   cosmos,
   cyberpunk;
 
-  bool get isDark => this != AppThemeStyle.notebookLight;
-
   /// Рисует ли тема бумагу. Всё остальное — экран.
   bool get isNotebook =>
       this == AppThemeStyle.notebookLight || this == AppThemeStyle.notebookDark;

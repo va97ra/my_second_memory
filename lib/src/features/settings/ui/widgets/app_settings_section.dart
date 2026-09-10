@@ -55,7 +55,7 @@ class AppSettingsSection extends ConsumerWidget {
           ),
         ),
         SettingsTile(
-          icon: themeStyle.isDark
+          icon: brightnessOf(themeStyle) == Brightness.dark
               ? Icons.dark_mode_rounded
               : Icons.light_mode_rounded,
           title: strings.appearance,
@@ -122,7 +122,10 @@ class AppSettingsSection extends ConsumerWidget {
     );
     if (selected == null || !context.mounted) return;
     try {
-      await NotebookAssets.preloadCurrent(dark: selected.isDark);
+      await NotebookAssets.preloadCurrent(
+        dark: brightnessOf(selected) == Brightness.dark,
+      );
+      await preloadScreenBackdrop(selected);
     } catch (_) {
       // Без картинок бумаги тема останется плоским цветом.
     }
