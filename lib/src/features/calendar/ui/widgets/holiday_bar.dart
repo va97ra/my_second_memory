@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Праздничная лента по нижнему краю ячейки дня.
@@ -15,19 +16,32 @@ class HolidayBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // В экранных темах лента ровного цвета темы: золотая нить и переливы —
+    // приметы тиснёной ленты на бумаге, на тёмном стекле им неоткуда взяться.
+    final holiday = ScreenVisuals.maybeOf(context)?.colors.holiday;
     final bar = DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFAF1B12), Color(0xFFE0670C), Color(0xFFAF1B12)],
-        ),
-        border: Border(top: BorderSide(color: _thread, width: 0.8)),
-      ),
+      decoration: holiday != null
+          ? BoxDecoration(color: holiday)
+          : const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFFAF1B12),
+                  Color(0xFFE0670C),
+                  Color(0xFFAF1B12),
+                ],
+              ),
+              border: Border(top: BorderSide(color: _thread, width: 0.8)),
+            ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(3, 2, 3, 2.5),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.celebration_rounded, size: 8, color: _thread),
+            Icon(
+              Icons.celebration_rounded,
+              size: 8,
+              color: holiday == null ? _thread : Colors.white,
+            ),
             const SizedBox(width: 2.5),
             Flexible(
               // Слово сжимается, но не обрезается: «Праз…» на ленте не

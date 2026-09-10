@@ -37,6 +37,7 @@ export 'src/themes/notebook/notebook_paper_island.dart';
 export 'src/themes/notebook/notebook_theme.dart';
 export 'src/themes/notebook/notebook_visuals.dart';
 export 'src/themes/screen/cosmos_colors.dart';
+export 'src/themes/screen/cyberpunk_colors.dart';
 export 'src/themes/screen/screen_theme.dart';
 export 'src/themes/screen/screen_theme_colors.dart';
 export 'src/themes/screen/screen_visuals.dart';

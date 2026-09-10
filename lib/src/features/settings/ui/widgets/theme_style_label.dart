@@ -9,5 +9,6 @@ String themeStyleLabel(AppThemeStyle style, {required bool isRu}) {
     AppThemeStyle.notebookLight => isRu ? 'Светлая' : 'Light',
     AppThemeStyle.notebookDark => isRu ? 'Тёмная' : 'Dark',
     AppThemeStyle.cosmos => isRu ? 'Космос' : 'Cosmos',
+    AppThemeStyle.cyberpunk => isRu ? 'Киберпанк' : 'Cyberpunk',
   };
 }

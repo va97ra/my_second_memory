@@ -34,4 +34,5 @@ const cosmosColors = ScreenThemeColors(
     Color(0xFF2B7FFF),
     Color(0xFF2AC4A8),
   ],
+  backdrop: 'assets/textures/cosmos_backdrop.webp',
 );

@@ -6,7 +6,8 @@
 enum AppThemeStyle {
   notebookLight,
   notebookDark,
-  cosmos;
+  cosmos,
+  cyberpunk;
 
   bool get isDark => this != AppThemeStyle.notebookLight;
 
@@ -22,6 +23,7 @@ enum AppThemeStyle {
       'notebookLight' || 'notebook' || 'light' => AppThemeStyle.notebookLight,
       'notebookDark' || 'dark' => AppThemeStyle.notebookDark,
       'cosmos' => AppThemeStyle.cosmos,
+      'cyberpunk' => AppThemeStyle.cyberpunk,
       _ => null,
     };
   }
