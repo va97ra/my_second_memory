@@ -316,7 +316,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
     await tester.pumpAndSettle();
-    expect(find.text('Новая записка'), findsOneWidget);
+    expectEditorTitle(tester, 'Записка');
     expect(find.byType(AppToolBar), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('top_calculator')));
@@ -324,7 +324,7 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
-    expect(find.text('Новая записка'), findsOneWidget);
+    expectEditorTitle(tester, 'Записка');
     expect(find.byType(AppToolBar), findsOneWidget);
     expect(tester.widget<AppNavBar>(find.byType(AppNavBar)).selectedIndex, 2);
   });
@@ -399,7 +399,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Новая записка'), findsOneWidget);
+    expectEditorTitle(tester, 'Записка');
     // Записку заводят с панели, поэтому панель остаётся под рукой: уйти с
     // экрана можно тем же способом, каким на него пришли.
     for (final id in ['calendar', 'feed', 'add_note', 'accounts', 'settings']) {
@@ -412,7 +412,7 @@ void main() {
 
     // И панель по-прежнему уводит на вкладки, а не запирает в редакторе.
     await openTab(tester, 'calendar');
-    expect(find.text('Новая записка'), findsNothing);
+    expect(find.byKey(const ValueKey('memory_editor_title')), findsNothing);
   });
 
   testWidgets('panels stay out of the page turn', (tester) async {

@@ -104,7 +104,7 @@ void main() {
 
     // Просмотра больше нет: карточка открывается сразу в редакторе — одно и
     // то же содержимое на двух экранах повторять незачем.
-    expect(find.text('Редактировать запись'), findsOneWidget);
+    expectEditorTitle(tester, 'Запись');
     expect(find.widgetWithText(TextFormField, 'Запись'), findsOneWidget);
   });
 

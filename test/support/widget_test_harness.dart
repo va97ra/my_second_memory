@@ -225,3 +225,16 @@ class FakeShiftScheduleRepository implements ShiftScheduleRepository {
     savedSchedules = schedules;
   }
 }
+
+/// Заголовок редактора записи.
+///
+/// Ищется по ключу, а не по тексту: «Запись» и «Записка» написаны ещё и на
+/// кнопках нижней панели, и поиск по слову находит их тоже.
+void expectEditorTitle(WidgetTester tester, String title) {
+  expect(
+    tester
+        .widget<Text>(find.byKey(const ValueKey('memory_editor_title')))
+        .data,
+    title,
+  );
+}

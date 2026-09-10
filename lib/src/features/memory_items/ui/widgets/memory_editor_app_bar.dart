@@ -67,6 +67,7 @@ class MemoryEditorAppBar extends StatelessWidget
         children: [
           Text(
             _title(strings),
+            key: const ValueKey('memory_editor_title'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -135,8 +136,11 @@ class MemoryEditorAppBar extends StatelessWidget
     if (selected != null) onTypeChanged(selected);
   }
 
-  String _title(AppStrings strings) {
-    if (isUndated) return hasItem ? strings.editNote : strings.newNote;
-    return hasItem ? strings.editRecord : strings.newRecord;
-  }
+  /// Заголовок называет вещь, а не действие.
+  ///
+  /// «Редактировать запись» не помещалось между клавишами и обрезалось, а
+  /// новизна записи и так видна: под заголовком стоит подпись о сохранении,
+  /// и у несохранённой она другая.
+  String _title(AppStrings strings) =>
+      isUndated ? strings.noteCard : strings.description;
 }

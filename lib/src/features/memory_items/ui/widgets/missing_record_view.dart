@@ -14,7 +14,7 @@ class MissingRecordView extends StatelessWidget {
     final strings = AppStrings.of(context);
 
     return Scaffold(
-      appBar: AppPageAppBar(onBack: onBack, title: Text(strings.editRecord)),
+      appBar: AppPageAppBar(onBack: onBack, title: Text(strings.description)),
       body: Center(child: Text(strings.recordNotFound)),
     );
   }

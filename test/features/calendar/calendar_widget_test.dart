@@ -249,7 +249,7 @@ void main() {
     await tester.tap(find.byType(DayTimeline));
     await tester.pumpAndSettle();
 
-    expect(find.text('Новая запись'), findsOneWidget);
+    expectEditorTitle(tester, 'Запись');
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Запись'),
       'Новая запись из календаря',
@@ -257,7 +257,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
 
-    expect(find.text('Редактировать запись'), findsOneWidget);
+    expectEditorTitle(tester, 'Запись');
     expect(find.text('Новая запись из календаря'), findsOneWidget);
     // Об успешном сохранении говорит цвет самой подписи: облачка рядом с
     // ней больше нет, оно повторяло то же самое вторым значком.
@@ -307,8 +307,8 @@ void main() {
     await tester.tap(find.text('План на сегодня'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Редактировать запись'), findsOneWidget);
-    expect(find.text('Запись'), findsOneWidget);
+    expectEditorTitle(tester, 'Запись');
+    expectEditorTitle(tester, 'Запись');
     expect(find.text('Название'), findsNothing);
   });
 }

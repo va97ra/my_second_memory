@@ -304,11 +304,8 @@ class AppStrings {
   String get passwordCopied => isRu ? 'Пароль скопирован' : 'Password copied';
   String get add => isRu ? 'Добавить' : 'Add';
   String get addRecord => isRu ? 'Добавить запись' : 'Add record';
-  String get newRecord => isRu ? 'Новая запись' : 'New record';
   String get notes => isRu ? 'Записки' : 'Notes';
   String get noteCard => isRu ? 'Записка' : 'Note';
-  String get newNote => isRu ? 'Новая записка' : 'New note';
-  String get editNote => isRu ? 'Редактировать записку' : 'Edit note';
   String get people => isRu ? 'Люди' : 'People';
   String get projects => isRu ? 'Проекты' : 'Projects';
   String get memoryArchive => isRu ? 'Архив памяти' : 'Memory archive';
@@ -490,7 +487,6 @@ class AppStrings {
   String get completed => isRu ? 'Выполнено' : 'Done';
   String get markDone => isRu ? 'Отметить выполненным' : 'Mark done';
   String get markActive => isRu ? 'Вернуть в работу' : 'Mark active';
-  String get editRecord => isRu ? 'Редактировать запись' : 'Edit record';
   String get recordNotFound => isRu ? 'Запись не найдена' : 'Record not found';
   String get deleteRecordQuestion =>
       isRu ? 'Удалить эту запись?' : 'Delete this record?';
