@@ -41,11 +41,15 @@ abstract final class GlassSurface {
     ScreenThemeColors colors, {
     required BorderRadius radius,
     double? opacity,
+    Color? tint,
   }) {
+    final back = colors.panel.withValues(alpha: opacity ?? opacityFor(colors));
     return BoxDecoration(
+      // Подкрашенное стекло остаётся стеклом: цвет уходит в саму пластину, а
+      // не ложится сплошной заливкой поверх неё.
       gradient: gradient(
         colors,
-        colors.panel.withValues(alpha: opacity ?? opacityFor(colors)),
+        tint == null ? back : Color.alphaBlend(tint, back),
       ),
       borderRadius: radius,
       boxShadow: shadow(colors),

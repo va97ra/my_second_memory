@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 import '../../state/feed_providers.dart';
@@ -22,13 +23,17 @@ class FeedSectionSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 360;
     final colors = Theme.of(context).colorScheme;
+    final screen = ScreenVisuals.maybeOf(context)?.colors;
+    final radius = BorderRadius.circular(8);
 
     return SafeArea(
       top: false,
+      // Снизу почти вплотную к панели: закладка принадлежит ей, а не листу
+      // над собой, и полоска фона между ними разрывала эту пару.
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 2),
         child: SizedBox(
-          height: 52,
+          height: 44,
           child: Row(
             children: [
               for (final section in FeedSection.values)
@@ -39,37 +44,8 @@ class FeedSectionSelector extends StatelessWidget {
                       button: true,
                       selected: section == selected,
                       label: feedSectionTabLabel(context, section),
-                      child: Material(
-                        color: section == selected
-                            ? colors.primaryContainer
-                            : colors.surface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: colors.outlineVariant),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: InkWell(
-                          key: ValueKey('feed_section_${section.name}'),
-                          onTap: section == selected
-                              ? null
-                              : () => onSelected(section),
-                          child: Center(
-                            child: Text(
-                              feedSectionTabLabel(
-                                context,
-                                section,
-                                compact: compact,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                        ),
-                      ),
+                      child: _tab(context, section, colors, screen, radius,
+                          compact: compact),
                     ),
                   ),
                 ),
@@ -77,6 +53,59 @@ class FeedSectionSelector extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Закладка: в экранных темах пластина стекла, в блокнотных — прежняя
+  /// плашка. Выбранная подкрашена акцентом, но остаётся стеклом: сплошная
+  /// заливка рядом со стеклянными соседями читается чужой.
+  Widget _tab(
+    BuildContext context,
+    FeedSection section,
+    ColorScheme colors,
+    ScreenThemeColors? screen,
+    BorderRadius radius, {
+    required bool compact,
+  }) {
+    final isSelected = section == selected;
+    final label = Center(
+      child: Text(
+        feedSectionTabLabel(context, section, compact: compact),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: isSelected && screen != null ? screen.accent : null,
+            ),
+      ),
+    );
+    final tap = NotebookPressable(
+      key: ValueKey('feed_section_${section.name}'),
+      onTap: isSelected ? null : () => onSelected(section),
+      playClick: false,
+      pressedOffset: 1,
+      borderRadius: radius,
+      child: label,
+    );
+
+    if (screen == null) {
+      return Material(
+        color: isSelected ? colors.primaryContainer : colors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(color: colors.outlineVariant),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: tap,
+      );
+    }
+    return DecoratedBox(
+      decoration: GlassSurface.decoration(
+        screen,
+        radius: radius,
+        tint: isSelected ? screen.accent.withValues(alpha: 0.26) : null,
+      ),
+      child: tap,
     );
   }
 }
