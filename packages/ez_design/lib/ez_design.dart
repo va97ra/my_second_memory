@@ -39,6 +39,7 @@ export 'src/themes/notebook/notebook_visuals.dart';
 export 'src/themes/screen/cosmos_colors.dart';
 export 'src/themes/screen/cyberpunk_colors.dart';
 export 'src/themes/screen/screen_backdrop.dart';
+export 'src/themes/screen/screen_panel.dart';
 export 'src/themes/screen/screen_theme.dart';
 export 'src/themes/screen/screen_theme_colors.dart';
 export 'src/themes/screen/screen_visuals.dart';

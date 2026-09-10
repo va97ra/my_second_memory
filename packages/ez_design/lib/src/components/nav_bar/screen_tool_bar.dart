@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../themes/screen/screen_panel.dart';
 import '../../themes/screen/screen_theme_colors.dart';
 import 'nav_bar_item.dart';
 
-/// Инструменты сверху в экранных темах: три карточки со значком в цветном
-/// квадрате и подписью под ним.
+/// Инструменты сверху в экранных темах: одна полоса стекла, а в ней три
+/// кнопки — значок в цветном квадрате и подпись под ним.
 ///
-/// Не ряд значков, как в блокноте: там панель — это край обложки, и кнопки на
-/// ней плоские. Здесь панель — тёмное стекло, и инструмент читается плиткой,
-/// которую видно раньше, чем прочитана подпись. Цвет у каждого свой и не
-/// зависит от того, выбран он сейчас или нет: цвет здесь — имя, а не
-/// состояние.
+/// Не три отдельные карточки: рамка вокруг каждой на светлом стекле спорила
+/// с рамкой самой полосы, и верх читался стопкой белых прямоугольников. Цвет
+/// у каждого инструмента свой и не зависит от того, выбран он сейчас или нет:
+/// цвет здесь — имя, а не состояние. Выбранный подсвечивается подложкой того
+/// же цвета.
 class ScreenToolBar extends StatelessWidget {
   const ScreenToolBar({
     required this.items,
@@ -25,21 +26,21 @@ class ScreenToolBar extends StatelessWidget {
   final int? selectedIndex;
   final ValueChanged<int> onSelected;
 
-  /// Высота ряда: квадрат со значком, подпись и поля вокруг.
-  static const double height = 82;
+  /// Высота полосы без системных полей: квадрат со значком, подпись и поля.
+  static const double height = 74;
 
-  static const double _squareSide = 40;
+  static const double _squareSide = 36;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+    return ScreenPanel(
+      colors: colors,
+      edge: VerticalDirection.up,
+      child: SizedBox(
+        height: height,
         child: Row(
           children: [
-            for (var index = 0; index < items.length; index++) ...[
-              if (index > 0) const SizedBox(width: 8),
+            for (var index = 0; index < items.length; index++)
               Expanded(
                 child: _Tool(
                   key: ValueKey('top_${items[index].id}'),
@@ -50,7 +51,6 @@ class ScreenToolBar extends StatelessWidget {
                   onTap: () => onSelected(index),
                 ),
               ),
-            ],
           ],
         ),
       ),
@@ -85,50 +85,32 @@ class _Tool extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(8),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            decoration: BoxDecoration(
-              color: colors.panel,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: selected ? tint : colors.border,
-                width: selected ? 1.4 : 1,
-              ),
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: tint.withValues(alpha: 0.28),
-                        blurRadius: 10,
-                      ),
-                    ]
-                  : null,
-            ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
                   width: ScreenToolBar._squareSide,
                   height: ScreenToolBar._squareSide,
                   decoration: BoxDecoration(
-                    color: tint.withValues(alpha: 0.16),
+                    color: tint.withValues(alpha: selected ? 0.26 : 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(item.icon, size: 22, color: tint),
+                  child: Icon(item.icon, size: 20, color: tint),
                 ),
                 const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      item.label,
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontFamily: 'Manrope',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: colors.ink,
-                      ),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 13,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                      color: selected ? tint : colors.ink,
                     ),
                   ),
                 ),

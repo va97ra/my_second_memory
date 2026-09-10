@@ -122,10 +122,14 @@ class _AppShellState extends ConsumerState<AppShell> {
               child: AppBackground(child: widget.child),
             ),
           ),
-          bottomNavigationBar: AppNavBar(
-            items: [for (final item in destinations) item.barItem],
-            selectedIndex: activeToolId == null ? panelIndex : null,
-            onSelected: (index) => navigation.select(destinations[index]),
+          bottomNavigationBar: SizedBox(
+            height: AppNavBar.heightOf(context) +
+                MediaQuery.paddingOf(context).bottom,
+            child: AppNavBar(
+              items: [for (final item in destinations) item.barItem],
+              selectedIndex: activeToolId == null ? panelIndex : null,
+              onSelected: (index) => navigation.select(destinations[index]),
+            ),
           ),
         ),
       ),
