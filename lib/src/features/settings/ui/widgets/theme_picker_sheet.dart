@@ -17,47 +17,52 @@ Future<AppThemeStyle?> showThemePickerSheet({
     builder: (context) {
       return SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                isRu ? 'Оформление' : 'Appearance',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 14),
-              // Образцы стоят рядом, пока их помещается три; четвёртая тема
-              // ломает ряд на телефоне — четыре колонки по 76 пикселей уже
-              // не образец, а полоска. Тогда они встают сеткой два на два.
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  const gap = 8.0;
-                  final columns = AppThemeStyle.values.length <= 3
-                      ? AppThemeStyle.values.length
-                      : 2;
-                  final width =
-                      (constraints.maxWidth - gap * (columns - 1)) / columns;
-                  return Wrap(
-                    spacing: gap,
-                    runSpacing: 12,
-                    children: [
-                      for (final style in AppThemeStyle.values)
-                        SizedBox(
-                          width: width,
-                          child: ThemePreview(
-                            style: style,
-                            selected: style == selected,
-                            label: themeStyleLabel(style, isRu: isRu),
-                            onTap: () => Navigator.of(context).pop(style),
+        // Лист прокручивается: четыре образца в два ряда не помещаются на
+        // невысоком экране, и нижний ряд обрезался без всякой возможности до
+        // него добраться.
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  isRu ? 'Оформление' : 'Appearance',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 14),
+                // Образцы стоят рядом, пока их помещается три; четвёртая тема
+                // ломает ряд на телефоне — четыре колонки по 76 пикселей уже
+                // не образец, а полоска. Тогда они встают сеткой два на два.
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const gap = 8.0;
+                    final columns = AppThemeStyle.values.length <= 3
+                        ? AppThemeStyle.values.length
+                        : 2;
+                    final width =
+                        (constraints.maxWidth - gap * (columns - 1)) / columns;
+                    return Wrap(
+                      spacing: gap,
+                      runSpacing: 12,
+                      children: [
+                        for (final style in AppThemeStyle.values)
+                          SizedBox(
+                            width: width,
+                            child: ThemePreview(
+                              style: style,
+                              selected: style == selected,
+                              label: themeStyleLabel(style, isRu: isRu),
+                              onTap: () => Navigator.of(context).pop(style),
+                            ),
                           ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ],
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       );
