@@ -2,9 +2,9 @@ import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../shared/ui/page_hint_button.dart';
+import 'calendar_month_label.dart';
 import 'shift_legend_chip.dart';
 
 /// Шапка календаря: месяц со стрелками и графики смен, которые
@@ -48,16 +48,9 @@ class CalendarHeader extends StatelessWidget {
                 style: notebookIconButtonStyle(),
               ),
               Expanded(
-                child: Text(
-                  _monthLabel(),
-                  key: const ValueKey('calendar_month_label'),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        height: 1.08,
-                      ),
+                child: CalendarMonthLabel(
+                  month: visibleMonth,
+                  locale: locale,
                 ),
               ),
               IconButton(
@@ -101,11 +94,4 @@ class CalendarHeader extends StatelessWidget {
   }
 
   /// Названия месяцев приходят из intl со строчной буквы в части языков.
-  String _monthLabel() {
-    final month = DateFormat('LLLL', locale).format(visibleMonth);
-    final capitalized = month.isEmpty
-        ? month
-        : '${month[0].toUpperCase()}${month.substring(1)}';
-    return '$capitalized ${visibleMonth.year}';
-  }
 }

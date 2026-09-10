@@ -57,6 +57,17 @@ ThemeData buildScreenTheme(ScreenThemeColors c) {
     canvasColor: c.backgroundStart,
     disabledColor: c.dimInk,
     dividerTheme: base.dividerTheme.copyWith(color: c.divider),
+    // Стрелки месяца, «сегодня» и «назад» сидят в своих плитках. Без них
+    // значок на тёмном фоне не читается кнопкой — не видно, где нажимать.
+    iconButtonTheme: IconButtonThemeData(
+      style: base.iconButtonTheme.style?.copyWith(
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.pressed) ? c.nested : c.panel;
+        }),
+        foregroundColor: WidgetStatePropertyAll(c.ink),
+        side: WidgetStatePropertyAll(BorderSide(color: c.border)),
+      ),
+    ),
     // Расширения перечислены целиком, а не добавлены к чужим: плоская тема
     // кладёт древесную текстуру, и оставить её здесь значило бы положить
     // экран на деревянный стол.
