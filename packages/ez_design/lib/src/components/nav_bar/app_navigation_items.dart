@@ -75,6 +75,10 @@ class _NavigationItemButton extends StatelessWidget {
         message: item.label,
         child: InkWell(
           onTap: onTap,
+          // Отклик держится в скруглении кнопки, а не разливается прямоугольником
+          // на всю её долю: на стекле прямоугольная волна видна целиком и
+          // читается прямоугольником, которого на панели нет.
+          borderRadius: BorderRadius.circular(14),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

@@ -29,6 +29,7 @@ const cyberpunkColors = ScreenThemeColors(
   onAccent: Color(0xFFFFFFFF),
   today: Color(0xFFFF2E6A),
   glow: Color(0xFFFF2E6A),
+  glint: Color(0xFF7DE9FF),
   event: Color(0xFF1E7BFF),
   task: Color(0xFF9B4DFF),
   family: Color(0xFF22B8E8),

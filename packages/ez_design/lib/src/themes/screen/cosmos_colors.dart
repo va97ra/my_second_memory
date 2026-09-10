@@ -37,6 +37,7 @@ const cosmosColors = ScreenThemeColors(
   onAccent: Color(0xFFFFFFFF),
   today: Color(0xFFEE4FA6),
   glow: Color(0xFFEE4FA6),
+  glint: Color(0xFFFFE3C6),
   event: Color(0xFF2B7FFF),
   task: Color(0xFF7C5CFF),
   family: Color(0xFF00A6A6),

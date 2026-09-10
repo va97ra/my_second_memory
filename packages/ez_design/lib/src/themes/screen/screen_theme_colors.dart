@@ -50,6 +50,7 @@ class ScreenThemeColors {
     required this.onAccent,
     required this.today,
     required this.glow,
+    required this.glint,
     required this.event,
     required this.task,
     required this.family,
@@ -110,6 +111,12 @@ class ScreenThemeColors {
 
   /// Свечение вокруг сегодняшнего дня и под выбранной кнопкой панели.
   final Color glow;
+
+  /// Свет, который идёт с задника и проходит через ребро стеклянной плитки.
+  ///
+  /// Не белый: свет у каждой темы свой — тёплый от планет, холодный от неона.
+  /// Ребро, подсвеченное чужим светом, выдаёт стекло накладкой.
+  final Color glint;
 
   /// Цвета записей. Имена по смыслу записи, а не по цвету: в киберпанке те же
   /// роли красятся неоном, и «синий» перестал бы быть синим.

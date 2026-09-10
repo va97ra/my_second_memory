@@ -56,7 +56,9 @@ class CalendarDayCellSurface {
       gradient: isSelected && !isToday
           ? palette.accentGradient
           : isInVisibleMonth
-              ? palette.surfaceGradient(base: _paper(colors, palette))
+              ? screen == null
+                  ? palette.surfaceGradient(base: _paper(colors, palette))
+                  : _glass(_paper(colors, palette))
               : null,
       borderRadius: BorderRadius.circular(CalendarDayCell.cornerRadius),
       // Отметка сегодня сильнее рамки выбора: в день открытия сегодня и есть
@@ -69,19 +71,63 @@ class CalendarDayCellSurface {
                 ? colors.onSurface
                 : hasItems && isInVisibleMonth
                     ? colors.outline
-                    : Colors.transparent,
+                    : screen != null && isInVisibleMonth
+                        ? screen!.glint.withValues(
+                            alpha: screen!.isDark ? 0.2 : 0.55,
+                          )
+                        : Colors.transparent,
         width: _ringsToday ? 1.8 : (isSelected ? 2 : 1),
       ),
       boxShadow: _shadow(context, colors),
     );
   }
 
+  /// Плитка дня как пластина стекла.
+  ///
+  /// Стекло толщиной три миллиметра при ширине плитки в двадцать пять — так
+  /// её мерил владелец, — то есть ребро занимает двенадцать сотых ширины.
+  /// Свет падает сверху слева: там ребро светится, на противоположном оно
+  /// притенено, а между ними ровное матовое поле. Отсюда и стопы: 0.12 и 0.88.
+  ///
+  /// Светится ребро не белым, а светом задника: тёплым от планет, холодным от
+  /// неона. Белое ребро выдаёт накладку — так стекло не ведёт себя ни на одном
+  /// фоне.
+  LinearGradient _glass(Color tile) {
+    final c = screen!;
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color.alphaBlend(c.glint.withValues(alpha: 0.62), tile),
+        tile,
+        tile,
+        Color.alphaBlend(
+          Colors.black.withValues(alpha: c.isDark ? 0.3 : 0.11),
+          tile,
+        ),
+      ],
+      stops: const [0, 0.12, 0.88, 1],
+    );
+  }
+
   List<BoxShadow>? _shadow(BuildContext context, ColorScheme colors) {
+    final screen = this.screen;
     if (_ringsToday) {
       return [
         BoxShadow(
-          color: screen!.glow.withValues(alpha: screen!.isDark ? 0.45 : 0.3),
+          color: screen!.glow.withValues(alpha: screen.isDark ? 0.45 : 0.3),
           blurRadius: 10,
+        ),
+      ];
+    }
+    if (screen != null && isInVisibleMonth && !isSelected) {
+      // Пластина лежит на заднике, а не врезана в него: под ней тень в свою
+      // же толщину.
+      return [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: screen.isDark ? 0.45 : 0.12),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
         ),
       ];
     }

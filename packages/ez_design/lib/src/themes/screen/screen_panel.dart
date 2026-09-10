@@ -36,37 +36,45 @@ class ScreenPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: edge == VerticalDirection.up,
-      bottom: edge == VerticalDirection.down,
-      maintainBottomViewPadding: edge == VerticalDirection.down,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          inset,
-          edge == VerticalDirection.up ? inset : inset / 2,
-          inset,
-          edge == VerticalDirection.up ? inset / 2 : inset,
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            // Полоса просвечивает нарочно: это матовое стекло на заднике, а
-            // не белая планка поверх него. Цвет панели берётся с ослабленной
-            // непрозрачностью, а не заводится отдельным значением: сквозь
-            // стекло видно тот же задник, что и вокруг.
-            color: colors.panel.withValues(alpha: colors.isDark ? 0.7 : 0.55),
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: colors.border),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: colors.isDark ? 0.4 : 0.1),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-            ],
+    final top = edge == VerticalDirection.up;
+    const rounded = Radius.circular(radius);
+    final shape = BorderRadius.vertical(
+      top: rounded,
+      bottom: top ? rounded : Radius.zero,
+    );
+    final panel = DecoratedBox(
+      decoration: BoxDecoration(
+        // Полоса просвечивает нарочно: это матовое стекло на заднике, а не
+        // белая планка поверх него. Цвет панели берётся с ослабленной
+        // непрозрачностью, а не заводится отдельным значением: сквозь стекло
+        // видно тот же задник, что и вокруг.
+        color: colors.panel.withValues(alpha: colors.isDark ? 0.7 : 0.55),
+        borderRadius: shape,
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: colors.isDark ? 0.4 : 0.1),
+            blurRadius: 12,
+            offset: Offset(0, top ? 3 : -3),
           ),
-          child: child,
-        ),
+        ],
       ),
+      // Нижняя полоса доходит до самого низа экрана, а системную зону жеста
+      // держит внутри себя: висящая над краем полоса оставляет под собой
+      // полоску задника, и панель перестаёт быть опорой экрана.
+      child: top
+          ? child
+          : SafeArea(top: false, maintainBottomViewPadding: true, child: child),
+    );
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        inset,
+        top ? inset : inset / 2,
+        inset,
+        top ? inset / 2 : 0,
+      ),
+      child: top ? SafeArea(bottom: false, child: panel) : panel,
     );
   }
 }
