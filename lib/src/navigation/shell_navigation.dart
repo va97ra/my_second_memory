@@ -53,7 +53,11 @@ class ShellNavigation {
     if (coordinator.isBusy || destination.id == activeToolId) return;
     final location = '${destination.location}?panel=$panel';
     if (activeToolId != null) {
-      _turnTo(() => router.pushReplacement(location));
+      // Верхние инструменты — вкладки одного места, а не следующие страницы.
+      // Переворот здесь показывал снимок старого инструмента поверх нового.
+      // У страниц инструментов нет собственного маршрутного затухания, поэтому
+      // обычная замена стека меняет содержимое одним кадром и с новым page key.
+      router.pushReplacement(location);
       return;
     }
     _turnTo(() => router.push<void>(location));

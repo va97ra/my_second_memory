@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../state/converter_controller.dart';
 import 'converter_helpers.dart';
 import 'converter_inputs.dart';
+import 'converter_save_button.dart';
 import 'saved_conversions.dart';
 
 class ConverterForm extends ConsumerStatefulWidget {
@@ -53,13 +54,11 @@ class _ConverterFormState extends ConsumerState<ConverterForm> {
             onValue: controller.setValue,
           ),
           const SizedBox(height: 20),
-          FilledButton.icon(
-            key: const ValueKey('converter_save'),
+          ConverterSaveButton(
+            label: strings.saveCalculation,
             onPressed: state.typed == null
                 ? null
                 : () => saveConversion(context, ref, state),
-            icon: const Icon(Icons.bookmark_add_outlined),
-            label: Text(strings.saveCalculation),
           ),
           const SizedBox(height: 16),
           SavedConversions(onLoad: controller.load),

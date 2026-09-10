@@ -17,7 +17,7 @@ const cyberpunkColors = ScreenThemeColors(
   panel: Color(0xFF0D1A28),
   raised: Color(0xFF12212F),
   nested: Color(0xFF17293A),
-  tile: Color(0x6B101E2C),
+  tile: Color(0xA6101E2C),
   weekday: Color(0x8C0D1A28),
   border: Color(0xFF1F5C7A),
   divider: Color(0xFF163A4E),
@@ -30,6 +30,11 @@ const cyberpunkColors = ScreenThemeColors(
   today: Color(0xFFFF2E6A),
   glow: Color(0xFFFF2E6A),
   glint: Color(0xFF7DE9FF),
+  glassLights: [
+    Color(0xFF39D9FF),
+    Color(0xFFFF2E9A),
+    Color(0xFF65FFB5),
+  ],
   event: Color(0xFF1E7BFF),
   task: Color(0xFF9B4DFF),
   family: Color(0xFF22B8E8),
@@ -41,5 +46,5 @@ const cyberpunkColors = ScreenThemeColors(
     Color(0xFF2B9DFF),
     Color(0xFF17E0C8),
   ],
-  backdrop: 'assets/textures/cyberpunk_backdrop.webp',
+  backdrop: 'assets/textures/cyberpunk_city_street.webp',
 );

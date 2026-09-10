@@ -1,4 +1,5 @@
 import 'package:ezhednevnik_v2/src/app/app.dart';
+import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
 import 'package:ezhednevnik_v2/src/features/calculator/ui/widgets/calculator_key.dart';
 import 'package:ezhednevnik_v2/src/features/calculator/ui/widgets/calculator_key_grid.dart';
 import 'package:ezhednevnik_v2/src/features/calculator/ui/widgets/calculator_mode_bar.dart';
@@ -54,8 +55,7 @@ void main() {
 
   testWidgets('keys fill the phone height without scrolling', (tester) async {
     await _openCalculator(tester, const Size(320, 800));
-    final standardHeight =
-        tester.getSize(_gridKeys().first).height;
+    final standardHeight = tester.getSize(_gridKeys().first).height;
     expect(
       tester.getSize(_gridKeys().first).width,
       closeTo(68, 0.1),
@@ -68,8 +68,7 @@ void main() {
       tester.getSize(_gridKeys().first).width,
       closeTo(52.8, 0.1),
     );
-    expect(tester.getSize(_gridKeys().first).height,
-        lessThan(standardHeight));
+    expect(tester.getSize(_gridKeys().first).height, lessThan(standardHeight));
   });
 
   testWidgets('compact display aligns with grid and has no F-E button',
@@ -113,6 +112,15 @@ void main() {
   testWidgets('calculator keys are raised and move down while pressed',
       (tester) async {
     await _openCalculator(tester, const Size(360, 800));
+    expect(find.byKey(const ValueKey('calculator_key_glass')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('calculator_display_glass')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('calculator_mode_glass_button')),
+      findsNothing,
+    );
     final key = _gridKeys().first;
     final surface = find.descendant(
       of: key,
@@ -135,6 +143,65 @@ void main() {
       0,
     );
   });
+
+  for (final style in [AppThemeStyle.cosmos, AppThemeStyle.cyberpunk]) {
+    testWidgets('${style.name} uses concave glass keys in both layouts',
+        (tester) async {
+      await _openCalculator(tester, const Size(360, 800), style: style);
+
+      expect(
+        find.byKey(const ValueKey('calculator_display_glass')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('calculator_result_glass')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('calculator_mode_glass_button')),
+        findsNWidgets(2),
+      );
+
+      final standardKeys = _gridKeys();
+      expect(
+        find.descendant(
+          of: standardKeys,
+          matching: find.byKey(const ValueKey('calculator_key_glass')),
+        ),
+        findsNWidgets(24),
+      );
+      final firstKey = standardKeys.first;
+      final lens = find.descendant(
+        of: firstKey,
+        matching: find.byKey(const ValueKey('calculator_key_lens')),
+      );
+      expect(
+        tester.widget<CustomPaint>(lens).foregroundPainter,
+        isNotNull,
+      );
+
+      final lamp = find.descendant(
+        of: firstKey,
+        matching: find.byKey(const ValueKey('calculator_key_lamp')),
+      );
+      expect(tester.widget<AnimatedOpacity>(lamp).opacity, 0);
+      final gesture = await tester.startGesture(tester.getCenter(firstKey));
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(tester.widget<AnimatedOpacity>(lamp).opacity, 1);
+      await gesture.up();
+      await tester.pump(const Duration(milliseconds: 130));
+      expect(tester.widget<AnimatedOpacity>(lamp).opacity, 0);
+
+      await _selectScientific(tester);
+      expect(
+        find.descendant(
+          of: _gridKeys(),
+          matching: find.byKey(const ValueKey('calculator_key_glass')),
+        ),
+        findsNWidgets(40),
+      );
+    });
+  }
 
   testWidgets('only actions and equals carry the accent', (tester) async {
     await _openCalculator(tester, const Size(360, 800));
@@ -290,7 +357,11 @@ Future<void> _selectScientific(WidgetTester tester) async {
   await tester.pump();
 }
 
-Future<void> _openCalculator(WidgetTester tester, Size size) async {
+Future<void> _openCalculator(
+  WidgetTester tester,
+  Size size, {
+  AppThemeStyle? style,
+}) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
@@ -301,6 +372,13 @@ Future<void> _openCalculator(WidgetTester tester, Size size) async {
         shiftScheduleRepositoryProvider.overrideWithValue(
           FakeShiftScheduleRepository(),
         ),
+        if (style != null)
+          appThemeControllerProvider.overrideWith(
+            (ref) => AppThemeController(
+              initialStyle: style,
+              loadOnStart: false,
+            ),
+          ),
       ],
       child: const EzhednevnikV2App(),
     ),

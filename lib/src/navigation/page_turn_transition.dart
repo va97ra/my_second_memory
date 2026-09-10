@@ -10,6 +10,7 @@ Page<void> pageTurnPage({
   required GoRouterState state,
   required Widget child,
   bool interceptBack = true,
+  bool animateRoute = true,
   String? backFallback,
 }) {
   final useFastTransition = _useFastTransition(context);
@@ -21,12 +22,16 @@ Page<void> pageTurnPage({
             child: child,
           )
         : child,
-    transitionDuration: useFastTransition
-        ? const Duration(milliseconds: 120)
-        : const Duration(milliseconds: 260),
-    reverseTransitionDuration: useFastTransition
-        ? const Duration(milliseconds: 100)
-        : const Duration(milliseconds: 230),
+    transitionDuration: animateRoute
+        ? useFastTransition
+            ? const Duration(milliseconds: 120)
+            : const Duration(milliseconds: 260)
+        : Duration.zero,
+    reverseTransitionDuration: animateRoute
+        ? useFastTransition
+            ? const Duration(milliseconds: 100)
+            : const Duration(milliseconds: 230)
+        : Duration.zero,
     // Обёртка одна и та же на всю жизнь страницы. Раньше здесь возвращались
     // разные деревья — то голый `child`, то `FadeTransition`, то пустой
     // `SizedBox`, — и при каждой смене формы Flutter выбрасывал поддерево и
@@ -34,12 +39,14 @@ Page<void> pageTurnPage({
     // прокрутки, выбранный фильтр, набранный текст. Теперь меняются только
     // значения внутри одной обёртки.
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return PageTurnTransition(
-        animation: animation,
-        secondaryAnimation: secondaryAnimation,
-        fast: useFastTransition,
-        child: child,
-      );
+      return animateRoute
+          ? PageTurnTransition(
+              animation: animation,
+              secondaryAnimation: secondaryAnimation,
+              fast: useFastTransition,
+              child: child,
+            )
+          : child;
     },
   );
 }

@@ -85,7 +85,7 @@ flutter:
     - assets/textures/light_leather.webp
     - assets/textures/vacation_ribbon.webp
     - assets/textures/cosmos_backdrop.webp
-    - assets/textures/cyberpunk_backdrop.webp
+    - assets/textures/cyberpunk_city_street.webp
     - windows/runner/resources/app_icon.ico
   fonts:
     - family: Manrope

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../state/finance_controller.dart';
 import '../state/finance_preferences.dart';
 import 'widgets/currency_converter_sheet.dart';
+import 'widgets/finance_action_buttons.dart';
 import 'widgets/finance_month_header.dart';
 import 'widgets/finance_entry_sheet_launcher.dart';
 import 'widgets/finance_entry_list.dart';
@@ -53,34 +54,19 @@ class FinanceScreen extends ConsumerWidget {
                         currencyCode: currency,
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: FilledButton.icon(
-                              key: const ValueKey('finance_add_income'),
-                              onPressed: () => _edit(
-                                context,
-                                ref,
-                                FinanceEntryKind.income,
-                              ),
-                              icon: const Icon(Icons.add_rounded),
-                              label: Text(strings.income),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: FilledButton.tonalIcon(
-                              key: const ValueKey('finance_add_expense'),
-                              onPressed: () => _edit(
-                                context,
-                                ref,
-                                FinanceEntryKind.expense,
-                              ),
-                              icon: const Icon(Icons.remove_rounded),
-                              label: Text(strings.expense),
-                            ),
-                          ),
-                        ],
+                      FinanceActionButtons(
+                        incomeLabel: strings.income,
+                        expenseLabel: strings.expense,
+                        onIncome: () => _edit(
+                          context,
+                          ref,
+                          FinanceEntryKind.income,
+                        ),
+                        onExpense: () => _edit(
+                          context,
+                          ref,
+                          FinanceEntryKind.expense,
+                        ),
                       ),
                     ],
                   ),

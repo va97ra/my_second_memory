@@ -19,6 +19,7 @@ class NotebookPressable extends StatefulWidget {
     this.borderRadius = const BorderRadius.all(Radius.circular(8)),
     this.pressedOffset = 2,
     this.playClick = true,
+    this.onHighlightChanged,
     super.key,
   });
 
@@ -27,6 +28,7 @@ class NotebookPressable extends StatefulWidget {
   final BorderRadius borderRadius;
   final double pressedOffset;
   final bool playClick;
+  final ValueChanged<bool>? onHighlightChanged;
 
   @override
   State<NotebookPressable> createState() => _NotebookPressableState();
@@ -36,7 +38,9 @@ class _NotebookPressableState extends State<NotebookPressable> {
   bool _pressed = false;
 
   void _setPressed(bool value) {
-    if (_pressed != value && mounted) setState(() => _pressed = value);
+    if (_pressed == value || !mounted) return;
+    setState(() => _pressed = value);
+    widget.onHighlightChanged?.call(value);
   }
 
   void _activate() {

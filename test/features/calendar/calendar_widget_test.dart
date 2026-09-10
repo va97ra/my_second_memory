@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/day_timeline.dart';
 import 'package:intl/intl.dart';
 import 'package:ezhednevnik_v2/src/app/app.dart';
+import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:ez_design/ez_design.dart';
@@ -12,6 +13,60 @@ import '../../support/widget_test_harness.dart';
 
 void main() {
   useTestEnvironment();
+
+  for (final style in [AppThemeStyle.cosmos, AppThemeStyle.cyberpunk]) {
+    testWidgets('${style.name} day cells keep their intended glass profile', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      await tester.pumpWidget(
+        testProviderScope(
+          overrides: [
+            securityServiceProvider
+                .overrideWithValue(UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(EmptyMemoryRepository()),
+            shiftScheduleRepositoryProvider.overrideWithValue(
+              FakeShiftScheduleRepository(),
+            ),
+            appThemeControllerProvider.overrideWith(
+              (ref) => AppThemeController(
+                initialStyle: style,
+                loadOnStart: false,
+              ),
+            ),
+          ],
+          child: const EzhednevnikV2App(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openTab(tester, 'calendar');
+
+      final todayKey = DateFormat('yyyy-MM-dd').format(today);
+      final todayCell = find.byKey(ValueKey('calendar_day_$todayKey'));
+      final lens = find.descendant(
+        of: todayCell,
+        matching: find.byKey(const ValueKey('calendar_day_glass_lens')),
+      );
+      if (style == AppThemeStyle.cosmos) {
+        expect(lens, findsNothing);
+        expect(cosmosColors.tile, const Color(0x4DFFFFFF));
+      } else {
+        expect(lens, findsOneWidget);
+        final painter = tester.widget<CustomPaint>(lens).foregroundPainter;
+        expect(painter, isA<ScreenGlassSurfacePainter>());
+        expect(
+          (painter! as ScreenGlassSurfacePainter).profile,
+          ScreenGlassProfile.convex,
+        );
+        expect(cyberpunkColors.tile.a, inInclusiveRange(0.62, 0.78));
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   for (final scale in [1.0, 1.3, 2.0]) {
     testWidgets('calendar header holds its bands at ${scale}x text',

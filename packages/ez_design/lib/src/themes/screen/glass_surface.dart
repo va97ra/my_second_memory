@@ -63,6 +63,18 @@ abstract final class GlassSurface {
           blurRadius: 10,
           offset: const Offset(0, 3),
         ),
+        if (colors.glassLights.isNotEmpty)
+          BoxShadow(
+            color: colors.glassLights.first.withValues(alpha: 0.14),
+            blurRadius: 8,
+            offset: const Offset(-1, -1),
+          ),
+        if (colors.glassLights.length > 1)
+          BoxShadow(
+            color: colors.glassLights[1].withValues(alpha: 0.12),
+            blurRadius: 9,
+            offset: const Offset(1, 1),
+          ),
       ];
 
   /// Переход поперёк пластины: кромка сверху освещена, снизу в тени.
@@ -71,6 +83,26 @@ abstract final class GlassSurface {
   /// нарисованного прямоугольника: у настоящей пластины светится только та
   /// кромка, на которую падает свет, а противоположная уходит в тень.
   static LinearGradient gradient(ScreenThemeColors colors, Color back) {
+    final lights = colors.glassLights;
+    if (lights.isNotEmpty) {
+      final cyan = lights.first;
+      final magenta = lights.length > 1 ? lights[1] : colors.accent;
+      final green = lights.length > 2 ? lights[2] : colors.glint;
+      return LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color.alphaBlend(cyan.withValues(alpha: 0.34), back),
+          Color.alphaBlend(cyan.withValues(alpha: 0.08), back),
+          back,
+          Color.alphaBlend(magenta.withValues(alpha: 0.09), back),
+          back,
+          Color.alphaBlend(green.withValues(alpha: 0.08), back),
+          Colors.black.withValues(alpha: 0.4),
+        ],
+        stops: const [0, edge, 0.28, 0.48, 0.7, 1 - edge, 1],
+      );
+    }
     return LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,

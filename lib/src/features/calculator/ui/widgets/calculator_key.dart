@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
+
+import 'calculator_key_surface.dart';
 
 /// Чем клавиша занята.
 ///
@@ -59,71 +62,46 @@ class _CalculatorKeyState extends State<CalculatorKey> {
                 colors.onSurfaceVariant,
               ),
           };
-    final topColor = Color.alphaBlend(
-      Colors.white.withValues(alpha: 0.10),
-      baseColor,
-    );
     return Semantics(
       button: true,
       selected: widget.selected,
       label: widget.label,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 80),
-        transform: Matrix4.translationValues(0, _pressed ? 2 : 0, 0),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [topColor, baseColor],
-          ),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.12),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: _pressed ? 0.18 : 0.38),
-              blurRadius: _pressed ? 2 : 5,
-              offset: Offset(0, _pressed ? 1 : 4),
-            ),
-          ],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: widget.onPressed,
-            onHighlightChanged: (value) => setState(() => _pressed = value),
-            child: LayoutBuilder(
-              builder: (context, constraints) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    // Подпись рисуется системным шрифтом, а не Manrope: у
-                    // того при жирном начертании нижняя точка знака деления
-                    // срастается с чертой, и `÷` читается как крестик, а
-                    // надстрочных `ˣ ʸ ⁻` в нём нет вовсе — они и так
-                    // приезжали из чужого шрифта. Стиль задан целиком через
-                    // `DefaultTextStyle`, а не `copyWith` от темы: иначе
-                    // Manrope подмешался бы обратно.
-                    child: widget.icon == null
-                        ? DefaultTextStyle(
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: _labelSize(constraints),
-                              color: inkColor,
-                            ),
-                            child: Text(widget.label, maxLines: 1),
-                          )
-                        : Icon(
-                            widget.icon,
-                            size: _labelSize(constraints),
-                            color: inkColor,
-                          ),
-                  ),
-                ),
+      child: CalculatorKeySurface(
+        baseColor: baseColor,
+        glassOpacity: _glassOpacity,
+        pressed: _pressed,
+        onPressed: widget.onPressed,
+        onHighlightChanged: (value) => setState(() => _pressed = value),
+        child: LayoutBuilder(
+          builder: (context, constraints) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                // Подпись лежит под линзой экранной клавиши. Системный шрифт
+                // сохраняет разборчивыми `÷` и надстрочные `ˣ ʸ ⁻`.
+                child: widget.icon == null
+                    ? DefaultTextStyle(
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: _labelSize(constraints),
+                          color: inkColor,
+                          shadows: ScreenVisuals.maybeOf(context) == null
+                              ? null
+                              : [
+                                  Shadow(
+                                    color: Colors.white.withValues(alpha: 0.32),
+                                    offset: const Offset(0, 0.7),
+                                  ),
+                                ],
+                        ),
+                        child: Text(widget.label, maxLines: 1),
+                      )
+                    : Icon(
+                        widget.icon,
+                        size: _labelSize(constraints),
+                        color: inkColor,
+                      ),
               ),
             ),
           ),
@@ -131,6 +109,15 @@ class _CalculatorKeyState extends State<CalculatorKey> {
       ),
     );
   }
+
+  double get _glassOpacity => widget.selected
+      ? 0.58
+      : switch (widget.role) {
+          CalculatorKeyRole.service => 0.20,
+          CalculatorKeyRole.plain => 0.28,
+          CalculatorKeyRole.operation => 0.52,
+          CalculatorKeyRole.result => 0.70,
+        };
 
   /// Знак живёт по размеру клавиши, а не по общему размеру текста: на
   /// клавиатуре во весь экран цифра шрифта абзаца выглядит потерянной. Длинным

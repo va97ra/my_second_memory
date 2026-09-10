@@ -23,6 +23,9 @@ export 'src/components/notebook_page_header.dart';
 export 'src/components/notebook_pressable.dart';
 export 'src/components/overlay_host.dart';
 export 'src/components/page_swipe_area.dart';
+export 'src/components/screen_glass_button.dart';
+export 'src/components/screen_glass_surface.dart';
+export 'src/components/screen_glass_surface_painter.dart';
 export 'src/components/page_turn/page_turn_coordinator.dart';
 export 'src/components/page_turn/page_turn_frame.dart';
 export 'src/components/page_turn/page_turn_geometry.dart'

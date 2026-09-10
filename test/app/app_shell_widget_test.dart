@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/app/app.dart';
+import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
@@ -9,6 +10,53 @@ import '../support/widget_test_harness.dart';
 
 void main() {
   useTestEnvironment();
+
+  for (final style in [AppThemeStyle.cosmos, AppThemeStyle.cyberpunk]) {
+    testWidgets('${style.name} keeps its intended top-tool material', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        testProviderScope(
+          overrides: [
+            securityServiceProvider
+                .overrideWithValue(UnlockedSecurityService()),
+            memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
+            shiftScheduleRepositoryProvider.overrideWithValue(
+              FakeShiftScheduleRepository(),
+            ),
+            appThemeControllerProvider.overrideWith(
+              (ref) => AppThemeController(
+                initialStyle: style,
+                loadOnStart: false,
+              ),
+            ),
+          ],
+          child: const EzhednevnikV2App(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      for (final id in ['calculator', 'finance', 'converter']) {
+        final tool = find.byKey(ValueKey('top_$id'));
+        final glass = find.descendant(
+          of: tool,
+          matching: find.byType(ScreenGlassSurface),
+        );
+        expect(
+          glass,
+          style == AppThemeStyle.cyberpunk ? findsOneWidget : findsNothing,
+        );
+        expect(
+          find.descendant(of: tool, matching: find.byType(InkWell)),
+          findsNothing,
+          reason: '$id restored the full-panel Material splash',
+        );
+      }
+    });
+  }
 
   testWidgets('the back key is the same size in every header', (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));
@@ -270,13 +318,11 @@ void main() {
     );
 
     await tester.tap(find.byKey(const ValueKey('top_finance')));
-    for (var frame = 0; frame < 5; frame++) {
-      await tester.pump();
-    }
-    expect(find.byKey(const ValueKey('app_page_turn_overlay')), findsOneWidget);
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('finance_currency')), findsOneWidget);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('app_page_turn_overlay')), findsNothing);
     expect(find.byKey(const ValueKey('calculator_expression')), findsNothing);
+    expect(find.byKey(const ValueKey('finance_currency')), findsOneWidget);
+    expect(tester.takeException(), isNull);
     expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex, 1);
     expect(
       tester.widget<AppNavBar>(find.byType(AppNavBar)).selectedIndex,
@@ -286,7 +332,17 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('top_converter')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('converter_screen')), findsOneWidget);
+    expect(find.byKey(const ValueKey('app_page_turn_overlay')), findsNothing);
+    expect(tester.takeException(), isNull);
     expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex, 2);
+
+    await tester.tap(find.byKey(const ValueKey('converter_save')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();

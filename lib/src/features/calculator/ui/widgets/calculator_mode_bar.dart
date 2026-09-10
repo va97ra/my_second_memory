@@ -1,6 +1,8 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/page_hint_button.dart';
+import 'calculator_mode_button.dart';
 
 /// Высота полосы выбора режима: её держит сама полоса, а не экран вокруг.
 const double calculatorModeBarHeight = 40;
@@ -27,18 +29,21 @@ class CalculatorModeBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screen = ScreenVisuals.maybeOf(context);
     return SizedBox(
       height: calculatorModeBarHeight,
       child: Row(
         children: [
           PageHintButton(hint: hint),
-          Expanded(child: _modes()),
+          Expanded(
+            child: screen == null ? _notebookModes() : _glassModes(),
+          ),
         ],
       ),
     );
   }
 
-  Widget _modes() {
+  Widget _notebookModes() {
     return SegmentedButton<bool>(
       key: const ValueKey('calculator_mode'),
       segments: [
@@ -62,6 +67,29 @@ class CalculatorModeBar extends StatelessWidget {
       onSelectionChanged: (value) => onModeChanged(value.single),
     );
   }
+
+  Widget _glassModes() => SizedBox(
+        key: const ValueKey('calculator_mode'),
+        child: Row(
+          children: [
+            Expanded(
+              child: CalculatorModeButton(
+                label: standardLabel,
+                selected: !scientific,
+                onPressed: () => onModeChanged(false),
+              ),
+            ),
+            const SizedBox(width: 2),
+            Expanded(
+              child: CalculatorModeButton(
+                label: scientificLabel,
+                selected: scientific,
+                onPressed: () => onModeChanged(true),
+              ),
+            ),
+          ],
+        ),
+      );
 
   Widget _label(String value) => Text(
         value,

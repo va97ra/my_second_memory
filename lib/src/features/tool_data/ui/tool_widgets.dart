@@ -1,6 +1,7 @@
-import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
+
+import 'calculation_name_dialog.dart';
 
 class ToolPageFrame extends StatelessWidget {
   const ToolPageFrame({
@@ -31,31 +32,8 @@ class ToolPageFrame extends StatelessWidget {
 }
 
 Future<String?> askCalculationName(BuildContext context, {String? initial}) {
-  final strings = AppStrings.of(context);
-  final controller = TextEditingController(text: initial);
   return showDialog<String>(
     context: context,
-    builder: (context) => AlertDialog(
-      title: Text(strings.saveCalculation),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        maxLength: 80,
-        decoration: InputDecoration(labelText: strings.calculationName),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-        ),
-        FilledButton(
-          onPressed: () {
-            final value = controller.text.trim();
-            if (value.isNotEmpty) Navigator.pop(context, value);
-          },
-          child: Text(strings.save),
-        ),
-      ],
-    ),
-  ).whenComplete(controller.dispose);
+    builder: (context) => CalculationNameDialog(initial: initial),
+  );
 }

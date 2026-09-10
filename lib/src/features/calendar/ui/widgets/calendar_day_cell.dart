@@ -79,6 +79,43 @@ class CalendarDayCell extends StatelessWidget {
     // Нажатие рисуется поверх плитки, а не под ней: `InkWell` снаружи
     // заливки отдаёт свою волну ближайшему материалу выше — материалу
     // `Scaffold`, — и сквозь стеклянную плитку она проступает белым.
+    final pressable = NotebookPressable(
+      onTap: onTap,
+      playClick: false,
+      pressedOffset: 0,
+      borderRadius: BorderRadius.circular(cornerRadius),
+      child: CalendarDayCellBody(
+        date: date,
+        locale: locale,
+        isInVisibleMonth: isInVisibleMonth,
+        isSelected: isSelected,
+        isToday: isToday,
+        items: items,
+        shiftSchedules: shiftSchedules,
+        holidays: holidays,
+        hasAlarm: hasAlarm,
+        foreground: foreground,
+        todayCap: todayCap,
+        outlinedNumber: screen == null,
+      ),
+    );
+    final usesCyberpunkLens = screen?.glassLights.isNotEmpty ?? false;
+    final contents = !usesCyberpunkLens
+        ? pressable
+        : ClipRRect(
+            borderRadius: BorderRadius.circular(cornerRadius),
+            child: CustomPaint(
+              key: const ValueKey('calendar_day_glass_lens'),
+              foregroundPainter: ScreenGlassSurfacePainter(
+                colors: screen!,
+                pressed: false,
+                profile: ScreenGlassProfile.convex,
+                showOuterEdge: false,
+                radius: cornerRadius,
+              ),
+              child: pressable,
+            ),
+          );
     return CustomPaint(
       foregroundPainter: usesGradientBorder
           ? CalendarCellBorderPainter(
@@ -99,26 +136,7 @@ class CalendarDayCell extends StatelessWidget {
           hasItems: items.isNotEmpty,
           screen: screen,
         ).decoration(context, colors, palette),
-        child: NotebookPressable(
-          onTap: onTap,
-          playClick: false,
-          pressedOffset: 0,
-          borderRadius: BorderRadius.circular(cornerRadius),
-          child: CalendarDayCellBody(
-            date: date,
-            locale: locale,
-            isInVisibleMonth: isInVisibleMonth,
-            isSelected: isSelected,
-            isToday: isToday,
-            items: items,
-            shiftSchedules: shiftSchedules,
-            holidays: holidays,
-            hasAlarm: hasAlarm,
-            foreground: foreground,
-            todayCap: todayCap,
-            outlinedNumber: screen == null,
-          ),
-        ),
+        child: contents,
       ),
     );
   }

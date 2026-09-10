@@ -78,6 +78,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          animateRoute: false,
           child: const CalculatorScreen(),
         ),
       ),
@@ -86,6 +87,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          animateRoute: false,
           child: const FinanceScreen(),
         ),
       ),
@@ -94,6 +96,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          animateRoute: false,
           child: const ConverterScreen(),
         ),
       ),
@@ -102,6 +105,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          animateRoute: false,
           child: const EmptyToolScreen(),
         ),
       ),
@@ -110,6 +114,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
           state: state,
+          animateRoute: false,
           child: const EmptyToolScreen(),
         ),
       ),
