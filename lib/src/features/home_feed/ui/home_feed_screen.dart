@@ -6,7 +6,7 @@ import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
 import '../state/feed_providers.dart';
 import 'widgets/feed_page.dart';
-import 'widgets/feed_top_section_selector.dart';
+import 'widgets/feed_section_selector.dart';
 import 'widgets/notebook_feed_book.dart';
 
 /// Лента: страница выбранного периода, которую листают закладками и пальцем.
@@ -39,18 +39,22 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
           );
 
           if (!useSideTabs) {
+            // Закладки стоят внизу, у самой нижней панели: там их достаёт
+            // большой палец, а вверху страницы место принадлежит периоду и
+            // самим записям. В блокноте они остаются сбоку — там это торчащие
+            // из книги закладки, и переносить их вниз бессмысленно.
             return Column(
               children: [
-                FeedTopSectionSelector(
-                  selected: view.section,
-                  onSelected: _selectSection,
-                ),
                 Expanded(
                   child: MediaQuery.removePadding(
                     context: context,
-                    removeTop: true,
+                    removeBottom: true,
                     child: page,
                   ),
+                ),
+                FeedSectionSelector(
+                  selected: view.section,
+                  onSelected: _selectSection,
                 ),
               ],
             );

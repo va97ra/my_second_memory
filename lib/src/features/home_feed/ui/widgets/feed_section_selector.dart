@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import '../../state/feed_providers.dart';
 import '../feed_labels.dart';
 
-/// Выбор закладки вне блокнотной темы: обычные кнопки над лентой.
-class FeedTopSectionSelector extends StatelessWidget {
-  const FeedTopSectionSelector({
+/// Выбор закладки вне блокнотной темы: кнопки под лентой.
+///
+/// Внизу, а не наверху: до них дотягивается большой палец, а верх страницы
+/// принадлежит периоду и записям. В блокнотной теме закладки торчат сбоку
+/// книги, и этот ряд там не показывается вовсе.
+class FeedSectionSelector extends StatelessWidget {
+  const FeedSectionSelector({
     super.key,
     required this.selected,
     required this.onSelected,
@@ -20,9 +24,9 @@ class FeedTopSectionSelector extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return SafeArea(
-      bottom: false,
+      top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
         child: SizedBox(
           height: 52,
           child: Row(
