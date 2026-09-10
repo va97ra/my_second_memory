@@ -140,8 +140,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     final screenColors = screenColorsOf(themeStyle);
     final baseTheme = screenColors == null
         ? buildNotebookTheme(
-            brightness:
-                themeStyle.isDark ? Brightness.dark : Brightness.light,
+            brightness: themeStyle.isDark ? Brightness.dark : Brightness.light,
           )
         : buildScreenTheme(screenColors);
     final selectedTheme = baseTheme.copyWith(
@@ -182,9 +181,17 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
         // достаётся только странице. Замок закрывает и панели тоже.
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: overlayStyle,
-          child: WindowsTrayFrame(
-            child: SecurityGate(
-              child: AppShell(child: child ?? const SizedBox.shrink()),
+          // Задник экранной темы лежит здесь, ниже всего остального, и
+          // отделён от него границей перерисовки. Внутри оболочки он
+          // перерисовывался при каждом переходе — оболочка следит за адресом
+          // и пересобирается вместе с ним, — и картинка на кадр мигала.
+          child: ScreenBackdrop(
+            child: WindowsTrayFrame(
+              child: SecurityGate(
+                child: RepaintBoundary(
+                  child: AppShell(child: child ?? const SizedBox.shrink()),
+                ),
+              ),
             ),
           ),
         );
