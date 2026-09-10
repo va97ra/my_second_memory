@@ -59,22 +59,25 @@ class CalendarDayCellSurface {
               ? palette.surfaceGradient(base: _paper(colors, palette))
               : null,
       borderRadius: BorderRadius.circular(CalendarDayCell.cornerRadius),
+      // Отметка сегодня сильнее рамки выбора: в день открытия сегодня и есть
+      // выбранный день, и тёмная рамка выбора стирала его примету — день
+      // выглядел как любой другой, по которому нажали.
       border: Border.all(
-        color: isSelected
-            ? colors.onSurface
-            : _ringsToday
-                ? screen!.today
+        color: _ringsToday
+            ? screen!.today
+            : isSelected
+                ? colors.onSurface
                 : hasItems && isInVisibleMonth
                     ? colors.outline
                     : Colors.transparent,
-        width: isSelected ? 2 : (_ringsToday ? 1.4 : 1),
+        width: _ringsToday ? 1.8 : (isSelected ? 2 : 1),
       ),
       boxShadow: _shadow(context, colors),
     );
   }
 
   List<BoxShadow>? _shadow(BuildContext context, ColorScheme colors) {
-    if (_ringsToday && !isSelected) {
+    if (_ringsToday) {
       return [
         BoxShadow(
           color: screen!.glow.withValues(alpha: screen!.isDark ? 0.45 : 0.3),
