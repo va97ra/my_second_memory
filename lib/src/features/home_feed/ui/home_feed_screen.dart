@@ -4,11 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
-import '../../calendar/calendar.dart';
 import '../state/feed_providers.dart';
 import 'widgets/feed_page.dart';
 import 'widgets/feed_top_section_selector.dart';
-import 'widgets/full_guide_sheet.dart';
 import 'widgets/notebook_feed_book.dart';
 
 /// Лента: страница выбранного периода, которую листают закладками и пальцем.
@@ -28,7 +26,6 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     ref.watch(recurrenceLoadProvider);
     final view = ref.watch(feedViewProvider);
     final layout = ref.watch(feedLayoutProvider);
-    final showHelp = ref.watch(appHintsProvider);
     final notebook = NotebookVisuals.maybeOf(context);
 
     return WarmGradientBackground(
@@ -39,7 +36,6 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
             view: view,
             layout: layout,
             loadState: loadState,
-            showHelp: showHelp,
           );
 
           if (!useSideTabs) {
@@ -81,7 +77,6 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     required FeedViewState view,
     required FeedLayout layout,
     required AsyncValue<void> loadState,
-    required bool showHelp,
   }) {
     final sheet = PageTurnFrame(
       key: _pageTurnKey,
@@ -89,16 +84,11 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
         view: view,
         layout: layout,
         loadState: loadState,
-        showHelp: showHelp,
         onGoToToday: view.showsPeriodOf(DateTime.now()) ? null : _goToToday,
         onFilterSelected: (filter) =>
             ref.read(feedViewProvider.notifier).selectFilter(filter),
         onPickDate: _pickDate,
         onMovePeriod: _movePeriod,
-        onShowHelp: () => showFeedGuide(
-          context,
-          ru: Localizations.localeOf(context).languageCode == 'ru',
-        ),
       ),
     );
 

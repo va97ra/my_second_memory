@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/ui/page_hint_button.dart';
+
 /// Высота полосы выбора режима: её держит сама полоса, а не экран вокруг.
 const double calculatorModeBarHeight = 40;
 
+/// Полоса над калькулятором: подсказка страницы и выбор режима.
+///
+/// Подсказка стоит в этом же ряду, а не строкой над ним: шапки у калькулятора
+/// нет, и отдельная строка отнималась бы у клавиатуры.
 class CalculatorModeBar extends StatelessWidget {
   const CalculatorModeBar({
+    required this.hint,
     required this.standardLabel,
     required this.scientificLabel,
     required this.scientific,
@@ -12,6 +19,7 @@ class CalculatorModeBar extends StatelessWidget {
     super.key,
   });
 
+  final String hint;
   final String standardLabel;
   final String scientificLabel;
   final bool scientific;
@@ -19,6 +27,18 @@ class CalculatorModeBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return SizedBox(
+      height: calculatorModeBarHeight,
+      child: Row(
+        children: [
+          PageHintButton(hint: hint),
+          Expanded(child: _modes()),
+        ],
+      ),
+    );
+  }
+
+  Widget _modes() {
     return SegmentedButton<bool>(
       key: const ValueKey('calculator_mode'),
       segments: [

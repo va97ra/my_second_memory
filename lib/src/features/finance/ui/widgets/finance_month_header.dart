@@ -2,6 +2,7 @@ import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../shared/ui/page_hint_button.dart';
 import '../../state/finance_currencies.dart';
 
 /// Шапка финансов: валюта, месяц и конвертер.
@@ -33,6 +34,7 @@ class FinanceMonthHeader extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) => Row(
         children: [
+          PageHintButton(hint: strings.financePageHint),
           DropdownButton<String>(
             key: const ValueKey('finance_currency'),
             value: currency,

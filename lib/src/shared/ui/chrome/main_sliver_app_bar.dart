@@ -7,12 +7,14 @@ class MainSliverAppBar extends StatelessWidget {
   const MainSliverAppBar({
     required this.title,
     this.backLocation,
+    this.hint,
     this.trailing,
     super.key,
   });
 
   final String title;
   final String? backLocation;
+  final String? hint;
   final Widget? trailing;
 
   @override
@@ -21,6 +23,7 @@ class MainSliverAppBar extends StatelessWidget {
       child: MainPageHeader(
         title: title,
         backLocation: backLocation,
+        hint: hint,
         trailing: trailing,
       ),
     );

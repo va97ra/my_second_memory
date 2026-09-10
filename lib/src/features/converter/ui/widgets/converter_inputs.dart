@@ -3,6 +3,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
 import '../../state/converter_controller.dart';
+import '../../../../shared/ui/page_hint_button.dart';
 import 'converter_category_field.dart';
 
 /// Ширина, которую кнопка обмена занимает между колонками.
@@ -47,9 +48,18 @@ class ConverterInputs extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ConverterCategoryField(
-          category: state.category,
-          onCategory: onCategory,
+        // Подсказка стоит в ряд с выбором величины: заголовка у страницы
+        // нет нарочно, и отдельная строка ради одной кнопки его бы вернула.
+        Row(
+          children: [
+            PageHintButton(hint: strings.converterPageHint),
+            Expanded(
+              child: ConverterCategoryField(
+                category: state.category,
+                onCategory: onCategory,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Row(

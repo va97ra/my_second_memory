@@ -24,6 +24,7 @@ class AccountsScreen extends ConsumerWidget {
             MainSliverAppBar(
               title: strings.accounts,
               backLocation: '/calendar',
+              hint: strings.accountsPageHint,
               trailing: IconButton(
                 key: const ValueKey('accounts_add'),
                 tooltip: strings.addAccount,

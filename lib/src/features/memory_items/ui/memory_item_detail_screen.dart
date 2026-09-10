@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
-import '../../calendar/calendar.dart';
 import '../../recurrence/recurrence.dart';
 import '../../security/security.dart';
 import '../state/memory_attachment_service.dart';
@@ -158,7 +157,6 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
               bodyController: _fields.body,
               amountController: _fields.amount,
               item: item,
-              showHints: ref.watch(appHintsProvider),
             ),
           ),
         ),

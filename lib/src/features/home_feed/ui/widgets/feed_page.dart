@@ -15,23 +15,19 @@ class FeedPage extends StatelessWidget {
     required this.view,
     required this.layout,
     required this.loadState,
-    required this.showHelp,
     required this.onGoToToday,
     required this.onFilterSelected,
     required this.onMovePeriod,
     required this.onPickDate,
-    required this.onShowHelp,
   });
 
   final FeedViewState view;
   final FeedLayout layout;
   final AsyncValue<void> loadState;
-  final bool showHelp;
   final VoidCallback? onGoToToday;
   final ValueChanged<FeedFilter> onFilterSelected;
   final ValueChanged<int> onMovePeriod;
   final VoidCallback onPickDate;
-  final VoidCallback onShowHelp;
 
   @override
   Widget build(BuildContext context) {
@@ -43,13 +39,11 @@ class FeedPage extends StatelessWidget {
           title: feedSectionTitle(context, view.section),
           periodLabel: feedPeriodLabel(context, view),
           filter: view.filter,
-          showHelp: showHelp,
           onGoToToday: onGoToToday,
           onFilterSelected: onFilterSelected,
           onPickDate: dated ? onPickDate : null,
           onPrevious: dated ? () => onMovePeriod(-1) : null,
           onNext: dated ? () => onMovePeriod(1) : null,
-          onShowHelp: onShowHelp,
         ),
         Expanded(
           child: FeedBody(

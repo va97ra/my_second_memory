@@ -59,6 +59,7 @@ class MemoryEditorAppBar extends StatelessWidget
 
     return AppPageAppBar(
       onBack: onBack,
+      hint: strings.recordPageHint,
       title: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

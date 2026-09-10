@@ -23,6 +23,7 @@ class ShiftSchedulesScreen extends ConsumerWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppPageAppBar(
         fallbackLocation: '/settings',
+        hint: strings.shiftsPageHint,
         title: Text(
           strings.shiftSchedules,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(

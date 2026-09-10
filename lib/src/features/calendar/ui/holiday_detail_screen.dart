@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../state/holiday_providers.dart';
@@ -21,6 +22,7 @@ class HolidayDetailScreen extends ConsumerWidget {
       appBar: AppPageAppBar(
         fallbackLocation:
             '/calendar/day?date=${DateFormat('yyyy-MM-dd').format(date)}',
+        hint: AppStrings.of(context).holidayPageHint,
         title: Text(
           isRu ? 'Праздники' : 'Holidays',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(

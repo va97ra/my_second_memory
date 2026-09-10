@@ -16,7 +16,6 @@ class MemoryEditorBodyView extends StatelessWidget {
     required this.bodyController,
     required this.amountController,
     required this.item,
-    required this.showHints,
   });
 
   final MemoryEditorController controller;
@@ -27,8 +26,6 @@ class MemoryEditorBodyView extends StatelessWidget {
   /// Запись, которую правят, или null у ещё не сохранённого черновика.
   final MemoryItem? item;
 
-  final bool showHints;
-
   @override
   Widget build(BuildContext context) {
     final form = controller.form;
@@ -36,9 +33,6 @@ class MemoryEditorBodyView extends StatelessWidget {
     return EditorBody(
       isUndated: form.isUndated,
       specialFields: _specialFields(),
-      showRecurrenceHint:
-          !form.isUndated && showHints && form.recurrenceFrequency == null,
-      onRecurrenceHintTap: actions.openRepeatPicker,
       recordEditor: RecordEditor(
         controller: bodyController,
         imagePaths: form.imagePaths,

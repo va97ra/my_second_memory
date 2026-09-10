@@ -32,6 +32,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     return Scaffold(
       appBar: AppPageAppBar(
         fallbackLocation: '/settings',
+        hint: strings.securityPageHint,
         title: Text(strings.pinSecurity),
       ),
       body: ListView(

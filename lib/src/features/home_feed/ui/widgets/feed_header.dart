@@ -4,6 +4,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/memory_filter_button.dart';
+import '../../../../shared/ui/page_hint_button.dart';
 
 /// Шапка страницы ленты: закладка, период и кнопки над ними.
 class FeedHeader extends StatelessWidget {
@@ -12,20 +13,16 @@ class FeedHeader extends StatelessWidget {
     required this.title,
     required this.periodLabel,
     required this.filter,
-    required this.showHelp,
     required this.onGoToToday,
     required this.onFilterSelected,
     required this.onPickDate,
     required this.onPrevious,
     required this.onNext,
-    required this.onShowHelp,
   });
 
   final String title;
   final String? periodLabel;
   final FeedFilter filter;
-  final bool showHelp;
-
   /// Null, когда на экране уже сегодняшняя страница.
   final VoidCallback? onGoToToday;
   final ValueChanged<FeedFilter> onFilterSelected;
@@ -34,7 +31,6 @@ class FeedHeader extends StatelessWidget {
   final VoidCallback? onPickDate;
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
-  final VoidCallback onShowHelp;
 
   @override
   Widget build(BuildContext context) {
@@ -46,16 +42,7 @@ class FeedHeader extends StatelessWidget {
         NotebookHeaderBand(
           child: Row(
             children: [
-              if (showHelp)
-                IconButton(
-                  key: const ValueKey('feed_help'),
-                  tooltip: strings.allFeatures,
-                  onPressed: onShowHelp,
-                  icon: const Icon(Icons.menu_book_rounded, size: 22),
-                  style: notebookIconButtonStyle(),
-                )
-              else
-                const SizedBox(width: notebookHeaderSlot),
+              PageHintButton(hint: strings.feedPageHint),
               // Уравновешивает кнопку «сегодня» справа.
               const SizedBox(width: notebookHeaderSlot),
               Expanded(

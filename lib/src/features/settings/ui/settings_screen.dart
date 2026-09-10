@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/locale/app_locale_controller.dart';
 import '../../../navigation/page_turn_navigation.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import '../../calendar/calendar.dart';
 import 'widgets/app_settings_section.dart';
 import 'widgets/data_settings_section.dart';
 import 'widgets/feedback_request_card.dart';
@@ -22,12 +21,15 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
     final isRu = ref.watch(appLocaleControllerProvider).languageCode == 'ru';
-    final showHints = ref.watch(appHintsProvider);
 
     return WarmGradientBackground(
       child: CustomScrollView(
         slivers: [
-          MainSliverAppBar(title: strings.settings, backLocation: '/calendar'),
+          MainSliverAppBar(
+            title: strings.settings,
+            backLocation: '/calendar',
+            hint: strings.settingsPageHint,
+          ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
@@ -46,10 +48,8 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
                   DataSettingsSection(isRu: isRu),
-                  if (showHints) ...[
-                    const SizedBox(height: 12),
-                    FeedbackRequestCard(isRu: isRu),
-                  ],
+                  const SizedBox(height: 12),
+                  FeedbackRequestCard(isRu: isRu),
                 ],
               ),
             ),

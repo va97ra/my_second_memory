@@ -223,7 +223,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Сохранить резервную копию'), findsOneWidget);
-    expect(find.text('Архив будет сохранён в папку Загрузки.'), findsOneWidget);
     expect(find.text('Восстановить из копии'), findsOneWidget);
 
     await tester.tap(find.text('Сохранить резервную копию'));

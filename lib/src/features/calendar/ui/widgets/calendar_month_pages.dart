@@ -16,7 +16,6 @@ class CalendarMonthPages extends ConsumerWidget {
     required this.visibleMonth,
     required this.outgoingMonth,
     required this.selectedDate,
-    required this.showHints,
     required this.animation,
     required this.axis,
     required this.direction,
@@ -27,7 +26,6 @@ class CalendarMonthPages extends ConsumerWidget {
   final DateTime visibleMonth;
   final DateTime? outgoingMonth;
   final DateTime selectedDate;
-  final bool showHints;
   final Animation<double> animation;
   final Axis axis;
   final int direction;
@@ -62,7 +60,6 @@ class CalendarMonthPages extends ConsumerWidget {
         visibleMonth: month,
         selectedDate: selectedDate,
         monthData: ref.watch(calendarMonthDataProvider(month)),
-        showHints: showHints,
         onSelectDate: onSelectDate,
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
+import '../page_hint_button.dart';
 import 'app_back_button.dart';
 import 'header_metrics.dart';
 
@@ -9,6 +10,7 @@ class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.fallbackLocation,
     this.onBack,
+    this.hint,
     this.actions,
     this.bottom,
     this.toolbarHeight = 48,
@@ -18,6 +20,11 @@ class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget title;
   final String? fallbackLocation;
   final VoidCallback? onBack;
+
+  /// Что можно сделать на этой странице. Кнопка встаёт рядом со стрелкой
+  /// «назад», а справа заводится пустой слот той же ширины, иначе заголовок
+  /// съедет с середины.
+  final String? hint;
   final List<Widget>? actions;
   final PreferredSizeWidget? bottom;
   final double toolbarHeight;
@@ -30,7 +37,8 @@ class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       toolbarHeight: toolbarHeight,
-      leadingWidth: notebookHeaderSlot + headerEdgeInset,
+      leadingWidth:
+          notebookHeaderSlot * (hint == null ? 1 : 2) + headerEdgeInset,
       titleSpacing: 4,
       centerTitle: true,
       backgroundColor: Colors.transparent,
@@ -40,17 +48,25 @@ class AppPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       // оставляет кнопке её размер, чтобы она была одной и той же везде.
       leading: Padding(
         padding: const EdgeInsets.only(left: headerEdgeInset),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: AppBackButton(
-            fallbackLocation: fallbackLocation,
-            onPressed: onBack,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppBackButton(
+              fallbackLocation: fallbackLocation,
+              onPressed: onBack,
+            ),
+            if (hint case final text?)
+              SizedBox(
+                width: notebookHeaderSlot,
+                child: PageHintButton(hint: text),
+              ),
+          ],
         ),
       ),
       title: title,
       actions: [
         ...?actions,
+        if (hint != null) const SizedBox(width: notebookHeaderSlot),
         const SizedBox(width: headerEdgeInset),
       ],
       bottom: bottom,

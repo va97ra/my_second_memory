@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'recurrence_hint.dart';
 
 /// Содержимое редактора: поле записи, метаданные и особые поля вида.
 class EditorBody extends StatelessWidget {
@@ -7,15 +6,11 @@ class EditorBody extends StatelessWidget {
     super.key,
     required this.isUndated,
     required this.specialFields,
-    required this.showRecurrenceHint,
-    required this.onRecurrenceHintTap,
     required this.recordEditor,
   });
 
   final bool isUndated;
   final Widget? specialFields;
-  final bool showRecurrenceHint;
-  final VoidCallback onRecurrenceHintTap;
   final Widget recordEditor;
 
   @override
@@ -39,11 +34,7 @@ class EditorBody extends StatelessWidget {
                     SizedBox(height: compact ? 6 : 8),
                     specialFields!,
                   ],
-                  if (showRecurrenceHint) ...[
-                    SizedBox(height: compact ? 6 : 8),
-                    RecurrenceHint(onTap: onRecurrenceHintTap),
-                  ],
-                  if (specialFields != null || showRecurrenceHint)
+                  if (specialFields != null)
                     SizedBox(height: compact ? 8 : 10),
                   Expanded(child: recordEditor),
                 ],

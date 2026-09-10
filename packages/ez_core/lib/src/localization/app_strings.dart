@@ -24,7 +24,6 @@ class AppStrings {
   String get feedFilter => isRu ? 'Фильтр' : 'Filter';
   String get previousPeriod => isRu ? 'Предыдущий период' : 'Previous period';
   String get nextPeriod => isRu ? 'Следующий период' : 'Next period';
-  String get allFeatures => isRu ? 'Все возможности' : 'All features';
   String get backToToday => isRu ? 'Вернуться к сегодня' : 'Back to today';
   String get allRecords => isRu ? 'Все записи' : 'All records';
   String get activeRecords => isRu ? 'Активные' : 'Active';
@@ -186,9 +185,110 @@ class AppStrings {
           'Taxes',
           'Other'
         ];
-  String get calendarTapHint => isRu
-      ? 'Нажмите на число, чтобы открыть день. Свайп вбок — месяц, вверх или вниз — год.'
-      : 'Tap a date to open the day. Swipe sideways for months, up or down for years.';
+  /// Всплывающая подпись у кнопки подсказки — одна на все страницы.
+  String get pageHintTooltip => isRu ? 'Что здесь можно' : 'What you can do here';
+
+  String get feedPageHint => isRu
+      ? 'Записи собраны по дням выбранного периода. Стрелки листают период, '
+          'значок возвращает к сегодня, а фильтр оставляет только нужные.'
+      : 'Records are grouped by day within the chosen period. The arrows move '
+          'between periods, the icon returns to today, and the filter narrows '
+          'the list.';
+
+  String get dayPageHint => isRu
+      ? 'Нажмите свободное время на шкале: встанет рамка, её тянут за кружки '
+          'и нажимают внутрь. Так заводится дело на эти часы.'
+      : 'Tap a free hour on the scale: a frame appears, drag it by the dots '
+          'and tap inside. That is how a record for those hours is made.';
+
+  String get recordPageHint => isRu
+      ? 'Запись сохраняется сама, отдельной кнопки нет. Кнопки внизу добавляют '
+          'фотографии и голосовые заметки, значок повтора вверху делает запись '
+          'повторяющейся.'
+      : 'The record saves itself; there is no save button. The buttons below '
+          'add photographs and voice notes, and the repeat icon above makes '
+          'the record recurring.';
+
+  String get archivePageHint => isRu
+      ? 'Здесь лежат записи, убранные в архив. Любую можно вернуть обратно '
+          'в ленту.'
+      : 'Records moved to the archive live here. Any of them can be returned '
+          'to the feed.';
+
+  String get accountsPageHint => isRu
+      ? 'Логины и пароли хранятся зашифрованными и открываются только после '
+          'разблокировки приложения. Нажатие на карточку открывает её для '
+          'правки.'
+      : 'Logins and passwords are stored encrypted and open only after the '
+          'app is unlocked. Tap a card to edit it.';
+
+  String get settingsPageHint => isRu
+      ? 'Здесь меняются язык, шрифт записей и показ праздников. Отсюда же '
+          'открываются PIN и архив записей.'
+      : 'Language, the record font and holiday display are set here. The PIN '
+          'and the archive open from here too.';
+
+  String get securityPageHint => isRu
+      ? 'PIN шифрует записи, аккаунты и вложения на этом устройстве. Биометрия '
+          'работает только вместе с ним и заменяет ввод кода.'
+      : 'The PIN encrypts records, accounts and attachments on this device. '
+          'Biometrics work only alongside it and replace typing the code.';
+
+  String get syncPageHint => isRu
+      ? 'Записи и вложения ездят между устройствами через аккаунт Google '
+          'зашифрованными. Пароль синхронизации отличается от PIN и известен '
+          'только вам.'
+      : 'Records and attachments travel between devices through a Google '
+          'account, encrypted. The synchronization password differs from the '
+          'PIN and is known only to you.';
+
+  String get backupPageHint => isRu
+      ? 'Копия сохраняется одним файлом в папку «Загрузки» под паролем, '
+          'который вы придумываете. Тот же пароль понадобится, чтобы её '
+          'восстановить.'
+      : 'A backup is saved as one file in the Downloads folder, under a '
+          'password you choose. The same password is needed to restore it.';
+
+  String get shiftsPageHint => isRu
+      ? 'Графики смен красят дни в календаре и могут будить будильником. '
+          'Выключенный график остаётся в списке, но дни красить перестаёт.'
+      : 'Shift schedules colour days in the calendar and can raise an alarm. '
+          'A disabled schedule stays in the list but stops colouring days.';
+
+  String get holidayPageHint => isRu
+      ? 'Здесь описан праздник выбранного дня. Показ праздников и '
+          'международных дней включается в настройках.'
+      : 'This describes the holiday of the chosen day. Holidays and '
+          'international days are switched on in settings.';
+
+  String get calculatorPageHint => isRu
+      ? 'Обычный режим считает выражение целиком и показывает ответ сразу, без '
+          '«равно». Инженерный добавляет функции, а «2nd» переключает клавиши '
+          'на вторые значения.'
+      : 'The standard mode evaluates the whole expression and shows the answer '
+          'as you type. The scientific one adds functions, and “2nd” switches '
+          'the keys to their second meaning.';
+
+  String get financePageHint => isRu
+      ? 'Доходы и расходы складываются по выбранному месяцу. Курс валют '
+          'берётся у Банка России, а нажатие на операцию открывает её для '
+          'правки.'
+      : 'Income and expenses are totalled for the chosen month. Exchange rates '
+          'come from the Bank of Russia, and tapping an entry opens it for '
+          'editing.';
+
+  String get converterPageHint => isRu
+      ? 'Слева величина, справа результат; кнопка между полями меняет их '
+          'местами. Набирать можно в любое из двух полей.'
+      : 'The value is on the left and the result on the right; the button '
+          'between them swaps the two. You can type in either field.';
+
+  String get calendarPageHint => isRu
+      ? 'Нажмите на число, чтобы открыть день. Месяцы листаются вбок, годы — '
+          'вверх и вниз, а цветная полоса сверху ячейки означает рабочую '
+          'смену.'
+      : 'Tap a date to open that day. Swipe sideways for months, up or down '
+          'for years; a coloured stripe on a cell marks a work shift.';
   String get accounts => isRu ? 'Аккаунты' : 'Accounts';
   String get addAccount => isRu ? 'Добавить аккаунт' : 'Add account';
   String get deleteAccountQuestion =>
@@ -316,9 +416,6 @@ class AppStrings {
   String get importBackup => isRu ? 'Восстановить из копии' : 'Import backup';
   String get backupCreated =>
       isRu ? 'Резервная копия сохранена' : 'Backup saved';
-  String get backupDownloadsHint => isRu
-      ? 'Архив будет сохранён в папку Загрузки.'
-      : 'The archive will be saved to Downloads.';
   String get backupSavedToDownloads =>
       isRu ? 'Архив сохранён в папку Загрузки' : 'Archive saved to Downloads';
   String get backupRestored =>

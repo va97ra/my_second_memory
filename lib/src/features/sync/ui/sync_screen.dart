@@ -46,6 +46,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
           MainSliverAppBar(
             title: strings.synchronization,
             backLocation: '/settings',
+            hint: strings.syncPageHint,
           ),
           SliverToBoxAdapter(
             child: Align(

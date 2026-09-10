@@ -4,6 +4,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../shared/ui/page_hint_button.dart';
 import 'shift_legend_chip.dart';
 
 /// Шапка календаря: месяц со стрелками и графики смен, которые
@@ -38,6 +39,7 @@ class CalendarHeader extends StatelessWidget {
         NotebookHeaderBand(
           child: Row(
             children: [
+              PageHintButton(hint: strings.calendarPageHint),
               IconButton(
                 key: const ValueKey('calendar_previous_month'),
                 tooltip: strings.previousMonth,

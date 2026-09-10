@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import 'backup_actions.dart';
 import 'widgets/backup_action_button.dart';
-import 'widgets/backup_hint.dart';
 
 /// Резервная копия: снять архив или восстановить данные из него.
 class BackupScreen extends ConsumerStatefulWidget {
@@ -26,6 +25,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     return Scaffold(
       appBar: AppPageAppBar(
         fallbackLocation: '/settings',
+        hint: strings.backupPageHint,
         title: Text(strings.backup),
       ),
       body: WarmGradientBackground(
@@ -58,8 +58,6 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            BackupHint(text: strings.backupDownloadsHint),
-            const SizedBox(height: 10),
             BackupActionButton(
               icon: Icons.cloud_upload_rounded,
               color: colors.primary,

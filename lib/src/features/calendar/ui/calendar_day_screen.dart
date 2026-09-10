@@ -1,3 +1,4 @@
+import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
@@ -79,6 +80,7 @@ class CalendarDayScreen extends ConsumerWidget {
   PreferredSizeWidget _appBar(BuildContext context, String locale) {
     return AppPageAppBar(
       fallbackLocation: '/calendar',
+      hint: AppStrings.of(context).dayPageHint,
       title: Text(
         DateFormat.yMMMMEEEEd(locale).format(date),
         maxLines: 2,

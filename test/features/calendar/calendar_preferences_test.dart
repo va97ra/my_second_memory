@@ -6,7 +6,7 @@ void main() {
   test('a switched setting persists under its own key', () async {
     SharedPreferences.setMockInitialValues({});
     final controller = BoolSettingController(
-      storageKey: 'calendar_hints_enabled_v1',
+      storageKey: 'calendar_holidays_enabled_v1',
       initial: true,
     );
     await controller.setEnabled(false);
@@ -14,7 +14,7 @@ void main() {
     expect(controller.state, isFalse);
     expect(
       (await SharedPreferences.getInstance())
-          .getBool('calendar_hints_enabled_v1'),
+          .getBool('calendar_holidays_enabled_v1'),
       isFalse,
     );
   });

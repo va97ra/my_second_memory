@@ -41,12 +41,14 @@ void main() {
         .dy;
     final bottomNavigationTop = tester.getTopLeft(find.byType(AppNavBar)).dy;
     expect(calendarBottom, closeTo(bottomNavigationTop, 0.1));
+    // Врезки с подсказкой под сеткой больше нет: пояснение достаётся кнопкой
+    // в шапке и экран не занимает.
+    expect(find.byKey(const ValueKey('calendar_hint')), findsNothing);
+    expect(find.byKey(const ValueKey('page_hint_button')), findsOneWidget);
     final gridBottom = tester
         .getBottomRight(find.byKey(const ValueKey('calendar_month_grid')))
         .dy;
-    final hintTop =
-        tester.getTopLeft(find.byKey(const ValueKey('calendar_hint'))).dy;
-    expect(hintTop - gridBottom, closeTo(7, 0.1));
+    expect(gridBottom, lessThanOrEqualTo(calendarBottom + 0.1));
 
     await tester.binding.setSurfaceSize(const Size(900, 430));
     await tester.pumpAndSettle();

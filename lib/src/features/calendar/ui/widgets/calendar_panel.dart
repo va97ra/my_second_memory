@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../state/calendar_month_data.dart';
 import 'calendar_month_grid.dart';
-import 'calendar_swipe_hint.dart';
 import 'calendar_weekday_row.dart';
 
 /// Страница календаря: дни недели, сетка месяца и подсказка под ней.
@@ -13,7 +12,6 @@ class CalendarPanel extends StatelessWidget {
     required this.visibleMonth,
     required this.selectedDate,
     required this.monthData,
-    required this.showHints,
     required this.onSelectDate,
   });
 
@@ -21,7 +19,6 @@ class CalendarPanel extends StatelessWidget {
   final DateTime visibleMonth;
   final DateTime selectedDate;
   final CalendarMonthData monthData;
-  final bool showHints;
   final ValueChanged<DateTime> onSelectDate;
 
   @override
@@ -41,10 +38,6 @@ class CalendarPanel extends StatelessWidget {
               onSelectDate: onSelectDate,
             ),
           ),
-          if (showHints) ...[
-            const SizedBox(height: 7),
-            const CalendarSwipeHint(),
-          ],
         ],
       ),
     );

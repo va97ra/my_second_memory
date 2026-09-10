@@ -72,14 +72,6 @@ class AppSettingsSection extends ConsumerWidget {
           onTap: () => _pickFont(context, ref, contentFont, isRu),
         ),
         SettingsSwitchTile(
-          icon: Icons.tips_and_updates_rounded,
-          title: isRu ? 'Показывать подсказки' : 'Show hints',
-          subtitle: isRu
-              ? 'Подсказки для новых пользователей'
-              : 'Hints for new users',
-          setting: appHintsProvider,
-        ),
-        SettingsSwitchTile(
           icon: Icons.celebration_rounded,
           title: isRu ? 'Показывать праздники' : 'Show holidays',
           subtitle: isRu

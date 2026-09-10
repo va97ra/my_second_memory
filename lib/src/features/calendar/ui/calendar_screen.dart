@@ -9,7 +9,6 @@ import '../../../navigation/page_turn_navigation.dart';
 import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
 import '../state/calendar_month_data.dart';
-import '../state/calendar_preferences_controller.dart';
 import 'widgets/calendar_header.dart';
 import 'widgets/calendar_loading_view.dart';
 import 'widgets/calendar_month_pages.dart';
@@ -54,7 +53,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     final locale = Localizations.localeOf(context).languageCode;
     final loadState = ref.watch(memoryItemsLoadProvider);
     final monthData = ref.watch(calendarMonthDataProvider(_visibleMonth));
-    final showHints = ref.watch(appHintsProvider);
     ref.watch(recurrenceLoadProvider);
 
     if (loadState.isLoading || loadState.hasError) {
@@ -70,7 +68,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         // В низком ландшафте страница не помещается целиком, поэтому экран
         // прокручивается.
         final needsScroll = isLandscape && constraints.maxHeight < 680;
-        final panel = _panel(locale, showHints, scrolls: needsScroll);
+        final panel = _panel(locale, scrolls: needsScroll);
         final header = _header(locale, monthData.shiftSchedules);
 
         return WarmGradientBackground(
@@ -100,7 +98,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         onChangeMonth: _changeMonth,
       );
 
-  Widget _panel(String locale, bool showHints, {required bool scrolls}) {
+  Widget _panel(String locale, {required bool scrolls}) {
     return PageSwipeArea(
       key: const ValueKey('calendar_month_swipe_area'),
       onHorizontalSwipe: _changeMonth,
@@ -111,7 +109,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         visibleMonth: _visibleMonth,
         outgoingMonth: _outgoingMonth,
         selectedDate: _selectedDate,
-        showHints: showHints,
         animation: _pageController,
         axis: _transitionAxis,
         direction: _transitionDirection,

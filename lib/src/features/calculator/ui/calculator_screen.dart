@@ -81,6 +81,7 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                 child: Column(
                   children: [
                     CalculatorModeBar(
+                      hint: strings.calculatorPageHint,
                       standardLabel: strings.calculatorStandard,
                       scientificLabel: strings.calculatorScientific,
                       scientific: state.scientific,

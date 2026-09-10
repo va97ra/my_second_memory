@@ -42,6 +42,7 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
           MainPageHeader(
             title: strings.memoryArchive,
             backLocation: '/settings',
+            hint: strings.archivePageHint,
             // Фильтр стоит там же, где в ленте: видов записей больше десятка,
             // в ряд кнопок они не помещаются.
             trailing: MemoryFilterButton(
