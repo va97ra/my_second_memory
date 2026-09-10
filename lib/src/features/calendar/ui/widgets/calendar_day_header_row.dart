@@ -14,6 +14,7 @@ class CalendarDayHeaderRow extends StatelessWidget {
     required this.isToday,
     required this.hasAlarm,
     required this.items,
+    this.outlinedNumber = true,
   });
 
   final int day;
@@ -23,6 +24,10 @@ class CalendarDayHeaderRow extends StatelessWidget {
   final bool isToday;
   final bool hasAlarm;
   final List<MemoryItem> items;
+
+  /// Обводить ли сегодняшнее число. На своей цветной шапке оно и так стоит
+  /// отдельно от соседей, и обводка там читается грязью.
+  final bool outlinedNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +46,7 @@ class CalendarDayHeaderRow extends StatelessWidget {
                 isToday: isToday,
                 isSelected: isSelected,
                 color: foreground,
+                outlined: outlinedNumber,
               ),
             ),
           ),

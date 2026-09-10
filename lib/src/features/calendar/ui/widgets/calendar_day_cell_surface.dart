@@ -14,12 +14,24 @@ class CalendarDayCellSurface {
     required this.isSelected,
     required this.isToday,
     required this.hasItems,
+    this.screenAccent,
   });
 
   final bool isInVisibleMonth;
   final bool isSelected;
   final bool isToday;
   final bool hasItems;
+
+  /// Акцент экранной темы или null в блокноте.
+  ///
+  /// Заливка сегодняшнего дня рассчитана на бумагу: подмешанный к ней акцент
+  /// светлеет и день выступает вперёд. На тёмной плитке та же примесь темнеет
+  /// и даёт грязное бордовое пятно — день выглядит не отмеченным, а
+  /// испачканным. Поэтому на экране сегодня отмечен цветной шапкой, обводкой
+  /// и свечением, а плитка под ними остаётся обычной.
+  final Color? screenAccent;
+
+  bool get _ringsToday => isToday && isInVisibleMonth && screenAccent != null;
 
   /// Насколько сегодняшний день отделён от соседних.
   ///
@@ -49,16 +61,26 @@ class CalendarDayCellSurface {
       border: Border.all(
         color: isSelected
             ? colors.onSurface
-            : hasItems && isInVisibleMonth
-                ? colors.outline
-                : Colors.transparent,
-        width: isSelected ? 2 : 1,
+            : _ringsToday
+                ? screenAccent!
+                : hasItems && isInVisibleMonth
+                    ? colors.outline
+                    : Colors.transparent,
+        width: isSelected ? 2 : (_ringsToday ? 1.4 : 1),
       ),
       boxShadow: _shadow(context, colors),
     );
   }
 
   List<BoxShadow>? _shadow(BuildContext context, ColorScheme colors) {
+    if (_ringsToday && !isSelected) {
+      return [
+        BoxShadow(
+          color: screenAccent!.withValues(alpha: 0.45),
+          blurRadius: 10,
+        ),
+      ];
+    }
     if (isSelected) {
       return [
         BoxShadow(
@@ -77,7 +99,7 @@ class CalendarDayCellSurface {
   /// Сегодняшний день — та же бумага, подкрашенная акцентом.
   Color _paper(ColorScheme colors, AppSurfacePalette palette) {
     if (!isInVisibleMonth) return Colors.transparent;
-    if (!isToday) return palette.calendarTile;
+    if (!isToday || screenAccent != null) return palette.calendarTile;
     return Color.alphaBlend(
       colors.primary.withValues(alpha: todayTintOpacity),
       palette.calendarTile,

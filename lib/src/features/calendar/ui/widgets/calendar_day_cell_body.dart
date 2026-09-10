@@ -25,6 +25,7 @@ class CalendarDayCellBody extends StatelessWidget {
     required this.holidays,
     required this.hasAlarm,
     required this.foreground,
+    this.todayCap,
   });
 
   final DateTime date;
@@ -37,6 +38,10 @@ class CalendarDayCellBody extends StatelessWidget {
   final List<HolidayOccurrence> holidays;
   final bool hasAlarm;
   final Color foreground;
+
+  /// Цвет шапки сегодняшнего дня или null, если шапки не будет: в блокноте
+  /// сегодня отмечен заливкой, а в дне со сменой шапку уже занял график.
+  final Color? todayCap;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +57,14 @@ class CalendarDayCellBody extends StatelessWidget {
 
         return Stack(
           children: [
+            if (todayCap case final cap?)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: ShiftMarks.headerHeight,
+                child: ColoredBox(color: cap),
+              ),
             if (hasShift)
               Positioned.fill(
                 // Скругление ячейке обрезает сама ячейка — второй раз не надо.
@@ -79,6 +92,7 @@ class CalendarDayCellBody extends StatelessWidget {
                     isToday: isToday,
                     hasAlarm: hasAlarm,
                     items: items,
+                    outlinedNumber: todayCap == null,
                   ),
                   if (layout.showsEvents) ...[
                     const SizedBox(height: 3),

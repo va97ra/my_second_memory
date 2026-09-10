@@ -47,18 +47,30 @@ class CalendarDayCell extends StatelessWidget {
   Widget _buildCell(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final palette = AppSurfacePalette.of(context);
+    final screenAccent = ScreenVisuals.maybeOf(context)?.colors.accent;
+    // Сегодня получает такую же цветную шапку, какую день со сменой получает
+    // от графика. Своей шапки ему не положено, когда график уже занял её:
+    // цвет графика выбрал человек, и подменять его нельзя.
+    final todayCap = isToday && isInVisibleMonth && shiftSchedules.isEmpty
+        ? screenAccent
+        : null;
     // Число, будильник и отметка архива стоят на шапке графика, а цвет ей
     // задаёт человек: чернила выбираются по её светлоте, иначе на светлом
     // графике белое число пропадает.
     final foreground = !isInVisibleMonth
         ? colors.onSurface.withValues(alpha: 0.38)
-        : shiftSchedules.isEmpty
-            ? colors.onSurface
-            : readableInkOn(Color(shiftSchedules.first.colorValue));
+        : todayCap != null
+            ? readableInkOn(todayCap)
+            : shiftSchedules.isEmpty
+                ? colors.onSurface
+                : readableInkOn(Color(shiftSchedules.first.colorValue));
     // Обычный день обходится нарисованной рамкой: она дешевле и не спорит с
     // рамкой выбранного дня. Сегодня — такой же обычный день: его примета
     // теперь заливка, а не собственная обводка.
-    final usesGradientBorder = isInVisibleMonth && !isSelected && items.isEmpty;
+    final usesGradientBorder = isInVisibleMonth &&
+        !isSelected &&
+        items.isEmpty &&
+        !(isToday && screenAccent != null);
 
     return InkWell(
       borderRadius: BorderRadius.circular(cornerRadius),
@@ -81,6 +93,7 @@ class CalendarDayCell extends StatelessWidget {
             isSelected: isSelected,
             isToday: isToday,
             hasItems: items.isNotEmpty,
+            screenAccent: screenAccent,
           ).decoration(context, colors, palette),
           child: CalendarDayCellBody(
             date: date,
@@ -93,6 +106,7 @@ class CalendarDayCell extends StatelessWidget {
             holidays: holidays,
             hasAlarm: hasAlarm,
             foreground: foreground,
+            todayCap: todayCap,
           ),
         ),
       ),

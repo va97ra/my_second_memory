@@ -12,6 +12,7 @@ class DayNumber extends StatelessWidget {
     required this.isToday,
     required this.isSelected,
     required this.color,
+    this.outlined = true,
   });
 
   /// Обводка сегодняшнего числа.
@@ -26,6 +27,10 @@ class DayNumber extends StatelessWidget {
   final bool isSelected;
   final Color color;
 
+  /// Обводить ли сегодняшнее число красным контуром. На цветной шапке оно
+  /// стоит отдельно и без обводки — см. [CalendarDayHeaderRow.outlinedNumber].
+  final bool outlined;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -38,7 +43,7 @@ class DayNumber extends StatelessWidget {
         height: 1,
         // Обводка собрана тенями по четырём сторонам: у текста нет способа
         // нарисовать контур и заливку одним проходом.
-        shadows: isToday ? _ring : null,
+        shadows: isToday && outlined ? _ring : null,
       ),
     );
 
