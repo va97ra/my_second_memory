@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
@@ -56,8 +58,14 @@ class _AccountEditorState extends State<AccountEditor> {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
 
+    // Высота листа считается от свободного места, а не от всего экрана:
+    // с поднятой клавиатурой доля в 0.86 не помещалась и лист вылезал на
+    // несколько пикселей.
+    final media = MediaQuery.of(context);
+    final room =
+        media.size.height - media.viewInsets.bottom - media.padding.top;
     return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.86,
+      height: math.min(media.size.height * 0.86, room),
       child: AnimatedPadding(
         duration: const Duration(milliseconds: 180),
         padding: EdgeInsets.fromLTRB(

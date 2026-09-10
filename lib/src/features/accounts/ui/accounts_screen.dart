@@ -90,7 +90,11 @@ class AccountsScreen extends ConsumerWidget {
       isScrollControlled: true,
       showDragHandle: true,
       useSafeArea: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      // Лист поверх затемнения: стекло здесь плотнее обычного, иначе сквозь
+      // него читается погашенный экран под ним, а не задник.
+      backgroundColor: ScreenVisuals.maybeOf(context)?.colors.panel
+              .withValues(alpha: 0.9) ??
+          Theme.of(context).colorScheme.surface,
       builder: (context) => AccountEditor(account: account, ref: ref),
     );
   }

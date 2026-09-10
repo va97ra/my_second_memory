@@ -25,15 +25,19 @@ class AccountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
+    final radius = BorderRadius.circular(8);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colors.outlineVariant),
-          boxShadow: notebookSurfaceShadow(context, NotebookSurfaceDepth.card),
-        ),
+        // В экранных темах карточка — пластина стекла, как всё остальное.
+        decoration: GlassSurface.maybeOf(context, radius: radius) ??
+            BoxDecoration(
+              color: colors.surface,
+              borderRadius: radius,
+              border: Border.all(color: colors.outlineVariant),
+              boxShadow:
+                  notebookSurfaceShadow(context, NotebookSurfaceDepth.card),
+            ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
           child: Column(
