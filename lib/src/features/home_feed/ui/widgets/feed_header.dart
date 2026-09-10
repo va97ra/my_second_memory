@@ -23,6 +23,7 @@ class FeedHeader extends StatelessWidget {
   final String title;
   final String? periodLabel;
   final FeedFilter filter;
+
   /// Null, когда на экране уже сегодняшняя страница.
   final VoidCallback? onGoToToday;
   final ValueChanged<FeedFilter> onFilterSelected;
@@ -81,7 +82,8 @@ class FeedHeader extends StatelessWidget {
                 // нет.
                 filters: [
                   for (final filter in FeedFilter.values)
-                    if (periodLabel != null || filter.recurringFrequency == null)
+                    if (periodLabel != null ||
+                        filter.recurringFrequency == null)
                       filter,
                 ],
               ),
@@ -100,21 +102,27 @@ class FeedHeader extends StatelessWidget {
                   style: notebookIconButtonStyle(),
                 ),
                 Expanded(
-                  child: InkWell(
-                    key: const ValueKey('feed_pick_date'),
-                    onTap: onPickDate,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(
-                        periodLabel!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              height: 1.08,
-                            ),
+                  // Свой прозрачный материал: без него волна нажатия уходит
+                  // материалу `Scaffold` и рисуется поверх задника.
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      key: const ValueKey('feed_pick_date'),
+                      onTap: onPickDate,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Text(
+                          periodLabel!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.08,
+                                  ),
+                        ),
                       ),
                     ),
                   ),

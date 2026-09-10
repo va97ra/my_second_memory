@@ -94,7 +94,7 @@ void main() {
     );
   });
 
-  testWidgets('top and bottom panels own separate ink surfaces',
+  testWidgets('panel buttons press without a material ink layer',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -113,24 +113,30 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    MaterialInkController inkOf(Key key) {
-      final ink = find.descendant(
-        of: find.byKey(key),
-        matching: find.byType(InkWell),
+    // Кнопки панелей не отзываются материаловской волной вовсе. Волна
+    // рисуется на ближайшем материале выше — общем со всей оболочкой, — и
+    // нажатие на нижнюю кнопку перерисовывало на кадр верхнюю панель: на
+    // блокноте это была вспышка кожаной фактуры, на стеклянных темах —
+    // пропавший на долю секунды задник. Нажатие показывает `NotebookPressable`
+    // притенением поверх кнопки, и перерисовывать ему нечего.
+    for (final key in const [
+      ValueKey('top_calculator'),
+      ValueKey('bottom_feed'),
+    ]) {
+      expect(
+        find.descendant(of: find.byKey(key), matching: find.byType(InkWell)),
+        findsNothing,
+        reason: '$key',
       );
-      return Material.of(tester.element(ink));
+      expect(
+        find.descendant(
+          of: find.byKey(key),
+          matching: find.byType(NotebookPressable),
+        ),
+        findsOneWidget,
+        reason: '$key',
+      );
     }
-
-    // Нажатие на нижнюю кнопку не должно инвалидировать общий со всей
-    // оболочкой ink-слой: на настоящем Android это на кадр перерисовывало
-    // кожаную фактуру верхних инструментов и выглядело как вспышка.
-    expect(
-      identical(
-        inkOf(const ValueKey('top_calculator')),
-        inkOf(const ValueKey('bottom_feed')),
-      ),
-      isFalse,
-    );
   });
 
   testWidgets('top panel uses the scaffold app bar slot outside the page body',

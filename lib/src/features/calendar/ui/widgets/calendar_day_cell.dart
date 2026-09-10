@@ -76,29 +76,34 @@ class CalendarDayCell extends StatelessWidget {
         items.isEmpty &&
         !(isToday && screen != null);
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(cornerRadius),
-      onTap: onTap,
-      child: CustomPaint(
-        foregroundPainter: usesGradientBorder
-            ? CalendarCellBorderPainter(
-                borderStart: palette.borderStart,
-                borderEnd: palette.borderEnd,
-                cornerRadius: cornerRadius,
-              )
-            : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          // Обрезает праздничную ленту по скруглению ячейки: она лежит
-          // вплотную к нижнему краю и без этого вылезла бы за углы.
-          clipBehavior: Clip.antiAlias,
-          decoration: CalendarDayCellSurface(
-            isInVisibleMonth: isInVisibleMonth,
-            isSelected: isSelected,
-            isToday: isToday,
-            hasItems: items.isNotEmpty,
-            screen: screen,
-          ).decoration(context, colors, palette),
+    // Нажатие рисуется поверх плитки, а не под ней: `InkWell` снаружи
+    // заливки отдаёт свою волну ближайшему материалу выше — материалу
+    // `Scaffold`, — и сквозь стеклянную плитку она проступает белым.
+    return CustomPaint(
+      foregroundPainter: usesGradientBorder
+          ? CalendarCellBorderPainter(
+              borderStart: palette.borderStart,
+              borderEnd: palette.borderEnd,
+              cornerRadius: cornerRadius,
+            )
+          : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        // Обрезает праздничную ленту по скруглению ячейки: она лежит
+        // вплотную к нижнему краю и без этого вылезла бы за углы.
+        clipBehavior: Clip.antiAlias,
+        decoration: CalendarDayCellSurface(
+          isInVisibleMonth: isInVisibleMonth,
+          isSelected: isSelected,
+          isToday: isToday,
+          hasItems: items.isNotEmpty,
+          screen: screen,
+        ).decoration(context, colors, palette),
+        child: NotebookPressable(
+          onTap: onTap,
+          playClick: false,
+          pressedOffset: 0,
+          borderRadius: BorderRadius.circular(cornerRadius),
           child: CalendarDayCellBody(
             date: date,
             locale: locale,

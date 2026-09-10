@@ -59,6 +59,11 @@ ThemeData buildScreenTheme(ScreenThemeColors c) {
   return base.copyWith(
     colorScheme: scheme,
     canvasColor: c.backgroundStart,
+    // Умолчания Material дают светло-серую волну, и на тёмной теме она
+    // читается вспышкой, а на стекле — белым пятном. Волна красится акцентом
+    // темы: это отклик приложения, а не системы.
+    splashColor: c.accent.withValues(alpha: 0.14),
+    highlightColor: c.accent.withValues(alpha: 0.07),
     disabledColor: c.dimInk,
     dividerTheme: base.dividerTheme.copyWith(color: c.divider),
     // Выбранная кнопка панели красится акцентом темы. Плоская основа

@@ -62,9 +62,22 @@ class ScreenPanel extends StatelessWidget {
       // Нижняя полоса доходит до самого низа экрана, а системную зону жеста
       // держит внутри себя: висящая над краем полоса оставляет под собой
       // полоску задника, и панель перестаёт быть опорой экрана.
-      child: top
-          ? child
-          : SafeArea(top: false, maintainBottomViewPadding: true, child: child),
+      // Свой материал обязателен. Без него `InkWell` внутри рисует волну на
+      // материале `Scaffold` — то есть под стеклом полосы, — и нажатие
+      // выглядит белым прямоугольником, проступающим сквозь неё.
+      child: ClipRRect(
+        borderRadius: shape,
+        child: Material(
+          type: MaterialType.transparency,
+          child: top
+              ? child
+              : SafeArea(
+                  top: false,
+                  maintainBottomViewPadding: true,
+                  child: child,
+                ),
+        ),
+      ),
     );
 
     return Padding(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../themes/screen/screen_theme_colors.dart';
+import '../notebook_pressable.dart';
 import 'nav_bar_item.dart';
 
 /// Инструменты сверху там, где панель приклеена к краю окна: три отдельные
@@ -85,9 +86,9 @@ class _Tool extends StatelessWidget {
       label: item.label,
       child: Tooltip(
         message: item.label,
-        child: InkWell(
+        child: NotebookPressable(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
+          playClick: false,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             decoration: BoxDecoration(

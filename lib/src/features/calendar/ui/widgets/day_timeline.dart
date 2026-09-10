@@ -268,9 +268,10 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
           _movingId = null;
           _movedStart = null;
         }),
-        // Табличка — отдельный листок и на тёмном блокноте остаётся светлой,
-        // как карточки в ленте. Тёмная на тёмной шкале читалась мрачно.
-        child: NotebookPaperIsland(
+        // Табличка — такой же лист бумаги, как карточка в ленте: на ней
+        // написана запись. Светлая во всех темах, с зерном и чернилами —
+        // правило в `docs/layout.md`.
+        child: PaperSheet(
           child: Builder(
             builder: (context) {
               final colors = Theme.of(context).colorScheme;
@@ -280,7 +281,12 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: colors.surface.withValues(alpha: 0.94),
+                        color: colors.surface,
+                        image: const DecorationImage(
+                          image: AssetImage(NotebookAssets.paper),
+                          fit: BoxFit.cover,
+                          opacity: 0.5,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color:

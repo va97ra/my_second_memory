@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../themes/screen/screen_theme_colors.dart';
 import '../../themes/screen/screen_visuals.dart';
+import '../notebook_pressable.dart';
 import 'nav_bar_item.dart';
 
 /// Один ряд навигационных кнопок для обеих панелей оболочки.
@@ -73,11 +74,10 @@ class _NavigationItemButton extends StatelessWidget {
       label: item.label,
       child: Tooltip(
         message: item.label,
-        child: InkWell(
+        child: NotebookPressable(
           onTap: onTap,
-          // Отклик держится в скруглении кнопки, а не разливается прямоугольником
-          // на всю её долю: на стекле прямоугольная волна видна целиком и
-          // читается прямоугольником, которого на панели нет.
+          playClick: false,
+          pressedOffset: 1,
           borderRadius: BorderRadius.circular(14),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

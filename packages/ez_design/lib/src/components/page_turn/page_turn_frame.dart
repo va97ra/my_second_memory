@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import '../../themes/screen/screen_visuals.dart';
 import 'opaque_snapshot.dart';
 import 'page_turn_coordinator.dart';
 import 'paper_texture_cache.dart';
@@ -89,7 +90,12 @@ class PageTurnFrameState extends State<PageTurnFrame>
     _activeCoordinator = coordinator;
     _isTurning = true;
 
-    if (MediaQuery.disableAnimationsOf(context)) {
+    // Переворот листа — жест блокнота: лист есть только там. На стеклянных
+    // темах страница снимается в картинку и на время анимации заливается
+    // сплошным цветом — задник на долю секунды пропадает, и это читается
+    // недоделкой, а не перелистыванием.
+    if (MediaQuery.disableAnimationsOf(context) ||
+        ScreenVisuals.maybeOf(context) != null) {
       switchContent();
       _isTurning = false;
       _releaseCoordinator();

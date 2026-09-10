@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../themes/screen/screen_panel.dart';
 import '../../themes/screen/screen_theme_colors.dart';
+import '../notebook_pressable.dart';
 import 'nav_bar_item.dart';
 
 /// Инструменты сверху там, где панели плавают: одна полоса стекла, а в ней
@@ -82,9 +83,10 @@ class _Tool extends StatelessWidget {
       label: item.label,
       child: Tooltip(
         message: item.label,
-        child: InkWell(
+        child: NotebookPressable(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
+          playClick: false,
+          pressedOffset: 1,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
             child: Column(
