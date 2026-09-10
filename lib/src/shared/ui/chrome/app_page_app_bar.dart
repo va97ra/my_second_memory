@@ -55,9 +55,17 @@ class AppPageAppBar extends ConsumerWidget implements PreferredSizeWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppBackButton(
-              fallbackLocation: fallbackLocation,
-              onPressed: onBack,
+            // Каждая клавиша стоит в своём слоте одной ширины. Прижатые друг
+            // к другу, они читались рядом разного размера: у стрелки поле
+            // вокруг значка меньше, чем у круглого знака вопроса.
+            SizedBox(
+              width: notebookHeaderSlot,
+              child: Center(
+                child: AppBackButton(
+                  fallbackLocation: fallbackLocation,
+                  onPressed: onBack,
+                ),
+              ),
             ),
             if (showHint) PageHintButton(hint: hint!),
           ],
@@ -65,7 +73,11 @@ class AppPageAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ),
       title: title,
       actions: [
-        ...?actions,
+        for (final action in actions ?? const <Widget>[])
+          SizedBox(
+            width: notebookHeaderSlot,
+            child: Center(child: action),
+          ),
         if (showHint) const SizedBox(width: notebookHeaderSlot),
         const SizedBox(width: headerEdgeInset),
       ],
