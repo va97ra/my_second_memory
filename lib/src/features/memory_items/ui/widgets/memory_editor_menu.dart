@@ -1,4 +1,5 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Что можно сделать с записью из меню редактора.
@@ -70,7 +71,10 @@ class MemoryEditorMenu extends StatelessWidget {
               ? 'Когда и что с записью'
               : 'When and what to do',
       iconSize: 22,
-      padding: const EdgeInsets.all(9),
+      // Размер кнопки задаётся полем вокруг значка: `constraints` у этой
+      // кнопки ограничивает выпадающий список, а не её саму — с ним меню
+      // сжималось в полоску шириной с кнопку.
+      padding: const EdgeInsets.all((notebookIconButtonSize - 22) / 2),
       icon: Icon(
         Icons.settings_rounded,
         color: hasRecurrence

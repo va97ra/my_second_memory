@@ -1,4 +1,5 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
@@ -102,8 +103,7 @@ class MemoryEditorAppBar extends StatelessWidget
             key: const ValueKey('memory_type_picker'),
             tooltip: strings.recordType,
             iconSize: 22,
-            padding: const EdgeInsets.all(9),
-            constraints: const BoxConstraints(),
+            style: notebookIconButtonStyle(),
             onPressed: () => _pickType(context),
           icon: Icon(
             memoryTypeIcon(controller.form.type),

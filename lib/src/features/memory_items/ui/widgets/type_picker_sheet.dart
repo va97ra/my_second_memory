@@ -15,7 +15,6 @@ Future<MemoryType?> showMemoryTypePicker(
   return showModalBottomSheet<MemoryType>(
     context: context,
     showDragHandle: true,
-    backgroundColor: Theme.of(context).colorScheme.surface,
     builder: (context) {
       final locale = Localizations.localeOf(context).languageCode;
       final strings = AppStrings.of(context);

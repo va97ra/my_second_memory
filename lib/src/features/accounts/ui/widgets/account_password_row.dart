@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -25,7 +26,10 @@ class _AccountPasswordRowState extends State<AccountPasswordRow> {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest,
+        // Вырез в стекле гасит фон под собой, а не заливается своим цветом.
+        color: ScreenVisuals.maybeOf(context) == null
+            ? colors.surfaceContainerHighest
+            : Colors.black.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: colors.outlineVariant),
       ),

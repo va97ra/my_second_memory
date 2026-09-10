@@ -72,7 +72,10 @@ class _PageHintButtonState extends ConsumerState<PageHintButton> {
         child: IconButton(
           key: const ValueKey('page_hint_button'),
           tooltip: strings.pageHintTooltip,
-          icon: const Icon(Icons.help_outline_rounded),
+          // Тот же размер, что у стрелки «назад» и у кнопок действий: в шапке
+          // все клавиши одного роста, иначе ряд рассыпается.
+          style: notebookIconButtonStyle(),
+          icon: const Icon(Icons.help_outline_rounded, size: 22),
           onPressed: () =>
               controller.isOpen ? controller.close() : controller.open(),
         ),

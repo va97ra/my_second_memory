@@ -1,8 +1,10 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Поле ввода в редакторе аккаунта.
 class AccountTextField extends StatelessWidget {
-  const AccountTextField({super.key, 
+  const AccountTextField({
+    super.key,
     required this.controller,
     required this.label,
     required this.icon,
@@ -42,7 +44,9 @@ class AccountTextField extends StatelessWidget {
           prefixIcon: Icon(icon),
           suffixIcon: suffixIcon,
           filled: true,
-          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          fillColor: ScreenVisuals.maybeOf(context) == null
+              ? Theme.of(context).colorScheme.surfaceContainerHighest
+              : null,
         ),
       ),
     );
