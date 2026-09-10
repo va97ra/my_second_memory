@@ -4,7 +4,7 @@
 кода — она исчезает и отсюда; если появилась новая, её сюда дописывают в том
 же коммите, а не «потом».
 
-Проверено 30 августа 2026.
+Проверено 10 сентября 2026.
 
 ## Сверх потолка осознанно
 
@@ -17,17 +17,17 @@ packages/ez_domain/lib/src/calendar/holiday_observance_table.dart     457
 packages/ez_domain/lib/src/calendar/holiday_russian_table.dart        994
    таблицы праздников: официальные, международные дни и праздники России
 
-packages/ez_core/lib/src/localization/app_strings.dart                570
+packages/ez_core/lib/src/localization/app_strings.dart                615
    строки интерфейса
 
 packages/ez_design/lib/src/themes/app_theme.dart                      406
-packages/ez_design/lib/src/themes/notebook/notebook_theme.dart        404
+packages/ez_design/lib/src/themes/notebook/notebook_theme.dart        407
    определения тем
 
 packages/ez_design/lib/src/components/page_turn/page_turn_painter.dart 476
    один painter и его геометрия
 
-packages/ez_design/lib/src/components/page_turn/page_turn_frame.dart   297
+packages/ez_design/lib/src/components/page_turn/page_turn_frame.dart  353
    одна машина состояний переворота: занять очередь, снять страницу,
    проиграть, отпустить. Её шаги делят между собой снимки и время жизни
    анимации. Загрузка текстуры бумаги, непрозрачный снимок и очередь со своим
@@ -36,7 +36,13 @@ packages/ez_design/lib/src/components/page_turn/page_turn_frame.dart   297
 lib/src/features/recurrence/state/recurrence_legacy_repair.dart       488
    помеченный ремонт данных прошлых версий
 
-lib/src/features/sync/state/sync_controller_impl.dart                 342
+lib/src/features/calendar/ui/widgets/day_timeline.dart                565
+   шкала дня: разметка часов, рамка нового дела с ручками и перенос
+   табличек. Здесь **есть** вторая ответственность, и файл ждёт разреза —
+   записан в `pending.md`. Резать перед публикацией не стали: шкала — самое
+   нагруженное место приложения, и ошибка в ней дороже длинного файла
+
+lib/src/features/sync/state/sync_controller_impl.dart                 355
    одна машина состояний подключения к облаку: загрузка, вход, хранилище,
    прогон. Всё остальное из неё вынуто — набор синхронизируемых данных,
    планировщик и сам прогон живут отдельно, — а фазы машины делят между собой
@@ -53,23 +59,23 @@ lib/src/features/memory_items/state/memory_items_controller.dart      356
    одно хранилище записей и его состояние. Напоминания и уборка файлов из него
    вынуты, осталось само чтение и запись
 
-lib/src/features/memory_items/state/memory_editor_form.dart           306
+lib/src/features/memory_items/state/memory_editor_form.dart           324
    одно неизменяемое значение с двумя десятками полей: длину даёт copyWith, а
    не вторая ответственность
 
-packages/ez_data/lib/src/notifications/notification_service.dart      495
+packages/ez_data/lib/src/notifications/notification_service.dart      499
    один разговор с системой уведомлений. Два интерфейса, которые он реализует,
    — это два взгляда на один и тот же плагин и одну инициализацию; разделив
    класс, мы получим два объекта, спорящих за один плагин. Правила из него
    вынуты: когда график будит, решает shiftAlarmTimes в домене
 
-packages/ez_data/lib/src/backup/backup_service.dart                   537
+packages/ez_data/lib/src/backup/backup_service.dart                   535
    один формат архива, прочитанный в обе стороны. Выгрузка и загрузка знают
    одну и ту же раскладку файлов, и разложить их по разным классам значит
    завести две копии этого знания
 
 
-lib/src/features/memory_items/ui/widgets/time_reminder_sheet.dart     168
+lib/src/features/memory_items/ui/widgets/time_reminder_sheet.dart     175
    одна форма: время, напоминание и звук. Разметка вынесена в свой виджет,
    осталось состояние и три обращения к системе
 ```

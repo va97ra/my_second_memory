@@ -27,4 +27,32 @@ void main() {
         .where((box) => (box.decoration as BoxDecoration).gradient != null);
     expect(plates, isNotEmpty, reason: 'пластины под шкалой нет');
   });
+
+  testWidgets('the plate survives inside the real day screen', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: buildScreenTheme(cyberpunkColors),
+          home: Scaffold(
+            body: Column(
+              children: [
+                // Так шкала стоит на экране дня: в `Expanded`, под шапкой и
+                // полосой смен. Изолированный виджет пластину показывал, а на
+                // устройстве её не было — проверяем в той же обвязке.
+                Expanded(
+                  child: DayTimeline(items: const [], onCreate: (_, __) {}),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final plates = tester
+        .widgetList<DecoratedBox>(find.byType(DecoratedBox))
+        .where((box) => (box.decoration as BoxDecoration).gradient != null);
+    expect(plates, isNotEmpty, reason: 'пластины под шкалой нет');
+  });
 }
