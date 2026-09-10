@@ -150,52 +150,51 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
       ],
     );
 
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      onGenerateTitle: (context) => AppStrings.of(context).appTitle,
-      theme: selectedTheme,
-      darkTheme: selectedTheme,
-      themeMode: themeStyle.isDark ? ThemeMode.dark : ThemeMode.light,
-      locale: locale,
-      supportedLocales: AppStrings.supportedLocales,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      routerConfig: ref.watch(appRouterProvider),
-      builder: (context, child) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final overlayStyle = SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-          systemNavigationBarColor:
-              AppSurfacePalette.of(context).navigationSurface,
-          systemNavigationBarIconBrightness:
-              isDark ? Brightness.light : Brightness.dark,
-        );
+    // Задник экранной темы лежит выше `MaterialApp`: он не принадлежит ни
+    // странице, ни оболочке и не пересобирается при переходах между ними.
+    // Ниже него только окно.
+    return ScreenBackdrop(
+      colors: screenColors,
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        onGenerateTitle: (context) => AppStrings.of(context).appTitle,
+        theme: selectedTheme,
+        darkTheme: selectedTheme,
+        themeMode: themeStyle.isDark ? ThemeMode.dark : ThemeMode.light,
+        locale: locale,
+        supportedLocales: AppStrings.supportedLocales,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        routerConfig: ref.watch(appRouterProvider),
+        builder: (context, child) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final overlayStyle = SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                isDark ? Brightness.light : Brightness.dark,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+            systemNavigationBarColor:
+                AppSurfacePalette.of(context).navigationSurface,
+            systemNavigationBarIconBrightness:
+                isDark ? Brightness.light : Brightness.dark,
+          );
 
-        // Оболочка стоит выше навигатора: панели живут одни на всё
-        // приложение, страницы приходят и уходят под ними, и переворот листа
-        // достаётся только странице. Замок закрывает и панели тоже.
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: overlayStyle,
-          // Задник экранной темы лежит здесь, ниже всего остального, и
-          // отделён от него границей перерисовки. Внутри оболочки он
-          // перерисовывался при каждом переходе — оболочка следит за адресом
-          // и пересобирается вместе с ним, — и картинка на кадр мигала.
-          child: ScreenBackdrop(
+          // Оболочка стоит выше навигатора: панели живут одни на всё
+          // приложение, страницы приходят и уходят под ними, и переворот листа
+          // достаётся только странице. Замок закрывает и панели тоже.
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: overlayStyle,
             child: WindowsTrayFrame(
               child: SecurityGate(
-                child: RepaintBoundary(
-                  child: AppShell(child: child ?? const SizedBox.shrink()),
-                ),
+                child: AppShell(child: child ?? const SizedBox.shrink()),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

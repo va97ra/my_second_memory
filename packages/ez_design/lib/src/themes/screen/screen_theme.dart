@@ -85,6 +85,42 @@ ThemeData buildScreenTheme(ScreenThemeColors c) {
         );
       }),
     ),
+    // Кнопки плоской основы держат её терракоту числами, а не берут цвет
+    // из схемы: в экранной теме главная кнопка оставалась оранжевой.
+    filledButtonTheme: FilledButtonThemeData(
+      style: base.filledButtonTheme.style?.copyWith(
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) return c.nested;
+          if (states.contains(WidgetState.pressed)) return c.accentDeep;
+          return c.accent;
+        }),
+        foregroundColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.disabled)
+              ? c.dimInk
+              : c.onAccent;
+        }),
+        shadowColor: WidgetStatePropertyAll(
+          c.accentDeep.withValues(alpha: 0.6),
+        ),
+        side: WidgetStatePropertyAll(BorderSide(color: c.accentDeep)),
+      ),
+    ),
+    // Полоса выбора режима без своего оформления приходит материаловской
+    // сиреневой — единственным цветом в приложении, который ниоткуда.
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.selected) ? c.accent : c.panel;
+        }),
+        foregroundColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.selected) ? c.onAccent : c.ink;
+        }),
+        side: WidgetStatePropertyAll(BorderSide(color: c.border)),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    ),
     // Стрелки месяца, «сегодня» и «назад» сидят в своих плитках. Без них
     // значок на тёмном фоне не читается кнопкой — не видно, где нажимать.
     iconButtonTheme: IconButtonThemeData(

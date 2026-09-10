@@ -1,33 +1,37 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
-import 'screen_visuals.dart';
+import 'screen_theme_colors.dart';
 
-/// Задник экранной темы под всем приложением.
+/// Задник экранной темы: картинка под всем приложением.
 ///
-/// Кладётся выше `Scaffold`, а не внутрь страницы, нарочно: рисунок у задника
-/// по краям кадра — как раз там, где стоят панели инструментов и навигации.
-/// Нарисованный только под страницей, он оставался бы виден лишь в просветах
-/// между карточками, а светящаяся рамка уходила под панели целиком.
+/// Живёт **выше `MaterialApp`**, а не внутри страницы и не внутри оболочки.
+/// Внутри страницы он обрезался бы её краями, а рисунок у него как раз по
+/// краям кадра. Внутри оболочки он пересобирался бы на каждом переходе:
+/// оболочка следит за адресом, и картинка на кадр мигала.
 ///
-/// В блокнотных темах виджет ничего не делает: там фон — бумага под страницей,
-/// и рисует её сама страница вместе со своей разлиновкой.
+/// Отсюда и требование к цветам: тема передаётся значениями, а не берётся из
+/// `Theme.of` — выше `MaterialApp` темы ещё нет.
+///
+/// [colors] равен null в блокнотных темах: там фон — бумага под страницей, и
+/// рисует её сама страница вместе со своей разлиновкой.
 class ScreenBackdrop extends StatelessWidget {
-  const ScreenBackdrop({required this.child, super.key});
+  const ScreenBackdrop({required this.colors, required this.child, super.key});
 
+  final ScreenThemeColors? colors;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final screen = ScreenVisuals.maybeOf(context);
-    if (screen == null) return child;
+    final colors = this.colors;
+    if (colors == null) return child;
 
     return DecoratedBox(
       decoration: BoxDecoration(
         // Заливка под изображением держит экран, пока оно не декодировано, и
         // закрывает края, если кадр не совпал с формой окна.
-        color: screen.colors.backgroundStart,
+        color: colors.backgroundStart,
         image: DecorationImage(
-          image: AssetImage(screen.colors.backdrop),
+          image: AssetImage(colors.backdrop),
           fit: BoxFit.cover,
           filterQuality: FilterQuality.medium,
         ),
