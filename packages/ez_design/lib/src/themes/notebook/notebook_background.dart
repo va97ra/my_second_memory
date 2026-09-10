@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../surface_palette.dart';
 import '../surface_textures.dart';
+import '../screen/screen_visuals.dart';
 import 'notebook_leather_surface.dart';
 import 'notebook_visuals.dart';
 
@@ -35,6 +36,10 @@ class NotebookPaperFill extends StatelessWidget {
         child: child,
       );
     }
+    // Экранная тема свой фон уже нарисовала — `ScreenBackdrop` под всем
+    // приложением. Второй раз его класть нельзя: кадр внутри страницы
+    // обрезался бы по её краям и не совпал бы с тем, что под панелями.
+    if (ScreenVisuals.maybeOf(context) != null) return child;
     final palette = AppSurfacePalette.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(

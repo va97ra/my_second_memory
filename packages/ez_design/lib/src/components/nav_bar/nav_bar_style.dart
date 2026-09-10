@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../themes/notebook/notebook_leather_surface.dart';
 import '../../themes/notebook/notebook_visuals.dart';
+import '../../themes/screen/screen_visuals.dart';
 import '../../themes/surface_palette.dart';
 import 'nav_bar_metrics.dart';
 
@@ -21,8 +22,15 @@ class NavBarStyle {
 
   factory NavBarStyle.of(BuildContext context) {
     final palette = AppSurfacePalette.of(context);
+    final screen = ScreenVisuals.maybeOf(context);
+    // Панель экранной темы просвечивает: задник нарисован светящейся рамкой
+    // по краям кадра, и непрозрачная панель закрывала бы её целиком. Ровный
+    // цвет, а не перелив: перелив — это блик на коже обложки.
+    final translucent = screen?.colors.navigation.withValues(alpha: 0.72);
     return NavBarStyle(
-      gradient: palette.navigationGradient,
+      gradient: translucent == null
+          ? palette.navigationGradient
+          : LinearGradient(colors: [translucent, translucent]),
       surface: palette.navigationSurface,
       borderColor: palette.borderStart.withValues(
         alpha: NavBarMetrics.topBorderOpacity,

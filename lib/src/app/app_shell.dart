@@ -96,36 +96,40 @@ class _AppShellState extends ConsumerState<AppShell> {
       coordinator: _turnCoordinator,
       // Панели живут выше навигатора, и подсказкам их кнопок нужен свой слой.
       child: OverlayHost(
-        child: Scaffold(
-          // Страница или модальный лист обрабатывает клавиатуру один раз.
-          // Повторное сжатие оболочки схлопывало редактор и двигало фон.
-          resizeToAvoidBottomInset: false,
-          // Обе панели занимают штатные слоты Scaffold. Когда верхняя панель
-          // была первым ребёнком body, создание композитного слоя
-          // перелистывания страницы на кадр сбрасывало её кожаную текстуру.
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(AppToolBar.heightOf(context)),
-            child: AppToolBar(
-              items: [for (final item in tools) item.barItem],
-              selectedIndex: _indexOf(tools, activeToolId),
-              onSelected: (index) => navigation.selectTool(
-                tools[index],
-                panel: destinations[panelIndex].id,
+        // Задник экранной темы лежит под всем, включая панели: рисунок у него
+        // по краям кадра, а панели стоят как раз там.
+        child: ScreenBackdrop(
+          child: Scaffold(
+            // Страница или модальный лист обрабатывает клавиатуру один раз.
+            // Повторное сжатие оболочки схлопывало редактор и двигало фон.
+            resizeToAvoidBottomInset: false,
+            // Обе панели занимают штатные слоты Scaffold. Когда верхняя панель
+            // была первым ребёнком body, создание композитного слоя
+            // перелистывания страницы на кадр сбрасывало её кожаную текстуру.
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(AppToolBar.heightOf(context)),
+              child: AppToolBar(
+                items: [for (final item in tools) item.barItem],
+                selectedIndex: _indexOf(tools, activeToolId),
+                onSelected: (index) => navigation.selectTool(
+                  tools[index],
+                  panel: destinations[panelIndex].id,
+                ),
               ),
             ),
-          ),
-          body: PageMedia(
-            child: PageTurnFrame(
-              key: _pageTurnKey,
-              coordinator: _turnCoordinator,
-              provideNavigation: true,
-              child: AppBackground(child: widget.child),
+            body: PageMedia(
+              child: PageTurnFrame(
+                key: _pageTurnKey,
+                coordinator: _turnCoordinator,
+                provideNavigation: true,
+                child: AppBackground(child: widget.child),
+              ),
             ),
-          ),
-          bottomNavigationBar: AppNavBar(
-            items: [for (final item in destinations) item.barItem],
-            selectedIndex: activeToolId == null ? panelIndex : null,
-            onSelected: (index) => navigation.select(destinations[index]),
+            bottomNavigationBar: AppNavBar(
+              items: [for (final item in destinations) item.barItem],
+              selectedIndex: activeToolId == null ? panelIndex : null,
+              onSelected: (index) => navigation.select(destinations[index]),
+            ),
           ),
         ),
       ),
