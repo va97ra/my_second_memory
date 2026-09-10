@@ -6,10 +6,22 @@ import 'package:flutter/material.dart';
 /// тем несколько («Космос», «Киберпанк»), и различаются они только этими
 /// значениями: раскладку, формы и размеры они делят на всех. Новая тема
 /// добавляется одним `const`-объектом, а не копией сборщика.
+/// Как тема носит панели инструментов и навигации.
+enum ScreenPanelStyle {
+  /// Полоса матового стекла с полями по краям: сквозь неё виден задник, и
+  /// она читается стеклом, лежащим на нём.
+  floating,
+
+  /// Панель во всю ширину, приклеенная к краю окна, — как в блокноте край
+  /// обложки. Задник обходит её и светится вокруг экрана.
+  edge,
+}
+
 @immutable
 class ScreenThemeColors {
   const ScreenThemeColors({
     required this.brightness,
+    required this.panels,
     required this.backgroundStart,
     required this.backgroundEnd,
     required this.navigation,
@@ -44,6 +56,11 @@ class ScreenThemeColors {
   final Brightness brightness;
 
   bool get isDark => brightness == Brightness.dark;
+
+  /// Вид панелей. От него зависит и то, как выглядят кнопки инструментов:
+  /// в плавающей полосе они без рамок, у приклеенной панели — отдельными
+  /// карточками.
+  final ScreenPanelStyle panels;
 
   /// Фон страницы: сверху темнее, снизу глубже — свет идёт из верхнего угла.
   final Color backgroundStart;

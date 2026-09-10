@@ -9,6 +9,7 @@ import 'screen_theme_colors.dart';
 /// обозначает действие, а очерчивает то, на чём оно происходит.
 const cyberpunkColors = ScreenThemeColors(
   brightness: Brightness.dark,
+  panels: ScreenPanelStyle.edge,
   backgroundStart: Color(0xFF050B14),
   backgroundEnd: Color(0xFF0A1522),
   navigation: Color(0xFF07101B),

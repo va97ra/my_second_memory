@@ -4,16 +4,16 @@ import '../../themes/screen/screen_panel.dart';
 import '../../themes/screen/screen_theme_colors.dart';
 import 'nav_bar_item.dart';
 
-/// Инструменты сверху в экранных темах: одна полоса стекла, а в ней три
-/// кнопки — значок в цветном квадрате и подпись под ним.
+/// Инструменты сверху там, где панели плавают: одна полоса стекла, а в ней
+/// три кнопки — значок в цветном квадрате и подпись под ним.
 ///
 /// Не три отдельные карточки: рамка вокруг каждой на светлом стекле спорила
 /// с рамкой самой полосы, и верх читался стопкой белых прямоугольников. Цвет
 /// у каждого инструмента свой и не зависит от того, выбран он сейчас или нет:
 /// цвет здесь — имя, а не состояние. Выбранный подсвечивается подложкой того
 /// же цвета.
-class ScreenToolBar extends StatelessWidget {
-  const ScreenToolBar({
+class ScreenToolStrip extends StatelessWidget {
+  const ScreenToolStrip({
     required this.items,
     required this.colors,
     required this.onSelected,
@@ -92,8 +92,8 @@ class _Tool extends StatelessWidget {
               children: [
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 160),
-                  width: ScreenToolBar._squareSide,
-                  height: ScreenToolBar._squareSide,
+                  width: ScreenToolStrip._squareSide,
+                  height: ScreenToolStrip._squareSide,
                   decoration: BoxDecoration(
                     color: tint.withValues(alpha: selected ? 0.26 : 0.12),
                     borderRadius: BorderRadius.circular(8),

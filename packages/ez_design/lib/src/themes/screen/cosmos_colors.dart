@@ -14,6 +14,7 @@ import 'screen_theme_colors.dart';
 /// нельзя.
 const cosmosColors = ScreenThemeColors(
   brightness: Brightness.light,
+  panels: ScreenPanelStyle.floating,
   backgroundStart: Color(0xFFD8E5F8),
   backgroundEnd: Color(0xFFEAF0FC),
   navigation: Color(0xF2FFFFFF),

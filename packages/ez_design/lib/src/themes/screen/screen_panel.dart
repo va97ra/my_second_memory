@@ -40,7 +40,11 @@ class ScreenPanel extends StatelessWidget {
         ),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: colors.panel,
+            // Полоса просвечивает нарочно: это матовое стекло на заднике, а
+            // не белая планка поверх него. Цвет панели берётся с ослабленной
+            // непрозрачностью, а не заводится отдельным значением: сквозь
+            // стекло видно тот же задник, что и вокруг.
+            color: colors.panel.withValues(alpha: colors.isDark ? 0.7 : 0.55),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: colors.border),
             boxShadow: [
