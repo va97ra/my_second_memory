@@ -6,6 +6,15 @@ import 'package:flutter/material.dart';
 /// тем несколько («Космос», «Киберпанк»), и различаются они только этими
 /// значениями: раскладку, формы и размеры они делят на всех. Новая тема
 /// добавляется одним `const`-объектом, а не копией сборщика.
+/// Чем отмечена выбранная кнопка панели навигации.
+enum ScreenNavIndicator {
+  /// Подложка под значком — плитка того же цвета, что и подпись.
+  pill,
+
+  /// Полоса под подписью. Значок и подпись при этом красятся акцентом сами.
+  underline,
+}
+
 /// Как тема носит панели инструментов и навигации.
 enum ScreenPanelStyle {
   /// Полоса матового стекла с полями по краям: сквозь неё виден задник, и
@@ -22,6 +31,7 @@ class ScreenThemeColors {
   const ScreenThemeColors({
     required this.brightness,
     required this.panels,
+    required this.navIndicator,
     required this.backgroundStart,
     required this.backgroundEnd,
     required this.navigation,
@@ -61,6 +71,9 @@ class ScreenThemeColors {
   /// в плавающей полосе они без рамок, у приклеенной панели — отдельными
   /// карточками.
   final ScreenPanelStyle panels;
+
+  /// Чем отмечен открытый раздел в нижней панели.
+  final ScreenNavIndicator navIndicator;
 
   /// Фон страницы: сверху темнее, снизу глубже — свет идёт из верхнего угла.
   final Color backgroundStart;

@@ -73,7 +73,7 @@ ThemeData buildScreenTheme(ScreenThemeColors c) {
       iconTheme: WidgetStateProperty.resolveWith((states) {
         final selected = states.contains(WidgetState.selected);
         return IconThemeData(
-          color: selected ? c.accent : c.mutedInk,
+          color: selected ? c.accent : _restingInk(c),
           size: selected ? 24 : 22,
         );
       }),
@@ -84,7 +84,7 @@ ThemeData buildScreenTheme(ScreenThemeColors c) {
           fontFamily: 'Manrope',
           letterSpacing: 0,
           fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
-          color: selected ? c.accent : c.mutedInk,
+          color: selected ? c.accent : _restingInk(c),
         );
       }),
     ),
@@ -190,3 +190,12 @@ Future<void> preloadScreenBackdrop(AppThemeStyle style) async {
   stream.addListener(listener);
   await completer.future;
 }
+
+/// Цвет невыбранной кнопки панели.
+///
+/// Приглушённые чернила там читались серым пятном: разделы, в которых ты не
+/// находишься, — это не второстепенный текст, а такие же кнопки. Берутся
+/// обычные чернила, чуть отпущенные, чтобы выбранный раздел всё равно
+/// выступал вперёд.
+Color _restingInk(ScreenThemeColors c) =>
+    c.ink.withValues(alpha: c.isDark ? 0.62 : 0.78);

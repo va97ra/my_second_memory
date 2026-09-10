@@ -9,20 +9,24 @@ import 'screen_theme_colors.dart';
 /// две тёмные темы с холодными панелями различались только оттенком неона, и
 /// выбирать было не из чего.
 ///
+/// Плитки дней и полоска дней недели стеклянные: сквозь них видно небо, и
+/// сетка лежит на заднике, а не закрывает его белым.
+///
 /// Сегодняшний день здесь розовый, а не оранжевый: оранжевым отмечено то, что
 /// выбрал человек — открытый раздел в панели, — и путать эти две приметы
 /// нельзя.
 const cosmosColors = ScreenThemeColors(
   brightness: Brightness.light,
   panels: ScreenPanelStyle.floating,
+  navIndicator: ScreenNavIndicator.pill,
   backgroundStart: Color(0xFFD8E5F8),
   backgroundEnd: Color(0xFFEAF0FC),
   navigation: Color(0xF2FFFFFF),
   panel: Color(0xF7FFFFFF),
   raised: Color(0xFFF3F8FF),
   nested: Color(0xFFE7EFFC),
-  tile: Color(0xFFF8FBFF),
-  weekday: Color(0xF2FFFFFF),
+  tile: Color(0xBFFFFFFF),
+  weekday: Color(0xB3FFFFFF),
   border: Color(0xFFC9D8EE),
   divider: Color(0xFFDDE7F6),
   ink: Color(0xFF1B2A45),

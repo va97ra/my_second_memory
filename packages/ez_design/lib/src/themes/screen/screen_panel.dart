@@ -25,6 +25,15 @@ class ScreenPanel extends StatelessWidget {
   /// Поле между полосой и краем экрана.
   static const double inset = 8;
 
+  /// Скругление полосы.
+  ///
+  /// Единственное место, где радиус не восьмёрка. Плавающая полоса — не
+  /// карточка и не кнопка: она читается стеклянной пластиной, лежащей на
+  /// заднике, а пластина с углом в восемь пикселей выглядит вырезанной из
+  /// листа. На виде, присланном владельцем, у неё крупное скругление, и оно
+  /// же отличает её от всего, что лежит внутри.
+  static const double radius = 22;
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -45,7 +54,7 @@ class ScreenPanel extends StatelessWidget {
             // непрозрачностью, а не заводится отдельным значением: сквозь
             // стекло видно тот же задник, что и вокруг.
             color: colors.panel.withValues(alpha: colors.isDark ? 0.7 : 0.55),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(radius),
             border: Border.all(color: colors.border),
             boxShadow: [
               BoxShadow(

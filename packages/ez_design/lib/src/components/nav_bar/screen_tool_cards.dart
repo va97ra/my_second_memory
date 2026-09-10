@@ -94,17 +94,17 @@ class _Tool extends StatelessWidget {
               color: colors.panel,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: selected ? tint : colors.border,
-                width: selected ? 1.4 : 1,
+                color: selected ? tint : tint.withValues(alpha: 0.55),
+                width: selected ? 1.6 : 1.2,
               ),
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: tint.withValues(alpha: 0.28),
-                        blurRadius: 10,
-                      ),
-                    ]
-                  : null,
+              // Светится каждая, а не только выбранная: неоновая рамка — это
+              // материал карточки, а выбор виден по её силе.
+              boxShadow: [
+                BoxShadow(
+                  color: tint.withValues(alpha: selected ? 0.4 : 0.16),
+                  blurRadius: selected ? 12 : 7,
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

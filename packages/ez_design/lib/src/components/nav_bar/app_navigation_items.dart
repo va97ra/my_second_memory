@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../themes/screen/screen_theme_colors.dart';
+import '../../themes/screen/screen_visuals.dart';
 import 'nav_bar_item.dart';
 
 /// Один ряд навигационных кнопок для обеих панелей оболочки.
@@ -63,6 +65,8 @@ class _NavigationItemButton extends StatelessWidget {
         const IconThemeData(size: 22);
     final labelStyle = navigationTheme.labelTextStyle?.resolve(states) ??
         theme.textTheme.labelSmall;
+    final underlined = ScreenVisuals.maybeOf(context)?.colors.navIndicator ==
+        ScreenNavIndicator.underline;
     return Semantics(
       button: true,
       selected: selected,
@@ -79,7 +83,7 @@ class _NavigationItemButton extends StatelessWidget {
                 width: compact ? 48 : 56,
                 height: compact ? 28 : 32,
                 decoration: BoxDecoration(
-                  color: selected
+                  color: selected && !underlined
                       ? navigationTheme.indicatorColor
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
@@ -100,6 +104,20 @@ class _NavigationItemButton extends StatelessWidget {
                   ),
                 ),
               ),
+              // Полоса под подписью вместо подложки под значком: примета темы,
+              // а не второй способ отметить одно и то же — тема выбирает одно
+              // из двух.
+              if (underlined)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  margin: const EdgeInsets.only(top: 3),
+                  height: 2.5,
+                  width: selected ? 26 : 0,
+                  decoration: BoxDecoration(
+                    color: labelStyle?.color,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
             ],
           ),
         ),
