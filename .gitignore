@@ -36,3 +36,6 @@ Thumbs.db
 
 # Снимки и логи прогонов инструментов, не исходники.
 output/
+
+# Kotlin compiler cache
+android/.kotlin/
