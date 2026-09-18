@@ -20,7 +20,7 @@ class SyncController extends StateNotifier<SyncState> {
     AppCipher? Function()? atRestCipher,
     VoidCallback? onMediaArrived,
     bool Function()? canAccessLocalData,
-  })  : _remote = remote,
+  })  : _remote = remote == null ? null : TimedSyncRemoteStore(remote),
         _keyStore = keyStore,
         _tombstones = tombstones,
         _data = data,

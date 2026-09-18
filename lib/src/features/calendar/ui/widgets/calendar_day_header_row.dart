@@ -1,4 +1,5 @@
 import 'package:ez_domain/ez_domain.dart';
+import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
 import 'day_number.dart';
@@ -15,9 +16,11 @@ class CalendarDayHeaderRow extends StatelessWidget {
     required this.hasAlarm,
     required this.items,
     this.outlinedNumber = true,
+    this.productionDay,
   });
 
   final int day;
+  final ProductionDay? productionDay;
   final Color foreground;
   final bool isInVisibleMonth;
   final bool isSelected;
@@ -43,6 +46,12 @@ class CalendarDayHeaderRow extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: DayNumber(
                 day: day,
+                isDayOff: productionDay?.isDayOff ?? false,
+                isShortened: productionDay == ProductionDay.shortened,
+                statusLabel: productionDay == null
+                    ? null
+                    : AppStrings.of(context)
+                        .productionDayLabel(productionDay!.name),
                 isToday: isToday,
                 isSelected: isSelected,
                 color: foreground,

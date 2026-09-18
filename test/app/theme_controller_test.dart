@@ -4,6 +4,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
 
 void main() {
+  test('disabled cyberpunk preference restores cosmos', () async {
+    SharedPreferences.setMockInitialValues(
+        {AppThemeController.storageKey: 'cyberpunk'});
+    final preferences = await SharedPreferences.getInstance();
+    expect(
+        AppThemeController.readInitialStyle(preferences), AppThemeStyle.cosmos);
+    final controller = AppThemeController(preferences: preferences);
+    addTearDown(controller.dispose);
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.state, AppThemeStyle.cosmos);
+  });
   test('theme choice is saved and restored', () async {
     SharedPreferences.setMockInitialValues({});
 

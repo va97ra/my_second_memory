@@ -38,8 +38,8 @@ Future<AppThemeStyle?> showThemePickerSheet({
                 LayoutBuilder(
                   builder: (context, constraints) {
                     const gap = 8.0;
-                    final columns = AppThemeStyle.values.length <= 3
-                        ? AppThemeStyle.values.length
+                    final columns = AppThemeStyle.available.length <= 3
+                        ? AppThemeStyle.available.length
                         : 2;
                     final width =
                         (constraints.maxWidth - gap * (columns - 1)) / columns;
@@ -47,7 +47,7 @@ Future<AppThemeStyle?> showThemePickerSheet({
                       spacing: gap,
                       runSpacing: 12,
                       children: [
-                        for (final style in AppThemeStyle.values)
+                        for (final style in AppThemeStyle.available)
                           SizedBox(
                             width: width,
                             child: ThemePreview(

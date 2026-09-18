@@ -13,6 +13,9 @@ class DayNumber extends StatelessWidget {
     required this.isSelected,
     required this.color,
     this.outlined = true,
+    this.isDayOff = false,
+    this.isShortened = false,
+    this.statusLabel,
   });
 
   /// Обводка сегодняшнего числа.
@@ -26,6 +29,9 @@ class DayNumber extends StatelessWidget {
   final bool isToday;
   final bool isSelected;
   final Color color;
+  final bool isDayOff;
+  final bool isShortened;
+  final String? statusLabel;
 
   /// Обводить ли сегодняшнее число красным контуром. На цветной шапке оно
   /// стоит отдельно и без обводки — см. [CalendarDayHeaderRow.outlinedNumber].
@@ -35,8 +41,12 @@ class DayNumber extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final content = Text(
-      '$day',
+      '$day${isShortened ? '*' : ''}',
+      semanticsLabel: statusLabel == null ? null : '$day, $statusLabel',
       style: TextStyle(
+        decoration: isDayOff ? TextDecoration.underline : null,
+        decorationColor: isSelected && !isToday ? colors.onPrimary : color,
+        decorationThickness: 2,
         color: isSelected && !isToday ? colors.onPrimary : color,
         fontSize: isToday ? todayFontSize : fontSize,
         fontWeight: isSelected || isToday ? FontWeight.w900 : FontWeight.w800,

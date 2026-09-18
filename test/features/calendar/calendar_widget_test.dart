@@ -301,7 +301,16 @@ void main() {
     // Нажатие по шкале ставит рамку, нажатие в неё открывает редактор.
     await tester.tap(find.byType(DayTimeline));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(DayTimeline));
+    // Высота шкалы меняется вместе с полосами над ней; рамка привязана
+    // к четверти часа, поэтому второй тап должен попадать в саму рамку.
+    final draft = find.descendant(
+      of: find.byType(DayTimeline),
+      matching: find.byWidgetPredicate((widget) =>
+          widget is GestureDetector &&
+          widget.onTap != null &&
+          widget.onLongPress == null),
+    );
+    await tester.tap(draft.last);
     await tester.pumpAndSettle();
 
     expectEditorTitle(tester, 'Запись');

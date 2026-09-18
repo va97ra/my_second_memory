@@ -284,11 +284,10 @@ class AppStrings {
           'between them swaps the two. You can type in either field.';
 
   String get calendarPageHint => isRu
-      ? 'Нажмите на число, чтобы открыть день. Месяцы листаются вбок, годы — '
-          'вверх и вниз, а цветная полоса сверху ячейки означает рабочую '
-          'смену.'
-      : 'Tap a date to open that day. Swipe sideways for months, up or down '
-          'for years; a coloured stripe on a cell marks a work shift.';
+      ? 'Нажмите число для открытия дня, название месяца — для производственного календаря. '
+          'Листайте вбок по месяцам, вверх и вниз по годам; цветная шапка — смена, розовый фон — выходной, янтарный и * — сокращённый день.'
+      : 'Tap a date to open the day or the month name for working-day totals. '
+          'Swipe sideways for months, vertically for years; a coloured cap is a shift, an underlined date is a day off, * is a shortened day.';
   String get accounts => isRu ? 'Аккаунты' : 'Accounts';
   String get addAccount => isRu ? 'Добавить аккаунт' : 'Add account';
   String get deleteAccountQuestion =>
@@ -395,6 +394,11 @@ class AppStrings {
       return isRu
           ? 'Слишком много запросов. Подождите минуту и попробуйте снова.'
           : 'Too many requests. Wait a minute and try again.';
+    }
+    if (error.contains('timeoutexception')) {
+      return isRu
+          ? 'Сервер не ответил вовремя. Проверьте интернет и повторите синхронизацию.'
+          : 'The server did not respond in time. Check your connection and retry synchronization.';
     }
     if (error.contains('socketexception') ||
         error.contains('failed host lookup') ||

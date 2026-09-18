@@ -1,13 +1,16 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../state/production_calendar_provider.dart';
+import '../../state/production_preferences.dart';
 
 import 'calendar_cell_border_painter.dart';
 import 'calendar_day_cell_body.dart';
 import 'calendar_day_cell_surface.dart';
 
 /// Ячейка дня в сетке месяца: её фон, рамка и содержимое.
-class CalendarDayCell extends StatelessWidget {
+class CalendarDayCell extends ConsumerWidget {
   const CalendarDayCell({
     super.key,
     required this.date,
@@ -38,20 +41,22 @@ class CalendarDayCell extends StatelessWidget {
   static const cornerRadius = 4.0;
 
   @override
-  Widget build(BuildContext context) {
-    // Ячейка — тоже отдельный листок: она держит светлую схему на тёмном
-    // блокноте и берёт свои чернила, а не чернила страницы.
-    return NotebookPaperIsland(child: Builder(builder: _buildCell));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final day =
+        ref.watch(productionCalendarProvider(date.year)).calendar.day(date);
+    final highlight =
+        ref.watch(productionPreferencesProvider.select((s) => s.highlight));
+    return NotebookPaperIsland(
+        child:
+            Builder(builder: (context) => _buildCell(context, day, highlight)));
   }
 
-  Widget _buildCell(BuildContext context) {
+  Widget _buildCell(
+      BuildContext context, ProductionDay? productionDay, bool highlight) {
     final colors = Theme.of(context).colorScheme;
     final palette = AppSurfacePalette.of(context);
     final screen = ScreenVisuals.maybeOf(context)?.colors;
-    // На тёмной теме сегодня получает такую же цветную шапку, какую день со
-    // сменой получает от графика. Своей шапки ему не положено, когда график
-    // уже занял её: цвет графика выбрал человек, и подменять его нельзя. На
-    // светлой шапка не нужна — там сегодня видно по подложке.
+    // На тёмной теме сегодня получает шапку, только если её не заняла смена.
     final todayCap = isToday &&
             isInVisibleMonth &&
             shiftSchedules.isEmpty &&
@@ -68,9 +73,7 @@ class CalendarDayCell extends StatelessWidget {
             : shiftSchedules.isEmpty
                 ? colors.onSurface
                 : readableInkOn(Color(shiftSchedules.first.colorValue));
-    // Обычный день обходится нарисованной рамкой: она дешевле и не спорит с
-    // рамкой выбранного дня. Сегодня — такой же обычный день: его примета
-    // теперь заливка, а не собственная обводка.
+    // Обычной плитке достаточно нарисованной рамки.
     final usesGradientBorder = isInVisibleMonth &&
         !isSelected &&
         items.isEmpty &&
@@ -85,6 +88,7 @@ class CalendarDayCell extends StatelessWidget {
       pressedOffset: 0,
       borderRadius: BorderRadius.circular(cornerRadius),
       child: CalendarDayCellBody(
+        productionDay: productionDay,
         date: date,
         locale: locale,
         isInVisibleMonth: isInVisibleMonth,
@@ -130,6 +134,8 @@ class CalendarDayCell extends StatelessWidget {
         // вплотную к нижнему краю и без этого вылезла бы за углы.
         clipBehavior: Clip.antiAlias,
         decoration: CalendarDayCellSurface(
+          dayOff: highlight && (productionDay?.isDayOff ?? false),
+          shortened: highlight && productionDay == ProductionDay.shortened,
           isInVisibleMonth: isInVisibleMonth,
           isSelected: isSelected,
           isToday: isToday,

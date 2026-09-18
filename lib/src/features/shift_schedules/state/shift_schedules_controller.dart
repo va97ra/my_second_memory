@@ -1,3 +1,4 @@
+import 'package:ez_core/ez_core.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,6 +44,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
   final ShiftAlarmScheduler? _alarms;
   final SyncMutationObserver? _sync;
   late final Future<void> _loadFuture;
+  final _writes = SequentialTaskQueue();
 
   Future<void> load() => _loadFuture;
 
@@ -73,7 +75,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
       ...state,
       schedule.copyWith(updatedAt: DateTime.now()),
     ]).schedules);
-    await _repository.saveSchedules(state);
+    await _persist();
     _sync?.shiftSchedulesChanged();
     await _safeReconcileAlarms(force: true);
   }
@@ -85,7 +87,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
       for (final existing in state)
         if (existing.id == schedule.id) updated else existing,
     ]).schedules);
-    await _repository.saveSchedules(state);
+    await _persist();
     _sync?.shiftSchedulesChanged();
     await _safeReconcileAlarms(force: true);
   }
@@ -103,7 +105,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
         else
           schedule,
     ]).schedules);
-    await _repository.saveSchedules(state);
+    await _persist();
     _sync?.shiftSchedulesChanged();
     await _safeReconcileAlarms(force: true);
   }
@@ -115,15 +117,20 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
       for (final schedule in state)
         if (schedule.id != id) schedule,
     ];
-    await _repository.saveSchedules(state);
+    await _persist();
     await _sync?.shiftScheduleDeleted(id, deletedAt);
     await _safeReconcileAlarms(force: true);
+  }
+
+  Future<void> _persist() {
+    final snapshot = state;
+    return _writes.add(() => _repository.saveSchedules(snapshot));
   }
 
   Future<void> replaceAll(List<ShiftSchedule> schedules) async {
     await _loadFuture;
     state = _sort(deduplicateShiftSchedules(schedules).schedules);
-    await _repository.saveSchedules(state);
+    await _persist();
     await _safeReconcileAlarms(force: true);
   }
 
@@ -132,6 +139,23 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
       for (final schedule in state)
         if (schedule.isWorkday(date)) schedule,
     ];
+  }
+
+  Future<void> replaceAllFromSync(
+    List<ShiftSchedule> schedules, {
+    required List<ShiftSchedule> baseline,
+  }) async {
+    await _loadFuture;
+    final merged = mergeSyncedEntities(
+      incoming: schedules,
+      current: state,
+      baseline: baseline,
+      idOf: (schedule) => schedule.id,
+      updatedAtOf: (schedule) => schedule.syncUpdatedAt,
+    );
+    state = _sort(deduplicateShiftSchedules(merged).schedules);
+    await _persist();
+    await _safeReconcileAlarms(force: true);
   }
 
   Future<void> _safeReconcileAlarms({bool force = false}) async {

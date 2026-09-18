@@ -8,12 +8,12 @@ import 'package:intl/intl.dart';
 import '../../../navigation/page_turn_navigation.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../../memory_items/memory_items.dart';
-import '../../shift_schedules/shift_schedules.dart';
 import '../state/holiday_providers.dart';
 import 'widgets/day_records_list.dart';
 import 'widgets/day_timeline.dart';
 import 'widgets/holiday_summary_card.dart';
 import 'widgets/working_shift_chips.dart';
+import 'widgets/production_day_status.dart';
 
 /// День календаря: что на него записано, кто в этот день работает и какие
 /// праздники приходятся на него.
@@ -33,10 +33,6 @@ class CalendarDayScreen extends ConsumerWidget {
         items.where((item) => item.timeMinutes != null).toList(growable: false);
     final untimed =
         items.where((item) => item.timeMinutes == null).toList(growable: false);
-    final workingSchedules = ref
-        .watch(shiftSchedulesControllerProvider)
-        .where((schedule) => schedule.isWorkday(date))
-        .toList();
     final holidays = ref.watch(holidaysForDayProvider(date));
 
     return Scaffold(
@@ -47,8 +43,8 @@ class CalendarDayScreen extends ConsumerWidget {
           top: false,
           child: Column(
             children: [
-              if (workingSchedules.isNotEmpty)
-                WorkingShiftChips(schedules: workingSchedules, date: date),
+              ProductionDayStatus(date: date),
+              WorkingShiftChips(date: date),
               if (untimed.isNotEmpty)
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 148),

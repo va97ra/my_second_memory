@@ -170,6 +170,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/calendar/preferences',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          backFallback: '/settings',
+          child: const ProductionPreferencesScreen(),
+        ),
+      ),
+      GoRoute(
         path: '/calendar/day',
         pageBuilder: (context, state) {
           final rawDate = state.uri.queryParameters['date'];

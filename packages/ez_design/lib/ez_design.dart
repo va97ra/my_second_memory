@@ -4,6 +4,7 @@
 /// только рисовать. Всё, что зависит от данных пользователя, живёт в
 /// приложении и передаётся сюда параметрами.
 library;
+export 'src/tokens/calendar_metrics.dart';
 
 export 'src/components/empty_state.dart';
 export 'src/components/keyboard_inset_padding.dart';

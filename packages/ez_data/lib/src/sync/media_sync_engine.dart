@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ez_domain/ez_domain.dart';
 
 import '../media/media_storage.dart';
@@ -58,6 +60,9 @@ class MediaSyncEngine {
           );
           uploaded++;
         }
+      } on TimeoutException {
+        // Stop an offline run instead of waiting again for every remaining file.
+        rethrow;
       } on Object {
         // Сорвавшийся снимок не должен ронять прогон целиком: записи важнее,
         // а файл доедет на следующем заходе. Счёт неудач уходит в итог, чтобы

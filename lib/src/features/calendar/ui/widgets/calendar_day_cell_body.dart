@@ -27,9 +27,11 @@ class CalendarDayCellBody extends StatelessWidget {
     required this.foreground,
     this.todayCap,
     this.outlinedNumber = true,
+    this.productionDay,
   });
 
   final DateTime date;
+  final ProductionDay? productionDay;
   final String locale;
   final bool isInVisibleMonth;
   final bool isSelected;
@@ -90,6 +92,7 @@ class CalendarDayCellBody extends StatelessWidget {
                 children: [
                   CalendarDayHeaderRow(
                     day: date.day,
+                    productionDay: productionDay,
                     foreground: foreground,
                     isInVisibleMonth: isInVisibleMonth,
                     isSelected: isSelected,

@@ -8,6 +8,7 @@ import '../../../../app/theme/app_content_font_controller.dart';
 import '../../../../app/theme/app_theme_controller.dart';
 import '../../../../platform/windows/windows_startup_controller.dart';
 import '../../../../shared/state/app_hints_provider.dart';
+import 'production_settings_tile.dart';
 import '../../../calendar/calendar.dart';
 import 'content_font_picker_sheet.dart';
 import 'settings_section.dart';
@@ -38,12 +39,10 @@ class AppSettingsSection extends ConsumerWidget {
           icon: Icons.language_rounded,
           title: strings.language,
           subtitle: isRu ? 'Русский' : 'English',
-          // Рамка выбора шире переключателей соседних строк ровно на эти
-          // четыре пикселя — без отступа её край выпирал правее всех.
+          // Четыре пикселя выравнивают край с переключателями.
           trailing: Padding(
             padding: const EdgeInsets.only(right: 4),
             child: SegmentedButton<String>(
-              // Подпись и так говорит, какой язык включён.
               showSelectedIcon: false,
               segments: const [
                 ButtonSegment(value: 'ru', label: Text('RU')),
@@ -86,6 +85,7 @@ class AppSettingsSection extends ConsumerWidget {
               : 'Holidays in the calendar and day view',
           setting: appHolidaysProvider,
         ),
+        const ProductionSettingsTile(),
         SettingsSwitchTile(
           icon: Icons.public_rounded,
           title: isRu ? 'Международные дни' : 'International observances',
@@ -93,7 +93,6 @@ class AppSettingsSection extends ConsumerWidget {
               ? 'Только на экране дня: в сетке месяца их не отмечают'
               : 'On the day view only: the month grid does not mark them',
           setting: appObservancesProvider,
-          // Без праздников этот слой некуда показывать: он лежит поверх них.
           enabled: ref.watch(appHolidaysProvider),
         ),
         if (windowsPlatform.isSupported)

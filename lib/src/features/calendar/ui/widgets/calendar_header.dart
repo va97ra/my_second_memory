@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/ui/page_hint_button.dart';
 import 'calendar_month_label.dart';
 import 'shift_legend_chip.dart';
+import 'production_calendar_dialog.dart';
 
 /// Шапка календаря: месяц со стрелками и графики смен, которые
 /// его красят. Та же карточка, те же полосы и те же кегли, что и у ленты.
@@ -48,9 +49,22 @@ class CalendarHeader extends StatelessWidget {
                 style: notebookIconButtonStyle(),
               ),
               Expanded(
-                child: CalendarMonthLabel(
-                  month: visibleMonth,
-                  locale: locale,
+                child: Tooltip(
+                  message: strings.productionCalendar,
+                  child: InkWell(
+                    key: const ValueKey('production_calendar_open'),
+                    onTap: () =>
+                        ProductionCalendarDialog.show(context, visibleMonth),
+                    child: ConstrainedBox(
+                      constraints:
+                          const BoxConstraints(minHeight: notebookHeaderSlot),
+                      child: Center(
+                          child: CalendarMonthLabel(
+                        month: visibleMonth,
+                        locale: locale,
+                      )),
+                    ),
+                  ),
                 ),
               ),
               IconButton(

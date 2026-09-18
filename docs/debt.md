@@ -36,12 +36,6 @@ packages/ez_design/lib/src/components/page_turn/page_turn_frame.dart  353
 lib/src/features/recurrence/state/recurrence_legacy_repair.dart       488
    помеченный ремонт данных прошлых версий
 
-lib/src/features/calendar/ui/widgets/day_timeline.dart                565
-   шкала дня: разметка часов, рамка нового дела с ручками и перенос
-   табличек. Здесь **есть** вторая ответственность, и файл ждёт разреза —
-   записан в `pending.md`. Резать перед публикацией не стали: шкала — самое
-   нагруженное место приложения, и ошибка в ней дороже длинного файла
-
 lib/src/features/sync/state/sync_controller_impl.dart                 355
    одна машина состояний подключения к облаку: загрузка, вход, хранилище,
    прогон. Всё остальное из неё вынуто — набор синхронизируемых данных,

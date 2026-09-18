@@ -1,4 +1,5 @@
 import 'package:ez_domain/ez_domain.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 import '../../state/calendar_month_data.dart';
@@ -30,7 +31,7 @@ class CalendarMonthGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        const spacing = 2.0;
+        const spacing = calendarGridSpacing;
         final rowCount = days.length ~/ 7;
         final cellWidth = (constraints.maxWidth - spacing * 6) / 7;
         final cellHeight =

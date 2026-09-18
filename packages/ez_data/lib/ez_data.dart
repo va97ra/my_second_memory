@@ -12,6 +12,9 @@
 /// сломал бы сборку под веб самим фактом импорта.
 library;
 
+export 'src/calendar/production_calendar_source.dart';
+export 'src/calendar/production_calendar_repository.dart';
+
 export 'src/finance/encrypted_finance_repository.dart';
 export 'src/finance/exchange_rate_repository.dart';
 export 'src/finance/exchange_rate_source.dart';
@@ -55,4 +58,5 @@ export 'src/sync/media_sync_engine.dart';
 export 'src/sync/supabase_sync_remote_store.dart';
 export 'src/sync/sync_local_store.dart';
 export 'src/sync/sync_remote_store.dart';
+export 'src/sync/timed_sync_remote_store.dart';
 export 'src/sync/sync_vault_crypto.dart';

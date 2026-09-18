@@ -270,6 +270,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Настройки'));
     await tester.pumpAndSettle();
+    await Scrollable.ensureVisible(tester.element(find.text('Архив памяти')),
+        alignment: 0.5);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Архив памяти'));
     await tester.pumpAndSettle();
 

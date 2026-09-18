@@ -9,6 +9,10 @@ enum AppThemeStyle {
   cosmos,
   cyberpunk;
 
+  /// Enabled choices. Cyberpunk is retained as a renderer for now, but is
+  /// disabled in the product by the owner's decision on 2026-09-17.
+  static const available = [notebookLight, notebookDark, cosmos];
+
   /// Рисует ли тема бумагу. Всё остальное — экран.
   bool get isNotebook =>
       this == AppThemeStyle.notebookLight || this == AppThemeStyle.notebookDark;
@@ -21,7 +25,7 @@ enum AppThemeStyle {
       'notebookLight' || 'notebook' || 'light' => AppThemeStyle.notebookLight,
       'notebookDark' || 'dark' => AppThemeStyle.notebookDark,
       'cosmos' => AppThemeStyle.cosmos,
-      'cyberpunk' => AppThemeStyle.cyberpunk,
+      'cyberpunk' => AppThemeStyle.cosmos,
       _ => null,
     };
   }

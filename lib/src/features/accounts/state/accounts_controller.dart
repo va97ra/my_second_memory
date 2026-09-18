@@ -1,3 +1,4 @@
+import 'package:ez_core/ez_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_data/ez_data.dart';
@@ -39,6 +40,7 @@ class AccountsController extends StateNotifier<List<AccountItem>> {
   final AccountRepository _repository;
   final SyncMutationObserver? _sync;
   late final Future<void> _loadFuture;
+  final _writes = SequentialTaskQueue();
 
   Future<void> load() => _loadFuture;
 
@@ -49,7 +51,7 @@ class AccountsController extends StateNotifier<List<AccountItem>> {
   Future<void> add(AccountItem account) async {
     await _loadFuture;
     state = _sort([...state, account.copyWith(updatedAt: DateTime.now())]);
-    await _repository.saveAccounts(state);
+    await _persist();
     _sync?.accountsChanged();
   }
 
@@ -60,7 +62,7 @@ class AccountsController extends StateNotifier<List<AccountItem>> {
       for (final existing in state)
         if (existing.id == account.id) updated else existing,
     ]);
-    await _repository.saveAccounts(state);
+    await _persist();
     _sync?.accountsChanged();
   }
 
@@ -71,14 +73,34 @@ class AccountsController extends StateNotifier<List<AccountItem>> {
       for (final account in state)
         if (account.id != id) account,
     ];
-    await _repository.saveAccounts(state);
+    await _persist();
     await _sync?.accountDeleted(id, deletedAt);
+  }
+
+  Future<void> _persist() {
+    final snapshot = state;
+    return _writes.add(() => _repository.saveAccounts(snapshot));
   }
 
   Future<void> replaceAll(List<AccountItem> accounts) async {
     await _loadFuture;
     state = _sort(accounts);
-    await _repository.saveAccounts(state);
+    await _persist();
+  }
+
+  Future<void> replaceAllFromSync(
+    List<AccountItem> accounts, {
+    required List<AccountItem> baseline,
+  }) async {
+    await _loadFuture;
+    state = _sort(mergeSyncedEntities(
+      incoming: accounts,
+      current: state,
+      baseline: baseline,
+      idOf: (account) => account.id,
+      updatedAtOf: (account) => account.updatedAt,
+    ));
+    await _persist();
   }
 
   List<AccountItem> _sort(List<AccountItem> accounts) {

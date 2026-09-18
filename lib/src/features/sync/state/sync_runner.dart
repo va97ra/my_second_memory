@@ -55,9 +55,10 @@ class SyncRunner {
       memoryItems: memoryItems,
       replaceMemoryItems: (items) => data.mergeMemoryItems(items, memoryItems),
       shiftSchedules: shiftSchedules,
-      replaceShiftSchedules: data.replaceShiftSchedules,
+      replaceShiftSchedules: (items) =>
+          data.mergeShiftSchedules(items, shiftSchedules),
       accounts: accounts,
-      replaceAccounts: data.replaceAccounts,
+      replaceAccounts: (items) => data.mergeAccounts(items, accounts),
       recurrenceSeries: recurrenceSeries,
       replaceRecurrenceSeries: (items) =>
           data.mergeRecurrenceSeries(items, recurrenceSeries),

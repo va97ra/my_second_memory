@@ -8,6 +8,42 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  testWidgets(
+      'a stalled fetch times out and its late result cannot resume sync',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    var localDataAvailable = false;
+    final remote = _BlockingConnectedRemoteStore();
+    final controller = SyncController(
+      remote: remote,
+      keyStore: _ConnectedKeyStore(),
+      tombstones: _RecordingTombstoneStore(),
+      canAccessLocalData: () => localDataAvailable,
+      data: SyncDataSources(
+        readMemoryItems: () async => [],
+        replaceMemoryItems: (_) async {},
+      ),
+    );
+    await controller.load();
+    localDataAvailable = true;
+    final run = controller.syncNow();
+    await remote.firstFetchStarted.future;
+    await tester.pump(const Duration(seconds: 31));
+    expect(controller.state.status, SyncStatus.error);
+    expect(controller.state.error, contains('TimeoutException'));
+    await run;
+    localDataAvailable = false;
+    remote.releaseFirstFetch.complete();
+    await tester.pump();
+    expect(controller.state.status, SyncStatus.error);
+    localDataAvailable = true;
+    await controller.syncNow();
+    expect(controller.state.status, SyncStatus.ready);
+    expect(remote.fetchEntitiesCalls, 2);
+    controller.dispose();
+    remote.dispose();
+  });
+
   test('Google OAuth callback advances a signed-out session to vault setup',
       () async {
     final remote = _OAuthRemoteStore();

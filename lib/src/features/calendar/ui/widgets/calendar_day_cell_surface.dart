@@ -15,12 +15,16 @@ class CalendarDayCellSurface {
     required this.isToday,
     required this.hasItems,
     this.screen,
+    this.dayOff = false,
+    this.shortened = false,
   });
 
   final bool isInVisibleMonth;
   final bool isSelected;
   final bool isToday;
   final bool hasItems;
+  final bool dayOff;
+  final bool shortened;
 
   /// Значения экранной темы или null в блокноте.
   ///
@@ -117,18 +121,20 @@ class CalendarDayCellSurface {
   /// Сегодняшний день — та же бумага, подкрашенная акцентом.
   Color _paper(ColorScheme colors, AppSurfacePalette palette) {
     if (!isInVisibleMonth) return Colors.transparent;
-    if (!isToday) return palette.calendarTile;
+    final tile = productionDaySurface(palette.calendarTile,
+        dayOff: dayOff, shortened: shortened);
+    if (!isToday) return tile;
     final screen = this.screen;
     if (screen == null) {
       return Color.alphaBlend(
         colors.primary.withValues(alpha: todayTintOpacity),
-        palette.calendarTile,
+        tile,
       );
     }
-    if (screen.isDark) return palette.calendarTile;
+    if (screen.isDark) return tile;
     return Color.alphaBlend(
       screen.today.withValues(alpha: 0.12),
-      palette.calendarTile,
+      tile,
     );
   }
 }

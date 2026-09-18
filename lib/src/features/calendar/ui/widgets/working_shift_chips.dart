@@ -1,72 +1,65 @@
 import 'package:ez_core/ez_core.dart';
-import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../state/day_shift_progress_provider.dart';
+import '../../../shift_schedules/shift_schedules.dart';
 
-/// Плашки графиков, у которых этот день рабочий.
-class WorkingShiftChips extends StatelessWidget {
-  const WorkingShiftChips({
-    super.key,
-    required this.schedules,
-    required this.date,
-  });
-
-  final List<ShiftSchedule> schedules;
+/// Bounded scrolling leaves room for the day timeline even with many shifts.
+class WorkingShiftChips extends ConsumerWidget {
+  const WorkingShiftChips({super.key, required this.date});
   final DateTime date;
-
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 2),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final schedule in schedules) _chip(context, schedule),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _chip(BuildContext context, ShiftSchedule schedule) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
-    final color = Color(schedule.colorValue);
-    // Рабочий день, попавший в отпуск, так и подписан: график его считает
-    // рабочим, но человек в этот день не работает.
-    final label = schedule.isVacationWorkday(date)
-        ? strings.vacation
-        : strings.workingToday;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.34)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const SizedBox(width: 10, height: 10),
-            ),
-            const SizedBox(width: 7),
-            Text(
-              '$label: ${schedule.organizationName}',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-          ],
-        ),
+    final shifts = ref.watch(dayShiftProgressProvider(date));
+    final hasSchedules =
+        ref.watch(shiftSchedulesControllerProvider).any((s) => s.isEnabled);
+    if (!hasSchedules) return const SizedBox.shrink();
+    return ConstrainedBox(
+      constraints:
+          BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .20),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (shifts.isEmpty)
+            Text(strings.shiftDayOff, textAlign: TextAlign.center),
+          for (final shift in shifts)
+            Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                      color: Color(shift.schedule.colorValue)
+                          .withValues(alpha: .14),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: Color(shift.schedule.colorValue)
+                              .withValues(alpha: .34))),
+                  child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 9, vertical: 7),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(shift.schedule.organizationName,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium
+                                    ?.copyWith(fontWeight: FontWeight.w800)),
+                            Text(shift.vacation
+                                ? strings.shiftVacationDay
+                                : strings.shiftOrdinal(
+                                    shift.progress.elapsed + 1,
+                                    shift.progress.total)),
+                            Text(
+                                strings.shiftDayProgress(
+                                    shift.progress.elapsed,
+                                    shift.progress.remaining -
+                                        (shift.vacation ? 0 : 1)),
+                                style: Theme.of(context).textTheme.bodySmall),
+                          ])),
+                )),
+        ]),
       ),
     );
   }

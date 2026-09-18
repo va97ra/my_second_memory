@@ -65,12 +65,18 @@ final syncControllerProvider =
       replaceShiftSchedules: (schedules) => ref
           .read(shiftSchedulesControllerProvider.notifier)
           .replaceAll(schedules),
+      mergeShiftSchedules: (schedules, baseline) => ref
+          .read(shiftSchedulesControllerProvider.notifier)
+          .replaceAllFromSync(schedules, baseline: baseline),
       readAccounts: () async {
         await ref.read(accountsControllerProvider.notifier).load();
         return ref.read(accountsControllerProvider);
       },
       replaceAccounts: (accounts) =>
           ref.read(accountsControllerProvider.notifier).replaceAll(accounts),
+      mergeAccounts: (accounts, baseline) => ref
+          .read(accountsControllerProvider.notifier)
+          .replaceAllFromSync(accounts, baseline: baseline),
       readRecurrenceSeries: () async {
         await ref.read(recurrenceSeriesControllerProvider.notifier).load();
         return ref.read(recurrenceSeriesControllerProvider);
@@ -240,8 +246,4 @@ class _RiverpodSyncMutationObserver implements SyncMutationObserver {
           deletedAt,
         );
   }
-
-
-
-
 }

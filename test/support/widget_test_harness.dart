@@ -5,6 +5,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/state/production_calendar_provider.dart';
 import 'package:ezhednevnik_v2/src/app/local_storage_scope_provider.dart';
 
 /// Общая обстановка виджет-тестов: форматы дат и пустые настройки.
@@ -41,6 +42,9 @@ Widget testProviderScope({
 }) {
   return ProviderScope(
     overrides: [
+      productionCalendarRepositoryProvider.overrideWithValue(
+        ProductionCalendarRepository(source: const OfflineProductionSource()),
+      ),
       localStorageScopeFactoryProvider.overrideWithValue(
         TestLocalStorageScope.new,
       ),
@@ -48,6 +52,12 @@ Widget testProviderScope({
     ],
     child: child,
   );
+}
+
+class OfflineProductionSource implements ProductionCalendarSource {
+  const OfflineProductionSource();
+  @override
+  Future<String> fetch(int year) async => throw StateError('Offline test');
 }
 
 class TestLocalStorageScope implements LocalStorageScope {
@@ -232,9 +242,7 @@ class FakeShiftScheduleRepository implements ShiftScheduleRepository {
 /// кнопках нижней панели, и поиск по слову находит их тоже.
 void expectEditorTitle(WidgetTester tester, String title) {
   expect(
-    tester
-        .widget<Text>(find.byKey(const ValueKey('memory_editor_title')))
-        .data,
+    tester.widget<Text>(find.byKey(const ValueKey('memory_editor_title'))).data,
     title,
   );
 }

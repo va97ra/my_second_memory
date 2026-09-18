@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:ez_data/ez_data.dart';
@@ -24,22 +25,25 @@ void main() {
       updatedAt: DateTime.utc(2026, 9, 9),
       imagePaths: images,
       voiceNotes: [
-        if (audio != null)
-          VoiceNote(reference: audio, durationSeconds: 4),
+        if (audio != null) VoiceNote(reference: audio, durationSeconds: 4),
       ],
     );
   }
 
   test('a file present here and missing in the cloud is uploaded', () async {
     final remote = SyncRemote();
-    final storage = FakeMediaStorage({'image_1.jpg': _bytes([1, 2, 3])});
+    final storage = FakeMediaStorage({
+      'image_1.jpg': _bytes([1, 2, 3])
+    });
 
     final result = await MediaSyncEngine(
       remote: remote,
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize([itemWith(images: ['image_1.jpg'])]);
+    ).synchronize([
+      itemWith(images: ['image_1.jpg'])
+    ]);
 
     expect(result.mediaUploaded, 1);
     expect(result.mediaDownloaded, 0);
@@ -79,7 +83,9 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: atRest,
-    ).synchronize([itemWith(images: ['image_3.jpg'])]);
+    ).synchronize([
+      itemWith(images: ['image_3.jpg'])
+    ]);
 
     expect(storage.atRestUsed, isTrue);
     expect(storage.files['image_3.jpg'], _bytes([6]));
@@ -89,14 +95,18 @@ void main() {
     final remote = SyncRemote();
     remote.storedMedia['image_kept.jpg'] = await vault.encryptBytes([1]);
     remote.storedMedia['image_orphan.jpg'] = await vault.encryptBytes([2]);
-    final storage = FakeMediaStorage({'image_kept.jpg': _bytes([1])});
+    final storage = FakeMediaStorage({
+      'image_kept.jpg': _bytes([1])
+    });
 
     await MediaSyncEngine(
       remote: remote,
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize([itemWith(images: ['image_kept.jpg'])]);
+    ).synchronize([
+      itemWith(images: ['image_kept.jpg'])
+    ]);
 
     expect(remote.storedMedia.keys, ['image_kept.jpg']);
   });
@@ -104,7 +114,9 @@ void main() {
   test('a record keeps the plain name whatever the path it arrived with',
       () async {
     final remote = SyncRemote();
-    final storage = FakeMediaStorage({'image_4.jpg': _bytes([8])});
+    final storage = FakeMediaStorage({
+      'image_4.jpg': _bytes([8])
+    });
 
     // Запись со старого устройства: абсолютный путь и хвост шифрования.
     await MediaSyncEngine(
@@ -156,6 +168,37 @@ void main() {
     expect(result.mediaUploaded, 1);
     expect(remote.storedMedia.keys, ['image_good.jpg']);
   });
+
+  test('a media timeout stops the run before further transfers or cleanup',
+      () async {
+    final remote = _TimedOutDownloadRemote();
+    remote.storedMedia.addAll({
+      'image_1.jpg': _bytes([1]),
+      'image_2.jpg': _bytes([2]),
+      'image_orphan.jpg': _bytes([3]),
+    });
+    final storage = FakeMediaStorage({});
+    await expectLater(
+      MediaSyncEngine(
+              remote: remote, storage: storage, vault: vault, atRest: null)
+          .synchronize([
+        itemWith(images: ['image_1.jpg', 'image_2.jpg'])
+      ]),
+      throwsA(isA<TimeoutException>()),
+    );
+    expect(remote.downloads, 1);
+    expect(storage.files, isEmpty);
+    expect(remote.storedMedia, hasLength(3));
+  });
+}
+
+class _TimedOutDownloadRemote extends SyncRemote {
+  int downloads = 0;
+  @override
+  Future<Uint8List> downloadMedia(String name) async {
+    downloads++;
+    throw TimeoutException('download');
+  }
 }
 
 Uint8List _bytes(List<int> values) => Uint8List.fromList(values);

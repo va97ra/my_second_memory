@@ -12,8 +12,11 @@ class SyncDataSources {
     Future<void> Function(List<MemoryItem>, List<MemoryItem>)? mergeMemoryItems,
     Future<List<ShiftSchedule>> Function()? readShiftSchedules,
     Future<void> Function(List<ShiftSchedule>)? replaceShiftSchedules,
+    Future<void> Function(List<ShiftSchedule>, List<ShiftSchedule>)?
+        mergeShiftSchedules,
     Future<List<AccountItem>> Function()? readAccounts,
     Future<void> Function(List<AccountItem>)? replaceAccounts,
+    Future<void> Function(List<AccountItem>, List<AccountItem>)? mergeAccounts,
     Future<List<RecurrenceSeries>> Function()? readRecurrenceSeries,
     Future<void> Function(List<RecurrenceSeries>)? replaceRecurrenceSeries,
     Future<void> Function(List<RecurrenceSeries>, List<RecurrenceSeries>)?
@@ -42,9 +45,12 @@ class SyncDataSources {
         mergeMemoryItems =
             mergeMemoryItems ?? ((items, _) => replaceMemoryItems(items)),
         readShiftSchedules = readShiftSchedules ?? _noShiftSchedules,
-        replaceShiftSchedules = replaceShiftSchedules ?? _ignoreShiftSchedules,
+        mergeShiftSchedules = mergeShiftSchedules ??
+            ((items, _) =>
+                (replaceShiftSchedules ?? _ignoreShiftSchedules)(items)),
         readAccounts = readAccounts ?? _noAccounts,
-        replaceAccounts = replaceAccounts ?? _ignoreAccounts,
+        mergeAccounts = mergeAccounts ??
+            ((items, _) => (replaceAccounts ?? _ignoreAccounts)(items)),
         readRecurrenceSeries = readRecurrenceSeries ?? _noRecurrenceSeries,
         mergeRecurrenceSeries = mergeRecurrenceSeries ??
             ((items, _) =>
@@ -69,9 +75,11 @@ class SyncDataSources {
   final Future<void> Function(List<MemoryItem>, List<MemoryItem>)
       mergeMemoryItems;
   final Future<List<ShiftSchedule>> Function() readShiftSchedules;
-  final Future<void> Function(List<ShiftSchedule>) replaceShiftSchedules;
+  final Future<void> Function(List<ShiftSchedule>, List<ShiftSchedule>)
+      mergeShiftSchedules;
   final Future<List<AccountItem>> Function() readAccounts;
-  final Future<void> Function(List<AccountItem>) replaceAccounts;
+  final Future<void> Function(List<AccountItem>, List<AccountItem>)
+      mergeAccounts;
   final Future<List<RecurrenceSeries>> Function() readRecurrenceSeries;
   final Future<void> Function(List<RecurrenceSeries>, List<RecurrenceSeries>)
       mergeRecurrenceSeries;
@@ -117,4 +125,3 @@ Future<void> _ignoreFinanceEntries(List<FinanceEntry> _) async {}
 Future<List<SavedToolCalculation>> _noToolCalculations() async => const [];
 
 Future<void> _ignoreToolCalculations(List<SavedToolCalculation> _) async {}
-
