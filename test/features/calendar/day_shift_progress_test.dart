@@ -3,7 +3,7 @@ import 'package:ez_design/ez_design.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/state/day_shift_progress_provider.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/calendar_day_screen.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/day_timeline.dart';
-import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/working_shift_chips.dart';
+
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -87,14 +87,15 @@ void main() {
               home: CalendarDayScreen(date: DateTime(2026, 9, 19)),
             )));
         await tester.pumpAndSettle();
-        expect(find.text('Смена 5 из 7 в этом месяце'), findsNWidgets(2));
-        expect(find.textContaining('Яндекс'), findsNothing);
+        expect(find.text('Статистика работы'), findsOneWidget);
         expect(
             tester.getSize(find.byType(DayTimeline)).height, greaterThan(200));
-        final scroller = find.descendant(
-            of: find.byType(WorkingShiftChips),
-            matching: find.byType(SingleChildScrollView));
-        await tester.drag(scroller, const Offset(0, -250));
+        await tester.tap(find.byKey(const ValueKey('production_day_summary')));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Консалтинг'), findsOneWidget);
+        await tester.ensureVisible(
+            find.byKey(const ValueKey('production_period_year')));
+        await tester.tap(find.byKey(const ValueKey('production_period_year')));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull, reason: '$width / $scale');
         await tester.pumpWidget(const SizedBox());

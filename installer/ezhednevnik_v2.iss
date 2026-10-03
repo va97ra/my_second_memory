@@ -1,7 +1,7 @@
 #ifndef AppVersion
-  ; Держится на 1.1.0, пока обновление не выложено в RuStore. Значение
+  ; Совпадает с готовящейся версией в pubspec.yaml. Значение
   ; можно передать снаружи: ISCC /DAppVersion=1.2.0
-  #define AppVersion "1.1.0"
+  #define AppVersion "1.1.1"
 #endif
 
 #define AppName "Ежедневник V2"

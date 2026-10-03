@@ -1,6 +1,28 @@
 import 'app_strings.dart';
 
 extension ProductionStrings on AppStrings {
+  String get productionWeek => isRu ? 'Неделя' : 'Week';
+  String get productionMonth => isRu ? 'Месяц' : 'Month';
+  String get productionYear => isRu ? 'Год' : 'Year';
+  String get productionElapsed => isRu ? 'Прошло' : 'Elapsed';
+  String get productionRemaining => isRu ? 'Осталось' : 'Remaining';
+  String get productionTotal => isRu ? 'Всего' : 'Total';
+  String get productionDetails =>
+      isRu ? 'Нормы и источник' : 'Norms and source';
+  String get productionPlanNote =>
+      isRu ? 'По графику, без отпуска' : 'Scheduled, excluding vacation';
+  String get productionTodayIncluded =>
+      isRu ? 'Включая сегодня' : 'Including today';
+  String get productionTodayExcluded =>
+      isRu ? 'Без сегодняшнего дня' : 'Excluding today';
+  String get productionStatistics =>
+      isRu ? 'Статистика работы' : 'Work statistics';
+  String get productionFederal =>
+      isRu ? 'Пятидневка РФ' : 'Russian five-day week';
+  String get productionChooseSource => isRu
+      ? 'Добавьте или включите график смен в настройках'
+      : 'Add or enable a shift schedule in settings';
+
   String get shiftDayOff =>
       isRu ? 'Выходной по вашим графикам' : 'Day off on your schedules';
   String get shiftVacationDay =>
@@ -12,12 +34,14 @@ extension ProductionStrings on AppStrings {
       ? 'По графику: до этой даты — $before, после — $after'
       : 'Scheduled shifts: before this date — $before, after — $after';
 
-  String productionProgress(int passed, int total, int remaining) => isRu
-      ? '5/2 · Прошло рабочих: $passed из $total · Осталось: $remaining'
-      : '5/2 · Elapsed: $passed of $total · Remaining: $remaining';
+  String productionProgress(int passed, int total, int remaining,
+          {String? source}) =>
+      isRu
+          ? '${source ?? '5/2'} · Прошло рабочих: $passed из $total · Осталось: $remaining'
+          : '${source ?? '5/2'} · Elapsed: $passed of $total · Remaining: $remaining';
   String get productionProgressHint => isRu
-      ? 'Пятидневка РФ, не табель явки. Учёт сегодняшнего дня задаётся в настройках. Личные смены показаны внутри выбранного дня.'
-      : 'Russian five-day week, not attendance. Configure whether to include today. Personal shifts appear inside the selected day.';
+      ? 'Плановый расчёт по выбранному графику, не табель явки. График и учёт сегодняшнего дня задаются в настройках.'
+      : 'Planned shifts, not attendance. Enabled schedules apply automatically; configure whether to include today.';
   String get productionHighlight =>
       isRu ? 'Подсветка ячеек' : 'Highlight cells';
   String get productionWeekNumbers => isRu ? 'Номера недель' : 'Week numbers';
@@ -26,8 +50,8 @@ extension ProductionStrings on AppStrings {
   String get productionIncludeToday =>
       isRu ? 'Включать сегодняшний день' : 'Include today';
   String get productionSettingsHint => isRu
-      ? 'Цвета ячеек и счётчик обозначают пятидневку РФ, шапки — ваши смены. Подробности смен показаны внутри выбранного дня.'
-      : 'Cell colors and progress show the Russian five-day week; caps show your shifts. Shift details appear inside the selected day.';
+      ? 'Статистика автоматически учитывает включённые графики смен. Подсветка государственных выходных настраивается отдельно.'
+      : 'Statistics automatically use enabled shift schedules. National day-off highlighting is independent.';
   String get productionCalendar =>
       isRu ? 'Производственный календарь' : 'Working calendar';
   String get productionScope => isRu

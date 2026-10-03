@@ -31,18 +31,20 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
-    expect(
-        find.textContaining('Данные за этот год недоступны'), findsOneWidget);
+    expect(find.text('Статистика работы'), findsOneWidget);
     // Synthetic response for testing propagation, not a historical calendar.
     pending.complete('1${'0' * 364}');
     await tester.pumpAndSettle();
-    expect(find.textContaining('Нерабочий день'), findsOneWidget);
     await tester.tap(find.byType(TextButton));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Нормы и источник'));
+    await tester.tap(find.text('Нормы и источник'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Рабочих дней: 30'), findsOneWidget);
     expect(find.textContaining('Источник: isDayOff.ru'), findsOneWidget);
     expect(find.textContaining('Обновлено:'), findsOneWidget);
     fail = true;
+    await tester.ensureVisible(find.text('Обновить'));
     await tester.tap(find.text('Обновить'));
     await tester.pumpAndSettle();
     expect(

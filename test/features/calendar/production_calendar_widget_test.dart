@@ -125,6 +125,9 @@ void main() {
           }
           await tester.tap(find.text('Открыть сводку'));
           await tester.pumpAndSettle();
+          await tester.ensureVisible(find.text('Нормы и источник'));
+          await tester.tap(find.text('Нормы и источник'));
+          await tester.pumpAndSettle();
           expect(find.textContaining('Рабочих дней: 19'), findsOneWidget);
           expect(tester.takeException(), isNull);
           await tester.pumpWidget(const SizedBox());

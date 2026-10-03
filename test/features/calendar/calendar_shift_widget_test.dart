@@ -260,6 +260,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('production_day_summary')));
+    await tester.pumpAndSettle();
     expect(find.textContaining('Завод'), findsOneWidget);
     expect(find.textContaining('Вахта'), findsOneWidget);
   });

@@ -51,18 +51,17 @@ void main() {
         of: todayCell,
         matching: find.byKey(const ValueKey('calendar_day_glass_lens')),
       );
+      expect(lens, findsOneWidget);
+      final painter = tester.widget<CustomPaint>(lens).foregroundPainter;
+      expect(painter, isA<ScreenGlassSurfacePainter>());
+      expect(
+        (painter! as ScreenGlassSurfacePainter).profile,
+        ScreenGlassProfile.plate,
+      );
       if (style == AppThemeStyle.cosmos) {
-        expect(lens, findsNothing);
         expect(cosmosColors.tile, const Color(0x4DFFFFFF));
       } else {
-        expect(lens, findsOneWidget);
-        final painter = tester.widget<CustomPaint>(lens).foregroundPainter;
-        expect(painter, isA<ScreenGlassSurfacePainter>());
-        expect(
-          (painter! as ScreenGlassSurfacePainter).profile,
-          ScreenGlassProfile.convex,
-        );
-        expect(cyberpunkColors.tile.a, inInclusiveRange(0.62, 0.78));
+        expect(cyberpunkColors.tile.a, inInclusiveRange(0.5, 0.6));
       }
       expect(tester.takeException(), isNull);
     });

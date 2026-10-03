@@ -58,7 +58,13 @@ class CalendarDayCellSurface {
       // и выбранный день, и акцентная заливка его примету не съедает: их
       // теперь двое, заливка и рамка выбора.
       gradient: isSelected && !isToday
-          ? palette.accentGradient
+          ? screen == null
+              ? palette.accentGradient
+              : _glass(Color.alphaBlend(
+                  colors.primary
+                      .withValues(alpha: screen!.isDark ? 0.24 : 0.14),
+                  _paper(colors, palette),
+                ))
           : isInVisibleMonth
               ? screen == null
                   ? palette.surfaceGradient(base: _paper(colors, palette))
@@ -84,7 +90,8 @@ class CalendarDayCellSurface {
 
   /// Плитка дня — та же пластина стекла, что и панели: одно стекло на всё
   /// приложение, чтобы сетка и панели не расходились между собой.
-  LinearGradient _glass(Color tile) => GlassSurface.gradient(screen!, tile);
+  LinearGradient _glass(Color tile) =>
+      GlassSurface.gradient(screen!, tile, clearPlate: true);
 
   List<BoxShadow>? _shadow(BuildContext context, ColorScheme colors) {
     final screen = this.screen;

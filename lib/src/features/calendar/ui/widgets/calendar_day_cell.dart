@@ -73,8 +73,10 @@ class CalendarDayCell extends ConsumerWidget {
             : shiftSchedules.isEmpty
                 ? colors.onSurface
                 : readableInkOn(Color(shiftSchedules.first.colorValue));
-    // Обычной плитке достаточно нарисованной рамки.
-    final usesGradientBorder = isInVisibleMonth &&
+    // У экранного стекла своя тонкая кромка. Дополнительная рамка нужна
+    // только бумажным плиткам блокнота.
+    final usesGradientBorder = screen == null &&
+        isInVisibleMonth &&
         !isSelected &&
         items.isEmpty &&
         !(isToday && screen != null);
@@ -103,18 +105,18 @@ class CalendarDayCell extends ConsumerWidget {
         outlinedNumber: screen == null,
       ),
     );
-    final usesCyberpunkLens = screen?.glassLights.isNotEmpty ?? false;
-    final contents = !usesCyberpunkLens
+    // Цветные отражения не обязательны для преломления: у «Космоса» стекло
+    // нейтральное, но освещённые кромки прямой пластины тоже видны.
+    final contents = screen == null
         ? pressable
         : ClipRRect(
             borderRadius: BorderRadius.circular(cornerRadius),
             child: CustomPaint(
               key: const ValueKey('calendar_day_glass_lens'),
               foregroundPainter: ScreenGlassSurfacePainter(
-                colors: screen!,
+                colors: screen,
                 pressed: false,
-                profile: ScreenGlassProfile.convex,
-                showOuterEdge: false,
+                profile: ScreenGlassProfile.plate,
                 radius: cornerRadius,
               ),
               child: pressable,

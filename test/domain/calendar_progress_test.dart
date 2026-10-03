@@ -2,6 +2,22 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('range progress covers leap years, crossing weeks and today', () {
+    final year = workdayRangeProgress(DateTime(2024), DateTime(2025),
+        today: DateTime(2024, 3, 1), isWorkingDay: (_) => true)!;
+    expect((year.elapsed, year.total, year.remaining), (60, 366, 306));
+    final week = workdayRangeProgress(
+        DateTime(2025, 12, 29), DateTime(2026, 1, 5),
+        today: DateTime(2026, 1, 1),
+        includeToday: true,
+        isWorkingDay: (_) => true)!;
+    expect((week.elapsed, week.total), (4, 7));
+    expect(
+        workdayRangeProgress(DateTime(2026), DateTime(2027),
+            today: DateTime(2026), isWorkingDay: (_) => null),
+        isNull);
+  });
+
   test('ISO week boundaries belong to the correct week year', () {
     expect(isoWeek(DateTime(2021, 1, 1)), (year: 2020, number: 53));
     expect(isoWeek(DateTime(2021, 1, 4)), (year: 2021, number: 1));

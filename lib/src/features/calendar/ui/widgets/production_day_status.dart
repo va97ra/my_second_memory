@@ -1,25 +1,36 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../state/production_calendar_provider.dart';
-
 import 'production_calendar_dialog.dart';
 
 class ProductionDayStatus extends ConsumerWidget {
   const ProductionDayStatus({super.key, required this.date});
   final DateTime date;
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) =>
+      NotebookPaperIsland(child: Builder(builder: _content));
+
+  Widget _content(BuildContext context) {
     final strings = AppStrings.of(context);
-    final day =
-        ref.watch(productionCalendarProvider(date.year)).calendar.day(date);
-    return TextButton(
-      onPressed: () => ProductionCalendarDialog.show(context, date),
-      child: Text(
-        '${strings.productionDayLabel(day?.name)} · ${strings.isRu ? 'РФ, 5/2' : 'RU, 5/2'}',
-        textAlign: TextAlign.center,
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      child: NotebookCardSurface(
+          child: TextButton(
+        key: const ValueKey('production_day_summary'),
+        onPressed: () => ProductionCalendarDialog.show(context, date),
+        style: TextButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+            foregroundColor: Theme.of(context).colorScheme.onSurface),
+        child: Row(children: [
+          const Icon(Icons.calendar_month_rounded, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text(strings.productionStatistics,
+                  style: Theme.of(context).textTheme.labelLarge)),
+          const Icon(Icons.chevron_right_rounded, size: 20),
+        ]),
+      )),
     );
   }
 }

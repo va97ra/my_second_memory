@@ -79,10 +79,15 @@ abstract final class GlassSurface {
 
   /// Переход поперёк пластины: кромка сверху освещена, снизу в тени.
   ///
-  /// Обводки у стекла нет. Ровная линия по всему контуру — примета
-  /// нарисованного прямоугольника: у настоящей пластины светится только та
-  /// кромка, на которую падает свет, а противоположная уходит в тень.
-  static LinearGradient gradient(ScreenThemeColors colors, Color back) {
+  /// Градиент оставляет середину прозрачной; тонкую освещённую кромку плитки
+  /// рисует отдельный painter, без широкой внутренней рамки.
+  /// У тонкой плитки [clearPlate] ослабляет край: её толщину рисует отдельный
+  /// painter, и полоса градиента не должна повторять его скос.
+  static LinearGradient gradient(
+    ScreenThemeColors colors,
+    Color back, {
+    bool clearPlate = false,
+  }) {
     final lights = colors.glassLights;
     if (lights.isNotEmpty) {
       final cyan = lights.first;
@@ -107,10 +112,12 @@ abstract final class GlassSurface {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        colors.glint.withValues(alpha: colors.isDark ? 0.7 : 0.85),
+        colors.glint.withValues(
+            alpha: colors.isDark ? 0.7 : (clearPlate ? 0.48 : 0.85)),
         back,
         back,
-        Colors.black.withValues(alpha: colors.isDark ? 0.4 : 0.22),
+        Colors.black.withValues(
+            alpha: colors.isDark ? 0.4 : (clearPlate ? 0.08 : 0.22)),
       ],
       stops: const [0, edge, 1 - edge, 1],
     );

@@ -12,7 +12,6 @@ import '../state/holiday_providers.dart';
 import 'widgets/day_records_list.dart';
 import 'widgets/day_timeline.dart';
 import 'widgets/holiday_summary_card.dart';
-import 'widgets/working_shift_chips.dart';
 import 'widgets/production_day_status.dart';
 
 /// День календаря: что на него записано, кто в этот день работает и какие
@@ -44,7 +43,6 @@ class CalendarDayScreen extends ConsumerWidget {
           child: Column(
             children: [
               ProductionDayStatus(date: date),
-              WorkingShiftChips(date: date),
               if (untimed.isNotEmpty)
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 148),

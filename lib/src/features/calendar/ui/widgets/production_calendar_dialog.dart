@@ -1,99 +1,129 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../state/production_calendar_provider.dart';
 import '../../../../navigation/page_turn_navigation.dart';
+import '../../state/production_period_provider.dart';
 import '../../state/production_preferences.dart';
-import 'production_month_progress.dart';
+import 'production_calendar_details.dart';
+import 'production_progress_numbers.dart';
+import 'working_shift_chips.dart';
 
-/// Month totals are read on demand, without taking space from the grid.
-class ProductionCalendarDialog extends ConsumerWidget {
+class ProductionCalendarDialog extends ConsumerStatefulWidget {
   const ProductionCalendarDialog({super.key, required this.month});
   final DateTime month;
-
   static Future<void> show(BuildContext context, DateTime month) async {
-    final openSettings = await showDialog<bool>(
-      context: context,
-      builder: (_) => ProductionCalendarDialog(month: month),
-    );
-    if (openSettings == true && context.mounted) {
+    final settings = await showDialog<bool>(
+        context: context,
+        builder: (_) => ProductionCalendarDialog(month: month));
+    if (settings == true && context.mounted) {
       await context.pageTurnPush('/calendar/preferences');
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductionCalendarDialog> createState() =>
+      _ProductionCalendarDialogState();
+}
+
+class _ProductionCalendarDialogState
+    extends ConsumerState<ProductionCalendarDialog> {
+  ProductionPeriod period = ProductionPeriod.month;
+  @override
+  Widget build(BuildContext context) =>
+      NotebookPaperIsland(child: Builder(builder: _content));
+
+  Widget _content(BuildContext context) {
     final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).languageCode;
-    final state = ref.watch(productionCalendarProvider(month.year));
-    final totals = state.calendar.month(month);
-    return AlertDialog(
-      scrollable: true,
-      title: Text(strings.productionCalendar),
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(DateFormat.yMMMM(locale).format(month),
-              style: Theme.of(context).textTheme.titleMedium),
-          Text(strings.productionScope),
-          const SizedBox(height: 16),
-          if (totals == null)
-            Text(strings.productionUnknown)
-          else ...[
-            Text(strings.productionTotals(
-                totals.workingDays, totals.daysOff, totals.shortenedDays)),
-            const SizedBox(height: 16),
-            for (final week in [40, 36, 24])
-              Text(strings.productionHours(week,
-                  NumberFormat('0.#', locale).format(totals.hours(week)))),
-          ],
-          if (ref.watch(productionPreferencesProvider).showProgress) ...[
-            ProductionMonthProgress(month: month),
-            Text(strings.productionProgressHint,
-                style: Theme.of(context).textTheme.bodySmall),
-          ],
-          const SizedBox(height: 16),
-          Text(strings.productionLegend),
-          if (month.year == 2026 && totals != null) ...[
-            const SizedBox(height: 16),
-            Text(strings.productionSource,
-                style: Theme.of(context).textTheme.bodySmall),
-          ],
-          const SizedBox(height: 16),
-          if (totals != null)
-            Text(
-                state.cached == null
-                    ? strings.productionBundled
-                    : strings.productionApiSource,
-                style: Theme.of(context).textTheme.bodySmall),
-          if (state.cached != null)
-            Text(
-                strings.productionChecked(DateFormat.yMd(locale)
-                    .add_Hm()
-                    .format(state.cached!.checkedAt.toLocal())),
-                style: Theme.of(context).textTheme.bodySmall),
-          if (state.loading) Text(strings.productionUpdating),
-          if (state.failed) Text(strings.productionUpdateFailed),
-        ],
+    final rows = ref
+        .watch(productionPeriodProvider((date: widget.month, period: period)));
+    final prefs = ref.watch(productionPreferencesProvider);
+    final text = Theme.of(context).textTheme;
+    final date = widget.month;
+    final monday = DateTime(date.year, date.month, date.day - date.weekday + 1);
+    final range = switch (period) {
+      ProductionPeriod.week =>
+        '${DateFormat.yMMMd(locale).format(monday)} — ${DateFormat.yMMMd(locale).format(monday.add(const Duration(days: 6)))}',
+      ProductionPeriod.month => DateFormat.yMMMM(locale).format(date),
+      ProductionPeriod.year => '${date.year}',
+    };
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: NotebookCardSurface(
+          padding: const EdgeInsets.all(16),
+          child: Material(
+              type: MaterialType.transparency,
+              child: DefaultTextStyle(
+                style: text.bodyMedium!.copyWith(fontFamily: 'Manrope'),
+                child: SingleChildScrollView(
+                    child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                      Row(children: [
+                        Expanded(
+                            child: Text(strings.productionStatistics,
+                                style: text.titleMedium)),
+                        IconButton(
+                            tooltip: MaterialLocalizations.of(context)
+                                .closeButtonLabel,
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded))
+                      ]),
+                      const SizedBox(height: 8),
+                      Wrap(spacing: 8, runSpacing: 4, children: [
+                        for (final p in ProductionPeriod.values)
+                          ChoiceChip(
+                              key: ValueKey('production_period_${p.name}'),
+                              label: Text(switch (p) {
+                                ProductionPeriod.week => strings.productionWeek,
+                                ProductionPeriod.month =>
+                                  strings.productionMonth,
+                                ProductionPeriod.year => strings.productionYear
+                              }),
+                              selected: period == p,
+                              onSelected: (_) => setState(() => period = p)),
+                      ]),
+                      const SizedBox(height: 16),
+                      Text(range, style: text.titleSmall),
+                      const SizedBox(height: 4),
+                      if (rows.isEmpty) Text(strings.productionChooseSource),
+                      for (final row in rows) ...[
+                        const SizedBox(height: 16),
+                        Text(row.name!, style: text.titleSmall),
+                        const SizedBox(height: 8),
+                        if (row.progress != null)
+                          ProductionProgressNumbers(progress: row.progress!),
+                      ],
+                      const SizedBox(height: 16),
+                      Text(strings.productionPlanNote, style: text.bodySmall),
+                      Text(
+                          prefs.includeToday
+                              ? strings.productionTodayIncluded
+                              : strings.productionTodayExcluded,
+                          style: text.bodySmall),
+                      if (rows.isNotEmpty)
+                        ExpansionTile(
+                            tilePadding: EdgeInsets.zero,
+                            title: Text(DateFormat.yMMMEd(locale).format(date),
+                                style: text.bodyMedium),
+                            children: [WorkingShiftChips(date: date)]),
+                      ProductionCalendarDetails(month: widget.month),
+                      const SizedBox(height: 8),
+                      Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              icon: const Icon(Icons.tune_rounded),
+                              label: Text(strings.settings))),
+                    ])),
+              )),
+        ),
       ),
-      actions: [
-        TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(strings.settings)),
-        TextButton(
-          onPressed: state.loading
-              ? null
-              : () => ref
-                  .read(productionCalendarProvider(month.year).notifier)
-                  .refresh(),
-          child: Text(strings.productionRefresh),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-        ),
-      ],
     );
   }
 }

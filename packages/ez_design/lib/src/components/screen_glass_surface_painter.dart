@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../themes/screen/screen_theme_colors.dart';
 
-enum ScreenGlassProfile { concave, convex }
+enum ScreenGlassProfile { concave, plate }
 
-/// Refraction inside a thick glass surface.
+/// Refraction inside a glass surface.
 ///
-/// The outer bevel catches light from above-left. The inset bevel reverses
-/// that light, so the broad middle reads as a hollow rather than a bubble.
+/// Concave controls have an inset bevel. Calendar plates keep their full face
+/// width and reflect light only along the outer edge.
 class ScreenGlassSurfacePainter extends CustomPainter {
   const ScreenGlassSurfacePainter({
     required this.colors,
@@ -25,6 +25,10 @@ class ScreenGlassSurfacePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (profile == ScreenGlassProfile.plate) {
+      _paintPlate(canvas, size);
+      return;
+    }
     final bounds = Offset.zero & size;
     final outer = RRect.fromRectAndRadius(
       bounds.deflate(0.6),
@@ -72,39 +76,25 @@ class ScreenGlassSurfacePainter extends CustomPainter {
           ],
         ).createShader(bounds),
     );
-    if (profile == ScreenGlassProfile.convex) {
-      _paintConvexLens(canvas, hollow);
-    } else {
-      _paintConcaveLens(canvas, hollow);
-    }
+    _paintConcaveLens(canvas, hollow);
     _paintStreetLightReflections(canvas, bounds, hollow);
     canvas.drawRRect(
       hollow,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = profile == ScreenGlassProfile.convex
-            ? (pressed ? 3.0 : 2.2)
-            : (pressed ? 3.6 : 2.8)
+        ..strokeWidth = pressed ? 3.6 : 2.8
         ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: profile == ScreenGlassProfile.convex
-              ? [
-                  colors.glint.withValues(alpha: pressed ? 0.98 : 0.82),
-                  Colors.transparent,
-                  Colors.black.withValues(
-                    alpha: colors.isDark ? 0.46 : 0.28,
-                  ),
-                ]
-              : [
-                  Colors.black.withValues(
-                    alpha: pressed
-                        ? (colors.isDark ? 0.62 : 0.42)
-                        : (colors.isDark ? 0.34 : 0.22),
-                  ),
-                  Colors.transparent,
-                  colors.glint.withValues(alpha: pressed ? 0.98 : 0.78),
-                ],
+          colors: [
+            Colors.black.withValues(
+              alpha: pressed
+                  ? (colors.isDark ? 0.62 : 0.42)
+                  : (colors.isDark ? 0.34 : 0.22),
+            ),
+            Colors.transparent,
+            colors.glint.withValues(alpha: pressed ? 0.98 : 0.78),
+          ],
           stops: const [0, 0.48, 1],
         ).createShader(hollow.outerRect),
     );
@@ -131,42 +121,54 @@ class ScreenGlassSurfacePainter extends CustomPainter {
     );
   }
 
-  void _paintConvexLens(Canvas canvas, RRect lens) {
-    final rect = lens.outerRect;
-    canvas.drawRRect(
-      lens,
-      Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(-0.24, -0.30),
-          radius: 1.12,
-          colors: [
-            colors.glint.withValues(alpha: colors.isDark ? 0.22 : 0.15),
-            colors.glint.withValues(alpha: colors.isDark ? 0.09 : 0.05),
-            Colors.transparent,
-            Colors.black.withValues(alpha: colors.isDark ? 0.24 : 0.12),
-          ],
-          stops: const [0, 0.28, 0.64, 1],
-        ).createShader(rect),
+  void _paintPlate(Canvas canvas, Size size) {
+    final bounds = Offset.zero & size;
+    final plate = RRect.fromRectAndRadius(
+      bounds.deflate(0.5),
+      Radius.circular((radius - 0.5).clamp(0, radius)),
     );
+    final light = colors.isDark ? colors.glint : Colors.white;
+    canvas.save();
+    canvas.clipRRect(plate);
+    // A soft reflection crosses the full face, without an inset frame that
+    // makes narrow calendar cells appear even narrower.
+    canvas.drawRect(
+      bounds,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            light.withValues(alpha: colors.isDark ? 0.12 : 0.17),
+            light.withValues(alpha: colors.isDark ? 0.04 : 0.06),
+            Colors.transparent,
+          ],
+          stops: const [0, 0.28, 0.7],
+        ).createShader(bounds),
+    );
+    _paintStreetLightReflections(canvas, bounds, plate);
+    canvas.restore();
 
-    final highlight = Rect.fromCenter(
-      center: Offset(
-        rect.left + rect.width * 0.30,
-        rect.top + rect.height * 0.24,
-      ),
-      width: rect.width * 0.48,
-      height: rect.height * 0.18,
-    );
-    canvas.drawOval(
-      highlight,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            colors.glint.withValues(alpha: colors.isDark ? 0.24 : 0.18),
-            Colors.transparent,
-          ],
-        ).createShader(highlight),
-    );
+    // The lit and shaded edges are less than a pixel wide. The visible face
+    // keeps the same width as the calendar tile in the original layout.
+    if (showOuterEdge) {
+      canvas.drawRRect(
+        plate,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.9
+          ..shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              light.withValues(alpha: colors.isDark ? 0.7 : 0.85),
+              light.withValues(alpha: 0.18),
+              Colors.black.withValues(alpha: colors.isDark ? 0.25 : 0.14),
+            ],
+            stops: const [0, 0.5, 1],
+          ).createShader(bounds),
+      );
+    }
   }
 
   void _paintStreetLightReflections(
@@ -176,6 +178,7 @@ class ScreenGlassSurfacePainter extends CustomPainter {
   ) {
     final lights = colors.glassLights;
     if (lights.isEmpty) return;
+    final strength = profile == ScreenGlassProfile.plate ? 0.55 : 1.0;
     final cyan = lights.first;
     final magenta = lights.length > 1 ? lights[1] : colors.accent;
     final green = lights.length > 2 ? lights[2] : colors.glint;
@@ -189,11 +192,11 @@ class ScreenGlassSurfacePainter extends CustomPainter {
           begin: const Alignment(-1, -0.65),
           end: const Alignment(1, 0.65),
           colors: [
-            cyan.withValues(alpha: 0.16),
+            cyan.withValues(alpha: 0.16 * strength),
             Colors.transparent,
-            magenta.withValues(alpha: pressed ? 0.2 : 0.13),
+            magenta.withValues(alpha: (pressed ? 0.2 : 0.13) * strength),
             Colors.transparent,
-            green.withValues(alpha: 0.1),
+            green.withValues(alpha: 0.1 * strength),
             Colors.transparent,
           ],
           stops: const [0, 0.2, 0.46, 0.64, 0.84, 1],
@@ -214,7 +217,7 @@ class ScreenGlassSurfacePainter extends CustomPainter {
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            magenta.withValues(alpha: pressed ? 0.2 : 0.1),
+            magenta.withValues(alpha: (pressed ? 0.2 : 0.1) * strength),
             Colors.transparent,
           ],
         ).createShader(streak),
