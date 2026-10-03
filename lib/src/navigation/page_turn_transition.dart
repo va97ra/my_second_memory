@@ -14,6 +14,13 @@ Page<void> pageTurnPage({
   String? backFallback,
 }) {
   final useFastTransition = _useFastTransition(context);
+  // Страницу, пришедшую во время переворота, показывает лист, а маршрут под
+  // ним меняется мгновенно. Навигатор снимает заменённую страницу, только
+  // доиграв приход новой, и всё это время рисует её под новой: на стекле
+  // сквозь календарь была видна шкала ушедшего дня.
+  final turnOwnsTransition =
+      PageTurnNavigationScope.maybeOf(context)?.isTurning ?? false;
+  final animated = animateRoute && !turnOwnsTransition;
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: interceptBack
@@ -22,12 +29,12 @@ Page<void> pageTurnPage({
             child: child,
           )
         : child,
-    transitionDuration: animateRoute
+    transitionDuration: animated
         ? useFastTransition
             ? const Duration(milliseconds: 120)
             : const Duration(milliseconds: 260)
         : Duration.zero,
-    reverseTransitionDuration: animateRoute
+    reverseTransitionDuration: animated
         ? useFastTransition
             ? const Duration(milliseconds: 100)
             : const Duration(milliseconds: 230)

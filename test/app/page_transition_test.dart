@@ -2,6 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/day_timeline.dart';
+import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
+import 'package:intl/intl.dart';
 
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
@@ -251,6 +254,68 @@ void main() {
       expect(find.text('first page'), findsNothing);
     });
   }
+  // На стеклянной теме страница прозрачная. Навигатор снимает заменённую
+  // страницу только после того, как доиграет приход новой, и всё это время
+  // она видна сквозь новую: на входе в день под шкалой проступал календарь,
+  // на выходе шкала висела поверх календаря.
+  testWidgets('day and calendar on glass never stand one under the other',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 860));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final now = DateTime.now();
+    await tester.pumpWidget(
+      testProviderScope(
+        overrides: [
+          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
+          memoryRepositoryProvider.overrideWithValue(EmptyMemoryRepository()),
+          shiftScheduleRepositoryProvider.overrideWithValue(
+            FakeShiftScheduleRepository(),
+          ),
+          appThemeControllerProvider.overrideWith(
+            (ref) => AppThemeController(
+              initialStyle: AppThemeStyle.cosmos,
+              loadOnStart: false,
+            ),
+          ),
+        ],
+        child: const EzhednevnikV2App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await openTab(tester, 'calendar');
+
+    // День живой — шкала тикает, — поэтому время качается отрезком, а не
+    // до полной тишины. Переворот листа укладывается в 300 мс.
+    Future<void> turnPage() async {
+      for (var frame = 0; frame < 15; frame++) {
+        await tester.pump(const Duration(milliseconds: 20));
+      }
+    }
+
+    final key = DateFormat('yyyy-MM-dd').format(now);
+    final calendarCell = find.byKey(
+      ValueKey('calendar_day_$key'),
+      skipOffstage: false,
+    );
+    final timeline = find.byType(DayTimeline, skipOffstage: false);
+
+    await tester.tap(calendarCell);
+    await turnPage();
+    expect(timeline, findsOneWidget);
+    expect(calendarCell, findsNothing);
+    // Второй переворот поверх недоигранного лист отклоняет: «назад» ждёт.
+    await turnPage();
+
+    // Обработчик «назад» ждёт кадра, поэтому его не дожидаются до прокачки.
+    final back = tester.binding.handlePopRoute();
+    await turnPage();
+    expect(calendarCell, findsOneWidget);
+    expect(timeline, findsNothing);
+    await turnPage();
+    expect(await back, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a pushed page keeps its state when a menu opens over it',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 1000));

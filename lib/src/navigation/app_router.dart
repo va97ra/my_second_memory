@@ -21,7 +21,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/calendar',
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) => navigationShell,
+        // Вкладки меняют страницу тем же переходом, что и всё остальное: без
+        // него оболочка въезжала переходом Android по умолчанию, долгим и
+        // своим, и страница, с которой ушли, рисовалась под ней всё это время.
+        // «Назад» перехватывают страницы вкладок, оболочке перехватывать
+        // нечего.
+        pageBuilder: (context, state, navigationShell) => pageTurnPage(
+          context: context,
+          state: state,
+          interceptBack: false,
+          child: navigationShell,
+        ),
         branches: [
           StatefulShellBranch(
             routes: [
