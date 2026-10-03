@@ -58,6 +58,7 @@ ThemeData buildScreenTheme(ScreenThemeColors c) {
 
   return base.copyWith(
     colorScheme: scheme,
+    progressIndicatorTheme: quietProgressTheme(scheme),
     canvasColor: c.backgroundStart,
     // Умолчания Material дают светло-серую волну, и на тёмной теме она
     // читается вспышкой, а на стекле — белым пятном. Волна красится акцентом

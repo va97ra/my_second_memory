@@ -3,6 +3,15 @@ import 'package:flutter/material.dart';
 import 'surface_palette.dart';
 import 'surface_textures.dart';
 
+/// Дорожка полосы прогресса — тонкий желобок цвета чернил темы, а не цветная
+/// заливка. Material по умолчанию берёт её из `secondaryContainer`, а темы
+/// держат там насыщенный цвет выбранного чипа: пустая полоса выглядела бы
+/// полной — «прошло 0 из 21» рисовалось сплошной синей полосой.
+ProgressIndicatorThemeData quietProgressTheme(ColorScheme scheme) =>
+    ProgressIndicatorThemeData(
+      linearTrackColor: scheme.onSurface.withValues(alpha: 0.12),
+    );
+
 ThemeData buildAppTheme({required Brightness brightness}) {
   final isDark = brightness == Brightness.dark;
   final seed = isDark ? const Color(0xFFFF6A3D) : const Color(0xFFF05A30);
