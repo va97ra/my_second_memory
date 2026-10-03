@@ -14,6 +14,14 @@ class AppStrings {
 
   bool get isRu => locale.languageCode == 'ru';
 
+  String get allDates => isRu ? 'Все даты' : 'All dates';
+  String get searchAllDates =>
+      isRu ? 'Поиск по всем датам' : 'Search all dates';
+  String get searchNotes => isRu ? 'Поиск по запискам' : 'Search notes';
+  String get closeSearch => isRu ? 'Закрыть поиск' : 'Close search';
+  String get clearSearch => isRu ? 'Стереть запрос' : 'Clear search';
+  String get feedNothingFound =>
+      isRu ? 'Записи не найдены' : 'No records found';
   String get appTitle => 'Ежедневник V2';
   String get feed => isRu ? 'Лента' : 'Feed';
   String get dayFeed => isRu ? 'Лента дня' : 'Day feed';
@@ -185,15 +193,17 @@ class AppStrings {
           'Taxes',
           'Other'
         ];
+
   /// Всплывающая подпись у кнопки подсказки — одна на все страницы.
-  String get pageHintTooltip => isRu ? 'Что здесь можно' : 'What you can do here';
+  String get pageHintTooltip =>
+      isRu ? 'Что здесь можно' : 'What you can do here';
 
   String get feedPageHint => isRu
       ? 'Записи собраны по дням выбранного периода. Стрелки листают период, '
-          'значок возвращает к сегодня, а фильтр оставляет только нужные.'
+          'лупа ищет записи, а фильтр оставляет только нужные.'
       : 'Records are grouped by day within the chosen period. The arrows move '
-          'between periods, the icon returns to today, and the filter narrows '
-          'the list.';
+          'between periods, the magnifier finds records, and the filter '
+          'narrows the list.';
 
   String get dayPageHint => isRu
       ? 'Нажмите свободное время на шкале: встанет рамка, её тянут за кружки '

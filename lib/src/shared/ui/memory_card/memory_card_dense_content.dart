@@ -23,13 +23,10 @@ class MemoryCardDenseContent extends StatelessWidget {
     final hasAudio = item.voiceNotes.isNotEmpty;
     final hasAttachments = hasAudio || item.imagePaths.isNotEmpty;
     final colors = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final typography = AppContentTypography.of(context);
     final titleStyle = typography.apply(
       Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: item.isDone
-                ? (isDark ? const Color(0xFF86EFAC) : const Color(0xFF14532D))
-                : colors.onSurface,
+            color: memoryTitleColor(colors, item),
             fontWeight: FontWeight.w800,
             height: 1.15,
           ),
@@ -102,7 +99,7 @@ class MemoryCardDenseContent extends StatelessWidget {
                 memoryAmountLabel(item.amountMinor!),
                 maxLines: 1,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: memoryTypeColor(item.type),
+                      color: memoryAccentColor(item),
                       fontWeight: FontWeight.w900,
                     ),
               ),

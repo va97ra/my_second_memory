@@ -1,4 +1,5 @@
 import 'package:ez_domain/ez_domain.dart';
+import 'package:ezhednevnik_v2/src/features/home_feed/state/feed_layout_provider.dart';
 import 'package:ezhednevnik_v2/src/features/home_feed/state/feed_providers.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -102,5 +103,65 @@ void main() {
     expect(query.start, isNull);
     expect(query.end, isNull);
     expect(controller.state.anchorDate, anchor);
+  });
+
+  test('search keeps its query only while open and starts empty each time',
+      () {
+    final controller = FeedViewController(
+      initialState: FeedViewState(
+        section: FeedSection.day,
+        anchorDate: DateTime(2026, 10, 1),
+        filter: FeedFilter.all,
+      ),
+    );
+
+    controller.search('счётчик');
+    expect(controller.state.searchQuery, isEmpty);
+
+    controller.toggleSearch();
+    controller.search('счётчик');
+    expect(controller.state.searchQuery, 'счётчик');
+
+    controller.toggleSearch();
+    expect(controller.state.searchQuery, isEmpty);
+    controller.toggleSearch();
+    expect(controller.state.searchQuery, isEmpty);
+  });
+
+  test('picking a day leaves the search', () {
+    final controller = FeedViewController(
+      initialState: FeedViewState(
+        section: FeedSection.day,
+        anchorDate: DateTime(2026, 10, 1),
+        filter: FeedFilter.all,
+        searching: true,
+        searchQuery: 'счётчик',
+      ),
+    );
+
+    controller.selectDate(DateTime(2026, 9, 3));
+
+    expect(controller.state.searching, isFalse);
+    expect(controller.state.searchQuery, isEmpty);
+  });
+
+  test('search stays open across tabs and lists all dates only on the day',
+      () {
+    final controller = FeedViewController(
+      initialState: FeedViewState(
+        section: FeedSection.day,
+        anchorDate: DateTime(2026, 10, 1),
+        filter: FeedFilter.all,
+      ),
+    );
+
+    controller.toggleSearch();
+    controller.search('пароль');
+    expect(controller.state.allDates, isTrue);
+
+    controller.selectSection(FeedSection.notes);
+    expect(controller.state.searching, isTrue);
+    expect(controller.state.searchQuery, 'пароль');
+    expect(controller.state.allDates, isFalse);
   });
 }

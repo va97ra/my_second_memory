@@ -19,7 +19,7 @@ class CalendarEventBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = memoryTypeColor(item.type);
+    final color = memoryAccentColor(item);
     final colors = Theme.of(context).colorScheme;
     final barColor = isMuted ? color.withValues(alpha: 0.48) : color;
     final title = _recordTitle(item, locale);

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
+import '../state/feed_layout_provider.dart';
 import '../state/feed_providers.dart';
 import 'widgets/feed_page.dart';
 import 'widgets/feed_section_selector.dart';
@@ -102,7 +103,9 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     // на кадр выпадает из дерева, и под ним мигает подложка.
     return PageSwipeArea(
       key: const ValueKey('feed_period_swipe_area'),
-      onHorizontalSwipe: view.section == FeedSection.notes ? null : _movePeriod,
+      onHorizontalSwipe: view.section == FeedSection.notes || view.searching
+          ? null
+          : _movePeriod,
       child: sheet,
     );
   }

@@ -2,8 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_domain/ez_domain.dart';
-import '../../memory_items/memory_items.dart';
-import '../../recurrence/recurrence.dart';
 
 /// Закладки ленты.
 ///
@@ -18,6 +16,8 @@ class FeedViewState {
     required this.section,
     required this.anchorDate,
     required this.filter,
+    this.searching = false,
+    this.searchQuery = '',
   });
 
   factory FeedViewState.initial() {
@@ -33,10 +33,27 @@ class FeedViewState {
   final DateTime anchorDate;
   final FeedFilter filter;
 
+  /// Открыт ли поиск. Ищут в открытой закладке: на дне — среди записей всех
+  /// дат, на записках — среди записок. Переход между закладками поиск не
+  /// закрывает: тот же запрос просто ищется в другом месте.
+  final bool searching;
+
+  /// Что ищут. Живёт только при открытом поиске.
+  final String searchQuery;
+
+  /// Ищет ли лента прямо сейчас: поиск открыт и в строке есть хоть одно
+  /// слово. Пустая строка ничего не ищет, и закладка показывает своё обычное
+  /// содержимое — иначе прошлые находки казались бы застрявшими в списке.
+  bool get hasQuery => searching && !MemorySearch(searchQuery).isEmpty;
+
+  /// Лента дня показывает все даты разом, а не одну страницу: запрос на дне
+  /// ищет по всем сохранённым записям, а не по открытому дню.
+  bool get allDates => hasQuery && section == FeedSection.day;
+
   /// Whether the page on screen is the one holding [now]. Notes have no
   /// period, so they always count as current.
   bool showsPeriodOf(DateTime now) {
-    if (section == FeedSection.notes) return true;
+    if (section == FeedSection.notes || allDates) return true;
     // Фильтр повторов раскрывает ленту на месяц или на год, поэтому текущей
     // считается страница этого периода, а не одного дня.
     return switch (filter.recurringFrequency) {
@@ -53,11 +70,15 @@ class FeedViewState {
     FeedSection? section,
     DateTime? anchorDate,
     FeedFilter? filter,
+    bool? searching,
+    String? searchQuery,
   }) {
     return FeedViewState(
       section: section ?? this.section,
       anchorDate: anchorDate ?? this.anchorDate,
       filter: filter ?? this.filter,
+      searching: searching ?? this.searching,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 }
@@ -78,6 +99,16 @@ class FeedViewController extends StateNotifier<FeedViewState> {
     );
   }
 
+  /// Открывает и закрывает поиск. Каждый вход начинается с пустой строки:
+  /// прошлый запрос, всплывший сам, выглядел бы как пропавшие записи.
+  void toggleSearch() =>
+      state = state.copyWith(searching: !state.searching, searchQuery: '');
+
+  void search(String query) {
+    if (!state.searching || query == state.searchQuery) return;
+    state = state.copyWith(searchQuery: query);
+  }
+
   void selectFilter(FeedFilter filter) {
     if (filter == state.filter) return;
     state = state.copyWith(filter: filter);
@@ -92,7 +123,11 @@ class FeedViewController extends StateNotifier<FeedViewState> {
   }
 
   void movePeriod(int delta) {
-    if (delta == 0 || state.section == FeedSection.notes) return;
+    // Пока открыт поиск, период закрыт строкой запроса: листать вслепую
+    // нельзя.
+    if (delta == 0 || state.section == FeedSection.notes || state.searching) {
+      return;
+    }
     final anchor = state.anchorDate;
     // Шаг листания равен показанному периоду: день, месяц или год.
     final next = switch (state.filter.recurringFrequency) {
@@ -107,8 +142,17 @@ class FeedViewController extends StateNotifier<FeedViewState> {
   /// дня переводит ленту на дневную закладку.
   void selectDate(DateTime date) {
     final day = DateTime(date.year, date.month, date.day);
-    if (state.section == FeedSection.day && state.anchorDate == day) return;
-    state = state.copyWith(section: FeedSection.day, anchorDate: day);
+    if (state.section == FeedSection.day &&
+        state.anchorDate == day &&
+        !state.searching) {
+      return;
+    }
+    state = state.copyWith(
+      section: FeedSection.day,
+      anchorDate: day,
+      searching: false,
+      searchQuery: '',
+    );
   }
 }
 
@@ -116,160 +160,6 @@ final feedViewProvider =
     StateNotifierProvider<FeedViewController, FeedViewState>(
   (ref) => FeedViewController(),
 );
-
-@immutable
-class FeedPeriodQuery {
-  const FeedPeriodQuery({
-    required this.section,
-    required this.anchorDate,
-    this.start,
-    this.end,
-  });
-
-  factory FeedPeriodQuery.fromState(FeedViewState state) {
-    final anchor = _dateOnly(state.anchorDate);
-    if (state.section == FeedSection.notes) {
-      return FeedPeriodQuery(section: state.section, anchorDate: anchor);
-    }
-    // Обычная лента показывает один день. Фильтр повторов раскрывает её на
-    // тот период, в котором повтор вообще случается.
-    return switch (state.filter.recurringFrequency) {
-      null => FeedPeriodQuery(
-          section: state.section,
-          anchorDate: anchor,
-          start: anchor,
-          end: anchor,
-        ),
-      RecurrenceFrequency.monthly => FeedPeriodQuery(
-          section: state.section,
-          anchorDate: anchor,
-          start: DateTime(anchor.year, anchor.month),
-          end: DateTime(anchor.year, anchor.month + 1, 0),
-        ),
-      RecurrenceFrequency.yearly => FeedPeriodQuery(
-          section: state.section,
-          anchorDate: anchor,
-          start: DateTime(anchor.year),
-          end: DateTime(anchor.year, 12, 31),
-        ),
-    };
-  }
-
-  final FeedSection section;
-  final DateTime anchorDate;
-  final DateTime? start;
-  final DateTime? end;
-}
-
-@immutable
-class FeedLayout {
-  const FeedLayout({required this.query, required this.groups});
-
-  final FeedPeriodQuery query;
-  final List<FeedGroupLayout> groups;
-
-  List<String> get itemIds => [
-        for (final group in groups) ...group.itemIds,
-      ];
-}
-
-@immutable
-class FeedGroupLayout {
-  const FeedGroupLayout({required this.period, required this.itemIds});
-
-  final DateTime period;
-  final List<String> itemIds;
-}
-
-final feedLayoutProvider = Provider<FeedLayout>((ref) {
-  final state = ref.watch(feedViewProvider);
-  final query = FeedPeriodQuery.fromState(state);
-
-  if (state.section == FeedSection.notes) {
-    final notes = ref
-        .watch(undatedNotesProvider)
-        .where((item) => matchesFeedFilter(item, state.filter))
-        .toList(growable: false);
-    return FeedLayout(
-      query: query,
-      groups: [
-        if (notes.isNotEmpty)
-          FeedGroupLayout(
-            period: query.anchorDate,
-            itemIds: [for (final item in notes) item.id],
-          ),
-      ],
-    );
-  }
-
-  final start = query.start!;
-  final end = query.end!;
-  // Вкладка задаёт период, а не разновидность записи: день, месяц и год
-  // показывают всё, что в них попадает. Повторы отбираются фильтром
-  // FeedFilter.recurring, а не тем, на какой вкладке стоит читатель.
-  final itemsByDate = ref.watch(memoryItemsByDateProvider);
-  final persisted = <MemoryItem>[];
-  for (var day = start;
-      !day.isAfter(end);
-      day = DateTime(day.year, day.month, day.day + 1)) {
-    persisted.addAll(itemsByDate[dateKey(day)] ?? const []);
-  }
-  // Проекция уже пропускает даты, у которых есть сохранённая запись, поэтому
-  // два источника не спорят между собой.
-  final source = [
-    ...persisted,
-    ...ref.watch(recurrenceItemsForRangeProvider(RecurrenceRange(start, end))),
-  ];
-  final byId = <String, MemoryItem>{};
-  for (final item in source) {
-    if (item.isUndated || item.isArchived) continue;
-    final date = _dateOnly(item.memoryDate);
-    if (date.isBefore(start) || date.isAfter(end)) continue;
-    if (!matchesFeedFilter(item, state.filter)) continue;
-    byId[item.id] = item;
-  }
-
-  final items = byId.values.toList()..sort(_compareDatedItems);
-  final grouped = <DateTime, List<String>>{};
-  for (final item in items) {
-    final period = switch (state.section) {
-      FeedSection.notes => query.anchorDate,
-      FeedSection.day =>
-        state.filter.recurringFrequency == RecurrenceFrequency.yearly
-            ? DateTime(item.memoryDate.year, item.memoryDate.month)
-            : _dateOnly(item.memoryDate),
-    };
-    grouped.putIfAbsent(period, () => <String>[]).add(item.id);
-  }
-
-  return FeedLayout(
-    query: query,
-    groups: [
-      for (final entry in grouped.entries)
-        FeedGroupLayout(period: entry.key, itemIds: entry.value),
-    ],
-  );
-});
-
-int _compareDatedItems(MemoryItem left, MemoryItem right) {
-  final byDate =
-      _dateOnly(left.memoryDate).compareTo(_dateOnly(right.memoryDate));
-  if (byDate != 0) return byDate;
-  final leftTime = left.timeMinutes;
-  final rightTime = right.timeMinutes;
-  if (leftTime != null || rightTime != null) {
-    if (leftTime == null) return 1;
-    if (rightTime == null) return -1;
-    final byTime = leftTime.compareTo(rightTime);
-    if (byTime != 0) return byTime;
-  }
-  final byPriority = right.priority.compareTo(left.priority);
-  if (byPriority != 0) return byPriority;
-  return left.createdAt.compareTo(right.createdAt);
-}
-
-DateTime _dateOnly(DateTime value) =>
-    DateTime(value.year, value.month, value.day);
 
 DateTime _shiftMonth(DateTime anchor, int delta) {
   final first = DateTime(anchor.year, anchor.month + delta);

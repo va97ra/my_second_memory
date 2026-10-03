@@ -31,8 +31,24 @@ Color memoryTypeColor(MemoryType type) => switch (type) {
       MemoryType.goal => const Color(0xFFF26B38),
       MemoryType.project => const Color(0xFF4D63D2),
       MemoryType.purchase => const Color(0xFFD69A00),
-      MemoryType.document => const Color(0xFF64748B),
+      // Крафтовая папка. Серым документ быть не может: серый означает
+      // «выполнено» — см. [memoryDoneColor].
+      MemoryType.document => const Color(0xFF8B5A2B),
       MemoryType.place => const Color(0xFFE04444),
       MemoryType.birthday => const Color(0xFFE03E8C),
       MemoryType.payment => const Color(0xFF008C85),
     };
+
+/// Цвет выполненной записи, один для всех видов.
+///
+/// Сделанное уходит в серый, и цветными на странице остаются только дела,
+/// которые ещё ждут: среди десятка записей дня сразу видно, что осталось.
+const memoryDoneColor = Color(0xFF6B7280);
+
+/// Цвет, которым помечена запись: цвет её вида, пока она не выполнена.
+Color memoryAccentColor(MemoryItem item) =>
+    item.isDone ? memoryDoneColor : memoryTypeColor(item.type);
+
+/// Цвет заголовка записи: выполненная пишется приглушённо, как и её цвет.
+Color memoryTitleColor(ColorScheme colors, MemoryItem item) =>
+    item.isDone ? colors.onSurfaceVariant : colors.onSurface;

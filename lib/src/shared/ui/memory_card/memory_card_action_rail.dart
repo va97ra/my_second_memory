@@ -4,6 +4,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
 import 'memory_card_labels.dart';
+import 'memory_item_presentation.dart';
 
 /// Правая полоса карточки: завершить, архивировать и текущее состояние.
 class MemoryCardActionRail extends StatelessWidget {
@@ -47,7 +48,7 @@ class MemoryCardActionRail extends StatelessWidget {
                 ),
                 style: notebookIconButtonStyle(
                   foregroundColor: item.isDone
-                      ? const Color(0xFF16A34A)
+                      ? memoryDoneColor
                       : const Color(0xFF94A3B8),
                   shrinkTapTarget: true,
                 ),
@@ -83,7 +84,7 @@ class MemoryCardActionRail extends StatelessWidget {
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: item.isArchived
                               ? const Color(0xFF92400E)
-                              : const Color(0xFF15803D),
+                              : memoryDoneColor,
                           fontSize: 8,
                           fontWeight: FontWeight.w900,
                           height: 1,

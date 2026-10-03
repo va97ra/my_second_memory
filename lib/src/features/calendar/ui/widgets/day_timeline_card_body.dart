@@ -26,7 +26,7 @@ class DayTimelineCardBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         NotebookLeatherSurface(
-          color: memoryTypeColor(item.type),
+          color: memoryAccentColor(item),
           child: SizedBox(width: 10 + tearInset),
         ),
         Expanded(
@@ -53,7 +53,7 @@ class DayTimelineCardBody extends StatelessWidget {
                       maxLines: short ? 1 : 3,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: colors.onSurface,
+                        color: memoryTitleColor(colors, item),
                         // На четверти часа подпись живёт одной мелкой строкой.
                         fontSize: short ? 11 : 13,
                         fontWeight: FontWeight.w800,

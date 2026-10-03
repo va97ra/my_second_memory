@@ -31,9 +31,19 @@ String feedSectionTabLabel(
   };
 }
 
+/// Где ищет строка поиска: на дне — по всем датам, на записках — по ним.
+String feedSearchHint(BuildContext context, FeedSection section) {
+  final strings = AppStrings.of(context);
+  return switch (section) {
+    FeedSection.day => strings.searchAllDates,
+    FeedSection.notes => strings.searchNotes,
+  };
+}
+
 /// Период, лежащий на странице. У записок периода нет.
 String? feedPeriodLabel(BuildContext context, FeedViewState view) {
   if (view.section == FeedSection.notes) return null;
+  if (view.allDates) return AppStrings.of(context).allDates;
   final locale = Localizations.localeOf(context).languageCode;
   final formatted = switch (view.filter.recurringFrequency) {
     null => DateFormat.yMMMMEEEEd(locale).format(view.anchorDate),
@@ -47,12 +57,12 @@ String? feedPeriodLabel(BuildContext context, FeedViewState view) {
 }
 
 /// Подпись разделителя внутри раскрытого периода.
-String feedGroupLabel(
-  BuildContext context,
-  FeedFilter filter,
-  DateTime period,
-) {
+String feedGroupLabel(BuildContext context, FeedFilter filter, DateTime period,
+    {bool allDates = false}) {
   final locale = Localizations.localeOf(context).languageCode;
+  if (allDates) {
+    return _capitalize(DateFormat.yMMMMEEEEd(locale).format(period));
+  }
   final value = filter.recurringFrequency == RecurrenceFrequency.yearly
       ? DateFormat.MMMM(locale).format(period)
       : DateFormat(locale == 'ru' ? 'd MMMM, EEEE' : 'EEEE, MMMM d', locale)

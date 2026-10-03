@@ -12,7 +12,6 @@ class MemoryCardPaper extends StatelessWidget {
     super.key,
     required this.cardKey,
     required this.variantKey,
-    required this.tint,
     required this.borderColor,
     required this.height,
     required this.margin,
@@ -25,8 +24,6 @@ class MemoryCardPaper extends StatelessWidget {
   /// один и тот же.
   final String variantKey;
 
-  /// Подкраска бумаги или null у обычной записи.
-  final Color? tint;
   final Color borderColor;
   final double height;
   final EdgeInsetsGeometry margin;
@@ -42,7 +39,7 @@ class MemoryCardPaper extends StatelessWidget {
       child: Padding(
         padding: margin,
         child: Material(
-          color: paper,
+          color: notebookCardSurface,
           elevation: 6,
           shadowColor:
               _shadowColor(isNotebook: notebook != null, isDark: isDark),
@@ -88,19 +85,10 @@ class MemoryCardPaper extends StatelessWidget {
         : const Color(0xFF536575).withValues(alpha: 0.34);
   }
 
-  /// Цвет листа: бумага, подкрашенная тем, что передала карточка.
-  ///
-  /// Бумага одна на все темы, а оттенок — состояние записи: выполненная
-  /// зеленеет. Поэтому карточка передаёт подкраску, а не готовый цвет: иначе
-  /// в тёмной теме она передала бы тёмную поверхность.
-  Color get paper => tint == null
-      ? notebookCardSurface
-      : Color.alphaBlend(tint!, notebookCardSurface);
-
   /// Фон листка: зерно бумаги, одно во всех темах.
   BoxDecoration _surface(BuildContext context, BorderRadius roundedBorder) {
     return BoxDecoration(
-      color: paper,
+      color: notebookCardSurface,
       image: const DecorationImage(
         image: AssetImage(NotebookAssets.paper),
         fit: BoxFit.cover,

@@ -38,18 +38,13 @@ class MemoryItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typeColor = memoryTypeColor(item.type);
+    // Выполненная запись сереет целиком — полоса вида, кромка и заголовок,
+    // — а бумага остаётся бумагой: сделанное дело листок не перекрашивает.
+    final accent = memoryAccentColor(item);
     return MemoryCardPaper(
       cardKey: ValueKey('memory_card_${item.id}'),
       variantKey: item.id,
-      // Выполненная запись зеленеет, обычная остаётся чистой бумагой. Цвет
-      // самой бумаги карточка не выбирает: он один на все темы.
-      tint: item.isDone
-          ? const Color(0xFF16A34A).withValues(alpha: 0.1)
-          : null,
-      borderColor: item.isDone
-          ? const Color(0xFF86EFAC)
-          : typeColor.withValues(alpha: 0.34),
+      borderColor: accent.withValues(alpha: 0.34),
       height: _height(context),
       margin: margin,
       child: Row(
@@ -67,7 +62,7 @@ class MemoryItemCard extends StatelessWidget {
                   MemoryCardTypeRail(
                     key: ValueKey('memory_card_type_${item.id}'),
                     item: item,
-                    color: typeColor,
+                    color: accent,
                     showDate: showDate,
                     compact: compact,
                     denseFeedLayout: denseFeedLayout,

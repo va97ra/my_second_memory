@@ -2,6 +2,8 @@ import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
+import 'memory_item_presentation.dart';
+
 /// Правая полоса плотной карточки: те же действия квадратными кнопками.
 class MemoryCardDenseActionRail extends StatelessWidget {
   const MemoryCardDenseActionRail({
@@ -50,10 +52,10 @@ class MemoryCardDenseActionRail extends StatelessWidget {
                 ),
                 style: _squareButtonStyle(
                   foreground: item.isDone
-                      ? const Color(0xFF16A34A)
+                      ? memoryDoneColor
                       : colors.onSurfaceVariant,
                   background: item.isDone
-                      ? const Color(0xFF16A34A).withValues(alpha: 0.15)
+                      ? memoryDoneColor.withValues(alpha: 0.15)
                       : Colors.transparent,
                 ),
               ),

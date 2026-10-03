@@ -21,6 +21,7 @@ export 'src/calendar/holiday_observance_table.dart';
 export 'src/calendar/holiday_occurrence.dart';
 export 'src/calendar/holiday_russian_table.dart';
 export 'src/feed/feed_rules.dart';
+export 'src/feed/memory_search.dart';
 export 'src/memory/memory_item.dart';
 export 'src/memory/reminder_rules.dart';
 export 'src/memory/memory_status.dart';
