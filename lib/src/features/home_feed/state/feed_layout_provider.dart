@@ -109,6 +109,8 @@ final feedLayoutProvider = Provider<FeedLayout>((ref) {
         day = DateTime(day.year, day.month, day.day + 1)) {
       source.addAll(itemsByDate[dateKey(day)] ?? const []);
     }
+    // Проекция уже пропускает даты, у которых есть сохранённая запись,
+    // поэтому два источника не спорят между собой.
     source.addAll(ref
         .watch(recurrenceItemsForRangeProvider(RecurrenceRange(start, end))));
   }

@@ -1,5 +1,5 @@
 import 'package:ezhednevnik_v2/src/features/calendar/state/production_preferences.dart';
-import 'package:ezhednevnik_v2/src/features/calendar/state/production_progress_provider.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/state/production_period_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,6 +36,8 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     expect(
-        container.read(productionProgressProvider(DateTime(2026, 9))), isNull);
+        container.read(productionPeriodProvider(
+            (date: DateTime(2026, 9), period: ProductionPeriod.month))),
+        isEmpty);
   });
 }

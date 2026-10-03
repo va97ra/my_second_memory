@@ -7,7 +7,7 @@ import 'production_preferences.dart';
 enum ProductionPeriod { week, month, year }
 
 typedef ProductionPeriodQuery = ({DateTime date, ProductionPeriod period});
-typedef PeriodProgressRow = ({String? name, ProductionProgress? progress});
+typedef PeriodProgressRow = ({String name, ProductionProgress? progress});
 final productionPeriodProvider = Provider.autoDispose
     .family<List<PeriodProgressRow>, ProductionPeriodQuery>((ref, query) {
   final date = query.date;

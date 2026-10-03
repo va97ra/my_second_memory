@@ -43,7 +43,6 @@ String feedSearchHint(BuildContext context, FeedSection section) {
 /// Период, лежащий на странице. У записок периода нет.
 String? feedPeriodLabel(BuildContext context, FeedViewState view) {
   if (view.section == FeedSection.notes) return null;
-  if (view.allDates) return AppStrings.of(context).allDates;
   final locale = Localizations.localeOf(context).languageCode;
   final formatted = switch (view.filter.recurringFrequency) {
     null => DateFormat.yMMMMEEEEd(locale).format(view.anchorDate),

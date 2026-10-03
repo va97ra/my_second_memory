@@ -94,7 +94,7 @@ class _ProductionCalendarDialogState
                       if (rows.isEmpty) Text(strings.productionChooseSource),
                       for (final row in rows) ...[
                         const SizedBox(height: 16),
-                        Text(row.name!, style: text.titleSmall),
+                        Text(row.name, style: text.titleSmall),
                         const SizedBox(height: 8),
                         if (row.progress != null)
                           ProductionProgressNumbers(progress: row.progress!),

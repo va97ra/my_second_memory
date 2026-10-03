@@ -14,7 +14,6 @@ class AppStrings {
 
   bool get isRu => locale.languageCode == 'ru';
 
-  String get allDates => isRu ? 'Все даты' : 'All dates';
   String get searchAllDates =>
       isRu ? 'Поиск по всем датам' : 'Search all dates';
   String get searchNotes => isRu ? 'Поиск по запискам' : 'Search notes';
