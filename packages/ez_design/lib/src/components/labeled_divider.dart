@@ -49,11 +49,12 @@ class AppLabeledDivider extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (trailingIcon != null) const SizedBox(width: 20),
+                        // Подпись переносится, а не теряет хвост: в поиске
+                        // это дата, и «Вторник, 15 сентябр…» без года
+                        // ничего не сообщает.
                         Flexible(
                           child: Text(
                             label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: color,

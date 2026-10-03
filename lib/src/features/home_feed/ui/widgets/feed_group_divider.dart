@@ -9,8 +9,10 @@ class FeedGroupDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
+    // Две линейки — наименьшая высота, а не потолок: длинная дата при
+    // крупном шрифте переносится на вторую строку.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48),
       child: Center(
         child: AppLabeledDivider(
           label: label,
