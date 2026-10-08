@@ -83,8 +83,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     final destinations = appDestinations(strings);
     final tools = toolDestinations(strings);
     final activeToolId = toolIdForLocation(_location, tools);
-    final panelIndex =
-        _indexOf(destinations, panelIdForLocation(_location)) ?? 0;
+    final panelId = panelIdForLocation(_location);
+    final panelIndex = _indexOf(destinations, panelId) ?? 0;
     final navigation = ShellNavigation(
       router: _router,
       frame: _pageTurnKey,
@@ -110,7 +110,9 @@ class _AppShellState extends ConsumerState<AppShell> {
               selectedIndex: _indexOf(tools, activeToolId),
               onSelected: (index) => navigation.selectTool(
                 tools[index],
-                panel: destinations[panelIndex].id,
+                // Раздел, с которого ушли, — даже если его кнопка наверху,
+                // как у настроек: «назад» вернёт туда же.
+                panel: panelId ?? destinations.first.id,
               ),
             ),
           ),

@@ -3,11 +3,12 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../navigation/page_turn_navigation.dart';
+import '../../../navigation/calendar_locations.dart';
 import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
+import '../state/calendar_focus_request.dart';
 import '../state/calendar_month_data.dart';
 import 'widgets/calendar_header.dart';
 import 'widgets/calendar_loading_view.dart';
@@ -54,6 +55,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     final loadState = ref.watch(memoryItemsLoadProvider);
     final monthData = ref.watch(calendarMonthDataProvider(_visibleMonth));
     ref.watch(recurrenceLoadProvider);
+    ref.listen(calendarFocusRequestProvider, (_, request) {
+      if (request != null) _goTo(request.date);
+    });
 
     if (loadState.isLoading || loadState.hasError) {
       return CalendarLoadingView(
@@ -94,7 +98,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         visibleMonth: _visibleMonth,
         locale: locale,
         schedules: schedules,
-        onToday: _goToToday,
+        onToday: () => _goTo(DateTime.now()),
         onChangeMonth: _changeMonth,
       );
 
@@ -129,20 +133,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         direction: offset.sign,
       );
 
-  void _goToToday() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final targetMonth = DateTime(today.year, today.month);
+  void _goTo(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day);
+    final targetMonth = DateTime(day.year, day.month);
     if (targetMonth == _visibleMonth) {
-      setState(() => _selectedDate = today);
+      setState(() => _selectedDate = day);
       return;
     }
-
     _startTransition(
       targetMonth,
       axis: Axis.horizontal,
       direction: targetMonth.isAfter(_visibleMonth) ? 1 : -1,
-      selectedDate: today,
+      selectedDate: day,
     );
   }
 
@@ -172,8 +174,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
 
   Future<void> _openDay(DateTime date) async {
     final selected = DateTime(date.year, date.month, date.day);
-    final location =
-        '/calendar/day?date=${DateFormat('yyyy-MM-dd').format(selected)}';
+    final location = calendarDayLocation(selected);
 
     // На Windows день открывается поверх календаря, поэтому выбранная дата
     // переносится уже после возвращения.

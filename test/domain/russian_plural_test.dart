@@ -1,4 +1,4 @@
-import 'package:ez_core/ez_core.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

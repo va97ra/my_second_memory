@@ -46,3 +46,14 @@ bool canRemindAt(DateTime memoryDate, int? minutes, {DateTime? now}) {
   if (minutes == null) return false;
   return reminderMomentOn(memoryDate, minutes).isAfter(now ?? DateTime.now());
 }
+
+/// Напоминание новой записи со временем: в момент её начала.
+///
+/// Время ставят затем, чтобы дело не пропустить, — молчаливая запись эту
+/// задачу не решает. Прошедший момент не наступит, поэтому для него
+/// напоминания нет.
+DateTime? defaultReminderAt(DateTime memoryDate, int? minutes, {DateTime? now}) {
+  if (minutes == null) return null;
+  final moment = reminderMomentOn(memoryDate, minutes);
+  return moment.isAfter(now ?? DateTime.now()) ? moment : null;
+}

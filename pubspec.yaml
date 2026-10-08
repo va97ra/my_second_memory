@@ -43,6 +43,11 @@ dependencies:
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
   record: ^7.1.1
+  # Джарвис: распознавание речи на телефоне без сети (sherpa-onnx + модель
+  # Vosk small ru) и голос дворецкого. Версии — те, что проверены на телефоне
+  # владельца в MemoryVoice.
+  sherpa_onnx: 1.13.8
+  flutter_tts: 4.2.5
   just_audio: ^0.9.40
   # Проигрывателя для Windows у just_audio нет: он объявляет только android,
   # ios, macos и web. Без этой реализации нажатие на голосовую заметку на
@@ -87,6 +92,9 @@ flutter:
     - assets/textures/vacation_ribbon.webp
     - assets/textures/cosmos_backdrop.webp
     - assets/textures/cyberpunk_city_street.webp
+    # Офлайн-распознавание речи Джарвиса: Vosk small streaming ru 0.54,
+    # Apache 2.0 (alphacep/vosk-model-small-streaming-ru).
+    - assets/speech/vosk-ru/
     - windows/runner/resources/app_icon.ico
   fonts:
     - family: Manrope

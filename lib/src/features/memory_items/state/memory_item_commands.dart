@@ -8,33 +8,55 @@ import 'memory_items_controller.dart';
 ///
 /// Вхождение повтора не лежит в хранилище отдельной строкой: его правка идёт в
 /// серию как переопределение. Поэтому каждое действие сначала спрашивает, что
-/// перед ним, и только потом выбирает, кому его передать.
-void toggleMemoryDone(WidgetRef ref, MemoryItem item) {
-  if (item.isGeneratedOccurrence) {
-    ref
-        .read(recurrenceSeriesControllerProvider.notifier)
-        .toggleOccurrenceDone(item);
-    return;
-  }
-  ref.read(memoryItemsControllerProvider.notifier).toggleDone(item.id);
+/// перед ним, и только потом выбирает, кому его передать. Решение живёт
+/// здесь одно — и для экранов, и для Джарвиса.
+class MemoryItemCommands {
+  const MemoryItemCommands({
+    required MemoryItemsController items,
+    required RecurrenceSeriesController series,
+  })  : _items = items,
+        _series = series;
+
+  final MemoryItemsController _items;
+  final RecurrenceSeriesController _series;
+
+  Future<void> toggleDone(MemoryItem item) => item.isGeneratedOccurrence
+      ? _series.toggleOccurrenceDone(item)
+      : _items.toggleDone(item.id);
+
+  Future<void> archive(MemoryItem item) => item.isGeneratedOccurrence
+      ? _series.archiveOccurrence(item)
+      : _items.archive(item.id);
+
+  Future<void> restore(MemoryItem item) => item.isGeneratedOccurrence
+      ? _series.restoreOccurrence(item)
+      : _items.restore(item.id);
+
+  /// Сохраняет правку [edited] записи [original] туда, где запись живёт.
+  ///
+  /// Перенесённое вхождение адресуется по исходной дате, иначе серия
+  /// разъезжается надвое.
+  Future<void> save(MemoryItem edited, {required MemoryItem original}) =>
+      original.isGeneratedOccurrence
+          ? _series.saveOccurrenceOverride(
+              edited,
+              occurrenceDate: original.memoryDate,
+            )
+          : _items.update(edited);
 }
 
-void archiveMemory(WidgetRef ref, MemoryItem item) {
-  if (item.isGeneratedOccurrence) {
-    ref
-        .read(recurrenceSeriesControllerProvider.notifier)
-        .archiveOccurrence(item);
-    return;
-  }
-  ref.read(memoryItemsControllerProvider.notifier).archive(item.id);
-}
+final memoryItemCommandsProvider = Provider<MemoryItemCommands>((ref) {
+  return MemoryItemCommands(
+    items: ref.watch(memoryItemsControllerProvider.notifier),
+    series: ref.watch(recurrenceSeriesControllerProvider.notifier),
+  );
+});
 
-void restoreMemory(WidgetRef ref, MemoryItem item) {
-  if (item.isGeneratedOccurrence) {
-    ref
-        .read(recurrenceSeriesControllerProvider.notifier)
-        .restoreOccurrence(item);
-    return;
-  }
-  ref.read(memoryItemsControllerProvider.notifier).restore(item.id);
-}
+void toggleMemoryDone(WidgetRef ref, MemoryItem item) =>
+    ref.read(memoryItemCommandsProvider).toggleDone(item);
+
+void archiveMemory(WidgetRef ref, MemoryItem item) =>
+    ref.read(memoryItemCommandsProvider).archive(item);
+
+void restoreMemory(WidgetRef ref, MemoryItem item) =>
+    ref.read(memoryItemCommandsProvider).restore(item);

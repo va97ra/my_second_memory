@@ -11,6 +11,10 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
+  # Только правила языка (склонение по числу): строки интерфейса и речь
+  # Джарвиса склоняют одним правилом. Продуктовое из домена сюда не берётся.
+  ez_domain:
+    path: ../ez_domain
 
 dev_dependencies:
   flutter_test:

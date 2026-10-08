@@ -14,6 +14,7 @@ import '../features/calculator/calculator.dart';
 import '../features/finance/finance.dart';
 import '../features/converter/converter.dart';
 import '../features/tool_slots/tool_slots.dart';
+import 'calendar_locations.dart';
 import 'page_turn_transition.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -108,15 +109,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state: state,
           animateRoute: false,
           child: const ConverterScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/tools/slot-one',
-        pageBuilder: (context, state) => pageTurnPage(
-          context: context,
-          state: state,
-          animateRoute: false,
-          child: const EmptyToolScreen(),
         ),
       ),
       GoRoute(
@@ -215,7 +207,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return pageTurnPage(
             context: context,
             state: state,
-            backFallback: _calendarDayLocation(date),
+            backFallback: calendarDayLocation(date),
             child: HolidayDetailScreen(
               date: DateTime(date.year, date.month, date.day),
             ),
@@ -262,8 +254,3 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-String _calendarDayLocation(DateTime date) {
-  final month = date.month.toString().padLeft(2, '0');
-  final day = date.day.toString().padLeft(2, '0');
-  return '/calendar/day?date=${date.year}-$month-$day';
-}

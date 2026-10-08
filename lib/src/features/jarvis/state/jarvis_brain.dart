@@ -1,0 +1,182 @@
+import 'dart:convert';
+
+import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart';
+
+import 'jarvis_executor.dart';
+import 'jarvis_outcome.dart';
+
+/// Нейросеть Джарвиса: свободная речь, советы, ответы на любые вопросы.
+///
+/// Действует она той же рукой, что и правила: функция `run_command` отдаёт
+/// короткую команду разбору фраз и исполнителю. Своих способов менять
+/// данные у нейросети нет, а значит, нет и второго описания того, что
+/// Джарвис умеет.
+class JarvisBrain {
+  JarvisBrain({
+    required GigaChatClient client,
+    required JarvisExecutor executor,
+  })  : _client = client,
+        _executor = executor;
+
+  final GigaChatClient _client;
+  final JarvisExecutor _executor;
+
+  /// Разговор помнится полчаса и не дольше двенадцати реплик: дальше он уже
+  /// не помогает понять просьбу, а только дорожает.
+  static const _memory = Duration(minutes: 30);
+  static const _keptReplies = 12;
+  static const _maxCalls = 6;
+
+  final _history = <Map<String, dynamic>>[];
+  DateTime? _lastAsked;
+
+  /// Спрашивает нейросеть. Бросает [GigaChatException], если она не ответила.
+  Future<JarvisOutcome> ask(
+    String text, {
+    required MemoryItem? mentioned,
+    required DateTime now,
+  }) async {
+    final last = _lastAsked;
+    if (last == null || now.difference(last) > _memory) _history.clear();
+    final messages = <Map<String, dynamic>>[
+      {'role': 'system', 'content': jarvisBrainInstructions(now)},
+      ..._history,
+      {'role': 'user', 'content': text},
+    ];
+    final outcomes = <JarvisOutcome>[];
+    var said = '';
+    for (var call = 0; call < _maxCalls; call++) {
+      final message =
+          await _client.chat(messages, functions: JarvisBrainFunctions.specs);
+      final function = message['function_call'];
+      if (function is! Map) {
+        said = message['content'] as String? ?? '';
+        break;
+      }
+      final name = '${function['name'] ?? ''}';
+      final result = await _run(name, _arguments(function['arguments']),
+          outcomes: outcomes, mentioned: mentioned, now: now);
+      messages
+        ..add({
+          'role': 'assistant',
+          'content': message['content'] ?? '',
+          'function_call': function,
+          if (message['functions_state_id'] != null)
+            'functions_state_id': message['functions_state_id'],
+        })
+        ..add({'role': 'function', 'name': name, 'content': jsonEncode(result)});
+    }
+    _lastAsked = now;
+    final reply = cleanBrainReply(said);
+    final spoken = reply.isNotEmpty
+        ? reply
+        : outcomes.map((outcome) => outcome.say).join(' ');
+    _history
+      ..add({'role': 'user', 'content': text})
+      ..add({'role': 'assistant', 'content': spoken});
+    while (_history.length > _keptReplies) {
+      _history.removeAt(0);
+    }
+    return _merge(spoken, outcomes);
+  }
+
+  Future<Object?> _run(
+    String name,
+    Map<String, dynamic> arguments, {
+    required List<JarvisOutcome> outcomes,
+    required MemoryItem? mentioned,
+    required DateTime now,
+  }) async {
+    switch (name) {
+      case JarvisBrainFunctions.runCommand:
+        final phrase = '${arguments['phrase'] ?? ''}';
+        final outcome = await _command(phrase, mentioned: mentioned, now: now);
+        if (outcome == null) {
+          return {'error': 'Команда не распознана. Скажи её проще.'};
+        }
+        outcomes.add(outcome);
+        return {'result': outcome.say};
+      case JarvisBrainFunctions.listRecords:
+        final from = parseBrainDate(arguments['from']);
+        final to = parseBrainDate(arguments['to']) ?? from;
+        if (from == null || to == null) return {'error': 'Нужны даты YYYY-MM-DD'};
+        return [
+          for (final item in _executor.records.between(from, to))
+            recordForBrain(item),
+        ];
+      case JarvisBrainFunctions.findRecords:
+        return [
+          for (final item in _executor.records
+              .find('${arguments['query'] ?? ''}', now)
+              .take(15))
+            recordForBrain(item),
+        ];
+    }
+    return {'error': 'Такой функции нет'};
+  }
+
+  /// Команда нейросети исполняется так же, как сказанная человеком. Уточнять
+  /// у нейросети «во сколько?» некому: дело без дня становится запиской, без
+  /// времени — делом на весь день.
+  Future<JarvisOutcome?> _command(
+    String phrase, {
+    required MemoryItem? mentioned,
+    required DateTime now,
+  }) async {
+    final command = const JarvisCommandParser().parse(phrase, now);
+    switch (command) {
+      case null || AskBrain() || UndoLast():
+        return null;
+      case CreateTasks(:final tasks, :final transcript):
+        return _executor.create(
+          [
+            for (final task in tasks)
+              task.need == TaskNeed.time ? task.copyWith(allDay: true) : task,
+          ],
+          transcript: transcript,
+          now: now,
+        );
+      default:
+        return _executor.run(command, mentioned: mentioned, now: now);
+    }
+  }
+
+  static Map<String, dynamic> _arguments(Object? raw) {
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    if (raw is String && raw.isNotEmpty) {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    }
+    return const {};
+  }
+
+  /// Несколько действий за один ответ — одна отмена на все: возвращается
+  /// всё, что нейросеть сделала по этой просьбе, в обратном порядке.
+  static JarvisOutcome _merge(String say, List<JarvisOutcome> outcomes) {
+    final undos = [
+      for (final outcome in outcomes)
+        if (outcome.undo != null) outcome.undo!,
+    ];
+    JarvisOutcome? lastWith(bool Function(JarvisOutcome) has) {
+      for (final outcome in outcomes.reversed) {
+        if (has(outcome)) return outcome;
+      }
+      return null;
+    }
+
+    return JarvisOutcome(
+      say,
+      open: lastWith((outcome) => outcome.open != null)?.open,
+      link: lastWith((outcome) => outcome.link != null)?.link,
+      mentioned: lastWith((outcome) => outcome.mentioned != null)?.mentioned,
+      undo: undos.isEmpty
+          ? null
+          : () async {
+              for (final undo in undos.reversed) {
+                await undo();
+              }
+            },
+    );
+  }
+}

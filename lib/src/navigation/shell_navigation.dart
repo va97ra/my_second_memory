@@ -35,7 +35,7 @@ class ShellNavigation {
   /// состояние сами; всё остальное открывается поверх страницы, чтобы туда
   /// можно было вернуться назад.
   void select(AppDestination destination) {
-    if (coordinator.isBusy) return;
+    if (coordinator.isBusy || _openSheet(destination)) return;
     _turnTo(() {
       if (destination.isBranch) {
         router.go(destination.location);
@@ -51,6 +51,13 @@ class ShellNavigation {
   /// прежней.
   void selectTool(AppDestination destination, {required String panel}) {
     if (coordinator.isBusy || destination.id == activeToolId) return;
+    if (_openSheet(destination)) return;
+    if (destination.isBranch) {
+      // Вкладка оболочки с кнопкой наверху: адрес меняется целиком, как и с
+      // нижней панели, — вкладка помнит своё состояние сама.
+      _turnTo(() => router.go(destination.location));
+      return;
+    }
     final location = '${destination.location}?panel=$panel';
     if (activeToolId != null) {
       // Верхние инструменты — вкладки одного места, а не следующие страницы.
@@ -61,6 +68,17 @@ class ShellNavigation {
       return;
     }
     _turnTo(() => router.push<void>(location));
+  }
+
+  /// Лист открывается в навигаторе, а не в оболочке: так он ложится между
+  /// панелями и меряет высоту от листа страницы, как и все листы. Не лист —
+  /// false, и кнопка ведёт по адресу.
+  bool _openSheet(AppDestination destination) {
+    final openSheet = destination.openSheet;
+    if (openSheet == null) return false;
+    final navigatorContext = router.routerDelegate.navigatorKey.currentContext;
+    if (navigatorContext != null) openSheet(navigatorContext);
+    return true;
   }
 
   void _turnTo(VoidCallback go) {

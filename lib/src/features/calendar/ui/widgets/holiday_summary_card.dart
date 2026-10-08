@@ -1,8 +1,8 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
+import '../../../../navigation/calendar_locations.dart';
 import '../../../../navigation/page_turn_navigation.dart';
 
 /// Праздники дня одной карточкой. По нажатию открывается их полный список.
@@ -31,9 +31,7 @@ class HolidaySummaryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: InkWell(
             borderRadius: BorderRadius.circular(8),
-            onTap: () => context.pageTurnPush(
-              '/calendar/holidays?date=${DateFormat('yyyy-MM-dd').format(date)}',
-            ),
+            onTap: () => context.pageTurnPush(holidaysLocation(date)),
             child: Padding(
               padding: const EdgeInsets.all(10),
               child: Row(

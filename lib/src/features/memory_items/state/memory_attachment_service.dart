@@ -66,24 +66,11 @@ class MemoryAttachmentService {
     if (!await _recorder.hasPermission()) return false;
     final path = await _storage.createVoicePath();
     await _recorder.start(
-      RecordConfig(device: await _defaultInputDevice()),
+      RecordConfig(device: await _audioInput.inputDeviceFor(_recorder)),
       path: path,
     );
     _recordingStartedAt = DateTime.now();
     return true;
-  }
-
-  /// Микрофон, выбранный в параметрах звука Windows.
-  ///
-  /// Null — устройство назвать не удалось; тогда его выбирает система, как и
-  /// раньше. На телефоне это всегда так: там микрофон один.
-  Future<InputDevice?> _defaultInputDevice() async {
-    final id = await _audioInput.defaultCaptureDeviceId();
-    if (id == null) return null;
-    for (final device in await _recorder.listInputDevices()) {
-      if (device.id == id) return device;
-    }
-    return null;
   }
 
   /// Останавливает запись. Null означает, что записывать было нечего.

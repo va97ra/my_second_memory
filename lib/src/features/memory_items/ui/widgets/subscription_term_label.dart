@@ -1,4 +1,4 @@
-import 'package:ez_core/ez_core.dart';
+import 'package:ez_domain/ez_domain.dart';
 
 /// Срок подписки словами: «2 года 3 месяца» или «Без срока».
 ///

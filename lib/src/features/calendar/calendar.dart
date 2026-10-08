@@ -3,6 +3,7 @@
 /// Снаружи фича видна только отсюда: остальное — её кухня.
 library;
 
+export 'state/calendar_focus_request.dart';
 export 'state/calendar_preferences_controller.dart';
 export 'state/holiday_providers.dart';
 export 'ui/calendar_day_screen.dart';

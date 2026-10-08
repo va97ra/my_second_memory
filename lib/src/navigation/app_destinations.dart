@@ -1,9 +1,11 @@
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
+import '../features/jarvis/jarvis.dart';
 import 'app_destination.dart';
 
-/// Пункты нижней панели в порядке показа.
+/// Пункты нижней панели в порядке показа. Вкладка настроек осталась веткой
+/// оболочки (`branchIndex: 3`), но кнопка её — в верхней панели.
 ///
 /// Единственное место, где описано, из чего состоит панель. Порядок здесь —
 /// это порядок на экране; индексы веток заданы явно, поэтому вставка пункта в
@@ -36,11 +38,13 @@ List<AppDestination> appDestinations(AppStrings strings) => [
         location: '/accounts',
         branchIndex: 2,
       ),
-      AppDestination.branch(
-        id: 'settings',
-        icon: Icons.tune_rounded,
-        label: strings.settings,
-        location: '/settings',
-        branchIndex: 3,
+      // Джарвис — справа внизу, под большим пальцем: к нему обращаются чаще
+      // всего. Настройки, которые нужны редко, ушли на его место наверх
+      // (решение владельца 8 октября 2026).
+      AppDestination.sheet(
+        id: 'jarvis',
+        icon: Icons.support_agent_rounded,
+        label: strings.jarvis,
+        openSheet: showJarvisSheet,
       ),
     ];

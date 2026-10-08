@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
+import '../../../navigation/calendar_locations.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../state/holiday_providers.dart';
 
@@ -20,8 +21,7 @@ class HolidayDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppPageAppBar(
-        fallbackLocation:
-            '/calendar/day?date=${DateFormat('yyyy-MM-dd').format(date)}',
+        fallbackLocation: calendarDayLocation(date),
         hint: AppStrings.of(context).holidayPageHint,
         title: Text(
           isRu ? 'Праздники' : 'Holidays',

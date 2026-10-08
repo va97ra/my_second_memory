@@ -39,3 +39,6 @@ output/
 
 # Kotlin compiler cache
 android/.kotlin/
+
+# Временная заготовка Джарвиса из MemoryVoice (модель речи 28 МБ) — см. docs/jarvis.md.
+jarvis_donor/

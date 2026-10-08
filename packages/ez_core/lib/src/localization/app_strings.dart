@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'russian_plural.dart';
+import 'package:ez_domain/ez_domain.dart' show russianPlural;
 
 class AppStrings {
   AppStrings(this.locale);
@@ -36,6 +36,7 @@ class AppStrings {
   String get activeRecords => isRu ? 'Активные' : 'Active';
   String get completedRecords => isRu ? 'Выполненные' : 'Done';
   String get today => isRu ? 'Сегодня' : 'Today';
+  String get tomorrow => isRu ? 'Завтра' : 'Tomorrow';
   String get yesterday => isRu ? 'Вчера' : 'Yesterday';
   String recordsCount(int count) {
     if (!isRu) return count == 1 ? '1 record' : '$count records';
@@ -51,8 +52,51 @@ class AppStrings {
   String get emptySlotHint => isRu
       ? 'Инструмент, который здесь стоял, убран. Место в панели осталось под следующий.'
       : 'The tool that lived here is gone. The slot is kept for the next one.';
-  String get toolSlotOne => isRu ? 'Слот 1' : 'Slot 1';
   String get toolSlotTwo => isRu ? 'Слот 2' : 'Slot 2';
+  String get jarvis => isRu ? 'Джарвис' : 'Jarvis';
+  String get jarvisGreeting =>
+      isRu ? 'Слушаю, сэр. Чем могу помочь?' : 'At your service.';
+
+  /// Джарвис понимает только русский: примеры — на нём при любом языке.
+  List<String> get jarvisExamples => const [
+        'Завтра в 10 врач',
+        'Что у меня завтра?',
+        'Открой финансы',
+      ];
+  String get jarvisInputHint =>
+      isRu ? 'Скажите или напишите' : 'Say or type';
+  String get jarvisSend => isRu ? 'Отправить' : 'Send';
+  String get jarvisListen => isRu ? 'Говорить' : 'Talk';
+  String get jarvisStopListening => isRu ? 'Хватит слушать' : 'Stop listening';
+  String get jarvisListening => isRu ? 'Слушаю…' : 'Listening…';
+  String get jarvisUndo => isRu ? 'Отменить' : 'Undo';
+  String get jarvisShow => isRu ? 'Показать' : 'Show';
+  String get jarvisDone => isRu ? 'Готово' : 'Done';
+  String get jarvisMorning => isRu ? 'Утром, в 9' : 'Morning, 9';
+  String get jarvisAfternoon => isRu ? 'Днём, в 13' : 'Afternoon, 1 pm';
+  String get jarvisEvening => isRu ? 'Вечером, в 19' : 'Evening, 7 pm';
+  String get jarvisAllDay => isRu ? 'Весь день' : 'All day';
+  String get jarvisNoDate => isRu ? 'Без даты' : 'No date';
+  String get jarvisCancelAnswer => isRu ? 'Не надо' : 'Never mind';
+  String get jarvisBrain => isRu ? 'Нейросеть GigaChat' : 'GigaChat brain';
+  String get jarvisBrainOn => isRu
+      ? 'Подключена: Джарвис понимает свободную речь'
+      : 'Connected: Jarvis understands free speech';
+  String get jarvisBrainOff => isRu
+      ? 'Не подключена: Джарвис понимает только команды'
+      : 'Not connected: Jarvis understands commands only';
+  String get jarvisBrainHowTo => isRu
+      ? 'Ключ выдаёт Сбер: developers.sber.ru → GigaChat API → «Получить '
+          'ключ». Он хранится только на этом устройстве.'
+      : 'Sber issues the key: developers.sber.ru → GigaChat API → «Get key». '
+          'It is stored on this device only.';
+  String get jarvisBrainKey => isRu ? 'Ключ авторизации' : 'Authorization key';
+  String get jarvisBrainPaste => isRu ? 'Вставить' : 'Paste';
+  String get jarvisBrainSave => isRu ? 'Сохранить' : 'Save';
+  String get jarvisBrainCheck => isRu ? 'Проверить связь' : 'Check connection';
+  String get jarvisBrainRemove => isRu ? 'Удалить ключ' : 'Remove key';
+  String get jarvisBrainWorks =>
+      isRu ? 'GigaChat на связи.' : 'GigaChat answers.';
   String get calculator => isRu ? 'Калькулятор' : 'Calculator';
   String get calculatorStandard => isRu ? 'Обычный' : 'Standard';
   String get calculatorScientific => isRu ? 'Инженерный' : 'Scientific';
@@ -196,6 +240,14 @@ class AppStrings {
   /// Всплывающая подпись у кнопки подсказки — одна на все страницы.
   String get pageHintTooltip =>
       isRu ? 'Что здесь можно' : 'What you can do here';
+
+  String get jarvisPageHint => isRu
+      ? 'Скажите или напишите, что сделать: «завтра в 10 врач», «что у меня '
+          'завтра», «открой финансы». Любое действие Джарвиса возвращается '
+          'кнопкой «Отменить» под его ответом.'
+      : 'Say or type what to do, in Russian: «завтра в 10 врач» books a '
+          'doctor tomorrow at ten. Every action Jarvis takes can be undone '
+          'with the button under his reply.';
 
   String get feedPageHint => isRu
       ? 'Записи собраны по дням выбранного периода. Стрелки листают период, '

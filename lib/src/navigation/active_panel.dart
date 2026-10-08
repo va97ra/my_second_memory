@@ -25,13 +25,19 @@ String? panelIdForLocation(Uri location) {
   };
 }
 
-/// Какой инструмент верхней панели открыт на этом адресе.
+/// Какой пункт верхней панели подсвечен на этом адресе.
 ///
-/// Инструмент занимает весь адрес целиком, поэтому здесь хватает точного
+/// Инструмент занимает весь адрес целиком, поэтому ему хватает точного
 /// совпадения: у страницы инструмента нет ни вложенных экранов, ни хвостов.
+/// Вкладка оболочки с кнопкой наверху (настройки) подсвечивается так же, как
+/// подсвечивалась бы внизу, — по своему разделу, вместе с вложенными
+/// страницами: графиками смен, резервными копиями, архивом.
 String? toolIdForLocation(Uri location, List<AppDestination> tools) {
   for (final tool in tools) {
-    if (tool.location == location.path) return tool.id;
+    final active = tool.isBranch
+        ? panelIdForLocation(location) == tool.id
+        : tool.location == location.path;
+    if (active) return tool.id;
   }
   return null;
 }

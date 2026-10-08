@@ -4,3 +4,9 @@ linter:
   rules:
     prefer_single_quotes: true
     sort_child_properties_last: true
+
+analyzer:
+  exclude:
+    # Временная заготовка Джарвиса из MemoryVoice — не код приложения.
+    # Переносится по docs/jarvis.md и удаляется после переноса.
+    - jarvis_donor/**

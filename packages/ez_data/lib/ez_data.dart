@@ -12,6 +12,8 @@
 /// сломал бы сборку под веб самим фактом импорта.
 library;
 
+export 'src/assistant/gigachat_client.dart';
+export 'src/assistant/gigachat_key_store.dart';
 export 'src/calendar/production_calendar_source.dart';
 export 'src/calendar/production_calendar_repository.dart';
 

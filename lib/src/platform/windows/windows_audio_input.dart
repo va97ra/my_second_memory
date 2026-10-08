@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:record/record.dart';
 
 /// Микрофон, выбранный в параметрах звука Windows.
 ///
@@ -23,5 +24,19 @@ class WindowsAudioInput {
     } on PlatformException {
       return null;
     }
+  }
+
+  /// Устройство записи для [recorder]: микрофон, выбранный в Windows.
+  ///
+  /// Null — устройство назвать не удалось; тогда его выбирает система, как и
+  /// раньше. На телефоне это всегда так: там микрофон один. Этим пользуются
+  /// все, кто пишет звук: голосовые заметки и Джарвис.
+  Future<InputDevice?> inputDeviceFor(AudioRecorder recorder) async {
+    final id = await defaultCaptureDeviceId();
+    if (id == null) return null;
+    for (final device in await recorder.listInputDevices()) {
+      if (device.id == id) return device;
+    }
+    return null;
   }
 }

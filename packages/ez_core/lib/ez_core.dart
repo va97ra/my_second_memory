@@ -11,4 +11,3 @@ export 'src/format/decimal_input.dart';
 export 'src/format/inch_fraction.dart';
 export 'src/localization/app_strings.dart';
 export 'src/localization/production_strings.dart';
-export 'src/localization/russian_plural.dart';
