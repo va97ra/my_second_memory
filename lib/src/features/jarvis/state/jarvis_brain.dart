@@ -4,6 +4,7 @@ import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 
 import 'jarvis_executor.dart';
+import 'jarvis_online.dart';
 import 'jarvis_outcome.dart';
 
 /// Нейросеть Джарвиса: свободная речь, советы, ответы на любые вопросы.
@@ -16,11 +17,14 @@ class JarvisBrain {
   JarvisBrain({
     required GigaChatClient client,
     required JarvisExecutor executor,
+    required JarvisOnline online,
   })  : _client = client,
-        _executor = executor;
+        _executor = executor,
+        _online = online;
 
   final GigaChatClient _client;
   final JarvisExecutor _executor;
+  final JarvisOnline _online;
 
   /// Разговор помнится полчаса и не дольше двенадцати реплик: дальше он уже
   /// не помогает понять просьбу, а только дорожает.
@@ -30,6 +34,12 @@ class JarvisBrain {
 
   final _history = <Map<String, dynamic>>[];
   DateTime? _lastAsked;
+
+  /// Забыть разговор: следующий вопрос — с чистого листа.
+  void forget() {
+    _history.clear();
+    _lastAsked = null;
+  }
 
   /// Спрашивает нейросеть. Бросает [GigaChatException], если она не ответила.
   Future<JarvisOutcome> ask(
@@ -97,14 +107,21 @@ class JarvisBrain {
         }
         outcomes.add(outcome);
         return {'result': outcome.say};
-      case JarvisBrainFunctions.listRecords:
+      case JarvisBrainFunctions.listDays:
         final from = parseBrainDate(arguments['from']);
         final to = parseBrainDate(arguments['to']) ?? from;
         if (from == null || to == null) return {'error': 'Нужны даты YYYY-MM-DD'};
-        return [
-          for (final item in _executor.records.between(from, to))
-            recordForBrain(item),
-        ];
+        return _days(from, to);
+      case JarvisBrainFunctions.weather:
+        return _online.weather(
+          place: arguments['place'] as String?,
+          day: parseBrainDate(arguments['date']),
+          now: now,
+        );
+      case JarvisBrainFunctions.wikiLookup:
+        return _online.lookup('${arguments['query'] ?? ''}');
+      case JarvisBrainFunctions.news:
+        return _online.news(arguments['topic'] as String?);
       case JarvisBrainFunctions.findRecords:
         return [
           for (final item in _executor.records
@@ -114,6 +131,25 @@ class JarvisBrain {
         ];
     }
     return {'error': 'Такой функции нет'};
+  }
+
+  /// Дни для нейросети — не больше шести недель за раз: ответ читается
+  /// моделью целиком, и длинный список только дорожает.
+  List<Map<String, Object?>> _days(DateTime from, DateTime to) {
+    final answers = _executor.answers;
+    final days = <Map<String, Object?>>[];
+    for (var day = from;
+        !day.isAfter(to) && days.length < 42;
+        day = DateTime(day.year, day.month, day.day + 1)) {
+      days.add(dayForBrain(
+        day,
+        records: _executor.records.between(day, day),
+        shifts: answers.shiftsOn(day),
+        holidays: answers.holidaysOn(day),
+        hasShiftSchedules: answers.hasShiftSchedules,
+      ));
+    }
+    return days;
   }
 
   /// Команда нейросети исполняется так же, как сказанная человеком. Уточнять

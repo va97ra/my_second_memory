@@ -7,4 +7,6 @@ library;
 export 'state/jarvis_brain_providers.dart'
     show gigaChatClientProvider, gigaChatKeyProvider;
 export 'state/jarvis_controller.dart';
+export 'state/jarvis_wake_controller.dart' show jarvisWakeEnabledProvider;
 export 'ui/jarvis_sheet.dart';
+export 'ui/jarvis_wake_host.dart';

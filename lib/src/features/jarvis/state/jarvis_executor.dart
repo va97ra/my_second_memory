@@ -27,6 +27,10 @@ class JarvisExecutor {
 
   /// Записи — для нейросети: она видит их, прежде чем отвечать о делах.
   JarvisRecords get records => _records;
+
+  /// Смены и праздники — тоже для нейросети: «свободный день» без них не
+  /// понять.
+  JarvisAnswers get answers => _answers;
   final JarvisAnswers _answers;
   final JarvisSettingsActions _settings;
 

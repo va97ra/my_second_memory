@@ -29,6 +29,8 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.24
   supabase_flutter: ^2.16.0
   timezone: ^0.9.4
+  # Новости для Джарвиса приходят лентами RSS.
+  xml: ^6.5.0
 
 dev_dependencies:
   flutter_test:

@@ -6,9 +6,16 @@ import 'package:flutter/services.dart';
 /// поэтому справа — «Вставить» из буфера. Сам ключ не показывается: это
 /// секрет владельца.
 class GigaChatKeyField extends StatelessWidget {
-  const GigaChatKeyField({required this.controller, super.key});
+  const GigaChatKeyField({
+    required this.controller,
+    this.invalid = false,
+    super.key,
+  });
 
   final TextEditingController controller;
+
+  /// Набранное ключом не является — строка под полем говорит об этом.
+  final bool invalid;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +29,7 @@ class GigaChatKeyField extends StatelessWidget {
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
         labelText: strings.jarvisBrainKey,
+        errorText: invalid ? strings.jarvisBrainNotKey : null,
         suffixIcon: IconButton(
           tooltip: strings.jarvisBrainPaste,
           icon: const Icon(Icons.content_paste_rounded),

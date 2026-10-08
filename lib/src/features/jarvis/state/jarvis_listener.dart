@@ -21,6 +21,19 @@ abstract interface class JarvisListener {
   /// Прервать без результата: [listen] вернёт пустую строку.
   Future<void> cancel();
 
+  /// Слушает без остановки — так ждут имя «Джарвис». Каждая законченная
+  /// фраза уходит в [onPhrase], текст по ходу — в [onPartial]. Разрешение на
+  /// микрофон здесь не спрашивается: нет его — false, и молча.
+  Future<bool> startContinuous({
+    required void Function(String text) onPhrase,
+    void Function(String text)? onPartial,
+  });
+
+  Future<void> stopContinuous();
+
+  /// Слушает ли без остановки прямо сейчас.
+  bool get continuous;
+
   void dispose();
 }
 

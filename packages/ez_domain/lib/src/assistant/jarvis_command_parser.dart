@@ -66,6 +66,7 @@ class JarvisCommandParser {
     return CreateTasks(
       tasks,
       transcript: phrase.raw,
+      requested: _recordRequest.hasMatch(phrase.work),
       confident: !phrase.isQuestion &&
           tasks.every((task) =>
               _words(task.title) <= _dictationWords &&
@@ -77,6 +78,12 @@ class JarvisCommandParser {
   /// к врачу, запиши меня куда-нибудь» — не название дела.
   static final _commandInside = phrasePattern('$wordStart(?:запиши|запишите'
       '|напомни|напомните|добавь|поставь|создай|перенеси|отметь)$wordEnd');
+
+  /// Слова, которыми просят записать.
+  static final _recordRequest = phrasePattern('$wordStart(?:запиши|запишите'
+      '|записать|запомни|напомни|напомните|напомнить|добавь|добавьте|поставь'
+      '|создай|запланируй|внеси|заведи|надо|нужно|не\\s+забыть|не\\s+забудь'
+      '|задач[аиу])$wordEnd');
 
   /// Диктовка дела — короткая: «завтра в 10 врач», «купить молоко». Длиннее
   /// восьми слов — уже рассказ, и понимать его лучше нейросетью.

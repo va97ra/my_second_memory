@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'jarvis_brain.dart';
 import 'jarvis_executor.dart';
+import 'jarvis_online.dart';
 
 /// Как Джарвис обращается к владельцу.
 const jarvisAddress = 'сэр';
@@ -24,14 +25,31 @@ final gigaChatKeyProvider =
 
 class GigaChatKeyController extends StateNotifier<AsyncValue<String?>> {
   GigaChatKeyController(this._store) : super(const AsyncValue.loading()) {
-    _load();
+    _loading = _load();
   }
 
   final GigaChatKeyStore _store;
+  late final Future<void> _loading;
 
+  /// Ключ прочитан с диска. Защищённое хранилище отвечает не сразу, и
+  /// пока оно молчит, «ключа нет» — неправда.
+  Future<void> get ready => _loading;
+
+  /// Хранилище может отказать (сломанный ключ шифрования после переноса
+  /// данных). Тогда ключ — ошибка с причиной, её видно в настройках, а
+  /// Джарвис отвечает без нейросети, а не падает на каждой фразе.
   Future<void> _load() async {
-    final key = await _store.read();
-    if (mounted) state = AsyncValue.data(key);
+    final key = await AsyncValue.guard(() async {
+      final stored = await _store.read();
+      // Сохранённое ключом не является (текст, попавший в поле): такой
+      // «ключ» не отправить даже в заголовке. Его показывают как ошибку, а
+      // поле для настоящего ключа открыто.
+      if (stored != null && !GigaChatClient.looksLikeAuthKey(stored)) {
+        throw const GigaChatException('сохранён не ключ — вставьте заново');
+      }
+      return stored;
+    });
+    if (mounted) state = key;
   }
 
   Future<void> save(String key) async {
@@ -58,5 +76,9 @@ final gigaChatClientProvider = Provider<GigaChatClient?>((ref) {
 final jarvisBrainProvider = Provider<JarvisBrain?>((ref) {
   final client = ref.watch(gigaChatClientProvider);
   if (client == null) return null;
-  return JarvisBrain(client: client, executor: ref.watch(jarvisExecutorProvider));
+  return JarvisBrain(
+    client: client,
+    executor: ref.watch(jarvisExecutorProvider),
+    online: ref.watch(jarvisOnlineProvider),
+  );
 });

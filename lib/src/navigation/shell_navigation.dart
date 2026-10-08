@@ -35,7 +35,7 @@ class ShellNavigation {
   /// состояние сами; всё остальное открывается поверх страницы, чтобы туда
   /// можно было вернуться назад.
   void select(AppDestination destination) {
-    if (coordinator.isBusy || _openSheet(destination)) return;
+    if (coordinator.isBusy || _closeSheetOrOpen(destination)) return;
     _turnTo(() {
       if (destination.isBranch) {
         router.go(destination.location);
@@ -50,8 +50,8 @@ class ShellNavigation {
   /// [panel] — пункт, с которого инструмент открыли: панель под ним остаётся
   /// прежней.
   void selectTool(AppDestination destination, {required String panel}) {
-    if (coordinator.isBusy || destination.id == activeToolId) return;
-    if (_openSheet(destination)) return;
+    if (coordinator.isBusy || _closeSheetOrOpen(destination)) return;
+    if (destination.id == activeToolId) return;
     if (destination.isBranch) {
       // Вкладка оболочки с кнопкой наверху: адрес меняется целиком, как и с
       // нижней панели, — вкладка помнит своё состояние сама.
@@ -70,14 +70,29 @@ class ShellNavigation {
     _turnTo(() => router.push<void>(location));
   }
 
+  /// Нажатие на панель сначала закрывает лист, открытый поверх страницы:
+  /// панели живут выше листа, и без этого он оставался висеть над новой
+  /// страницей. Кнопка листа при открытом листе его и сворачивает — второй
+  /// такой же лист поверх первого никому не нужен.
+  ///
   /// Лист открывается в навигаторе, а не в оболочке: так он ложится между
-  /// панелями и меряет высоту от листа страницы, как и все листы. Не лист —
-  /// false, и кнопка ведёт по адресу.
-  bool _openSheet(AppDestination destination) {
+  /// панелями и меряет высоту от листа страницы, как и все листы.
+  ///
+  /// true — нажатие обработано здесь, дальше по адресу идти не нужно.
+  bool _closeSheetOrOpen(AppDestination destination) {
+    final navigator = router.routerDelegate.navigatorKey.currentState;
+    var closed = false;
+    navigator?.popUntil((route) {
+      if (route is! PopupRoute) return true;
+      closed = true;
+      return false;
+    });
     final openSheet = destination.openSheet;
     if (openSheet == null) return false;
-    final navigatorContext = router.routerDelegate.navigatorKey.currentContext;
-    if (navigatorContext != null) openSheet(navigatorContext);
+    if (!closed) {
+      final context = router.routerDelegate.navigatorKey.currentContext;
+      if (context != null) openSheet(context);
+    }
     return true;
   }
 

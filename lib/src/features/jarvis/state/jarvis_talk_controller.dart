@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +8,7 @@ import 'jarvis_controller.dart';
 import 'jarvis_listener.dart';
 import 'jarvis_message.dart';
 import 'jarvis_voice.dart';
+import 'jarvis_wake_controller.dart';
 
 /// Голосовой разговор: что слышно прямо сейчас.
 @immutable
@@ -30,6 +32,8 @@ final jarvisTalkProvider =
     voice: ref.watch(jarvisVoiceProvider),
     jarvis: ref.watch(jarvisControllerProvider.notifier),
     conversation: () => ref.read(jarvisControllerProvider),
+    onAnswered: () =>
+        ref.read(jarvisWakeProvider.notifier).continueConversation(),
   );
 });
 
@@ -44,16 +48,23 @@ class JarvisTalkController extends StateNotifier<JarvisTalk> {
     required JarvisVoice voice,
     required JarvisController jarvis,
     required JarvisConversation Function() conversation,
+    void Function()? onAnswered,
   })  : _listener = listener,
         _voice = voice,
         _jarvis = jarvis,
         _conversation = conversation,
+        _onAnswered = onAnswered ?? _nothing,
         super(const JarvisTalk());
+
+  static void _nothing() {}
 
   final JarvisListener? _listener;
   final JarvisVoice _voice;
   final JarvisController _jarvis;
   final JarvisConversation Function() _conversation;
+
+  /// Ответ прозвучал — можно продолжать без имени.
+  final void Function() _onAnswered;
 
   /// Слушать можно только там, где есть распознавание на устройстве.
   bool get canListen => _listener != null;
@@ -81,6 +92,23 @@ class JarvisTalkController extends StateNotifier<JarvisTalk> {
     await _reply(said);
   }
 
+  /// Джарвиса позвали голосом. Только имя — «Слушаю, сэр» и слушать
+  /// просьбу; имя с просьбой — сразу ответить на неё.
+  Future<void> respond(String command) async {
+    if (command.isEmpty) {
+      await _voice.speak('Слушаю, $jarvisAddress.');
+      if (mounted) await listen();
+      return;
+    }
+    await _reply(command);
+  }
+
+  /// Человек ответил текстом: прошлая неудача микрофона больше не к месту.
+  /// «Не расслышал» под новой репликой выглядел бы ответом на неё.
+  void forgetProblem() {
+    if (state.problem != null) state = const JarvisTalk();
+  }
+
   /// Дослушать досрочно — то, что уже сказано, уйдёт Джарвису.
   Future<void> stop() async => _listener?.stop();
 
@@ -95,7 +123,12 @@ class JarvisTalkController extends StateNotifier<JarvisTalk> {
     ].join(' ');
     if (answer.isEmpty || !mounted) return;
     await _voice.speak(answer);
-    if (mounted && _conversation().asking != null) await listen();
+    if (!mounted) return;
+    if (_conversation().asking != null) {
+      await listen();
+    } else if (!WakeWord.endsConversation(said)) {
+      _onAnswered();
+    }
   }
 
   @override

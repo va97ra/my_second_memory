@@ -28,13 +28,24 @@ class _MemoryKeyStore extends GigaChatKeyStore {
   Future<void> delete() async => value = null;
 }
 
+/// GigaChat, который принимает ключ, отвергает его или недоступен.
+enum _Server { accepts, rejects, offline }
+
+const _realKey = 'Y2xpZW50LWlkOmNsaWVudC1zZWNyZXQ=';
+
 void main() {
   useTestEnvironment();
 
-  testWidgets('ключ сохраняется, проверяется и удаляется', (tester) async {
-    final store = _MemoryKeyStore();
+  Future<_MemoryKeyStore> open(
+    WidgetTester tester,
+    _Server mode, {
+    String? stored,
+  }) async {
+    final store = _MemoryKeyStore()..value = stored;
     final server = MockClient((request) async {
+      if (mode == _Server.offline) throw http.ClientException('нет сети');
       if (request.url.path.endsWith('/oauth')) {
+        if (mode == _Server.rejects) return http.Response('{}', 401);
         return http.Response(
             jsonEncode({'access_token': 'T', 'expires_at': 4102444800000}),
             200);
@@ -80,24 +91,74 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Не подключена'), findsOneWidget);
-
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('gigachat_check')), findsNothing);
-    await tester.enterText(find.byKey(const ValueKey('gigachat_key')), ' КЛЮЧ ');
+    return store;
+  }
+
+  final field = find.byKey(const ValueKey('gigachat_key'));
+
+  Future<void> enter(WidgetTester tester, String text) async {
+    await tester.enterText(field, text);
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('gigachat_save')));
     await tester.pumpAndSettle();
+  }
 
-    expect(store.value, 'КЛЮЧ');
+  testWidgets('подтверждённый ключ прячет поле, удаление возвращает его',
+      (tester) async {
+    final store = await open(tester, _Server.accepts);
+    expect(find.textContaining('Не подключена'), findsOneWidget);
+    expect(find.byKey(const ValueKey('gigachat_check')), findsNothing);
+
+    // Фраза — не ключ: сохранить нельзя, под полем сказано почему.
+    await tester.enterText(
+        field, 'какой день на этой неделе у меня самый свободный');
+    await tester.pump();
+    expect(find.text('Не похоже на ключ GigaChat'), findsOneWidget);
+    expect(
+        tester
+            .widget<FilledButton>(find.byKey(const ValueKey('gigachat_save')))
+            .onPressed,
+        isNull);
+
+    await enter(tester, ' $_realKey ');
+    expect(store.value, _realKey);
     expect(find.text('GigaChat на связи.'), findsOneWidget);
+    expect(field, findsNothing, reason: 'сохранённый ключ не правят');
     expect(find.textContaining('Подключена'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('gigachat_remove')));
     await tester.pumpAndSettle();
     expect(store.value, isNull);
+    expect(field, findsOneWidget);
     expect(find.textContaining('Не подключена'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('ключ, который Сбер не принял, не сохраняется', (tester) async {
+    final store = await open(tester, _Server.rejects);
+    await enter(tester, _realKey);
+    expect(store.value, isNull);
+    expect(field, findsOneWidget);
+    expect(find.textContaining('Ключ GigaChat не подошёл'), findsOneWidget);
+  });
+
+  testWidgets('без связи ключ не подтверждён — и не сохраняется',
+      (tester) async {
+    final store = await open(tester, _Server.offline);
+    await enter(tester, _realKey);
+    expect(store.value, isNull);
+    expect(field, findsOneWidget);
+    expect(find.text('Нет связи с GigaChat.'), findsOneWidget);
+  });
+
+  testWidgets('в хранилище текст вместо ключа — видно причину и поле',
+      (tester) async {
+    // Так однажды вышло на телефоне: в поле ключа попала фраза.
+    await open(tester, _Server.accepts,
+        stored: 'какой день на этой неделе у меня самый свободный');
+    expect(find.textContaining('сохранён не ключ'), findsOneWidget);
+    expect(field, findsOneWidget);
   });
 }

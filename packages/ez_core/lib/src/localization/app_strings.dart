@@ -70,6 +70,11 @@ class AppStrings {
   String get jarvisStopListening => isRu ? 'Хватит слушать' : 'Stop listening';
   String get jarvisListening => isRu ? 'Слушаю…' : 'Listening…';
   String get jarvisUndo => isRu ? 'Отменить' : 'Undo';
+  String get jarvisClear => isRu ? 'Очистить разговор' : 'Clear conversation';
+  String get jarvisClearQuestion => isRu
+      ? 'Очистить разговор? Записи в календаре останутся.'
+      : 'Clear the conversation? Calendar records stay.';
+  String get jarvisClearConfirm => isRu ? 'Очистить' : 'Clear';
   String get jarvisShow => isRu ? 'Показать' : 'Show';
   String get jarvisDone => isRu ? 'Готово' : 'Done';
   String get jarvisMorning => isRu ? 'Утром, в 9' : 'Morning, 9';
@@ -79,6 +84,11 @@ class AppStrings {
   String get jarvisNoDate => isRu ? 'Без даты' : 'No date';
   String get jarvisCancelAnswer => isRu ? 'Не надо' : 'Never mind';
   String get jarvisBrain => isRu ? 'Нейросеть GigaChat' : 'GigaChat brain';
+  String get jarvisWakeWord =>
+      isRu ? 'Отзываться на «Джарвис»' : 'Answer to «Jarvis»';
+  String get jarvisWakeWordHint => isRu
+      ? 'Пока приложение открыто, микрофон ждёт имя'
+      : 'While the app is open, the microphone waits for the name';
   String get jarvisBrainOn => isRu
       ? 'Подключена: Джарвис понимает свободную речь'
       : 'Connected: Jarvis understands free speech';
@@ -91,8 +101,15 @@ class AppStrings {
       : 'Sber issues the key: developers.sber.ru → GigaChat API → «Get key». '
           'It is stored on this device only.';
   String get jarvisBrainKey => isRu ? 'Ключ авторизации' : 'Authorization key';
+  String get jarvisBrainUnreadable =>
+      isRu ? 'Ключ не прочитался' : 'The key could not be read';
   String get jarvisBrainPaste => isRu ? 'Вставить' : 'Paste';
+  String get jarvisBrainNotKey =>
+      isRu ? 'Не похоже на ключ GigaChat' : 'Not a GigaChat key';
   String get jarvisBrainSave => isRu ? 'Сохранить' : 'Save';
+  String get jarvisBrainSaved => isRu
+      ? 'Ключ сохранён на этом устройстве.'
+      : 'The key is stored on this device.';
   String get jarvisBrainCheck => isRu ? 'Проверить связь' : 'Check connection';
   String get jarvisBrainRemove => isRu ? 'Удалить ключ' : 'Remove key';
   String get jarvisBrainWorks =>

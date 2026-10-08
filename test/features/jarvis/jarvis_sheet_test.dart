@@ -1,6 +1,6 @@
 import 'package:ez_data/ez_data.dart';
 import 'package:ezhednevnik_v2/src/app/app.dart';
-import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_listener.dart';
+import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_brain_providers.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/memory_items.dart';
 import 'package:ezhednevnik_v2/src/features/security/security.dart';
 import 'package:ezhednevnik_v2/src/shared/state/notification_providers.dart';
@@ -14,6 +14,12 @@ import '../../support/widget_test_harness.dart';
 /// Панель Джарвиса в настоящем приложении: кнопка нижней панели, разговор
 /// текстом, отмена и переход на страницу. Микрофона в тестах нет — так же,
 /// как в вебе: панель обязана работать и без него.
+/// Ключа GigaChat нет: Джарвис отвечает правилами.
+class _NoKeyStore extends GigaChatKeyStore {
+  @override
+  Future<String?> read() async => null;
+}
+
 void main() {
   useTestEnvironment();
 
@@ -25,7 +31,8 @@ void main() {
         securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
         memoryRepositoryProvider.overrideWithValue(const LocalMemoryRepository()),
         notificationServiceProvider.overrideWithValue(FakeReminderScheduler()),
-        jarvisListenerProvider.overrideWithValue(null),
+        // Защищённого хранилища в тестах нет: ключа GigaChat — тоже.
+        gigaChatKeyStoreProvider.overrideWithValue(_NoKeyStore()),
       ],
       child: const EzhednevnikV2App(),
     ));
@@ -85,6 +92,51 @@ void main() {
     await say(tester, 'открой финансы');
     expect(find.byKey(const ValueKey('jarvis_input')), findsNothing);
     expect(find.byKey(const ValueKey('finance_currency')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('очистка разговора — с подтверждением, записи остаются',
+      (tester) async {
+    final container = await openApp(tester);
+    await tester.tap(find.byKey(const ValueKey('bottom_jarvis')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('jarvis_clear')), findsNothing,
+        reason: 'пустой разговор очищать нечего');
+    await say(tester, 'завтра в 10 врач');
+
+    await tester.tap(find.byKey(const ValueKey('jarvis_clear')));
+    await tester.pumpAndSettle();
+    expect(find.text('Очистить разговор? Записи в календаре останутся.'),
+        findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('jarvis_clear_confirm')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Слушаю, сэр. Чем могу помочь?'), findsOneWidget);
+    expect(find.textContaining('Записал'), findsNothing);
+    expect(container.read(memoryItemsControllerProvider), hasLength(1));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('кнопка панели закрывает лист, а «Джарвис» его сворачивает',
+      (tester) async {
+    await openApp(tester);
+    final input = find.byKey(const ValueKey('jarvis_input'));
+    await tester.tap(find.byKey(const ValueKey('bottom_jarvis')));
+    await tester.pumpAndSettle();
+    expect(input, findsOneWidget);
+
+    // Панели живут выше листа: без закрытия лист висел над новой страницей.
+    await tester.tap(find.byKey(const ValueKey('top_settings')));
+    await tester.pumpAndSettle();
+    expect(input, findsNothing);
+    expect(find.byKey(const ValueKey('settings_gigachat')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('bottom_jarvis')));
+    await tester.pumpAndSettle();
+    expect(input, findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('bottom_jarvis')));
+    await tester.pumpAndSettle();
+    expect(input, findsNothing);
     expect(tester.takeException(), isNull);
   });
 

@@ -41,6 +41,13 @@ class GigaChatClient {
   /// GigaChat Lite: самый большой бесплатный пакет и самый быстрый.
   static const defaultModel = 'GigaChat-2';
 
+  /// Похоже ли [value] на ключ авторизации. Ключ — base64 от пары
+  /// «идентификатор:секрет»: латиница, цифры, `+ / =`, без пробелов. Текст
+  /// с кириллицей ключом быть не может — его даже нельзя отправить в
+  /// заголовке запроса.
+  static bool looksLikeAuthKey(String value) =>
+      RegExp(r'^[A-Za-z0-9+/_-]{20,}={0,2}$').hasMatch(value.trim());
+
   static final _tokenUrl =
       Uri.parse('https://ngw.devices.sberbank.ru:9443/api/v2/oauth');
   static final _chatUrl =
@@ -59,6 +66,11 @@ class GigaChatClient {
 
   /// Токен доступа — с запасом в минуту до конца его жизни.
   Future<String> token() async {
+    if (!looksLikeAuthKey(authKey)) {
+      throw const GigaChatException(
+          'Сохранённый ключ GigaChat не похож на настоящий. Вставьте ключ '
+          'заново в настройках Джарвиса.');
+    }
     final known = _token;
     final until = _tokenUntil;
     if (known != null && until != null && _clock().isBefore(until)) {

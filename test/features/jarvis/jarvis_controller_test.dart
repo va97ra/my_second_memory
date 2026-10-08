@@ -80,7 +80,7 @@ void main() {
 
   test('без дня и времени — спрашивает по очереди', () async {
     final c = await start();
-    expect(await say(c, 'купить молоко'),
+    expect(await say(c, 'запиши купить молоко'),
         'На какой день вам назначить «Купить молоко», сэр?');
     expect(c.read(jarvis).asking?.title, 'Купить молоко');
     expect(await say(c, 'послезавтра'),
@@ -93,7 +93,7 @@ void main() {
 
   test('«не надо» на вопрос — ничего не записывает', () async {
     final c = await start();
-    await say(c, 'купить молоко');
+    await say(c, 'запиши купить молоко');
     expect(await say(c, 'не надо'), 'Хорошо, «Купить молоко» не записываю, сэр.');
     expect(rows(c), isEmpty);
   });
@@ -101,7 +101,7 @@ void main() {
   test('новая просьба вместо ответа: начатое — запиской, просьба — исполнена',
       () async {
     final c = await start();
-    await say(c, 'купить молоко');
+    await say(c, 'запиши купить молоко');
     expect(await say(c, 'открой календарь'), 'Открываю календарь, сэр.');
     expect(rows(c).single.isUndated, isTrue);
     expect(c.read(jarvis).navigation?.target.place, JarvisPlace.calendar);
@@ -155,6 +155,14 @@ void main() {
     expect(c.read(appThemeControllerProvider), AppThemeStyle.notebookDark);
     await say(c, 'отмени');
     expect(c.read(appThemeControllerProvider), before);
+  });
+
+  test('без просьбы и без дня не записывает, а спрашивает', () async {
+    final c = await start();
+    expect(await say(c, 'ты знаешь фильм Soulmate'), startsWith('Что вы хотите, сэр? Чтобы записать'));
+    expect(rows(c), isEmpty);
+    // С днём — диктовка дела, её записывают и без «запиши».
+    expect(await say(c, 'завтра в 10 врач'), startsWith('Записал'));
   });
 
   test('отменять нечего', () async {

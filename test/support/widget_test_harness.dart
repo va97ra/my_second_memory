@@ -7,6 +7,7 @@ import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/state/production_calendar_provider.dart';
 import 'package:ezhednevnik_v2/src/app/local_storage_scope_provider.dart';
+import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_listener.dart';
 
 /// Общая обстановка виджет-тестов: форматы дат и пустые настройки.
 ///
@@ -48,6 +49,9 @@ Widget testProviderScope({
       localStorageScopeFactoryProvider.overrideWithValue(
         TestLocalStorageScope.new,
       ),
+      // Микрофона и распознавания в тестах нет — как в вебе. Тест, которому
+      // нужен слух Джарвиса, подставляет свой.
+      jarvisListenerProvider.overrideWithValue(null),
       ...overrides,
     ],
     child: child,

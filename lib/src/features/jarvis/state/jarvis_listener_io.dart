@@ -60,6 +60,8 @@ class OfflineJarvisListener implements JarvisListener {
     }
     final recognizer = await (_starting ??= _start());
     await cancel();
+    // Микрофон один: пока слушаем просьбу, имя не ждём.
+    await stopContinuous();
     final stream = recognizer.createStream();
     final completer = Completer<String>();
     _stream = stream;
@@ -121,8 +123,79 @@ class OfflineJarvisListener implements JarvisListener {
     if (completer != null && !completer.isCompleted) completer.complete('');
   }
 
+  StreamSubscription<Uint8List>? _waitAudio;
+  sherpa.OnlineStream? _waitStream;
+
+  @override
+  bool get continuous => _waitAudio != null;
+
+  @override
+  Future<bool> startContinuous({
+    required void Function(String text) onPhrase,
+    void Function(String text)? onPartial,
+  }) async {
+    if (_waitAudio != null) return true;
+    // Идёт обычное слушание — оно главнее.
+    if (_completer != null) return false;
+    if (!await _recorder.hasPermission(request: false)) return false;
+    final recognizer = await (_starting ??= _start());
+    final stream = recognizer.createStream();
+    final Stream<Uint8List> audio;
+    try {
+      audio = await _recorder.startStream(RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: _sampleRate,
+        numChannels: 1,
+        noiseSuppress: true,
+        autoGain: true,
+        device: await _audioInput.inputDeviceFor(_recorder),
+      ));
+    } on Object {
+      // Микрофон занят другим приложением — имя подождёт следующей попытки.
+      stream.free();
+      return false;
+    }
+    _waitStream = stream;
+    _oddByte = null;
+    var last = '';
+    _waitAudio = audio.listen((bytes) {
+      if (!identical(_waitStream, stream)) return;
+      final samples = _toFloat32(bytes);
+      if (samples.isEmpty) return;
+      stream.acceptWaveform(samples: samples, sampleRate: _sampleRate);
+      while (recognizer.isReady(stream)) {
+        recognizer.decode(stream);
+      }
+      final text = recognizer.getResult(stream).text.trim();
+      if (text != last) {
+        last = text;
+        onPartial?.call(text);
+      }
+      // Фраза кончилась — отдаём её и слушаем дальше с чистого листа.
+      if (recognizer.isEndpoint(stream)) {
+        recognizer.reset(stream);
+        last = '';
+        if (text.isNotEmpty) onPhrase(text);
+      }
+    });
+    return true;
+  }
+
+  @override
+  Future<void> stopContinuous() async {
+    final audio = _waitAudio;
+    final stream = _waitStream;
+    if (audio == null) return;
+    _waitAudio = null;
+    _waitStream = null;
+    await audio.cancel();
+    stream?.free();
+    await _stopRecorder();
+  }
+
   @override
   void dispose() {
+    unawaited(stopContinuous());
     unawaited(cancel());
     _recognizer?.free();
     _recognizer = null;

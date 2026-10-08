@@ -123,6 +123,11 @@ class JarvisReplies {
     return enabled ? 'Включил $what.' : 'Выключил $what.';
   }
 
+  /// Фраза без просьбы записать и без дня — дело это или разговор, не
+  /// ясно. Спросить честнее, чем записать наугад.
+  static const whatToDo =
+      'Что вы хотите? Чтобы записать, скажите: «запиши …» или «напомни …».';
+
   static const undone = 'Отменил.';
   static const nothingToUndo = 'Отменять нечего: я ещё ничего не менял.';
   static const notUnderstood =

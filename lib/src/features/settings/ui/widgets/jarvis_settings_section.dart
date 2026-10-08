@@ -6,6 +6,7 @@ import '../../../jarvis/jarvis.dart';
 import 'gigachat_key_sheet.dart';
 import 'settings_chevron.dart';
 import 'settings_section.dart';
+import 'settings_switch_tile.dart';
 import 'settings_tile.dart';
 
 /// Джарвис: подключена ли нейросеть, которая понимает свободную речь.
@@ -15,7 +16,8 @@ class JarvisSettingsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
-    final connected = ref.watch(gigaChatKeyProvider).valueOrNull != null;
+    final key = ref.watch(gigaChatKeyProvider);
+    final connected = key.valueOrNull != null;
     return SettingsSection(
       title: strings.jarvis,
       children: [
@@ -23,9 +25,20 @@ class JarvisSettingsSection extends ConsumerWidget {
           key: const ValueKey('settings_gigachat'),
           icon: Icons.psychology_rounded,
           title: strings.jarvisBrain,
-          subtitle: connected ? strings.jarvisBrainOn : strings.jarvisBrainOff,
+          subtitle: key.hasError
+              ? '${strings.jarvisBrainUnreadable}: ${key.error}'
+              : connected
+                  ? strings.jarvisBrainOn
+                  : strings.jarvisBrainOff,
           trailing: const SettingsChevron(),
           onTap: () => showGigaChatKeySheet(context),
+        ),
+        SettingsSwitchTile(
+          key: const ValueKey('settings_jarvis_wake'),
+          icon: Icons.record_voice_over_rounded,
+          title: strings.jarvisWakeWord,
+          subtitle: strings.jarvisWakeWordHint,
+          setting: jarvisWakeEnabledProvider,
         ),
       ],
     );

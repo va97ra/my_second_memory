@@ -21,11 +21,12 @@ export 'src/assistant/jarvis_replies.dart';
 export 'src/assistant/record_lookup.dart';
 export 'src/assistant/moment_hits.dart' show PhraseRepeat, PhraseRepeatKind;
 export 'src/assistant/russian_words.dart'
-    show capitalizeFirst, joinWithAnd, lowerFirst, searchStems;
+    show capitalizeFirst, joinWithAnd, lowerFirst, normalizePhrase, searchStems;
 export 'src/assistant/small_talk.dart';
 export 'src/assistant/spoken_moments.dart';
 export 'src/assistant/task_phrase.dart';
 export 'src/assistant/unit_phrases.dart' show unitReply;
+export 'src/assistant/wake_word.dart' show WakeWord;
 export 'src/calculator/calculator_engine.dart';
 export 'src/calculator/calculator_types.dart';
 export 'src/finance/exchange_rates.dart';

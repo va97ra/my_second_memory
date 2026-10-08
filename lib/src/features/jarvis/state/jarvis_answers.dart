@@ -48,46 +48,55 @@ class JarvisAnswers {
 
   /// Праздники дня — даже если в календаре они скрыты: человек спросил сам.
   JarvisOutcome holidays(AskHolidays command, DateTime now) {
-    final holidays = _ref.read(holidayCalendarServiceProvider).holidaysForDate(
-          command.day,
-          withObservances: _ref.read(appObservancesProvider),
-        );
+    final titles = holidaysOn(command.day);
     return JarvisOutcome(
-      holidaysReply(
-        titles: [for (final holiday in holidays) holiday.titleRu],
-        dayLabel: spokenDay(command.day, now),
-      ),
-      link: holidays.isEmpty
+      holidaysReply(titles: titles, dayLabel: spokenDay(command.day, now)),
+      link: titles.isEmpty
           ? null
           : OpenPlace(JarvisPlace.holidays, date: command.day),
     );
   }
 
+  /// Названия праздников дня; международные дни — если они включены.
+  List<String> holidaysOn(DateTime day) => [
+        for (final holiday in _ref
+            .read(holidayCalendarServiceProvider)
+            .holidaysForDate(day,
+                withObservances: _ref.read(appObservancesProvider)))
+          holiday.titleRu,
+      ];
+
+  /// Есть ли у владельца хоть один включённый график смен.
+  bool get hasShiftSchedules => _schedules.isNotEmpty;
+
+  /// По каким графикам день рабочий. Отпуск — не рабочий день.
+  List<String> shiftsOn(DateTime day) => [
+        for (final schedule in _schedules)
+          if (schedule.isWorkday(day) && !schedule.isVacationWorkday(day))
+            schedule.organizationName,
+      ];
+
+  List<ShiftSchedule> get _schedules => [
+        for (final schedule in _ref.read(shiftSchedulesControllerProvider))
+          if (schedule.isEnabled) schedule,
+      ];
+
   JarvisOutcome shift(AskShift command, DateTime now) {
-    final schedules = [
-      for (final schedule in _ref.read(shiftSchedulesControllerProvider))
-        if (schedule.isEnabled) schedule,
-    ];
-    List<String> workingOn(DateTime day) => [
-          for (final schedule in schedules)
-            if (schedule.isWorkday(day) && !schedule.isVacationWorkday(day))
-              schedule.organizationName,
-        ];
     var day = command.day;
-    if (command.findNext && schedules.isNotEmpty) {
+    if (command.findNext && hasShiftSchedules) {
       // Ближайшая смена — не дальше двух месяцев: дальше графики не ведут.
-      for (var i = 0; i < 62 && workingOn(day).isEmpty; i++) {
+      for (var i = 0; i < 62 && shiftsOn(day).isEmpty; i++) {
         day = DateTime(day.year, day.month, day.day + 1);
       }
     }
     return JarvisOutcome(
       shiftReply(
         command,
-        working: workingOn(day),
-        hasSchedules: schedules.isNotEmpty,
+        working: shiftsOn(day),
+        hasSchedules: hasShiftSchedules,
         dayLabel: spokenWhen(day, now),
       ),
-      link: schedules.isEmpty ? const OpenPlace(JarvisPlace.shifts) : null,
+      link: hasShiftSchedules ? null : const OpenPlace(JarvisPlace.shifts),
     );
   }
 

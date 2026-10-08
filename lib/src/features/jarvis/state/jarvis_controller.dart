@@ -17,7 +17,10 @@ final jarvisControllerProvider =
     StateNotifierProvider<JarvisController, JarvisConversation>((ref) {
   return JarvisController(
     ref.watch(jarvisExecutorProvider),
-    brain: () => ref.read(jarvisBrainProvider),
+    brain: () async {
+      await ref.read(gigaChatKeyProvider.notifier).ready;
+      return ref.read(jarvisBrainProvider);
+    },
   );
 });
 
@@ -29,7 +32,7 @@ final jarvisControllerProvider =
 class JarvisController extends StateNotifier<JarvisConversation> {
   JarvisController(
     this._executor, {
-    JarvisBrain? Function()? brain,
+    Future<JarvisBrain?> Function()? brain,
     DateTime Function()? clock,
   })  : _brain = brain ?? _noBrain,
         _clock = clock ?? DateTime.now,
@@ -38,9 +41,10 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   final JarvisExecutor _executor;
 
   /// Нейросеть, если ключ GigaChat сохранён. Спрашивается в момент вопроса:
-  /// ключ могли ввести, пока разговор уже шёл.
-  final JarvisBrain? Function() _brain;
-  static JarvisBrain? _noBrain() => null;
+  /// ключ могли ввести, пока разговор уже шёл, а сразу после запуска его
+  /// ещё читают с диска — тогда ответа дожидаются.
+  final Future<JarvisBrain?> Function() _brain;
+  static Future<JarvisBrain?> _noBrain() async => null;
   final DateTime Function() _clock;
   final _persona = const ButlerPersona(jarvisAddress);
   final _replies = StreamController<String>.broadcast();
@@ -92,6 +96,19 @@ class JarvisController extends StateNotifier<JarvisConversation> {
     }
   }
 
+  /// Очистить разговор. Записи, которые Джарвис завёл, остаются: стирается
+  /// только сам разговор — реплики, начатые уточнения, «отменить» и память
+  /// нейросети о сказанном.
+  Future<void> clear() async {
+    if (state.busy) return;
+    _waiting.clear();
+    _ready.clear();
+    _mentioned = null;
+    _undo = null;
+    state = const JarvisConversation();
+    (await _brain())?.forget();
+  }
+
   /// Кнопка «Показать» под ответом.
   void show(OpenPlace target) => _open(target);
 
@@ -111,10 +128,20 @@ class JarvisController extends StateNotifier<JarvisConversation> {
         await _runUndo();
       case AskBrain(:final text):
         await _askBrain(text, now);
-      case CreateTasks(confident: false, :final transcript)
-          when _brain() != null:
-        await _askBrain(transcript, now);
-      case CreateTasks(:final tasks, :final transcript):
+      case CreateTasks(:final tasks, :final transcript) && final create:
+        // Не просили записать или разобрано неуверенно — понимать нейросетью,
+        // если она подключена: «ты знаешь фильм…» — разговор, а не дело.
+        final brain =
+            create.requested && create.confident ? null : await _brain();
+        if (brain != null) {
+          await _askBrainWith(brain, transcript, now);
+          return;
+        }
+        // Без нейросети фразу без просьбы и без дня не записываем наугад.
+        if (!create.requested && tasks.every((task) => task.date == null)) {
+          _jarvis(JarvisReplies.whatToDo);
+          return;
+        }
         _transcript = transcript;
         for (final task in tasks) {
           (task.need == null ? _ready : _waiting).add(task);
@@ -128,11 +155,15 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   /// Вопрос, на который правила не отвечают, — нейросети. Нет её или нет
   /// связи — Джарвис говорит об этом прямо, а не делает вид, что понял.
   Future<void> _askBrain(String text, DateTime now) async {
-    final brain = _brain();
+    final brain = await _brain();
     if (brain == null) {
       _jarvis(JarvisReplies.needsBrain);
       return;
     }
+    await _askBrainWith(brain, text, now);
+  }
+
+  Future<void> _askBrainWith(JarvisBrain brain, String text, DateTime now) async {
     try {
       _apply(await brain.ask(text, mentioned: _mentioned, now: now));
     } on GigaChatException catch (failure) {

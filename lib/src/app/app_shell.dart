@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/jarvis/jarvis.dart';
 import '../navigation/active_panel.dart';
 import '../navigation/app_destination.dart';
 import '../navigation/app_destinations.dart';
@@ -92,45 +93,51 @@ class _AppShellState extends ConsumerState<AppShell> {
       coordinator: _turnCoordinator,
     );
 
-    return PageTurnCoordinatorScope(
-      coordinator: _turnCoordinator,
-      // Панели живут выше навигатора, и подсказкам их кнопок нужен свой слой.
-      child: OverlayHost(
-        child: Scaffold(
-          // Страница или модальный лист обрабатывает клавиатуру один раз.
-          // Повторное сжатие оболочки схлопывало редактор и двигало фон.
-          resizeToAvoidBottomInset: false,
-          // Обе панели занимают штатные слоты Scaffold. Когда верхняя панель
-          // была первым ребёнком body, создание композитного слоя
-          // перелистывания страницы на кадр сбрасывало её кожаную текстуру.
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(AppToolBar.heightOf(context)),
-            child: AppToolBar(
-              items: [for (final item in tools) item.barItem],
-              selectedIndex: _indexOf(tools, activeToolId),
-              onSelected: (index) => navigation.selectTool(
-                tools[index],
-                // Раздел, с которого ушли, — даже если его кнопка наверху,
-                // как у настроек: «назад» вернёт туда же.
-                panel: panelId ?? destinations.first.id,
+    // Имя «Джарвис» слушается на любой странице, поэтому слух живёт здесь,
+    // в оболочке, а лист по вызову открывается в навигаторе.
+    return JarvisWakeHost(
+      navigatorContext: () =>
+          _router.routerDelegate.navigatorKey.currentContext,
+      child: PageTurnCoordinatorScope(
+        coordinator: _turnCoordinator,
+        // Панели живут выше навигатора, и подсказкам их кнопок нужен свой слой.
+        child: OverlayHost(
+          child: Scaffold(
+            // Страница или модальный лист обрабатывает клавиатуру один раз.
+            // Повторное сжатие оболочки схлопывало редактор и двигало фон.
+            resizeToAvoidBottomInset: false,
+            // Обе панели занимают штатные слоты Scaffold. Когда верхняя панель
+            // была первым ребёнком body, создание композитного слоя
+            // перелистывания страницы на кадр сбрасывало её кожаную текстуру.
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(AppToolBar.heightOf(context)),
+              child: AppToolBar(
+                items: [for (final item in tools) item.barItem],
+                selectedIndex: _indexOf(tools, activeToolId),
+                onSelected: (index) => navigation.selectTool(
+                  tools[index],
+                  // Раздел, с которого ушли, — даже если его кнопка наверху,
+                  // как у настроек: «назад» вернёт туда же.
+                  panel: panelId ?? destinations.first.id,
+                ),
               ),
             ),
-          ),
-          body: PageMedia(
-            child: PageTurnFrame(
-              key: _pageTurnKey,
-              coordinator: _turnCoordinator,
-              provideNavigation: true,
-              child: AppBackground(child: widget.child),
+            body: PageMedia(
+              child: PageTurnFrame(
+                key: _pageTurnKey,
+                coordinator: _turnCoordinator,
+                provideNavigation: true,
+                child: AppBackground(child: widget.child),
+              ),
             ),
-          ),
-          bottomNavigationBar: SizedBox(
-            height: AppNavBar.heightOf(context) +
-                MediaQuery.paddingOf(context).bottom,
-            child: AppNavBar(
-              items: [for (final item in destinations) item.barItem],
-              selectedIndex: activeToolId == null ? panelIndex : null,
-              onSelected: (index) => navigation.select(destinations[index]),
+            bottomNavigationBar: SizedBox(
+              height: AppNavBar.heightOf(context) +
+                  MediaQuery.paddingOf(context).bottom,
+              child: AppNavBar(
+                items: [for (final item in destinations) item.barItem],
+                selectedIndex: activeToolId == null ? panelIndex : null,
+                onSelected: (index) => navigation.select(destinations[index]),
+              ),
             ),
           ),
         ),

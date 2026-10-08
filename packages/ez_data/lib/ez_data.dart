@@ -14,6 +14,9 @@ library;
 
 export 'src/assistant/gigachat_client.dart';
 export 'src/assistant/gigachat_key_store.dart';
+export 'src/assistant/online_fetch.dart';
+export 'src/assistant/reference_sources.dart';
+export 'src/assistant/weather_source.dart';
 export 'src/calendar/production_calendar_source.dart';
 export 'src/calendar/production_calendar_repository.dart';
 

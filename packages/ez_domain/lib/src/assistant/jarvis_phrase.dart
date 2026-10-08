@@ -1,4 +1,5 @@
 import 'russian_words.dart';
+import 'wake_word.dart';
 
 /// Фраза, обращённая к Джарвису, без обращения и вежливых слов в начале.
 ///
@@ -31,10 +32,7 @@ class JarvisPhrase {
   /// Был ли это вопрос: знак вопроса или вопросительное слово в начале.
   bool get isQuestion => raw.endsWith('?') || _questionWord.hasMatch(work);
 
-  static const _names = 'джарвис|джарвес|джарвиз|джервис|джералд|джентль'
-      '|джарс|джарлис|жардж|эйджарвес';
-
-  static final _lead = phrasePattern('^(?:(?:эй|ну|слушай|слушайте|$_names'
+  static final _lead = phrasePattern('^(?:(?:эй|ну|слушай|слушайте|$jarvisNamePattern'
       '|сэр|пожалуйста|будь\\s+добр|будьте\\s+добры)$wordEnd[\\s,.!]*)+');
 
   static final _questionWord = phrasePattern('^(?:как|почему|зачем|кто|что'

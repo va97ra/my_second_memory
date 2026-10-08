@@ -102,6 +102,14 @@ void main() {
       expect(create.transcript, 'завтра в 10 врач');
     });
 
+    test('просьба записать видна отдельно от разговора', () {
+      expect(as<CreateTasks>('ты знаешь фильм Soulmate').requested, isFalse);
+      expect(as<CreateTasks>('завтра в 10 врач').requested, isFalse);
+      expect(as<CreateTasks>('запиши купить молоко').requested, isTrue);
+      expect(as<CreateTasks>('напомни завтра позвонить маме').requested, isTrue);
+      expect(as<CreateTasks>('надо заплатить за свет').requested, isTrue);
+    });
+
     test('повтор, которого календарь не умеет, — честный ответ', () {
       expect(as<JarvisSay>('каждый день в 9 пить таблетки').text,
           contains('«каждый день»'));

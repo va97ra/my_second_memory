@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:ez_core/ez_core.dart';
-import 'package:ez_data/ez_data.dart' show GigaChatException;
+import 'package:ez_data/ez_data.dart' show GigaChatClient, GigaChatException;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -53,6 +53,7 @@ class _GigaChatKeySheetState extends ConsumerState<GigaChatKeySheet> {
     final strings = AppStrings.of(context);
     final saved = ref.watch(gigaChatKeyProvider).valueOrNull != null;
     final typed = _key.text.trim().isNotEmpty;
+    final valid = GigaChatClient.looksLikeAuthKey(_key.text);
     return Padding(
       padding: EdgeInsets.fromLTRB(
           16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
@@ -65,17 +66,12 @@ class _GigaChatKeySheetState extends ConsumerState<GigaChatKeySheet> {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            Text(strings.jarvisBrainHowTo),
-            const SizedBox(height: 12),
-            GigaChatKeyField(controller: _key),
-            const SizedBox(height: 12),
-            FilledButton(
-              key: const ValueKey('gigachat_save'),
-              onPressed: typed ? _save : null,
-              child: Text(strings.jarvisBrainSave),
-            ),
+            // Сохранённый ключ не показывается и не правится: поле есть,
+            // только пока ключа нет. Так его не затереть случайно — сменить
+            // можно, лишь удалив.
             if (saved) ...[
-              const SizedBox(height: 8),
+              Text(strings.jarvisBrainSaved, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
               OutlinedButton(
                 key: const ValueKey('gigachat_check'),
                 onPressed: _checking ? null : _check,
@@ -83,8 +79,18 @@ class _GigaChatKeySheetState extends ConsumerState<GigaChatKeySheet> {
               ),
               TextButton(
                 key: const ValueKey('gigachat_remove'),
-                onPressed: _remove,
+                onPressed: _checking ? null : _remove,
                 child: Text(strings.jarvisBrainRemove),
+              ),
+            ] else ...[
+              Text(strings.jarvisBrainHowTo),
+              const SizedBox(height: 12),
+              GigaChatKeyField(controller: _key, invalid: typed && !valid),
+              const SizedBox(height: 12),
+              FilledButton(
+                key: const ValueKey('gigachat_save'),
+                onPressed: valid && !_checking ? _save : null,
+                child: Text(strings.jarvisBrainSave),
               ),
             ],
             if (_result != null) ...[
@@ -99,32 +105,41 @@ class _GigaChatKeySheetState extends ConsumerState<GigaChatKeySheet> {
     );
   }
 
+  /// Ключ сохраняется и сразу проверяется. Остаётся он, только если Сбер
+  /// его принял (решение владельца 8 октября 2026): не принял или связи нет
+  /// — ключ не хранится, поле остаётся с причиной.
   Future<void> _save() async {
     await ref.read(gigaChatKeyProvider.notifier).save(_key.text);
+    final failure = await _check();
+    if (failure != null) {
+      await ref.read(gigaChatKeyProvider.notifier).remove();
+      return;
+    }
     _key.clear();
-    await _check();
   }
 
-  Future<void> _check() async {
+  /// Проверка связи; возвращает отказ, если он был.
+  Future<GigaChatException?> _check() async {
     final client = ref.read(gigaChatClientProvider);
-    if (client == null) return;
+    if (client == null) return null;
     final works = AppStrings.of(context).jarvisBrainWorks;
     setState(() {
       _checking = true;
       _result = null;
     });
-    String result;
+    GigaChatException? failure;
     try {
       await client.check();
-      result = works;
-    } on GigaChatException catch (failure) {
-      result = failure.message;
+    } on GigaChatException catch (error) {
+      failure = error;
     }
-    if (!mounted) return;
-    setState(() {
-      _checking = false;
-      _result = result;
-    });
+    if (mounted) {
+      setState(() {
+        _checking = false;
+        _result = failure?.message ?? works;
+      });
+    }
+    return failure;
   }
 
   Future<void> _remove() async {

@@ -17,11 +17,22 @@ class JarvisVoice {
   static const _pitch = 0.85;
   static const _rate = 0.585;
 
+  var _speaking = 0;
+
+  /// Говорит прямо сейчас. Пока говорит, имя не слушают: микрофон услышал
+  /// бы самого Джарвиса.
+  bool get speaking => _speaking > 0;
+
   /// Говорит и ждёт конца фразы.
   Future<void> speak(String text) async {
-    await (_ready ??= _prepare());
-    await _tts.stop();
-    await _tts.speak(text);
+    _speaking++;
+    try {
+      await (_ready ??= _prepare());
+      await _tts.stop();
+      await _tts.speak(text);
+    } finally {
+      _speaking--;
+    }
   }
 
   Future<void> stop() => _tts.stop();

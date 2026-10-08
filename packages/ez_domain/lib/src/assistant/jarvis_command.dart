@@ -70,10 +70,16 @@ final class CreateTasks extends JarvisCommand {
     this.tasks, {
     required this.transcript,
     this.confident = true,
+    this.requested = true,
   });
 
   final List<ParsedTask> tasks;
   final String transcript;
+
+  /// Человек сам просит записать: «запиши», «напомни», «надо», «не забыть».
+  /// Без такой просьбы фраза — может быть, дело, а может быть, разговор
+  /// («ты знаешь фильм Soulmate»), и записывать её сразу нельзя.
+  final bool requested;
 
   /// Похоже на диктовку дела, а не на свободную речь: коротко и не вопрос.
   /// Неуверенную фразу, если подключена нейросеть, лучше отдать ей —

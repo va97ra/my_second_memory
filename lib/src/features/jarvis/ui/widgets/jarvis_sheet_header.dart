@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/page_hint_button.dart';
 
-/// Шапка панели: подсказка слева, имя посередине. Справа пустой слот той же
-/// ширины — иначе имя съезжает с середины (`docs/layout.md`).
+/// Шапка панели: подсказка слева, имя посередине, справа — очистить
+/// разговор. Пустой разговор очищать нечего, но слот остаётся той же ширины,
+/// иначе имя съезжает с середины (`docs/layout.md`).
 class JarvisSheetHeader extends StatelessWidget {
-  const JarvisSheetHeader({super.key});
+  const JarvisSheetHeader({this.onClear, super.key});
+
+  /// Null — разговор пуст.
+  final VoidCallback? onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +29,17 @@ class JarvisSheetHeader extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
-        const SizedBox(width: notebookHeaderSlot),
+        SizedBox(
+          width: notebookHeaderSlot,
+          child: onClear == null
+              ? null
+              : IconButton(
+                  key: const ValueKey('jarvis_clear'),
+                  tooltip: strings.jarvisClear,
+                  onPressed: onClear,
+                  icon: const Icon(Icons.delete_sweep_rounded),
+                ),
+        ),
       ],
     );
   }
