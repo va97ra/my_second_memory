@@ -1,11 +1,15 @@
 import '../recurrence/recurrence_dates.dart';
 import 'jarvis_command.dart';
 import 'russian_words.dart';
+import 'spoken_moments.dart';
 import 'task_phrase.dart';
 
 /// Вопросы о дне: «я завтра работаю?», «у меня в субботу смена?», «завтра
 /// выходной?», «какой сегодня праздник», «что за праздник 4 ноября».
 JarvisCommand? dayQuestionCommand(String work, DateTime now) {
+  if (_alarm.hasMatch(work) && _asksAlarm.hasMatch(work)) {
+    return const AskAlarms();
+  }
   if (_holiday.hasMatch(work) && _asksHoliday.hasMatch(work)) {
     return AskHolidays(_dayOf(work, now));
   }
@@ -34,6 +38,29 @@ String shiftReply(
   return '$day у вас смены: ${joinWithAnd(working)}.';
 }
 
+/// Будильник Ежедневника для ответа: когда и о чём.
+typedef AlarmMention = ({DateTime at, String what});
+
+/// Ответ о будильниках: ближайшие по порядку. «Будильников нет» — значит
+/// нет ни напоминаний с мелодией, ни будильников графиков.
+String alarmsReply(List<AlarmMention> alarms, DateTime now) {
+  if (alarms.isEmpty) {
+    return 'Будильников в Ежедневнике нет: ни у записей, ни у графиков смен.';
+  }
+  final sorted = [...alarms]..sort((left, right) => left.at.compareTo(right.at));
+  String one(AlarmMention alarm) {
+    final when = spokenMoment(
+        alarm.at, alarm.at.hour * 60 + alarm.at.minute, now);
+    return '$when — ${lowerFirst(alarm.what)}';
+  }
+
+  if (sorted.length == 1) return 'Ближайший будильник: ${one(sorted.single)}.';
+  const shown = 5;
+  final more = sorted.length > shown ? '; и ещё ${sorted.length - shown}' : '';
+  return 'Ближайшие будильники: '
+      '${sorted.take(shown).map(one).join('; ')}$more.';
+}
+
 /// Ответ о праздниках дня.
 String holidaysReply({required List<String> titles, required String dayLabel}) {
   final day = capitalizeFirst(dayLabel);
@@ -46,6 +73,13 @@ DateTime _dayOf(String work, DateTime now) =>
     const TaskPhraseParser().parseAnswer(work, now).date ?? dateOnly(now);
 
 final _whenNext = phrasePattern('^когда$wordEnd');
+
+final _alarm = phrasePattern('$wordStartбудильник[а-я]*$wordEnd');
+
+/// Спрашивают, а не просят поставить: «поставь будильник» — не вопрос.
+final _asksAlarm = phrasePattern('^(?:какие|какой|когда|во\\s+сколько|мои'
+    '|мой|у\\s+меня|есть\\s+ли|покажи|скажи|подскажи|назови|а|список)$wordEnd'
+    '|\\?\$');
 
 final _holiday = phrasePattern('$wordStartпраздник[а-я]*$wordEnd');
 

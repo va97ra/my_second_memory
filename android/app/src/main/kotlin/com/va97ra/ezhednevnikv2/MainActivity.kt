@@ -17,6 +17,15 @@ import java.time.ZoneId
 
 class MainActivity : FlutterFragmentActivity() {
     private var pendingSoundResult: MethodChannel.Result? = null
+    private var pendingContacts: ((Boolean) -> Unit)? = null
+
+    /** Разрешение на контакты спрашивает Джарвис — когда просят позвонить. */
+    private val contactsPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        pendingContacts?.invoke(granted)
+        pendingContacts = null
+    }
 
     private val audioFilePicker = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -81,6 +90,13 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        SpokenReminders.register(this, flutterEngine.dartExecutor.binaryMessenger)
+        PhoneActions(this) { answer ->
+            pendingContacts?.invoke(false)
+            pendingContacts = answer
+            contactsPermission.launch(android.Manifest.permission.READ_CONTACTS)
+        }.register(flutterEngine.dartExecutor.binaryMessenger)
+        BankNotices.register(this, flutterEngine.dartExecutor.binaryMessenger)
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,

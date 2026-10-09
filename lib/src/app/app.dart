@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_core/ez_core.dart';
 import '../navigation/app_router.dart';
+import '../navigation/calendar_locations.dart';
 import 'package:ez_design/ez_design.dart';
+import '../features/jarvis/jarvis.dart';
 import '../features/security/security.dart';
 import '../features/sync/sync.dart';
 import '../platform/windows/windows_desktop.dart';
@@ -27,6 +29,7 @@ class EzhednevnikV2App extends ConsumerStatefulWidget {
 
 class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
   StreamSubscription<String>? _notificationSubscription;
+  StreamSubscription<DateTime>? _briefingSubscription;
   Locale? _desktopLocale;
   late final AppLifecycleListener _lifecycleObserver;
   late final ProviderSubscription<bool> _securityUnlockSubscription;
@@ -102,11 +105,22 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
         _openNotificationItem(itemId);
       }
     });
+    // Сводка Джарвиса открывает свой день.
+    _briefingSubscription =
+        ref.read(briefingSchedulerProvider).openedDays.listen((day) {
+      if (mounted) ref.read(appRouterProvider).go(calendarDayLocation(day));
+    });
     try {
       await notifications.initialize();
     } catch (_) {
       // The app remains usable when notifications are unavailable.
     }
+    // Сводки Джарвиса живут, пока живёт приложение, и ставятся заново после
+    // каждой правки дел.
+    ref
+      ..read(jarvisBriefingsProvider)
+      // Уведомления банков — тоже, пока приложение живо.
+      ..read(jarvisBankWatcherProvider);
   }
 
   /// Уведомление открывает запись без переворота листа: лист принадлежит
@@ -122,6 +136,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     _securityUnlockSubscription.close();
     _lifecycleObserver.dispose();
     _notificationSubscription?.cancel();
+    _briefingSubscription?.cancel();
     unawaited(windowsDesktopPlatform.detach());
     super.dispose();
   }

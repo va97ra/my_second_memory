@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'jarvis_answers.dart';
 import 'jarvis_outcome.dart';
+import 'jarvis_phone.dart';
 import 'jarvis_places.dart';
 import 'jarvis_records.dart';
 import 'jarvis_settings_actions.dart';
@@ -61,6 +62,9 @@ class JarvisExecutor {
       AskWhen(:final query) => _records.when(query, now),
       AskShift() => _answers.shift(command, now),
       AskHolidays() => _answers.holidays(command, now),
+      AskAlarms() => _answers.alarms(now),
+      AskMetroRoute(:final from, :final to) =>
+        JarvisOutcome(MetroGuide.moscow.route(from, to)),
       AskFinance() => _answers.finance(command, now),
       AskBrain() => const JarvisOutcome(JarvisReplies.needsBrain),
       CreateTasks(:final tasks, :final transcript) =>
@@ -75,6 +79,7 @@ class JarvisExecutor {
       AddFinanceEntry() => await _settings.addFinance(command, now),
       SwitchSetting() => await _settings.toggle(command),
       ChangeTheme() => await _settings.theme(command),
+      PhoneCommand() => await _ref.read(jarvisPhoneProvider).run(command),
     };
   }
 }

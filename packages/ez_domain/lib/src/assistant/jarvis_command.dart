@@ -183,6 +183,7 @@ final class AddFinanceEntry extends JarvisCommand {
     required this.date,
     this.currency,
     this.category = '',
+    this.source,
   });
 
   final FinanceEntryKind kind;
@@ -194,6 +195,10 @@ final class AddFinanceEntry extends JarvisCommand {
   /// Код валюты; не названа — валюта журнала, открытого в финансах.
   final String? currency;
   final String category;
+
+  /// Откуда запись, если её не диктовали: приложение банка, чьё уведомление
+  /// Джарвис прочёл сам.
+  final String? source;
 }
 
 /// «Сколько я потратил в этом месяце».
@@ -211,6 +216,21 @@ final class AskShift extends JarvisCommand {
 
   final DateTime day;
   final bool findNext;
+}
+
+/// «Какие у меня будильники», «когда будильник» — будильники Ежедневника:
+/// напоминания с мелодией и будильники графиков смен.
+final class AskAlarms extends JarvisCommand {
+  const AskAlarms();
+}
+
+/// «Как доехать от Щёлковской до Курской» — метро Москвы. [from] пуст —
+/// назвали только, куда ехать.
+final class AskMetroRoute extends JarvisCommand {
+  const AskMetroRoute({required this.from, required this.to});
+
+  final String? from;
+  final String to;
 }
 
 /// «Какой сегодня праздник».
@@ -242,4 +262,59 @@ final class ChangeTheme extends JarvisCommand {
 /// «Отмени», «верни как было» — отменить последнее действие Джарвиса.
 final class UndoLast extends JarvisCommand {
   const UndoLast();
+}
+
+/// Команды телефону. Ничего не уходит само: звонок открывает набор номера,
+/// сообщение — чат с готовым текстом, нажимает человек.
+sealed class PhoneCommand extends JarvisCommand {
+  const PhoneCommand();
+}
+
+/// «Включи фонарик», «выключи фонарик».
+final class PhoneTorch extends PhoneCommand {
+  const PhoneTorch({required this.on});
+
+  final bool on;
+}
+
+/// «Разбуди меня в 6:30», «поставь будильник на 7» — будильник в «Часах»
+/// телефона. [minutes] — от полуночи.
+final class PhoneAlarm extends PhoneCommand {
+  const PhoneAlarm(this.minutes);
+
+  final int minutes;
+}
+
+/// «Таймер на 10 минут», «засеки полчаса».
+final class PhoneTimer extends PhoneCommand {
+  const PhoneTimer(this.seconds);
+
+  final int seconds;
+}
+
+/// «Позвони маме», «набери 8 916 123-45-67».
+final class PhoneCall extends PhoneCommand {
+  const PhoneCall(this.who);
+
+  final String who;
+}
+
+/// Чем отправить сообщение.
+enum PhoneMessenger { sms, whatsapp, telegram }
+
+/// «Напиши Васе в ватсап, что опоздаю».
+final class PhoneMessage extends PhoneCommand {
+  const PhoneMessage(this.who, this.text, {required this.app});
+
+  final String who;
+  final String text;
+  final PhoneMessenger app;
+}
+
+/// «Открой камеру», «запусти телеграм» — приложение телефона. Страницы
+/// Ежедневника открывает [OpenPlace], и узнаются они раньше.
+final class PhoneOpenApp extends PhoneCommand {
+  const PhoneOpenApp(this.name);
+
+  final String name;
 }

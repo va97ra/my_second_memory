@@ -92,7 +92,9 @@ class JarvisReplies {
             entry.date.day == now.day
         ? ''
         : ', ${spokenDay(entry.date, now)}';
-    return 'Записал $what: $shown $name — ${entry.category}$day.';
+    final source = entry.source == null ? '' : ' по уведомлению «${entry.source}»';
+    final category = entry.category.isEmpty ? '' : ' — ${entry.category}';
+    return 'Записал $what$source: $shown $name$category$day.';
   }
 
   /// «Открываю календарь», «Открываю завтра», «Открываю ноябрь».

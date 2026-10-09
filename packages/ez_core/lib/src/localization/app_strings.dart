@@ -89,6 +89,51 @@ class AppStrings {
   String get jarvisWakeWordHint => isRu
       ? 'Пока приложение открыто, микрофон ждёт имя'
       : 'While the app is open, the microphone waits for the name';
+  /// Остаток пакета GigaChat под заголовком Джарвиса.
+  String gigaChatLeft(int tokens) => isRu
+      ? 'GigaChat: осталось ${_tokens(tokens)}'
+      : 'GigaChat: ${_tokens(tokens)} left';
+
+  /// Остатка Сбер не сообщил — сколько ушло за месяц.
+  String gigaChatSpent(int tokens) => isRu
+      ? 'GigaChat: за месяц ${_tokens(tokens)}'
+      : 'GigaChat: ${_tokens(tokens)} this month';
+
+  /// «950 тыс. токенов», «1,2 млн токенов», «12 токенов».
+  String _tokens(int count) {
+    String short(double value) => value >= 10 || value == value.roundToDouble()
+        ? value.round().toString()
+        : value.toStringAsFixed(1).replaceAll('.', isRu ? ',' : '.');
+    if (!isRu) {
+      if (count >= 1000000) return '${short(count / 1000000)}M tokens';
+      if (count >= 1000) return '${short(count / 1000)}K tokens';
+      return '$count tokens';
+    }
+    if (count >= 1000000) return '${short(count / 1000000)} млн токенов';
+    if (count >= 1000) return '${short(count / 1000)} тыс. токенов';
+    return '$count ${russianPlural(count, 'токен', 'токена', 'токенов')}';
+  }
+
+  String get jarvisBankNotices => isRu
+      ? 'Записывать покупки из уведомлений банков'
+      : 'Record purchases from bank notifications';
+  String get jarvisBankNoticesHint => isRu
+      ? 'Джарвис сам запишет расход или доход, с «Отменить»'
+      : 'Jarvis records the expense or income himself, with Undo';
+  String get jarvisBankNoAccess => isRu
+      ? 'Нужен доступ к уведомлениям — нажмите, чтобы открыть настройки телефона'
+      : 'Notification access needed — tap to open phone settings';
+  String get jarvisSpeakReminders =>
+      isRu ? 'Говорить напоминания вслух' : 'Speak reminders aloud';
+  String get jarvisSpeakRemindersHint => isRu
+      ? 'Голосом Джарвиса; молчит в беззвучном режиме и во время звонка'
+      : 'In Jarvis’s voice; silent in silent mode and during calls';
+  String get jarvisMorningBriefing =>
+      isRu ? 'Утром — дела на день' : 'Morning: today’s tasks';
+  String get jarvisEveningBriefing =>
+      isRu ? 'Вечером — дела на завтра' : 'Evening: tomorrow’s tasks';
+  String jarvisBriefingAt(String time) => isRu ? 'В $time' : 'At $time';
+  String get jarvisBriefingOff => isRu ? 'Выключено' : 'Off';
   String get jarvisBrainOn => isRu
       ? 'Подключена: Джарвис понимает свободную речь'
       : 'Connected: Jarvis understands free speech';

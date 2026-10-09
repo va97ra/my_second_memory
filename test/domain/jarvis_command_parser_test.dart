@@ -25,8 +25,8 @@ void main() {
     });
 
     test('короткие реплики — не дела', () {
-      expect(as<JarvisSay>('спасибо').text, 'Всегда рад помочь.');
-      expect(as<JarvisSay>('ладно на завтра').text, 'Хорошо.');
+      expect(as<JarvisSay>('спасибо').text, isIn(SmallTalk.thanks));
+      expect(as<JarvisSay>('ладно на завтра').text, isIn(SmallTalk.ok));
       expect(as<JarvisSay>('Джарвис').text, 'Слушаю.');
     });
   });
@@ -274,7 +274,7 @@ void main() {
       expect(as<AskBrain>('Джарвис, почему небо голубое?').text,
           'почему небо голубое');
       expect(parse('что такое ипотека'), isA<AskBrain>());
-      expect(as<JarvisSay>('как дела').text, contains('в порядке'));
+      expect(as<JarvisSay>('как дела').text, isIn(SmallTalk.howAreYou));
     });
   });
 }

@@ -1,22 +1,25 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
-import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 
 import '../../../platform/windows/windows_audio_input.dart';
 import 'jarvis_listener.dart';
+import 'jarvis_speech_worker.dart';
 
 JarvisListener? createJarvisListener() => OfflineJarvisListener();
 
 /// Распознавание на устройстве: sherpa-onnx и потоковая модель Vosk small
-/// ru (Zipformer2, Apache 2.0). Модель лежит в `assets/speech/vosk-ru` и при
-/// первом запуске один раз копируется в память приложения — движок читает
-/// файлы, а не ресурсы сборки.
+/// ru (Zipformer2, Apache 2.0). Модель лежит в `assets/speech/vosk-ru` и
+/// один раз копируется в память приложения — движок читает файлы, а не
+/// ресурсы сборки. Расшифровка идёт в своём потоке ([SpeechWorker]).
+///
+/// Микрофон один на две работы: ждать имя и слушать просьбу. Включают и
+/// выключают его строго по очереди — иначе две работы одновременно
+/// запускали запись, и одна из них молча оставалась без звука.
 ///
 /// Перенесено из MemoryVoice, где проверено на телефоне владельца; числа
 /// пауз подобраны там же.
@@ -35,22 +38,24 @@ class OfflineJarvisListener implements JarvisListener {
     'joiner.int8.onnx',
     'tokens.txt',
   ];
-  static const _sampleRate = 16000;
+
+  /// Модель распакована целиком: файл появляется последним.
+  static const _unpacked = '.unpacked';
 
   /// Дольше одной фразы не слушаем.
   static const _maxDuration = Duration(seconds: 30);
 
   final AudioRecorder _recorder;
   final WindowsAudioInput _audioInput;
-  sherpa.OnlineRecognizer? _recognizer;
-  Future<sherpa.OnlineRecognizer>? _starting;
 
-  sherpa.OnlineStream? _stream;
-  StreamSubscription<Uint8List>? _audio;
-  Completer<String>? _completer;
-  Timer? _maxTimer;
-  String _last = '';
-  int? _oddByte;
+  Future<SpeechWorker>? _worker;
+  StreamSubscription<SpeechHeard>? _heard;
+  _Session? _session;
+  var _sessions = 0;
+  Future<void> _mic = Future.value();
+
+  @override
+  bool get continuous => _session?.continuous ?? false;
 
   @override
   Future<String> listen({void Function(String text)? onPartial}) async {
@@ -58,207 +63,178 @@ class OfflineJarvisListener implements JarvisListener {
       throw const JarvisListenerFailure(
           'Разрешите приложению микрофон в настройках телефона.');
     }
-    final recognizer = await (_starting ??= _start());
-    await cancel();
-    // Микрофон один: пока слушаем просьбу, имя не ждём.
-    await stopContinuous();
-    final stream = recognizer.createStream();
-    final completer = Completer<String>();
-    _stream = stream;
-    _completer = completer;
-    _last = '';
-    _oddByte = null;
-
-    final Stream<Uint8List> audio;
+    final SpeechWorker worker;
     try {
-      audio = await _recorder.startStream(RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        sampleRate: _sampleRate,
-        numChannels: 1,
-        noiseSuppress: true,
-        autoGain: true,
-        device: await _audioInput.inputDeviceFor(_recorder),
-      ));
+      worker = await _ready();
     } on Object {
-      _release();
+      throw const JarvisListenerFailure(
+          'Распознавание речи не запустилось на этом телефоне.');
+    }
+    final session = await _exclusive(() async {
+      // Микрофон один: пока слушаем просьбу, имя не ждём.
+      await _close(_session);
+      return _open(worker, continuous: false, onPartial: onPartial);
+    });
+    if (session == null) {
       throw const JarvisListenerFailure(
           'Микрофон не включился — возможно, его занимает другое приложение.');
     }
-
-    _audio = audio.listen(
-      (bytes) {
-        if (!identical(_completer, completer)) return;
-        final samples = _toFloat32(bytes);
-        if (samples.isEmpty) return;
-        stream.acceptWaveform(samples: samples, sampleRate: _sampleRate);
-        while (recognizer.isReady(stream)) {
-          recognizer.decode(stream);
-        }
-        final text = recognizer.getResult(stream).text.trim();
-        if (text != _last) {
-          _last = text;
-          onPartial?.call(text);
-        }
-        if (recognizer.isEndpoint(stream)) _finish(completer);
-      },
-      // Микрофон оборвался — отдаём то, что успели расслышать.
-      onError: (Object _) => _finish(completer),
-    );
-    _maxTimer = Timer(_maxDuration, () => _finish(completer));
-    return completer.future;
+    return session.result.future;
   }
 
   @override
-  Future<void> stop() async {
-    final completer = _completer;
-    if (completer != null) await _finish(completer);
-  }
+  Future<void> stop() => _exclusive(() async {
+        final session = _session;
+        if (session != null && !session.continuous) await _finish(session);
+      });
 
   @override
-  Future<void> cancel() async {
-    final completer = _completer;
-    _completer = null;
-    _release();
-    await _stopRecorder();
-    if (completer != null && !completer.isCompleted) completer.complete('');
-  }
-
-  StreamSubscription<Uint8List>? _waitAudio;
-  sherpa.OnlineStream? _waitStream;
-
-  @override
-  bool get continuous => _waitAudio != null;
+  Future<void> cancel() => _exclusive(() async {
+        final session = _session;
+        if (session != null && !session.continuous) await _close(session);
+      });
 
   @override
   Future<bool> startContinuous({
     required void Function(String text) onPhrase,
     void Function(String text)? onPartial,
   }) async {
-    if (_waitAudio != null) return true;
-    // Идёт обычное слушание — оно главнее.
-    if (_completer != null) return false;
+    if (_session != null) return continuous;
     if (!await _recorder.hasPermission(request: false)) return false;
-    final recognizer = await (_starting ??= _start());
-    final stream = recognizer.createStream();
+    final SpeechWorker worker;
+    try {
+      worker = await _ready();
+    } on Object {
+      return false;
+    }
+    return _exclusive(() async {
+      // Пока ждали очереди, могли начать слушать просьбу — она главнее.
+      if (_session != null) return continuous;
+      final session = await _open(worker,
+          continuous: true, onPartial: onPartial, onPhrase: onPhrase);
+      return session != null;
+    });
+  }
+
+  @override
+  Future<void> stopContinuous() => _exclusive(() async {
+        final session = _session;
+        if (session != null && session.continuous) await _close(session);
+      });
+
+  @override
+  void dispose() {
+    unawaited(_exclusive(() async {
+      await _close(_session);
+      await _heard?.cancel();
+      final worker = _worker;
+      _worker = null;
+      if (worker != null) (await worker).dispose();
+    }));
+  }
+
+  /// Включения и выключения микрофона — по одному, в порядке вызова.
+  Future<T> _exclusive<T>(Future<T> Function() action) {
+    final result = _mic.then((_) => action());
+    _mic = result.then<void>((_) {}, onError: (Object _) {});
+    return result;
+  }
+
+  /// Поток распознавания поднимается один раз; не поднялся — каждая
+  /// следующая попытка получает тот же отказ, а не грузит модель заново.
+  Future<SpeechWorker> _ready() => _worker ??= () async {
+        final worker = await SpeechWorker.spawn(await _unpackModel());
+        _heard = worker.heard.listen(_onHeard);
+        return worker;
+      }();
+
+  Future<_Session?> _open(
+    SpeechWorker worker, {
+    required bool continuous,
+    void Function(String text)? onPartial,
+    void Function(String text)? onPhrase,
+  }) async {
+    final id = ++_sessions;
+    worker.open(id, continuous: continuous);
     final Stream<Uint8List> audio;
     try {
       audio = await _recorder.startStream(RecordConfig(
         encoder: AudioEncoder.pcm16bits,
-        sampleRate: _sampleRate,
+        sampleRate: 16000,
         numChannels: 1,
-        noiseSuppress: true,
-        autoGain: true,
+        // Режим микрофона для распознавания речи: без автоусиления и
+        // шумоподавления. Они подстраиваются под тишину и искажают первое
+        // слово после неё — как раз имя, которым зовут. Этим же режимом
+        // пишет звук официальная обвязка Vosk для Android.
+        noiseSuppress: false,
+        autoGain: false,
+        androidConfig: const AndroidRecordConfig(
+          audioSource: AndroidAudioSource.voiceRecognition,
+        ),
+        // Чужие звуки запись не прерывают, и сама она чужим не мешает. По
+        // умолчанию любое уведомление ставило её на паузу, и та уже не
+        // снималась: приложение считало, что слушает, а звука не было. Да
+        // ещё и музыка останавливалась, пока Джарвис ждал имя.
+        audioInterruption: AudioInterruptionMode.none,
         device: await _audioInput.inputDeviceFor(_recorder),
       ));
     } on Object {
-      // Микрофон занят другим приложением — имя подождёт следующей попытки.
-      stream.free();
-      return false;
+      worker.close(id);
+      return null;
     }
-    _waitStream = stream;
-    _oddByte = null;
-    var last = '';
-    _waitAudio = audio.listen((bytes) {
-      if (!identical(_waitStream, stream)) return;
-      final samples = _toFloat32(bytes);
-      if (samples.isEmpty) return;
-      stream.acceptWaveform(samples: samples, sampleRate: _sampleRate);
-      while (recognizer.isReady(stream)) {
-        recognizer.decode(stream);
-      }
-      final text = recognizer.getResult(stream).text.trim();
-      if (text != last) {
-        last = text;
-        onPartial?.call(text);
-      }
-      // Фраза кончилась — отдаём её и слушаем дальше с чистого листа.
-      if (recognizer.isEndpoint(stream)) {
-        recognizer.reset(stream);
-        last = '';
-        if (text.isNotEmpty) onPhrase(text);
-      }
-    });
-    return true;
+    final session = _Session(id, worker,
+        continuous: continuous, onPartial: onPartial, onPhrase: onPhrase);
+    _session = session;
+    session.audio = audio.listen(
+      (bytes) => worker.feed(id, bytes),
+      // Микрофон оборвался — отдаём то, что успели расслышать, а ожидание
+      // имени выключаем: оболочка включит его заново.
+      onError: (Object _) => _ended(session),
+      onDone: () => _ended(session),
+    );
+    if (!continuous) session.limit = Timer(_maxDuration, () => _ended(session));
+    return session;
   }
 
-  @override
-  Future<void> stopContinuous() async {
-    final audio = _waitAudio;
-    final stream = _waitStream;
-    if (audio == null) return;
-    _waitAudio = null;
-    _waitStream = null;
-    await audio.cancel();
-    stream?.free();
-    await _stopRecorder();
-  }
-
-  @override
-  void dispose() {
-    unawaited(stopContinuous());
-    unawaited(cancel());
-    _recognizer?.free();
-    _recognizer = null;
-  }
-
-  Future<sherpa.OnlineRecognizer> _start() async {
-    final dir = await _unpackModel();
-    sherpa.initBindings();
-    final recognizer = sherpa.OnlineRecognizer(sherpa.OnlineRecognizerConfig(
-      model: sherpa.OnlineModelConfig(
-        transducer: sherpa.OnlineTransducerModelConfig(
-          encoder: p.join(dir, 'encoder.int8.onnx'),
-          decoder: p.join(dir, 'decoder.int8.onnx'),
-          joiner: p.join(dir, 'joiner.int8.onnx'),
-        ),
-        tokens: p.join(dir, 'tokens.txt'),
-        numThreads: 2,
-        debug: false,
-      ),
-      decodingMethod: 'modified_beam_search',
-      maxActivePaths: 4,
-      enableEndpoint: true,
-      // Ничего не сказали 2,4 с — «не расслышал».
-      rule1MinTrailingSilence: 2.4,
-      // Договорили и молчат 2,2 с — фраза закончена. С 1,5 с обрывало
-      // задумавшегося посреди фразы: «завтра… в два… к врачу».
-      rule2MinTrailingSilence: 2.2,
-      rule3MinUtteranceLength: 30,
-    ));
-    _recognizer = recognizer;
-    return recognizer;
-  }
-
-  /// Дослушать остаток, выдать итог и освободить микрофон.
-  Future<void> _finish(Completer<String> completer) async {
-    if (completer.isCompleted || !identical(_completer, completer)) return;
-    // Конец фразы и таймер могут прийти разом: завершает первый.
-    _completer = null;
-    final recognizer = _recognizer;
-    final stream = _stream;
-    var text = _last;
-    if (recognizer != null && stream != null) {
-      // Полсекунды тишины в конце — модель «дожимает» последнее слово.
-      stream.acceptWaveform(
-          samples: Float32List(_sampleRate ~/ 2), sampleRate: _sampleRate);
-      stream.inputFinished();
-      while (recognizer.isReady(stream)) {
-        recognizer.decode(stream);
-      }
-      text = recognizer.getResult(stream).text.trim();
+  void _onHeard(SpeechHeard heard) {
+    final session = _session;
+    if (session == null || heard.session != session.id) return;
+    switch (heard.kind) {
+      case SpeechHeardKind.partial:
+        session.onPartial?.call(heard.text);
+      case SpeechHeardKind.endpoint:
+        if (session.continuous) {
+          session.onPhrase?.call(heard.text);
+        } else {
+          _ended(session);
+        }
+      case SpeechHeardKind.done:
+        break;
     }
-    _release();
-    await _stopRecorder();
-    completer.complete(text);
   }
 
-  void _release() {
-    _maxTimer?.cancel();
-    _maxTimer = null;
-    unawaited(_audio?.cancel());
-    _audio = null;
-    _stream?.free();
-    _stream = null;
+  /// Фраза кончилась, вышло время или оборвался звук.
+  void _ended(_Session session) => unawaited(_exclusive(
+      () => session.continuous ? _close(session) : _finish(session)));
+
+  /// Дослушать просьбу, выдать итог и освободить микрофон.
+  Future<void> _finish(_Session session) async {
+    if (!identical(_session, session)) return;
+    _session = null;
+    await session.stopFeeding();
+    final text = await session.worker.finish(session.id);
+    await _stopRecorder();
+    session.complete(text);
+  }
+
+  /// Выключить микрофон без итога.
+  Future<void> _close(_Session? session) async {
+    if (session == null || !identical(_session, session)) return;
+    _session = null;
+    await session.stopFeeding();
+    session.worker.close(session.id);
+    await _stopRecorder();
+    session.complete('');
   }
 
   Future<void> _stopRecorder() async {
@@ -266,45 +242,55 @@ class OfflineJarvisListener implements JarvisListener {
   }
 
   /// Копирует модель из ресурсов сборки в память приложения — один раз на
-  /// версию модели.
+  /// версию модели. Распакованную не трогает: чтение 27 МБ ресурсов на
+  /// каждом запуске задерживало старт приложения.
   Future<String> _unpackModel() async {
     final base = await getApplicationSupportDirectory();
     final dir = Directory(p.join(base.path, 'speech', _modelVersion));
+    final done = File(p.join(dir.path, _unpacked));
+    if (await done.exists()) return dir.path;
     await dir.create(recursive: true);
     for (final name in _files) {
-      final file = File(p.join(dir.path, name));
       final data = await rootBundle.load('$_assetDir/$name');
-      if (await file.exists() && await file.length() == data.lengthInBytes) {
-        continue;
-      }
-      final partial = File('${file.path}.part');
+      final partial = File(p.join(dir.path, '$name.part'));
       await partial.writeAsBytes(
         data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
         flush: true,
       );
-      await partial.rename(file.path);
+      await partial.rename(p.join(dir.path, name));
     }
+    await done.writeAsString(_modelVersion, flush: true);
     return dir.path;
   }
+}
 
-  /// PCM 16 бит little-endian → числа от -1 до 1. Нечётный байт куска
-  /// переносится в следующий: звук приходит кусками произвольной длины.
-  Float32List _toFloat32(Uint8List bytes) {
-    var data = bytes;
-    final carried = _oddByte;
-    if (carried != null) {
-      data = Uint8List(bytes.length + 1)
-        ..[0] = carried
-        ..setRange(1, bytes.length + 1, bytes);
-      _oddByte = null;
-    }
-    final even = data.length & ~1;
-    if (even != data.length) _oddByte = data[data.length - 1];
-    final view = ByteData.sublistView(data, 0, even);
-    final samples = Float32List(even ~/ 2);
-    for (var i = 0; i < samples.length; i++) {
-      samples[i] = view.getInt16(i * 2, Endian.little) / 32768.0;
-    }
-    return samples;
+/// Одно включение микрофона: ожидание имени или одна просьба.
+class _Session {
+  _Session(
+    this.id,
+    this.worker, {
+    required this.continuous,
+    this.onPartial,
+    this.onPhrase,
+  });
+
+  final int id;
+  final SpeechWorker worker;
+  final bool continuous;
+  final void Function(String text)? onPartial;
+  final void Function(String text)? onPhrase;
+
+  /// Итог просьбы; у ожидания имени — всегда пусто.
+  final result = Completer<String>();
+  StreamSubscription<Uint8List>? audio;
+  Timer? limit;
+
+  Future<void> stopFeeding() async {
+    limit?.cancel();
+    await audio?.cancel();
+  }
+
+  void complete(String text) {
+    if (!result.isCompleted) result.complete(text);
   }
 }

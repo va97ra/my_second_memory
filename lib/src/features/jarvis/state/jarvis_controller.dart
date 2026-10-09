@@ -11,8 +11,6 @@ import 'jarvis_executor.dart';
 import 'jarvis_message.dart';
 import 'jarvis_outcome.dart';
 
-export 'jarvis_brain_providers.dart' show jarvisAddress;
-
 final jarvisControllerProvider =
     StateNotifierProvider<JarvisController, JarvisConversation>((ref) {
   return JarvisController(
@@ -107,6 +105,13 @@ class JarvisController extends StateNotifier<JarvisConversation> {
     _undo = null;
     state = const JarvisConversation();
     (await _brain())?.forget();
+  }
+
+  /// Джарвис сделал дело сам, без просьбы, — записал расход по уведомлению
+  /// банка. В разговоре это видно так же, как сказанное, с «Отменить».
+  Future<void> act(JarvisCommand command) async {
+    final now = _clock();
+    _apply(await _executor.run(command, mentioned: _mentioned, now: now));
   }
 
   /// Кнопка «Показать» под ответом.

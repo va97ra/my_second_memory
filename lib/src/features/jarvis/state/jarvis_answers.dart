@@ -100,6 +100,34 @@ class JarvisAnswers {
     );
   }
 
+  /// Будильники Ежедневника на две недели вперёд: напоминания с мелодией и
+  /// будильники графиков смен.
+  JarvisOutcome alarms(DateTime now) {
+    final found = <AlarmMention>[];
+    final today = DateTime(now.year, now.month, now.day);
+    for (var offset = 0; offset < 14; offset++) {
+      final day = DateTime(today.year, today.month, today.day + offset);
+      for (final item in _ref.read(memoryItemsForDayProvider(day))) {
+        final at = item.remindAt;
+        if (item.reminderSoundUri != null && wantsReminder(item, now: now)) {
+          found.add((at: at!, what: item.title));
+        }
+      }
+    }
+    for (final schedule in _schedules) {
+      for (final (slot, alarm) in schedule.alarms.indexed) {
+        for (final at in shiftAlarmTimes(schedule, alarm, slot,
+            now: now, horizonDays: 14)) {
+          found.add((at: at, what: 'смена, ${schedule.organizationName}'));
+        }
+      }
+    }
+    return JarvisOutcome(
+      alarmsReply(found, now),
+      link: found.isEmpty ? null : const OpenPlace(JarvisPlace.calendar),
+    );
+  }
+
   /// Итог месяца в валюте журнала, открытого в финансах: журналы валют
   /// независимы и друг к другу не сводятся.
   JarvisOutcome finance(AskFinance command, DateTime now) {

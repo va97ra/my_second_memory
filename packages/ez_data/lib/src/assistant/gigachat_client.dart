@@ -34,6 +34,7 @@ class GigaChatClient {
     this.model = defaultModel,
     Future<http.Client> Function()? connect,
     this.timeout = const Duration(seconds: 30),
+    this.onUsage,
     DateTime Function()? clock,
   })  : _connect = connect ?? connectGigaChat,
         _clock = clock ?? DateTime.now;
@@ -52,10 +53,15 @@ class GigaChatClient {
       Uri.parse('https://ngw.devices.sberbank.ru:9443/api/v2/oauth');
   static final _chatUrl =
       Uri.parse('https://gigachat.devices.sberbank.ru/api/v1/chat/completions');
+  static final _balanceUrl =
+      Uri.parse('https://gigachat.devices.sberbank.ru/api/v1/balance');
 
   final String authKey;
   final String model;
   final Duration timeout;
+
+  /// Сколько токенов ушло на ответ — GigaChat сообщает это в каждом.
+  final void Function(int tokens)? onUsage;
   final Future<http.Client> Function() _connect;
   final DateTime Function() _clock;
   http.Client? _client;
@@ -154,12 +160,49 @@ class GigaChatClient {
     }
     final json =
         jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    final spent = (json['usage'] as Map?)?['total_tokens'];
+    if (spent is num) onUsage?.call(spent.toInt());
     final choices = json['choices'] as List? ?? const [];
     if (choices.isEmpty) {
       throw const GigaChatException('GigaChat ничего не ответил.');
     }
     return Map<String, dynamic>.from(
         (choices.first as Map)['message'] as Map);
+  }
+
+  /// Сколько токенов модели [model] осталось в пакете; null — Сбер не
+  /// сказал (так бывает на бесплатном пакете) или нет связи.
+  Future<int?> balance() async {
+    final http.Response response;
+    try {
+      final bearer = await token();
+      response = await _send(() async => (await _http()).get(
+            _balanceUrl,
+            headers: {
+              'Authorization': 'Bearer $bearer',
+              'Accept': 'application/json',
+            },
+          ));
+    } on GigaChatException {
+      return null;
+    }
+    if (response.statusCode != 200) return null;
+    final json = jsonDecode(utf8.decode(response.bodyBytes));
+    final packages = json is Map ? json['balance'] : null;
+    if (packages is! List) return null;
+    int? valueOf(bool Function(String usage) matches) {
+      for (final package in packages) {
+        if (package is! Map) continue;
+        final usage = '${package['usage']}';
+        final value = package['value'];
+        if (matches(usage) && value is num) return value.toInt();
+      }
+      return null;
+    }
+
+    // Пакет называется по модели; у Lite встречается и старое имя без «-2».
+    return valueOf((usage) => usage == model) ??
+        valueOf((usage) => usage == model.replaceFirst('-2', ''));
   }
 
   /// Проверка ключа и связи: короткий вопрос — короткий ответ.

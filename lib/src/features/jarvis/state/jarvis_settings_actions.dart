@@ -67,6 +67,7 @@ class JarvisSettingsActions {
           date: entry.occurredOn,
           currency: currency,
           category: entry.category,
+          source: command.source,
         ),
         currency,
         now,

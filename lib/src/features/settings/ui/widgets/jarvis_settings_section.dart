@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../jarvis/jarvis.dart';
 import 'gigachat_key_sheet.dart';
+import 'jarvis_settings_tiles.dart';
 import 'settings_chevron.dart';
 import 'settings_section.dart';
 import 'settings_switch_tile.dart';
 import 'settings_tile.dart';
 
-/// Джарвис: подключена ли нейросеть, которая понимает свободную речь.
+/// Джарвис: нейросеть, которая понимает свободную речь, слух на имя, голос
+/// напоминаний и сводки утром и вечером.
 class JarvisSettingsSection extends ConsumerWidget {
   const JarvisSettingsSection({super.key});
 
@@ -18,6 +20,7 @@ class JarvisSettingsSection extends ConsumerWidget {
     final strings = AppStrings.of(context);
     final key = ref.watch(gigaChatKeyProvider);
     final connected = key.valueOrNull != null;
+    final briefings = ref.watch(jarvisBriefingSettingsProvider);
     return SettingsSection(
       title: strings.jarvis,
       children: [
@@ -39,6 +42,34 @@ class JarvisSettingsSection extends ConsumerWidget {
           title: strings.jarvisWakeWord,
           subtitle: strings.jarvisWakeWordHint,
           setting: jarvisWakeEnabledProvider,
+        ),
+        SettingsSwitchTile(
+          key: const ValueKey('settings_jarvis_speak'),
+          icon: Icons.campaign_rounded,
+          title: strings.jarvisSpeakReminders,
+          subtitle: strings.jarvisSpeakRemindersHint,
+          setting: jarvisSpeakRemindersProvider,
+        ),
+        const BankNoticesTile(),
+        BriefingTile(
+          key: const ValueKey('settings_jarvis_morning'),
+          icon: Icons.wb_sunny_rounded,
+          title: strings.jarvisMorningBriefing,
+          enabled: briefings.morning,
+          at: briefings.morningAt,
+          onChanged: ({enabled, at}) => ref
+              .read(jarvisBriefingSettingsProvider.notifier)
+              .setMorning(enabled: enabled, at: at),
+        ),
+        BriefingTile(
+          key: const ValueKey('settings_jarvis_evening'),
+          icon: Icons.nights_stay_rounded,
+          title: strings.jarvisEveningBriefing,
+          enabled: briefings.evening,
+          at: briefings.eveningAt,
+          onChanged: ({enabled, at}) => ref
+              .read(jarvisBriefingSettingsProvider.notifier)
+              .setEvening(enabled: enabled, at: at),
         ),
       ],
     );

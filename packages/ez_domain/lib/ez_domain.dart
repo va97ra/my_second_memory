@@ -7,17 +7,20 @@ library;
 
 export 'src/assistant/agenda_speech.dart';
 export 'src/assistant/brain_instructions.dart';
+export 'src/assistant/bank_notice_phrases.dart';
 export 'src/assistant/butler_persona.dart';
 export 'src/assistant/calculation_phrases.dart'
     show calculationReply, spokenNumber;
 export 'src/assistant/clarification_phrases.dart';
 export 'src/assistant/currency_phrases.dart' show currencyReply;
 export 'src/assistant/day_question_phrases.dart'
-    show holidaysReply, shiftReply;
+    show AlarmMention, alarmsReply, holidaysReply, shiftReply;
 export 'src/assistant/finance_phrases.dart' show financeReply;
 export 'src/assistant/jarvis_command.dart';
 export 'src/assistant/jarvis_command_parser.dart';
 export 'src/assistant/jarvis_replies.dart';
+export 'src/assistant/phone_phrases.dart'
+    show PhoneReplies, alarmMinutes, bestContact, durationSeconds, spokenSeconds;
 export 'src/assistant/record_lookup.dart';
 export 'src/assistant/moment_hits.dart' show PhraseRepeat, PhraseRepeatKind;
 export 'src/assistant/russian_words.dart'
@@ -33,6 +36,7 @@ export 'src/finance/exchange_rates.dart';
 export 'src/finance/finance_entry.dart';
 export 'src/finance/finance_summary.dart';
 export 'src/accounts/account_item.dart';
+export 'src/metro/metro_guide.dart' show MetroGuide;
 export 'src/calendar/holiday_calendar_service.dart';
 export 'src/calendar/production_calendar.dart';
 export 'src/calendar/iso_week.dart';

@@ -19,6 +19,10 @@ abstract final class ReminderSource {
   static const memory = 'memory_reminder';
   static const recurrence = 'recurrence_reminder';
 
+  /// Утренние и вечерние сводки Джарвиса — не записи, но согласуются так же:
+  /// своим источником, не трогая чужих.
+  static const briefing = 'jarvis_briefing';
+
   /// Источник, к которому относится запись.
   ///
   /// К повторам относится только спроецированное вхождение. Сама запись,

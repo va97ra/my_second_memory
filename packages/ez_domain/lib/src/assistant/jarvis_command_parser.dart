@@ -1,3 +1,4 @@
+import '../metro/metro_guide.dart';
 import 'agenda_phrases.dart';
 import 'calculation_phrases.dart';
 import 'currency_phrases.dart';
@@ -6,6 +7,7 @@ import 'finance_phrases.dart';
 import 'jarvis_command.dart';
 import 'jarvis_phrase.dart';
 import 'moment_hits.dart';
+import 'phone_phrases.dart';
 import 'place_phrases.dart';
 import 'record_phrases.dart';
 import 'russian_words.dart';
@@ -35,6 +37,8 @@ class JarvisCommandParser {
         undoCommand(work) ??
         (talk == null ? null : JarvisSay(talk)) ??
         settingCommand(work) ??
+        phoneCommand(phrase, now) ??
+        _metroCommand(phrase.text) ??
         agendaCommand(work, now) ??
         dayQuestionCommand(work, now) ??
         financeCommand(work, now) ??
@@ -46,7 +50,14 @@ class JarvisCommandParser {
         whenCommand(work) ??
         noteCommand(phrase, now) ??
         placeCommand(work, now) ??
+        phoneAppCommand(work, now) ??
         _taskCommand(phrase, now);
+  }
+
+  /// Вопрос о дороге на метро; станции узнаёт схема метро.
+  JarvisCommand? _metroCommand(String text) {
+    final asked = MetroGuide.moscow.question(text);
+    return asked == null ? null : AskMetroRoute(from: asked.from, to: asked.to);
   }
 
   JarvisCommand _taskCommand(JarvisPhrase phrase, DateTime now) {

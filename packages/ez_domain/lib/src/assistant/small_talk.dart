@@ -93,13 +93,12 @@ class SmallTalk {
 
   /// Ответ на короткую реплику или null, если это не она.
   static String? reply(String text, DateTime now) {
-    if (_howAreYou.hasMatch(text.trim().toLowerCase())) {
-      return 'Всё в порядке, благодарю. Чем могу помочь?';
+    final said = text.trim().toLowerCase().replaceAll('ё', 'е');
+    for (final (pattern, lines) in _talk) {
+      if (pattern.hasMatch(said)) return pick(lines, now);
     }
-    if (_whoAreYou.hasMatch(text.trim().toLowerCase())) {
-      return 'Я Джарвис, ваш помощник. Веду календарь, записи и финансы — '
-          'говорите, что сделать.';
-    }
+    if (_howAreYou.hasMatch(said)) return pick(howAreYou, now);
+    if (_whoAreYou.hasMatch(said)) return pick(whoAreYou, now);
     final title = const TaskPhraseParser().parse(text, now).task.title;
     final words = title
         .toLowerCase()
@@ -115,10 +114,127 @@ class SmallTalk {
         _ok.contains(word) ||
         _glue.contains(word);
     if (!words.every(known)) return null;
-    if (words.any(_thanks.contains)) return 'Всегда рад помочь.';
-    if (words.any(_bye.contains)) return 'До связи.';
-    if (words.any(_hello.contains)) return 'Здравствуйте. Чем могу помочь?';
-    if (words.any(_ok.contains)) return 'Хорошо.';
+    if (words.any(_thanks.contains)) return pick(thanks, now);
+    if (words.any(_bye.contains)) {
+      return pick(now.hour >= 21 || now.hour < 5 ? goodNight : bye, now);
+    }
+    if (words.any(_hello.contains)) return pick(_greetingFor(now), now);
+    if (words.any(_ok.contains)) return pick(ok, now);
     return 'Слушаю.';
   }
+
+  /// Каждый раз — своя фраза: выбирается по минуте, так что подряд Джарвис
+  /// не повторяется, а в тестах ответ предсказуем.
+  static String pick(List<String> lines, DateTime now) =>
+      lines[(now.hour * 60 + now.minute) % lines.length];
+
+  static List<String> _greetingFor(DateTime now) => switch (now.hour) {
+        >= 5 && < 12 => morning,
+        >= 12 && < 17 => afternoon,
+        >= 17 && < 23 => evening,
+        _ => night,
+      };
+
+  // Реплики Джарвиса — его собственные, в манере учтивого дворецкого с
+  // сухим юмором. Не цитаты из фильмов и не слова других героев (решение
+  // владельца 9 октября 2026). Обращение «сэр» добавляет [ButlerPersona].
+
+  static const thanks = [
+    'Всегда рад помочь.',
+    'К вашим услугам.',
+    'Не стоит благодарности — это моя работа.',
+    'Рад быть полезным.',
+  ];
+  static const ok = ['Хорошо.', 'Как скажете.', 'Принято.'];
+  static const bye = [
+    'До связи.',
+    'Буду ждать, когда понадоблюсь.',
+    'Если что — я рядом.',
+  ];
+  static const goodNight = [
+    'Спокойной ночи. Я присмотрю за делами.',
+    'Доброй ночи. Будильники на месте, напоминания тоже.',
+  ];
+  static const morning = [
+    'Доброе утро. Кофе сварить не могу, но день спланирую.',
+    'Доброе утро. Все системы в порядке, жду указаний.',
+  ];
+  static const afternoon = [
+    'Добрый день. Чем могу помочь?',
+    'Здравствуйте. Слушаю вас.',
+  ];
+  static const evening = [
+    'Добрый вечер. Чем могу помочь?',
+    'Добрый вечер. Подвести итоги дня или заглянуть в завтра?',
+  ];
+  static const night = [
+    'Доброй ночи. Не спится? Я на месте.',
+    'Поздно уже. Но я, как всегда, на посту.',
+  ];
+  static const howAreYou = [
+    'Все системы работают нормально. Чем могу помочь?',
+    'Лучше не бывает: дела записаны, напоминания на месте.',
+    'В полном порядке, благодарю. А у вас?',
+  ];
+  static const whoAreYou = [
+    'Я Джарвис, ваш дворецкий в телефоне. Веду календарь, записи и '
+        'финансы, напоминаю о делах — говорите, что сделать.',
+  ];
+  static const jokes = [
+    'Я бы рассказал шутку про напоминания, но вы её забудете. Поэтому я её '
+        'запишу.',
+    'Говорят, чтобы ничего не забывать, нужен хороший дворецкий. Скромность '
+        'не позволяет назвать имя.',
+    'Мой календарь никогда не опаздывает. Не буду показывать пальцем на '
+        'тех, кто опаздывает.',
+    'Я проверил: в сутках по-прежнему 24 часа. Заявку на 25-й я подал, '
+        'ответа пока нет.',
+    'Моя любимая зарядка — та, что до ста процентов.',
+  ];
+  static const praise = [
+    'Благодарю. Стараюсь соответствовать.',
+    'Приятно слышать. Хотя я всего лишь делал свою работу.',
+    'Вы слишком добры. Продолжу в том же духе.',
+  ];
+  static const here = ['Всегда на месте.', 'Слышу вас отлично.', 'Здесь.'];
+  static const home = [
+    'С возвращением. Рассказать, что на завтра?',
+    'С возвращением. Пока вас не было, ничего не сгорело.',
+  ];
+  static const tired = [
+    'Тогда отдохните. Дела никуда не денутся — я их стерегу.',
+    'Отдых — тоже дело. Записывать не буду, просто отдохните.',
+  ];
+  static const bored = [
+    'Могу рассказать, что у вас на неделе, — скучать станет некогда.',
+    'Можем заглянуть в финансы. Обычно это бодрит.',
+  ];
+
+  /// Узнаётся вся фраза целиком: «пошути» — шутка, а «пошути про это
+  /// завтра» уже не реплика.
+  static final _talk = <(RegExp, List<String>)>[
+    (
+      _whole(r'(?:пошути|пошути\s+что-нибудь|расскажи\s+(?:шутку|анекдот)'
+          r'|рассмеши\s+меня|скажи\s+что-нибудь\s+смешное|шутку|анекдот)'),
+      jokes,
+    ),
+    (
+      _whole(r'(?:молодец|умница|красавчик|ты\s+лучший|ты\s+молодец'
+          r'|хорошая\s+работа|отлично\s+сработано|ты\s+крут|ты\s+супер)'),
+      praise,
+    ),
+    (
+      _whole(r'(?:ты\s+(?:тут|здесь)|ты\s+меня\s+слышишь|слышишь\s+меня'
+          r'|ты\s+на\s+месте|ау)'),
+      here,
+    ),
+    (_whole(r'(?:я\s+(?:дома|пришел|вернулся|вернулась|пришла))'), home),
+    (_whole(r'(?:я\s+(?:устал|устала|вымотался|вымоталась))'), tired),
+    (_whole(r'(?:мне\s+скучно|скучно)'), bored),
+  ];
+
+  static RegExp _whole(String phrase) => RegExp(
+        r'^(?:(?:ну|эй|слушай|джарвис|сэр)[\s,]+)*' '$phrase' r'[?!.\s]*$',
+        unicode: true,
+      );
 }

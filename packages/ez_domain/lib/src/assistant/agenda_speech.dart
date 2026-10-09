@@ -73,6 +73,75 @@ class AgendaSpeech {
         '${_list(open, daysFrom: now)}.');
   }
 
+  /// Напоминание вслух в его момент: «Сэр, напоминаю: в 2 часа дня —
+  /// встреча с Иваном.» Заранее — сколько осталось: «Сэр, через 30 минут, в
+  /// 2 часа дня — встреча.» Дело другого дня — с днём: «Сэр, напоминаю:
+  /// завтра в 10 часов утра — врач.»
+  static String reminder(
+    MemoryItem item, {
+    required DateTime at,
+    String address = '',
+  }) {
+    final title = lowerFirst(item.title.trim());
+    final remind = '${hello(address)}напоминаю: ';
+    final minutes = item.timeMinutes;
+    if (item.isUndated) return capitalizeFirst('$remind$title.');
+    final day = item.memoryDate;
+    final sameDay = isSameDay(day, at);
+    if (minutes == null) {
+      final when = sameDay ? 'сегодня' : spokenWhen(day, at);
+      return capitalizeFirst('$remind$when — $title.');
+    }
+    final start = DateTime(day.year, day.month, day.day, minutes ~/ 60,
+        minutes % 60);
+    final ahead = start.difference(at).inMinutes;
+    if (sameDay && ahead > 0) {
+      return capitalizeFirst('${hello(address)}через ${spokenDuration(ahead)}, '
+          '${spokenAt(minutes)} — $title.');
+    }
+    final when = sameDay ? spokenAt(minutes) : spokenMoment(day, minutes, at);
+    return capitalizeFirst('$remind$when — $title.');
+  }
+
+  /// Голос за будильником смены: «Доброе утро, сэр! Сегодня рабочая смена
+  /// — Завод.» Утро после суточной: «Доброе утро, сэр! Суточная смена
+  /// позади — Завод.»
+  static String shiftAlarm(
+    String organization, {
+    required bool afterNightShift,
+    String address = '',
+  }) {
+    final name = address.trim();
+    final hi = name.isEmpty ? 'Доброе утро!' : 'Доброе утро, $name!';
+    final what = organization.trim();
+    final shift =
+        afterNightShift ? 'Суточная смена позади' : 'Сегодня рабочая смена';
+    return what.isEmpty ? '$hi $shift.' : '$hi $shift — $what.';
+  }
+
+  /// Сводка дня — утром на сегодня, вечером на завтра: «Доброе утро, сэр!
+  /// На сегодня 2 дела» и по порядку, что за дела. null — дел нет, и
+  /// беспокоить незачем.
+  static ({String title, String body})? briefing(
+    List<MemoryItem> items, {
+    required DateTime day,
+    required DateTime at,
+    String address = '',
+  }) {
+    final open = _open(items);
+    if (open.isEmpty) return null;
+    final today = isSameDay(day, at);
+    final name = address.trim();
+    final what = 'на ${spokenDay(day, at)} ${count(open.length)}';
+    return (
+      title: today && at.hour < 12
+          ? '${name.isEmpty ? 'Доброе утро' : 'Доброе утро, $name'}! '
+              '${capitalizeFirst(what)}'
+          : capitalizeFirst('${hello(address)}$what'),
+      body: _inOrder(open, now: today ? at : null),
+    );
+  }
+
   /// Записки без даты.
   static String undated(List<MemoryItem> notes, {String address = ''}) {
     final open = _open(notes);

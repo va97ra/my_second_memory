@@ -1,12 +1,13 @@
+import 'dart:async';
+
 import 'package:ez_data/ez_data.dart';
+import 'package:ez_domain/ez_domain.dart' show jarvisAddress;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'gigachat_limit.dart';
 import 'jarvis_brain.dart';
 import 'jarvis_executor.dart';
 import 'jarvis_online.dart';
-
-/// Как Джарвис обращается к владельцу.
-const jarvisAddress = 'сэр';
 
 /// Руки Джарвиса — одни на правила и на нейросеть.
 final jarvisExecutorProvider = Provider<JarvisExecutor>((ref) {
@@ -67,7 +68,14 @@ class GigaChatKeyController extends StateNotifier<AsyncValue<String?>> {
 final gigaChatClientProvider = Provider<GigaChatClient?>((ref) {
   final key = ref.watch(gigaChatKeyProvider).valueOrNull;
   if (key == null) return null;
-  final client = GigaChatClient(authKey: key);
+  final client = GigaChatClient(
+    authKey: key,
+    onUsage: (tokens) {
+      final limit = ref.read(gigaChatLimitProvider.notifier);
+      unawaited(limit.spent(tokens));
+      unawaited(limit.refresh());
+    },
+  );
   ref.onDispose(client.close);
   return client;
 });

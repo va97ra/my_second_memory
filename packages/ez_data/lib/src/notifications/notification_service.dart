@@ -9,6 +9,8 @@ import 'package:timezone/timezone.dart' as timezone;
 
 import 'package:ez_domain/ez_domain.dart';
 
+import 'spoken_reminders.dart';
+
 const _notificationChannel = MethodChannel('ezhednevnik_v2/notifications');
 const _openAction = 'open_record';
 const _stopAction = 'stop_sound';
@@ -48,6 +50,18 @@ abstract class ReminderScheduler {
   Future<void> reconcileRecurring(List<MemoryItem> items);
 }
 
+/// Сводка дня в уведомлении и голосом: [day] открывается по нажатию.
+typedef Briefing = ({DateTime at, DateTime day, String title, String body});
+
+/// Утренние и вечерние сводки Джарвиса.
+abstract class BriefingScheduler {
+  /// Нажали на сводку — какой день открыть.
+  Stream<DateTime> get openedDays;
+
+  /// Ставит ровно эти сводки; прочие снимает.
+  Future<void> reconcileBriefings(List<Briefing> briefings);
+}
+
 abstract class ShiftAlarmScheduler {
   Future<void> reconcileShiftAlarms(
     List<ShiftSchedule> schedules, {
@@ -55,16 +69,28 @@ abstract class ShiftAlarmScheduler {
   });
 }
 
-class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
-  NotificationService({FlutterLocalNotificationsPlugin? plugin})
-      : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+class NotificationService
+    implements ReminderScheduler, ShiftAlarmScheduler, BriefingScheduler {
+  NotificationService({
+    FlutterLocalNotificationsPlugin? plugin,
+    SpokenReminders voice = const SpokenReminders(),
+  })  : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
+        _voice = voice;
 
   final FlutterLocalNotificationsPlugin _plugin;
+
+  /// Голос в момент напоминания — к тем же напоминаниям, не второй
+  /// системой: ставится и снимается вместе с уведомлением.
+  final SpokenReminders _voice;
   final _openedItems = StreamController<String>.broadcast();
+  final _openedDays = StreamController<DateTime>.broadcast();
   bool _initialized = false;
 
   @override
   Stream<String> get openedItemIds => _openedItems.stream;
+
+  @override
+  Stream<DateTime> get openedDays => _openedDays.stream;
 
   @override
   bool get isSupported =>
@@ -172,12 +198,33 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     }
     await initialize();
     await cancel(item.id);
+    if (await _scheduleNotification(item)) {
+      final spoken = _spoken(item);
+      if (spoken != null) {
+        await _voice.put(ReminderSource.of(item), spoken);
+      }
+    }
+  }
 
+  /// Голос напоминания. У будильника с мелодией голос ждёт, пока мелодию
+  /// выключат, и звучит сразу за ней (`SpokenReminders.kt`).
+  SpokenReminder? _spoken(MemoryItem item) {
+    final remindAt = item.remindAt;
+    if (remindAt == null) return null;
+    return (
+      id: stableNotificationId(item.id),
+      at: remindAt,
+      text: AgendaSpeech.reminder(item, at: remindAt, address: jarvisAddress),
+    );
+  }
+
+  /// Уведомление без голоса; false — напоминать не о чем.
+  Future<bool> _scheduleNotification(MemoryItem item) async {
     final remindAt = item.remindAt;
     if (remindAt == null ||
         item.status != MemoryStatus.active ||
         !remindAt.isAfter(DateTime.now())) {
-      return;
+      return false;
     }
 
     // Мелодия и есть согласие на будильник. Не выбрали — придёт обычное
@@ -187,10 +234,10 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     try {
       await _scheduleWithSound(item, remindAt, soundUri);
     } catch (_) {
-      if (soundUri != null) {
-        await _scheduleWithSound(item, remindAt, null);
-      }
+      if (soundUri == null) return false;
+      await _scheduleWithSound(item, remindAt, null);
     }
+    return true;
   }
 
   Future<void> _scheduleWithSound(
@@ -274,6 +321,7 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
       return;
     }
     await _plugin.cancel(stableNotificationId(itemId));
+    await _voice.remove(stableNotificationId(itemId));
   }
 
   @override
@@ -314,14 +362,72 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
           alive.contains(stableNotificationId(item.id))) {
         continue;
       }
-      await schedule(item);
+      await _scheduleNotification(item);
       // Планирование ходит на платформу. Без пауз длинный список подвешивает
       // интерфейс, поэтому каждые восемь напоминаний уступаем кадр.
       if (++scheduled % 8 == 0) {
         await Future<void>.delayed(Duration.zero);
       }
     }
+    // Голос — одной пересылкой на весь источник: так он догоняет и
+    // напоминания, поставленные до того, как у Джарвиса появился голос.
+    await _voice.sync(source, [
+      for (final item in items.where(wantsReminder)) _spoken(item),
+    ].nonNulls);
   }
+
+  @override
+  Future<void> reconcileBriefings(List<Briefing> briefings) async {
+    if (!isSupported) return;
+    await initialize();
+    final wanted = {
+      for (final briefing in briefings) _briefingId(briefing.at): briefing,
+    };
+    for (final notification in await _plugin.pendingNotificationRequests()) {
+      final payload = decodeReminderPayload(notification.payload);
+      if (payload?['source'] == ReminderSource.briefing &&
+          !wanted.containsKey(notification.id)) {
+        await _plugin.cancel(notification.id);
+      }
+    }
+    for (final MapEntry(key: id, value: briefing) in wanted.entries) {
+      // Текст сводки меняется с каждым делом, поэтому ставится заново
+      // всегда: то же id заменяет прежнюю.
+      await _plugin.zonedSchedule(
+        id,
+        briefing.title,
+        briefing.body,
+        timezone.TZDateTime.from(briefing.at, timezone.local),
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'jarvis_briefings_v1',
+            'Сводки Джарвиса',
+            channelDescription:
+                'Утром — дела на день, вечером — дела на завтра',
+            importance: Importance.high,
+            priority: Priority.high,
+            category: AndroidNotificationCategory.reminder,
+            styleInformation: BigTextStyleInformation(briefing.body),
+          ),
+        ),
+        payload: jsonEncode({
+          'source': ReminderSource.briefing,
+          'day': briefing.day.toIso8601String(),
+          'notificationId': id,
+        }),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
+    await _voice.sync(ReminderSource.briefing, [
+      for (final MapEntry(key: id, value: briefing) in wanted.entries)
+        (id: id, at: briefing.at, text: '${briefing.title}. ${briefing.body}'),
+    ]);
+  }
+
+  static int _briefingId(DateTime at) =>
+      stableNotificationId('briefing:${at.toIso8601String()}');
 
   @override
   Future<void> reconcileShiftAlarms(
@@ -340,6 +446,7 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
 
     final now = DateTime.now();
     final desiredIds = <int>{};
+    final spoken = <SpokenReminder>[];
     for (final schedule in schedules) {
       for (var slot = 0; slot < schedule.alarms.length; slot++) {
         final alarm = schedule.alarms[slot];
@@ -354,6 +461,15 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
         for (final alarmAt in times) {
           final notificationId = _shiftAlarmId(schedule.id, slot, alarmAt);
           desiredIds.add(notificationId);
+          spoken.add((
+            id: notificationId,
+            at: alarmAt,
+            text: AgendaSpeech.shiftAlarm(
+              schedule.organizationName,
+              afterNightShift: slot == 1,
+              address: jarvisAddress,
+            ),
+          ));
           if (!force && pendingShiftIds.contains(notificationId)) continue;
           try {
             await _scheduleShiftAlarm(
@@ -377,6 +493,8 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     for (final id in pendingShiftIds.difference(desiredIds)) {
       await _plugin.cancel(id);
     }
+    // Джарвис отзывается и на будильник смены — когда его выключат.
+    await _voice.sync('shift_alarm', spoken);
   }
 
   Future<void> _scheduleShiftAlarm(
@@ -440,6 +558,11 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
       return;
     }
     final data = decodeReminderPayload(response.payload);
+    final day = DateTime.tryParse(data?['day'] as String? ?? '');
+    if (data?['source'] == ReminderSource.briefing && day != null) {
+      _openedDays.add(day);
+      return;
+    }
     final itemId = data?['itemId'] as String?;
     if (itemId != null && itemId.isNotEmpty) {
       _openedItems.add(itemId);
@@ -448,7 +571,18 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
 
   void dispose() {
     _openedItems.close();
+    _openedDays.close();
   }
+}
+
+class NoopBriefingScheduler implements BriefingScheduler {
+  const NoopBriefingScheduler();
+
+  @override
+  Stream<DateTime> get openedDays => const Stream.empty();
+
+  @override
+  Future<void> reconcileBriefings(List<Briefing> briefings) async {}
 }
 
 class NoopShiftAlarmScheduler implements ShiftAlarmScheduler {

@@ -37,6 +37,7 @@ export 'src/memory/encrypted_memory_repository.dart';
 export 'src/memory/local_memory_repository.dart';
 export 'src/memory/memory_repository.dart';
 export 'src/notifications/notification_service.dart';
+export 'src/notifications/spoken_reminders.dart';
 export 'src/recurrence/encrypted_recurrence_exception_repository.dart';
 export 'src/recurrence/encrypted_recurrence_repository.dart';
 export 'src/recurrence/local_recurrence_exception_repository.dart';

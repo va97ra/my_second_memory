@@ -4,7 +4,7 @@
 кода — она исчезает и отсюда; если появилась новая, её сюда дописывают в том
 же коммите, а не «потом».
 
-Проверено 10 сентября 2026.
+Проверено 9 октября 2026.
 
 ## Сверх потолка осознанно
 
@@ -17,7 +17,7 @@ packages/ez_domain/lib/src/calendar/holiday_observance_table.dart     457
 packages/ez_domain/lib/src/calendar/holiday_russian_table.dart        994
    таблицы праздников: официальные, международные дни и праздники России
 
-packages/ez_core/lib/src/localization/app_strings.dart                615
+packages/ez_core/lib/src/localization/app_strings.dart                742
    строки интерфейса
 
 packages/ez_design/lib/src/themes/app_theme.dart                      406
@@ -57,11 +57,14 @@ lib/src/features/memory_items/state/memory_editor_form.dart           324
    одно неизменяемое значение с двумя десятками полей: длину даёт copyWith, а
    не вторая ответственность
 
-packages/ez_data/lib/src/notifications/notification_service.dart      499
-   один разговор с системой уведомлений. Два интерфейса, которые он реализует,
-   — это два взгляда на один и тот же плагин и одну инициализацию; разделив
-   класс, мы получим два объекта, спорящих за один плагин. Правила из него
-   вынуты: когда график будит, решает shiftAlarmTimes в домене
+packages/ez_data/lib/src/notifications/notification_service.dart      633
+   один разговор с системой уведомлений. Три интерфейса, которые он реализует,
+   — напоминания, будильники смен и сводки Джарвиса — это три взгляда на один
+   и тот же плагин и одну инициализацию; разделив класс, мы получим объекты,
+   спорящие за один плагин. Голос напоминаний ставится тут же, вместе с
+   уведомлением, чтобы не стать второй системой; сам канал голоса — в
+   spoken_reminders.dart. Правила из него вынуты: когда график будит, решает
+   shiftAlarmTimes, что сказать — AgendaSpeech в домене
 
 packages/ez_data/lib/src/backup/backup_service.dart                   535
    один формат архива, прочитанный в обе стороны. Выгрузка и загрузка знают

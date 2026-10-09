@@ -16,6 +16,7 @@ import 'widgets/jarvis_conversation_view.dart';
 import 'widgets/jarvis_empty_view.dart';
 import 'widgets/jarvis_heard_line.dart';
 import 'widgets/jarvis_input_bar.dart';
+import 'widgets/jarvis_limit_bar.dart';
 import 'widgets/jarvis_sheet_header.dart';
 
 /// Открывает Джарвиса поверх страницы, на которой человек сейчас.
@@ -101,6 +102,7 @@ class _JarvisSheetState extends ConsumerState<JarvisSheet> {
               JarvisSheetHeader(
                 onClear: conversation.messages.isEmpty ? null : _clear,
               ),
+              const JarvisLimitBar(),
               Flexible(
                 child: conversation.messages.isEmpty
                     ? SingleChildScrollView(
