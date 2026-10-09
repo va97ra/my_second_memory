@@ -166,3 +166,22 @@ final _rate = phrasePattern('$wordStartкурс[а-я]*$wordEnd');
 final _asksConversion = phrasePattern('^(?:сколько|переведи|пересчитай'
     '|конвертируй|почем|скажи)$wordEnd|$wordStart(?:в|во)\\s+[а-я]+\\s*\\??\$'
     '|это\\s+сколько');
+
+/// Сумма словами для ответа: «45 000 рублей», «99,90 рубля», «100 USD» —
+/// если валюты нет среди известных.
+String spokenMoney(double value, String code) {
+  final whole = value.truncate();
+  final cents = ((value - whole) * 100).round();
+  final digits = whole.toString();
+  final grouped = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) grouped.write(' ');
+    grouped.write(digits[i]);
+  }
+  final number =
+      cents == 0 ? '$grouped' : '$grouped,${cents.toString().padLeft(2, '0')}';
+  final name = currencyWords.any((word) => word.code == code)
+      ? currencyWordOf(code).nameFor(value)
+      : code;
+  return '$number $name';
+}

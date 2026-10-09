@@ -1,7 +1,9 @@
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../finance/finance.dart';
 import 'jarvis_answers.dart';
+import 'jarvis_facts.dart';
 import 'jarvis_outcome.dart';
 import 'jarvis_phone.dart';
 import 'jarvis_places.dart';
@@ -65,8 +67,14 @@ class JarvisExecutor {
       AskAlarms() => _answers.alarms(now),
       AskMetroRoute(:final from, :final to) =>
         JarvisOutcome(MetroGuide.moscow.route(from, to)),
+      AskHistory() => _answers.history(command, now),
+      AskFinanceHistory() => _answers.financeHistory(command, now),
+      RememberFact(:final fact) => await _remember(fact),
+      ForgetFact(:final query) => await _forget(query),
+      ListFacts() => JarvisOutcome(FactReplies.list(facts)),
       AskFinance() => _answers.finance(command, now),
-      AskBrain() => const JarvisOutcome(JarvisReplies.needsBrain),
+      AskBrain(:final text) =>
+        recall(text) ?? const JarvisOutcome(JarvisReplies.needsBrain),
       CreateTasks(:final tasks, :final transcript) =>
         await create(tasks, transcript: transcript, now: now),
       CreateNote(:final text) => await _records.createNote(text, now),
@@ -81,5 +89,37 @@ class JarvisExecutor {
       ChangeTheme() => await _settings.theme(command),
       PhoneCommand() => await _ref.read(jarvisPhoneProvider).run(command),
     };
+  }
+
+  /// Журнал финансов — для нейросети: только то, что записано в Ежедневнике.
+  List<FinanceEntry> get finance => _ref.read(financeControllerProvider);
+
+  /// Что хозяин просил запомнить — для нейросети и для ответов без неё.
+  List<String> get facts => _ref.read(jarvisFactsProvider);
+
+  /// Ответ из запомненного: «что любит мама?» — «Вы говорили: мама любит
+  /// белые розы». null — ничего подходящего.
+  JarvisOutcome? recall(String question) {
+    final fact = factFor(question, facts);
+    return fact == null ? null : JarvisOutcome(FactReplies.answer(fact));
+  }
+
+  Future<JarvisOutcome> _remember(String fact) async {
+    final memory = _ref.read(jarvisFactsProvider.notifier);
+    await memory.add(fact);
+    return JarvisOutcome(
+      FactReplies.remembered(fact),
+      undo: () async => memory.forget(fact),
+    );
+  }
+
+  Future<JarvisOutcome> _forget(String query) async {
+    final memory = _ref.read(jarvisFactsProvider.notifier);
+    final forgotten = await memory.forget(query);
+    if (forgotten == null) return const JarvisOutcome(FactReplies.unknown);
+    return JarvisOutcome(
+      FactReplies.forgotten(forgotten),
+      undo: () => memory.add(forgotten),
+    );
   }
 }

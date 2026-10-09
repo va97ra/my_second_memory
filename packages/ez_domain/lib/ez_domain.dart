@@ -8,6 +8,7 @@ library;
 export 'src/assistant/agenda_speech.dart';
 export 'src/assistant/brain_instructions.dart';
 export 'src/assistant/bank_notice_phrases.dart';
+export 'src/assistant/briefing_notes.dart';
 export 'src/assistant/butler_persona.dart';
 export 'src/assistant/calculation_phrases.dart'
     show calculationReply, spokenNumber;
@@ -15,7 +16,9 @@ export 'src/assistant/clarification_phrases.dart';
 export 'src/assistant/currency_phrases.dart' show currencyReply;
 export 'src/assistant/day_question_phrases.dart'
     show AlarmMention, alarmsReply, holidaysReply, shiftReply;
+export 'src/assistant/fact_phrases.dart' show FactReplies, factFor;
 export 'src/assistant/finance_phrases.dart' show financeReply;
+export 'src/assistant/history_phrases.dart' show financeHistoryReply;
 export 'src/assistant/jarvis_command.dart';
 export 'src/assistant/jarvis_command_parser.dart';
 export 'src/assistant/jarvis_replies.dart';
@@ -65,6 +68,7 @@ export 'src/shifts/shift_alarm_times.dart';
 export 'src/shifts/shift_presets.dart';
 export 'src/shifts/shift_schedule.dart';
 export 'src/shifts/shift_schedule_deduplication.dart';
+export 'src/shifts/working_shifts.dart';
 export 'src/sync/sync_backend_config.dart';
 export 'src/sync/sync_merge.dart';
 export 'src/sync/sync_models.dart';

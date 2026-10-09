@@ -21,6 +21,18 @@ class JarvisAnswers {
   final String address;
 
   JarvisOutcome agenda(AskAgenda command, DateTime now) {
+    if (command.important) {
+      return JarvisOutcome(
+        AgendaSpeech.important(
+          _records.between(command.from, command.to),
+          label: command.label,
+          address: address,
+        ),
+        link: command.isOneDay
+            ? OpenPlace(JarvisPlace.day, date: command.from)
+            : const OpenPlace(JarvisPlace.calendar),
+      );
+    }
     if (command.isOneDay) {
       final day = command.from;
       return JarvisOutcome(
@@ -40,6 +52,30 @@ class JarvisAnswers {
       link: const OpenPlace(JarvisPlace.calendar),
     );
   }
+
+  /// Прошлое календаря — со сделанным или только несделанное.
+  JarvisOutcome history(AskHistory command, DateTime now) {
+    final oneDay = command.from == command.to;
+    return JarvisOutcome(
+      AgendaSpeech.history(
+        _records.between(command.from, command.to),
+        label: command.label,
+        now: now,
+        unfinished: command.unfinished,
+        important: command.important,
+      ),
+      link: oneDay
+          ? OpenPlace(JarvisPlace.day, date: command.from)
+          : const OpenPlace(JarvisPlace.calendar),
+    );
+  }
+
+  /// Деньги за прошлое — только из журнала финансов Ежедневника.
+  JarvisOutcome financeHistory(AskFinanceHistory command, DateTime now) =>
+      JarvisOutcome(
+        financeHistoryReply(command, _ref.read(financeControllerProvider), now),
+        link: const OpenPlace(JarvisPlace.finance),
+      );
 
   JarvisOutcome undated() => JarvisOutcome(
         AgendaSpeech.undated(_ref.read(undatedNotesProvider), address: address),
@@ -70,11 +106,7 @@ class JarvisAnswers {
   bool get hasShiftSchedules => _schedules.isNotEmpty;
 
   /// По каким графикам день рабочий. Отпуск — не рабочий день.
-  List<String> shiftsOn(DateTime day) => [
-        for (final schedule in _schedules)
-          if (schedule.isWorkday(day) && !schedule.isVacationWorkday(day))
-            schedule.organizationName,
-      ];
+  List<String> shiftsOn(DateTime day) => workingShifts(_schedules, day);
 
   List<ShiftSchedule> get _schedules => [
         for (final schedule in _ref.read(shiftSchedulesControllerProvider))

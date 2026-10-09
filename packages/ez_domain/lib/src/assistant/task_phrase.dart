@@ -139,7 +139,7 @@ class TaskPhraseParser {
         date: date,
         minutes: minutes,
         allDay: minutes == null && hits.allDay,
-        repeat: repeat,
+        repeat: repeat ?? (date == null ? null : impliedRepeat(title, date)),
       ),
       confident: date != null && title.isNotEmpty && !conflict,
     );
@@ -245,3 +245,24 @@ final _danglingApproximation = RegExp(
 
 final _joiner =
     RegExp(r'\s+(?:и|а\s+также|а\s+потом|потом|ещё|еще)\s+', unicode: true);
+
+/// Повтор, который подразумевается без слов «каждый год»: день рождения и
+/// годовщина — раз в год, подписка, квартплата и кредит — раз в месяц
+/// (просьба владельца 9 октября 2026). Повтор виден в ответе Джарвиса и
+/// отменяется вместе с записью.
+PhraseRepeat? impliedRepeat(String title, DateTime date) {
+  final work = normalizePhrase(title);
+  if (isAnniversary(title)) return const PhraseRepeat(PhraseRepeatKind.yearly);
+  if (_monthly.hasMatch(work)) {
+    return PhraseRepeat(PhraseRepeatKind.monthly, monthDay: date.day);
+  }
+  return null;
+}
+
+/// День рождения, годовщина, юбилей, именины — о них стоит сказать заранее.
+bool isAnniversary(String title) => _yearly.hasMatch(normalizePhrase(title));
+
+final _yearly = phrasePattern('$wordStart(?:день\\s+рождени|днюх|годовщин'
+    '|юбиле|именин)');
+final _monthly = phrasePattern('$wordStart(?:подписк|квартплат|коммуналк'
+    '|ипотек|кредит)');

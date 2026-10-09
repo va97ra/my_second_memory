@@ -127,19 +127,113 @@ class AgendaSpeech {
     required DateTime day,
     required DateTime at,
     String address = '',
+    List<String> notes = const [],
   }) {
     final open = _open(items);
-    if (open.isEmpty) return null;
+    if (open.isEmpty && notes.isEmpty) return null;
     final today = isSameDay(day, at);
     final name = address.trim();
-    final what = 'на ${spokenDay(day, at)} ${count(open.length)}';
+    final what = open.isEmpty
+        ? 'на ${spokenDay(day, at)} дел нет'
+        : 'на ${spokenDay(day, at)} ${count(open.length)}';
     return (
       title: today && at.hour < 12
           ? '${name.isEmpty ? 'Доброе утро' : 'Доброе утро, $name'}! '
               '${capitalizeFirst(what)}'
           : capitalizeFirst('${hello(address)}$what'),
-      body: _inOrder(open, now: today ? at : null),
+      body: [
+        if (open.isNotEmpty) _inOrder(open, now: today ? at : null),
+        ...notes,
+      ].join(' '),
     );
+  }
+
+  /// Насколько дело важное — по признакам, которые человек сам оставил:
+  /// будильник, напоминание, время и слова вроде «срочно», «оплатить»,
+  /// «врач». Отдельной пометки «важно» у записей нет.
+  static int importance(MemoryItem item) {
+    var score = 0;
+    if (item.reminderSoundUri != null) score += 3;
+    if (item.remindAt != null) score += 2;
+    if (item.timeMinutes != null) score += 1;
+    if (_weighty.hasMatch(normalizePhrase('${item.title} ${item.body}'))) {
+      score += 2;
+    }
+    return score;
+  }
+
+  /// Сначала главное: «Самое важное завтра: в 10 часов утра — врач.
+  /// Остальное: купить хлеб.» Важного нет — так и сказано.
+  static String important(
+    List<MemoryItem> items, {
+    required String label,
+    String address = '',
+  }) {
+    final open = _open(items);
+    final on = label.startsWith('в ') || label.startsWith('на ') ? label : 'на $label';
+    if (open.isEmpty) return capitalizeFirst('${hello(address)}$on дел нет.');
+    final ranked = [...open]
+      ..sort((left, right) => importance(right).compareTo(importance(left)));
+    final top = [
+      for (final item in ranked.take(3))
+        if (importance(item) >= 2) item,
+    ];
+    final rest = [
+      for (final item in ranked)
+        if (!top.contains(item)) item,
+    ];
+    if (top.isEmpty) {
+      return capitalizeFirst('${hello(address)}$on особо срочного нет: '
+          '${_list(rest)}.');
+    }
+    final also = rest.isEmpty ? '' : ' Остальное: ${_list(rest)}.';
+    return capitalizeFirst('${hello(address)}самое важное $on: '
+        '${_list(top)}.$also');
+  }
+
+  /// Прошлое календаря — со сделанным: «15 апреля: в 10 часов утра — врач,
+  /// сделано; купить хлеб.» [unfinished] — только неотмеченное.
+  static String history(
+    List<MemoryItem> items, {
+    required String label,
+    required DateTime now,
+    bool unfinished = false,
+    bool important = false,
+  }) {
+    final kept = [
+      for (final item in items)
+        if (item.status == MemoryStatus.active ||
+            (!unfinished && item.status == MemoryStatus.done))
+          item,
+    ]..sort((left, right) {
+        if (important) {
+          final byWeight = importance(right).compareTo(importance(left));
+          if (byWeight != 0) return byWeight;
+        }
+        final byDay = left.memoryDate.compareTo(right.memoryDate);
+        if (byDay != 0) return byDay;
+        // Дела без времени — после дел со временем, как в рассказе о дне.
+        return (left.timeMinutes ?? 24 * 60)
+            .compareTo(right.timeMinutes ?? 24 * 60);
+      });
+    final when = capitalizeFirst(label);
+    if (kept.isEmpty) {
+      return unfinished
+          ? '$when всё отмечено — несделанного нет.'
+          : '$when записей нет.';
+    }
+    final oneDay = kept.every((item) => isSameDay(item.memoryDate, kept.first.memoryDate));
+    const shown = 12;
+    final parts = [
+      for (final item in kept.take(shown))
+        '${_entry(item, oneDay ? null : now)}'
+            '${item.status == MemoryStatus.done ? ', сделано' : ''}',
+    ];
+    final more = kept.length > shown ? '; и ещё ${kept.length - shown}' : '';
+    final what = unfinished
+        ? ' не отмечено ${count(kept.length)}'
+        : '';
+    return '$when$what: ${parts.join('; ')}$more.';
   }
 
   /// Записки без даты.
@@ -231,4 +325,11 @@ class AgendaSpeech {
     final title = lowerFirst(item.title);
     return when.isEmpty ? title : '$when — $title';
   }
+
+  static final _weighty = RegExp(
+    r'(?<![а-яa-z0-9])(?:срочн|важн|обязательн|не\s+забыть|дедлайн|сдать'
+    r'|оплат|заплат|платеж|налог|штраф|кредит|врач|больниц|анализ|документ'
+    r'|паспорт|суд|экзамен|собеседован|встреч|день\s+рождени|подар)',
+    unicode: true,
+  );
 }

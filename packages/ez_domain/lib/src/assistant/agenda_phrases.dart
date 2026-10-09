@@ -1,6 +1,7 @@
 import '../recurrence/recurrence_dates.dart';
 import 'date_phrases.dart';
 import 'jarvis_command.dart';
+import 'history_phrases.dart' show asksImportant;
 import 'russian_words.dart';
 import 'spoken_moments.dart';
 import 'task_phrase.dart';
@@ -19,6 +20,7 @@ JarvisCommand? agendaCommand(String work, DateTime now) {
       from: _addDays(monday, 7),
       to: _addDays(monday, 13),
       label: 'На следующей неделе',
+      important: asksImportant(work),
     );
   }
   if (_week.hasMatch(work)) {
@@ -26,6 +28,7 @@ JarvisCommand? agendaCommand(String work, DateTime now) {
       from: today,
       to: _addDays(monday, 6),
       label: 'До конца недели',
+      important: asksImportant(work),
     );
   }
   if (_weekend.hasMatch(work)) {
@@ -33,10 +36,16 @@ JarvisCommand? agendaCommand(String work, DateTime now) {
       from: nearestWeekend(today),
       to: _addDays(monday, 6),
       label: 'На выходных',
+      important: asksImportant(work),
     );
   }
   final day = const TaskPhraseParser().parseAnswer(work, now).date ?? today;
-  return AskAgenda(from: day, to: day, label: spokenDay(day, now));
+  return AskAgenda(
+    from: day,
+    to: day,
+    label: spokenDay(day, now),
+    important: asksImportant(work),
+  );
 }
 
 DateTime _addDays(DateTime date, int days) =>
@@ -52,6 +61,7 @@ final _question = phrasePattern('$wordStart(?:что\\s+у\\s+меня'
     '|надо\\s+сделать|нужно\\s+сделать)'
     '|что\\s+на\\s+(?:сегодня|завтра|послезавтра)$wordEnd'
     '|(?:дела|планы|задачи|расписание)\\s+на|расписани[а-я]*'
+    '|что\\s+(?:самое\\s+)?(?:важн|главн|срочн)[а-я]*'
     '|сколько[^?.!]*$wordStart(?:дел|задач|встреч)$wordEnd'
     '|есть\\s+ли[^?.!]*$wordStart(?:дела|планы|задачи|встречи)$wordEnd'
     '|(?:покажи|расскажи|напомни)\\s+(?:мне\\s+)?(?:дела|планы|задачи'

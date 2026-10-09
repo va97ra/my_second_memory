@@ -47,10 +47,18 @@ final class OpenPlace extends JarvisCommand {
 
 /// «Что у меня завтра», «какие дела на выходных».
 final class AskAgenda extends JarvisCommand {
-  const AskAgenda({required this.from, required this.to, required this.label});
+  const AskAgenda({
+    required this.from,
+    required this.to,
+    required this.label,
+    this.important = false,
+  });
 
   final DateTime from;
   final DateTime to;
+
+  /// «Что самое важное завтра» — сначала главное, потом остальное.
+  final bool important;
 
   /// Как назвать период вслух: «завтра», «на выходных».
   final String label;
@@ -317,4 +325,74 @@ final class PhoneOpenApp extends PhoneCommand {
   const PhoneOpenApp(this.name);
 
   final String name;
+}
+
+/// «Запомни, что мама любит белые розы» — Джарвису на память о хозяине.
+final class RememberFact extends JarvisCommand {
+  const RememberFact(this.fact);
+
+  final String fact;
+}
+
+/// «Забудь, что я живу в Казани».
+final class ForgetFact extends JarvisCommand {
+  const ForgetFact(this.query);
+
+  final String query;
+}
+
+/// «Что ты обо мне знаешь».
+final class ListFacts extends JarvisCommand {
+  const ListFacts();
+}
+
+/// «Что я делал 15 апреля», «чем я занимался в прошлом месяце» — прошлое
+/// календаря, вместе со сделанным.
+final class AskHistory extends JarvisCommand {
+  const AskHistory({
+    required this.from,
+    required this.to,
+    required this.label,
+    this.unfinished = false,
+    this.important = false,
+  });
+
+  final DateTime from;
+  final DateTime to;
+
+  /// «15 апреля», «в прошлом месяце».
+  final String label;
+
+  /// «Что я не закончил» — только неотмеченное.
+  final bool unfinished;
+
+  /// «Что важного» — сначала главное.
+  final bool important;
+}
+
+/// Деньги из журнала финансов за прошлое: «когда пришла зарплата», «какие
+/// расходы были вчера», «сколько ушло на такси в сентябре». Только то, что
+/// записано в Ежедневнике, — в приложения банков Джарвис не ходит.
+final class AskFinanceHistory extends JarvisCommand {
+  const AskFinanceHistory({
+    required this.from,
+    required this.to,
+    required this.label,
+    this.kind,
+    this.what = '',
+    this.asksWhen = false,
+  });
+
+  final DateTime from;
+  final DateTime to;
+  final String label;
+
+  /// null — и расходы, и доходы.
+  final FinanceEntryKind? kind;
+
+  /// Про что спросили: «зарплата», «такси»; пусто — про всё.
+  final String what;
+
+  /// «Когда пришла зарплата» — нужны даты, а не сумма за период.
+  final bool asksWhen;
 }

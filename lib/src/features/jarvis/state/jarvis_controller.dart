@@ -162,7 +162,9 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   Future<void> _askBrain(String text, DateTime now) async {
     final brain = await _brain();
     if (brain == null) {
-      _jarvis(JarvisReplies.needsBrain);
+      // Без нейросети Джарвис отвечает хотя бы тем, что ему велели помнить.
+      _apply(_executor.recall(text) ??
+          const JarvisOutcome(JarvisReplies.needsBrain));
       return;
     }
     await _askBrainWith(brain, text, now);
@@ -172,7 +174,12 @@ class JarvisController extends StateNotifier<JarvisConversation> {
     try {
       _apply(await brain.ask(text, mentioned: _mentioned, now: now));
     } on GigaChatException catch (failure) {
-      _jarvis(failure.message);
+      final recalled = failure.offline ? _executor.recall(text) : null;
+      if (recalled != null) {
+        _apply(recalled);
+      } else {
+        _jarvis(failure.message);
+      }
     }
   }
 

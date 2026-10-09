@@ -76,14 +76,16 @@ void main() {
         supportedLocales: AppStrings.supportedLocales,
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         home: Scaffold(
+          // Раздел длиннее экрана теста: как и настоящие настройки, он
+          // прокручивается, а кнопка открытия стоит над ним.
           body: Builder(
-            builder: (context) => Column(
+            builder: (context) => ListView(
               children: [
-                const JarvisSettingsSection(),
                 TextButton(
                   onPressed: () => showGigaChatKeySheet(context),
                   child: const Text('open'),
                 ),
+                const JarvisSettingsSection(),
               ],
             ),
           ),

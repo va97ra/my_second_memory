@@ -1,3 +1,4 @@
+import '../finance/finance_entry.dart';
 import '../memory/memory_item.dart';
 import 'russian_numbers.dart';
 import 'russian_words.dart';
@@ -16,6 +17,9 @@ abstract final class JarvisBrainFunctions {
   static const weather = 'get_weather';
   static const wikiLookup = 'wiki_lookup';
   static const news = 'get_news';
+  static const listFinance = 'list_finance';
+  static const rememberFact = 'remember_fact';
+  static const forgetFact = 'forget_fact';
 
   static const specs = <Map<String, Object?>>[
     {
@@ -97,6 +101,43 @@ abstract final class JarvisBrainFunctions {
       },
     },
     {
+      'name': listFinance,
+      'description': 'Расходы и доходы из журнала «Финансы» Ежедневника с '
+          'from по to включительно: дата, вид, сумма, валюта, категория, и '
+          'итоги. Только то, что записано в Ежедневнике.',
+      'parameters': {
+        'type': 'object',
+        'properties': {
+          'from': {'type': 'string', 'description': 'Первый день, YYYY-MM-DD'},
+          'to': {'type': 'string', 'description': 'Последний день, YYYY-MM-DD'},
+        },
+        'required': ['from', 'to'],
+      },
+    },
+    {
+      'name': rememberFact,
+      'description': 'Запомнить о хозяине то, что он просит запомнить: '
+          'город, близких, привычки. Одна мысль — одним предложением.',
+      'parameters': {
+        'type': 'object',
+        'properties': {
+          'fact': {'type': 'string', 'description': 'Что запомнить'},
+        },
+        'required': ['fact'],
+      },
+    },
+    {
+      'name': forgetFact,
+      'description': 'Забыть запомненное о хозяине.',
+      'parameters': {
+        'type': 'object',
+        'properties': {
+          'fact': {'type': 'string', 'description': 'Что забыть'},
+        },
+        'required': ['fact'],
+      },
+    },
+    {
       'name': news,
       'description': 'Свежие заголовки новостей (ТАСС, РИА, Лента.ру).',
       'parameters': {
@@ -114,7 +155,7 @@ abstract final class JarvisBrainFunctions {
 
 /// Инструкция для нейросети на этот момент: кто она, какое сегодня число и
 /// ближайшие дни — без календаря в голове «в пятницу» не превратить в дату.
-String jarvisBrainInstructions(DateTime now) {
+String jarvisBrainInstructions(DateTime now, {List<String> facts = const []}) {
   final today = DateTime(now.year, now.month, now.day);
   final monday = DateTime(today.year, today.month, today.day - today.weekday + 1);
   final sunday = DateTime(monday.year, monday.month, monday.day + 6);
@@ -139,8 +180,15 @@ String jarvisBrainInstructions(DateTime now) {
   }
   final time = '${now.hour.toString().padLeft(2, '0')}:'
       '${now.minute.toString().padLeft(2, '0')}';
+  final known = facts.isEmpty
+      ? ''
+      : 'Что хозяин просил тебя запомнить:\n'
+          '${facts.map((fact) => '- $fact').join('\n')}\n'
+          'Пользуйся этим: город для погоды, имена близких и прочее бери '
+          'отсюда, если хозяин их не назвал.\n';
   return '''
-Ты — Джарвис, личный помощник в приложении «Ежедневник»: календарь, записи, записки, финансы, графики смен, настройки.
+Ты — Джарвис, дворецкий своего хозяина в приложении «Ежедневник»: календарь, записи, записки, финансы, графики смен, настройки.
+Ты говоришь только со своим хозяином: обращайся к нему «сэр», говори ему «вы». Никогда не называй его «пользователь».
 Отвечай по-русски и коротко — одно-три предложения, без списков, эмодзи и разметки: ответ прочитают вслух.
 
 Сейчас: ${_dayName(today)} ${today.year} года, $time.
@@ -148,16 +196,20 @@ String jarvisBrainInstructions(DateTime now) {
 Дни:
 $days
 Дни недели и числа бери только из этого списка, сам их не высчитывай.
+$known
 
-Записи владельца хранятся в приложении, сам ты их не помнишь.
+Записи хозяина хранятся в приложении, сам ты их не помнишь.
 1. Любое действие в приложении делай через run_command, передав короткую команду по-русски. Одно действие — один вызов. Не говори, что сделал, пока не вызвал функцию; перескажи своими словами её результат.
-Записывай дело, только если владелец просит записать или напомнить либо диктует дело с днём или временем («завтра в 10 врач»). Если он просто что-то рассказал или спросил — ответь, ничего не записывая. Не понял, чего он хочет, — спроси коротко: «Что вы хотите, сэр?».
-2. На любой вопрос о делах, планах, работе и свободном времени сначала вызови list_days за нужные дни или find_records по словам — без этого не отвечай. У владельца работа по графикам смен: день со сменой — рабочий, даже если это суббота. Свободный день — без смен и без записей. Не выдумывай записей, которых нет в ответе функции.
-3. Курс валют, счёт, перевод величин, смены, праздники и будильники — тоже run_command: «курс доллара», «сколько будет 25 на 4», «я завтра работаю», «какие у меня будильники». Телефон — тоже: «включи фонарик», «разбуди меня в 6:30», «таймер на 10 минут», «позвони маме», «напиши Васе в ватсап, что опоздаю», «открой камеру». Звонок и сообщение не уходят сами — владелец нажимает «Вызов» или «Отправить».
+Записывай дело, только если хозяин просит записать или напомнить либо диктует дело с днём или временем («завтра в 10 врач»). Если он просто что-то рассказал или спросил — ответь, ничего не записывая. Не понял, чего он хочет, — спроси коротко: «Что вы хотите, сэр?».
+2. На любой вопрос о делах, планах, работе и свободном времени сначала вызови list_days за нужные дни или find_records по словам — без этого не отвечай. У хозяина работа по графикам смен: день со сменой — рабочий, даже если это суббота. Свободный день — без смен и без записей. Не выдумывай записей, которых нет в ответе функции.
+Прошлое тоже спрашивай у list_days: там видно, что сделано (done), а что нет; за полгода — несколькими вызовами по шесть недель. Важнее те дела, где стоит будильник (alarm) или напоминание (reminder), есть время и слова вроде «срочно», «оплатить», «врач», «документы»; просят главное — начни с него.
+Деньги — только list_finance: это журнал «Финансы» Ежедневника, туда записи попадают голосом и из уведомлений банков. В приложения банков ты не заходишь.
+3. Курс валют, счёт, перевод величин, смены, праздники и будильники — тоже run_command: «курс доллара», «сколько будет 25 на 4», «я завтра работаю», «какие у меня будильники». Телефон — тоже: «включи фонарик», «разбуди меня в 6:30», «таймер на 10 минут», «позвони маме», «напиши Васе в ватсап, что опоздаю», «открой камеру». Звонок и сообщение не уходят сами — хозяин нажимает «Вызов» или «Отправить».
 4. Из интернета: погода — get_weather, справка о людях, фильмах, книгах, местах и понятиях — wiki_lookup, новости — get_news. Не выдумывай погоду и новости. Коротко назови источник («по данным MET Norway»). Если функция вернула ошибку — скажи об этом или сделай, как она советует; справка недоступна — ответь по памяти и предупреди, что это по памяти.
-5. Пароли, логины и PIN-код не трогай и не спрашивай: это владелец делает сам.
+5. Пароли, логины и PIN-код не трогай и не спрашивай: это хозяин делает сам.
 6. На обычные вопросы, советы, объяснения и просьбы написать текст отвечай сам, коротко и по делу.
 7. Если просьба непонятна, задай один короткий уточняющий вопрос.
+8. Просит запомнить что-то о себе — remember_fact; забыть — forget_fact. Пароли и коды не запоминай.
 Стиль: учтиво и сдержанно, как английский дворецкий. Обращайся «сэр» — естественно, не в каждой фразе.''';
 }
 
@@ -189,7 +241,17 @@ Map<String, Object?> recordForBrain(MemoryItem item) => {
       if (item.timeMinutes != null) 'time': spokenClock(item.timeMinutes!),
       if (item.isDone) 'done': true,
       if (item.isUndated) 'note': true,
+      if (item.reminderSoundUri != null) 'alarm': true,
+      if (item.remindAt != null) 'reminder': true,
+      if (_textOf(item) case final text?) 'text': text,
     };
+
+/// Текст записи, если он не повторяет заголовок: до 200 знаков.
+String? _textOf(MemoryItem item) {
+  final body = item.body.trim();
+  if (body.isEmpty || body == item.title.trim()) return null;
+  return body.length <= 200 ? body : '${body.substring(0, 200)}…';
+}
 
 /// Ответ нейросети без разметки: его читают вслух.
 String cleanBrainReply(String raw) {
@@ -231,3 +293,43 @@ const _weekdays = [
   'суббота',
   'воскресенье',
 ];
+
+/// Деньги для нейросети: записи журнала за период и итоги. Не больше
+/// восьмидесяти записей за раз — ответ читается целиком.
+Map<String, Object?> financeForBrain(
+  List<FinanceEntry> entries, {
+  required DateTime from,
+  required DateTime to,
+}) {
+  final found = [
+    for (final entry in entries)
+      if (!entry.occurredOn.isBefore(from) &&
+          !DateTime(entry.occurredOn.year, entry.occurredOn.month,
+                  entry.occurredOn.day)
+              .isAfter(to))
+        entry,
+  ]..sort((left, right) => left.occurredOn.compareTo(right.occurredOn));
+  final totals = <String, double>{};
+  for (final entry in found) {
+    final key = '${entry.kind == FinanceEntryKind.expense ? 'расходы' : 'доходы'}'
+        ' ${entry.currencyCode}';
+    totals[key] = (totals[key] ?? 0) + (double.tryParse(entry.amount) ?? 0);
+  }
+  return {
+    'entries': [
+      for (final entry in found.take(80))
+        {
+          'date': _isoDate(entry.occurredOn),
+          'kind': entry.kind == FinanceEntryKind.expense ? 'расход' : 'доход',
+          'amount': entry.amount,
+          'currency': entry.currencyCode,
+          'category': entry.category,
+        },
+    ],
+    if (found.length > 80) 'more': found.length - 80,
+    'totals': {
+      for (final MapEntry(:key, :value) in totals.entries)
+        key: value.toStringAsFixed(2),
+    },
+  };
+}

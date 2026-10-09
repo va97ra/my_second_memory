@@ -63,8 +63,7 @@ class AppStrings {
         'Что у меня завтра?',
         'Открой финансы',
       ];
-  String get jarvisInputHint =>
-      isRu ? 'Скажите или напишите' : 'Say or type';
+  String get jarvisInputHint => isRu ? 'Скажите или напишите' : 'Say or type';
   String get jarvisSend => isRu ? 'Отправить' : 'Send';
   String get jarvisListen => isRu ? 'Говорить' : 'Talk';
   String get jarvisStopListening => isRu ? 'Хватит слушать' : 'Stop listening';
@@ -89,6 +88,7 @@ class AppStrings {
   String get jarvisWakeWordHint => isRu
       ? 'Пока приложение открыто, микрофон ждёт имя'
       : 'While the app is open, the microphone waits for the name';
+
   /// Остаток пакета GigaChat под заголовком Джарвиса.
   String gigaChatLeft(int tokens) => isRu
       ? 'GigaChat: осталось ${_tokens(tokens)}'
@@ -114,6 +114,18 @@ class AppStrings {
     return '$count ${russianPlural(count, 'токен', 'токена', 'токенов')}';
   }
 
+  String get jarvisFacts =>
+      isRu ? 'Что Джарвис помнит' : 'What Jarvis remembers';
+  String jarvisFactsCount(int count) => isRu
+      ? (count == 0
+          ? 'Пока ничего. Скажите ему: «запомни, что …»'
+          : '$count ${russianPlural(count, 'запись', 'записи', 'записей')} — '
+              'только на этом телефоне')
+      : (count == 0 ? 'Nothing yet. Say “remember that …”' : '$count notes');
+  String get jarvisFactsEmpty => isRu
+      ? 'Скажите Джарвису «запомни, что я живу в Казани» — и он будет это знать.'
+      : 'Tell Jarvis “remember that I live in Kazan” and he will know it.';
+  String get jarvisFactForget => isRu ? 'Забыть' : 'Forget';
   String get jarvisBankNotices => isRu
       ? 'Записывать покупки из уведомлений банков'
       : 'Record purchases from bank notifications';

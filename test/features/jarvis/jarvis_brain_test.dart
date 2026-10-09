@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:ez_data/ez_data.dart';
-import 'package:ez_domain/ez_domain.dart' show ShiftSchedule;
+import 'package:ez_domain/ez_domain.dart'
+    show FinanceEntry, FinanceEntryKind, ShiftSchedule;
 import 'package:ezhednevnik_v2/src/app/local_storage_scope_provider.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_brain.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_brain_providers.dart';
@@ -18,6 +19,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_facts.dart';
+import 'package:ezhednevnik_v2/src/features/finance/finance.dart';
 import '../../support/memory_items_test_support.dart';
 import '../../support/widget_test_harness.dart';
 
@@ -112,7 +115,8 @@ void main() {
         contains('run_command'));
   });
 
-  test('нейросеть действует той же рукой: run_command заводит запись', () async {
+  test('нейросеть действует той же рукой: run_command заводит запись',
+      () async {
     final c = await start();
     server.replies
       ..add({
@@ -152,7 +156,8 @@ void main() {
     expect(c.read(memoryItemsControllerProvider), isEmpty);
   });
 
-  test('ключ, испорченный текстом, — понятная причина, а не «что-то '
+  test(
+      'ключ, испорченный текстом, — понятная причина, а не «что-то '
       'пошло не так»', () async {
     // Так однажды вышло на телефоне: в поле ключа попала фраза.
     server = _FakeGigaChat();
@@ -208,9 +213,8 @@ void main() {
       })
       ..add({'role': 'assistant', 'content': 'В каком вы городе, сэр?'});
     await container.read(jarvis.notifier).send('какая погода завтра?');
-    final first = jsonDecode(
-        ((server.requests.last['messages'] as List).last as Map)['content']
-            as String) as Map;
+    final first = jsonDecode(((server.requests.last['messages'] as List).last
+        as Map)['content'] as String) as Map;
     expect(first['error'], contains('Город не известен'));
     expect(hosts, isEmpty, reason: 'без города в сеть не ходят');
 
@@ -225,9 +229,8 @@ void main() {
       })
       ..add({'role': 'assistant', 'content': 'Сервис погоды недоступен.'});
     await container.read(jarvis.notifier).send('в москве');
-    final second = jsonDecode(
-        ((server.requests.last['messages'] as List).last as Map)['content']
-            as String) as Map;
+    final second = jsonDecode(((server.requests.last['messages'] as List).last
+        as Map)['content'] as String) as Map;
     expect(second['error'], contains('ошибкой 503'),
         reason: 'отказ сети нейросеть получает словами');
     expect(hosts, contains('geocoding-api.open-meteo.com'));
@@ -267,9 +270,8 @@ void main() {
       })
       ..add({'role': 'assistant', 'content': 'Свободна суббота.'});
     await say(c, 'какой день на этой неделе самый свободный?');
-    final days = jsonDecode(
-        ((server.requests.last['messages'] as List).last as Map)['content']
-            as String) as List;
+    final days = jsonDecode(((server.requests.last['messages'] as List).last
+        as Map)['content'] as String) as List;
     expect(days[0], {
       'date': '2099-10-08',
       'day': 'четверг, 8 октября',
@@ -279,8 +281,14 @@ void main() {
             'России',
       ],
       'records': [
-        {'title': 'Врач', 'date': '2099-10-08', 'day': 'четверг, 8 октября',
-            'time': '10 часов утра'},
+        {
+          'title': 'Врач',
+          'date': '2099-10-08',
+          'day': 'четверг, 8 октября',
+          'time': '10 часов утра',
+          // Напоминание — признак важного: по нему нейросеть начинает с главного.
+          'reminder': true,
+        },
       ],
     });
     expect(days[2], {
@@ -322,14 +330,67 @@ void main() {
     addTearDown(container.dispose);
     await container.read(memoryItemsLoadProvider.future);
     server.replies.add({'role': 'assistant', 'content': 'Из-за рассеяния.'});
-    await container.read(jarvisControllerProvider.notifier).send(
-        'почему небо голубое?');
+    await container
+        .read(jarvisControllerProvider.notifier)
+        .send('почему небо голубое?');
     expect(container.read(jarvisControllerProvider).messages.last.text,
         'Из-за рассеяния, сэр.');
   });
+
+  test('нейросеть запоминает о хозяине и видит это в следующий раз', () async {
+    final c = await start();
+    server.replies
+      ..add({
+        'role': 'assistant',
+        'content': '',
+        'function_call': {
+          'name': 'remember_fact',
+          'arguments': {'fact': 'Хозяин живёт в Казани'},
+        },
+        'functions_state_id': 'state-1',
+      })
+      ..add({'role': 'assistant', 'content': 'Запомнил, что вы в Казани.'})
+      ..add({'role': 'assistant', 'content': 'В Казани.'});
+    await say(c, 'кстати, я перебрался в Казань, имей это в виду');
+    expect(c.read(jarvisFactsProvider), ['Хозяин живёт в Казани']);
+    await say(c, 'а где я теперь живу');
+    final system = (server.requests.last['messages'] as List).first as Map;
+    expect(system['content'], contains('- Хозяин живёт в Казани'));
+    expect(
+        system['content'], contains('Никогда не называй его «пользователь»'));
+  });
+
+  test('деньги нейросеть берёт только из журнала финансов', () async {
+    final c = await start();
+    await c.read(financeControllerProvider.notifier).add(FinanceEntry(
+          id: 'salary',
+          kind: FinanceEntryKind.income,
+          amount: '45000',
+          currencyCode: 'RUB',
+          category: 'Зарплата',
+          occurredOn: DateTime(2099, 9, 5),
+          createdAt: now,
+          updatedAt: now,
+        ));
+    server.replies
+      ..add({
+        'role': 'assistant',
+        'content': '',
+        'function_call': {
+          'name': 'list_finance',
+          'arguments': {'from': '2099-09-01', 'to': '2099-09-30'},
+        },
+        'functions_state_id': 'state-1',
+      })
+      ..add({'role': 'assistant', 'content': 'Зарплата пришла 5 сентября.'});
+    await say(c, 'слушай, а зарплата-то в прошлом месяце когда упала');
+    final answer = (server.requests.last['messages'] as List).last as Map;
+    final finance = jsonDecode(answer['content'] as String) as Map;
+    expect((finance['entries'] as List).single['category'], 'Зарплата');
+    expect((finance['totals'] as Map)['доходы RUB'], '45000.00');
+  });
 }
 
-/// Хранилище, которое отвечает не сразу — как защищённое на телефоне.
 class _SlowKeyStore extends GigaChatKeyStore {
   _SlowKeyStore(this._key);
 

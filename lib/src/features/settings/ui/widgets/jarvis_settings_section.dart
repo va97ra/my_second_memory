@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../jarvis/jarvis.dart';
 import 'gigachat_key_sheet.dart';
+import 'jarvis_facts_sheet.dart';
 import 'jarvis_settings_tiles.dart';
 import 'settings_chevron.dart';
 import 'settings_section.dart';
@@ -35,6 +36,15 @@ class JarvisSettingsSection extends ConsumerWidget {
                   : strings.jarvisBrainOff,
           trailing: const SettingsChevron(),
           onTap: () => showGigaChatKeySheet(context),
+        ),
+        SettingsTile(
+          key: const ValueKey('settings_jarvis_facts'),
+          icon: Icons.auto_stories_rounded,
+          title: strings.jarvisFacts,
+          subtitle:
+              strings.jarvisFactsCount(ref.watch(jarvisFactsProvider).length),
+          trailing: const SettingsChevron(),
+          onTap: () => showJarvisFactsSheet(context),
         ),
         SettingsSwitchTile(
           key: const ValueKey('settings_jarvis_wake'),

@@ -4,6 +4,7 @@ import 'package:ezhednevnik_v2/src/app/local_storage_scope_provider.dart';
 import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_controller.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_executor.dart';
+import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_facts.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_message.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/memory_items.dart';
 import 'package:ezhednevnik_v2/src/features/recurrence/recurrence.dart';
@@ -169,5 +170,46 @@ void main() {
     final c = await start();
     expect(await say(c, 'отмени'),
         'Отменять нечего, сэр: я ещё ничего не менял.');
+  });
+
+  test('«запомни»: без нейросети отвечает из запомненного, «Отменить» стирает',
+      () async {
+    final c = await start();
+    expect(await say(c, 'Джарвис, запомни, что я живу в Казани'),
+        'Запомнил, сэр: я живу в Казани.');
+    expect(c.read(jarvisFactsProvider), ['Я живу в Казани']);
+    expect(await say(c, 'где я живу?'), 'Вы говорили, сэр: я живу в Казани.');
+    await c.read(jarvis.notifier).undo();
+    expect(c.read(jarvisFactsProvider), isEmpty);
+  });
+
+  test('прошлое: что сделано и что не отмечено; важное — первым', () async {
+    final c = await start();
+    final items = c.read(memoryItemsControllerProvider.notifier);
+    MemoryItem row(String title, DateTime day,
+            {int? minutes, MemoryStatus status = MemoryStatus.active}) =>
+        MemoryItem(
+          id: 'row_$title',
+          type: MemoryType.task,
+          title: title,
+          memoryDate: day,
+          timeMinutes: minutes,
+          status: status,
+          createdAt: now,
+          updatedAt: now,
+        );
+    final yesterday = DateTime(2099, 10, 6);
+    await items.add(row('Врач', yesterday, minutes: 600, status: MemoryStatus.done));
+    await items.add(row('Купить хлеб', yesterday));
+    expect(await say(c, 'что я делал вчера'),
+        'Вчера, сэр: в 10 часов утра — врач, сделано; купить хлеб.');
+    expect(await say(c, 'что я не закончил вчера'),
+        'Вчера не отмечено одно дело, сэр: купить хлеб.');
+
+    await say(c, 'завтра в 10 оплатить интернет');
+    await say(c, 'запиши завтра купить молоко');
+    expect(await say(c, 'что самое важное завтра'),
+        'Сэр, самое важное на завтра: в 10 часов утра — оплатить интернет. '
+        'Остальное: купить молоко.');
   });
 }

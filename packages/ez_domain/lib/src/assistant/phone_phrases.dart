@@ -35,7 +35,9 @@ JarvisCommand? phoneCommand(JarvisPhrase phrase, DateTime now) {
   // «Напиши поздравление маме» — просьба сочинить текст, а не отправить:
   // сообщение узнаётся по приложению, «что» или слову «сообщение».
   final message = _message.firstMatch(work);
+  // «Напиши записку …» — записка Ежедневника, а не сообщение.
   if (message != null &&
+      !_noteWord.hasMatch(message.namedGroup('who')!) &&
       (message.namedGroup('app') != null ||
           message.namedGroup('that') != null ||
           message.namedGroup('noun') != null)) {
@@ -209,6 +211,8 @@ final _message = phrasePattern(
     '(?<who>[а-яa-z0-9+]+),?\\s+'
     '(?:в\\s+(?<app>ватсап|вотсап|whatsapp|телеграм|телеграмм|telegram'
     '|телегу|смс|sms)\\s*,?\\s+)?(?<that>что\\s+)?(?<text>.+)\$');
+
+final _noteWord = phrasePattern('^(?:записк|заметк)');
 
 final _open = phrasePattern('^(?:открой|запусти)\\s+(?<app>.+)\$');
 

@@ -50,7 +50,10 @@ class JarvisBrain {
     final last = _lastAsked;
     if (last == null || now.difference(last) > _memory) _history.clear();
     final messages = <Map<String, dynamic>>[
-      {'role': 'system', 'content': jarvisBrainInstructions(now)},
+      {
+        'role': 'system',
+        'content': jarvisBrainInstructions(now, facts: _executor.facts),
+      },
       ..._history,
       {'role': 'user', 'content': text},
     ];
@@ -105,6 +108,25 @@ class JarvisBrain {
         if (outcome == null) {
           return {'error': 'Команда не распознана. Скажи её проще.'};
         }
+        outcomes.add(outcome);
+        return {'result': outcome.say};
+      case JarvisBrainFunctions.listFinance:
+        final from = parseBrainDate(arguments['from']);
+        final to = parseBrainDate(arguments['to']) ?? from;
+        if (from == null || to == null) return {'error': 'Нужны даты YYYY-MM-DD'};
+        return financeForBrain(_executor.finance, from: from, to: to);
+      case JarvisBrainFunctions.rememberFact:
+        final outcome = await _executor.run(
+            RememberFact('${arguments['fact'] ?? ''}'),
+            mentioned: mentioned,
+            now: now);
+        outcomes.add(outcome);
+        return {'result': outcome.say};
+      case JarvisBrainFunctions.forgetFact:
+        final outcome = await _executor.run(
+            ForgetFact('${arguments['fact'] ?? ''}'),
+            mentioned: mentioned,
+            now: now);
         outcomes.add(outcome);
         return {'result': outcome.say};
       case JarvisBrainFunctions.listDays:

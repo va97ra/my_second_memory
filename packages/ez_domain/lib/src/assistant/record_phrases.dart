@@ -57,6 +57,12 @@ JarvisCommand? noteCommand(JarvisPhrase phrase, DateTime now) {
   final match =
       _note.firstMatch(phrase.work) ?? _remember.firstMatch(phrase.work);
   if (match == null) return null;
+  // «Запомни, что мама любит розы» — это Джарвису на память, а не записка;
+  // записка — когда просят сделать дело: «запомни купить хлеб».
+  if (identical(match.pattern, _remember) &&
+      !_doing.hasMatch(match.namedGroup('t')!)) {
+    return null;
+  }
   // Текст записки — до конца фразы, поэтому его начало считается от конца
   // совпадения; рабочая копия и исходный текст одной длины.
   final start = match.end - match.namedGroup('t')!.length;
@@ -140,10 +146,14 @@ final _search = phrasePattern('^(?:найди|поищи|ищи|отыщи|по�
 final _when = phrasePattern('^когда\\s+(?:у\\s+меня\\s+)?(?:будет\\s+)?'
     '(?<q>.+)\$');
 
-final _note = phrasePattern('^(?:запиши|сделай|создай|добавь|новая|новую)?'
+final _note = phrasePattern('^(?:запиши|напиши|сделай|создай|добавь|новая'
+    '|новую)?'
     '\\s*(?:записку|заметку|записка|заметка)[\\s:,.\\-—]+(?<t>.+)\$');
 
 final _remember = phrasePattern('^запомни[\\s,:]+(?:что[\\s,]+)?(?<t>.+)\$');
+
+/// Дело начинается с действия: «купить хлеб», «позвонить маме».
+final _doing = phrasePattern('^[а-я]+(?:ть|ти|ться|тись)$wordEnd');
 
 final _undo = phrasePattern('^(?:отмени|отмена|отменить|верни\\s+как\\s+было'
     '|верни\\s+обратно|откати|не\\s+надо\\s+было)(?:\\s+(?:это|последнее'

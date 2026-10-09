@@ -3,7 +3,9 @@ import 'agenda_phrases.dart';
 import 'calculation_phrases.dart';
 import 'currency_phrases.dart';
 import 'day_question_phrases.dart';
+import 'fact_phrases.dart';
 import 'finance_phrases.dart';
+import 'history_phrases.dart';
 import 'jarvis_command.dart';
 import 'jarvis_phrase.dart';
 import 'moment_hits.dart';
@@ -37,8 +39,10 @@ class JarvisCommandParser {
         undoCommand(work) ??
         (talk == null ? null : JarvisSay(talk)) ??
         settingCommand(work) ??
+        factCommand(phrase, now) ??
         phoneCommand(phrase, now) ??
         _metroCommand(phrase.text) ??
+        historyCommand(work, now) ??
         agendaCommand(work, now) ??
         dayQuestionCommand(work, now) ??
         financeCommand(work, now) ??

@@ -7,8 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../shared/state/bool_setting_controller.dart';
 import '../../../shared/state/notification_providers.dart';
+import '../../finance/finance.dart';
 import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
+import '../../shift_schedules/shift_schedules.dart';
 
 /// «Говорить напоминания вслух» — включено, пока владелец не выключит.
 final jarvisSpeakRemindersProvider = boolSettingProvider(
@@ -99,9 +101,13 @@ final jarvisBriefingsProvider = Provider<JarvisBriefings>((ref) {
     ..listen(memoryItemsControllerProvider, (_, __) => briefings.plan())
     ..listen(recurrenceSeriesControllerProvider, (_, __) => briefings.plan())
     ..listen(jarvisBriefingSettingsProvider, (_, __) => briefings.plan())
+    // Подсказки сводки — смены и деньги — тоже меняют её текст.
+    ..listen(shiftSchedulesControllerProvider, (_, __) => briefings.plan())
+    ..listen(financeControllerProvider, (_, __) => briefings.plan())
     ..listen(
       jarvisSpeakRemindersProvider,
-      (_, speak) => unawaited(ref.read(spokenRemindersProvider).setEnabled(speak)),
+      (_, speak) =>
+          unawaited(ref.read(spokenRemindersProvider).setEnabled(speak)),
       fireImmediately: true,
     )
     ..onDispose(briefings.dispose);
@@ -129,16 +135,37 @@ class JarvisBriefings {
   /// Сводки на [days] дней вперёд от [now].
   List<Briefing> briefings(DateTime now) {
     final settings = _ref.read(jarvisBriefingSettingsProvider);
+    final schedules = _ref.read(shiftSchedulesControllerProvider);
+    final finance = _ref.read(financeControllerProvider);
+    final currency = _ref.read(financeCurrencyProvider);
+    List<MemoryItem> itemsOn(DateTime day, [int offset = 0]) =>
+        _ref.read(memoryItemsForDayProvider(
+            DateTime(day.year, day.month, day.day + offset)));
     final result = <Briefing>[];
     void add(DateTime on, int minutes, DateTime about) {
       final at =
           DateTime(on.year, on.month, on.day, minutes ~/ 60, minutes % 60);
       if (!at.isAfter(now)) return;
+      final morning = on == about;
+      final items = itemsOn(about);
       final text = AgendaSpeech.briefing(
-        _ref.read(memoryItemsForDayProvider(about)),
+        items,
         day: about,
         at: at,
         address: jarvisAddress,
+        notes: briefingNotes(
+          day: about,
+          at: now,
+          morning: morning,
+          shifts: workingShifts(schedules, about),
+          dayItems: items,
+          overdue: morning ? itemsOn(about, -1) : const [],
+          ahead: morning
+              ? [for (var d = 1; d <= 3; d++) ...itemsOn(about, d)]
+              : const [],
+          finance: finance,
+          currency: currency,
+        ),
       );
       if (text != null) {
         result.add((at: at, day: about, title: text.title, body: text.body));
