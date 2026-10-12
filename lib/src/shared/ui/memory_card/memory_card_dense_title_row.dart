@@ -1,5 +1,7 @@
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
+import '../styled_text_span.dart';
 import 'memory_card_attachment_icons.dart';
 import 'memory_card_status_chip.dart';
 
@@ -18,7 +20,8 @@ class MemoryCardDenseTitleRow extends StatelessWidget {
   });
 
   final String itemId;
-  final String title;
+  /// Название с оформлением текста записи.
+  final StyledText title;
   final TextStyle? titleStyle;
   final String? status;
   final int imageCount;
@@ -29,14 +32,13 @@ class MemoryCardDenseTitleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        if (title.isNotEmpty)
+        if (title.plain.isNotEmpty)
           Expanded(
-            child: Text(
-              title,
+            child: Text.rich(
+              styledTextSpan(title, titleStyle ?? const TextStyle()),
               key: ValueKey('memory_card_title_$itemId'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: titleStyle,
             ),
           )
         else

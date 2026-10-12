@@ -30,6 +30,9 @@ class JarvisBrain {
   /// не помогает понять просьбу, а только дорожает.
   static const _memory = Duration(minutes: 30);
   static const _keptReplies = 12;
+
+  /// Обращений к функциям за один ответ. Полгода прошлого — это пять
+  /// обращений по шесть недель, и ещё одно остаётся на что-нибудь другое.
   static const _maxCalls = 6;
 
   final _history = <Map<String, dynamic>>[];
@@ -59,12 +62,17 @@ class JarvisBrain {
     ];
     final outcomes = <JarvisOutcome>[];
     var said = '';
-    for (var call = 0; call < _maxCalls; call++) {
-      final message =
-          await _client.chat(messages, functions: JarvisBrainFunctions.specs);
+    var cut = false;
+    // Последний запрос — уже без права на функцию: ответ словами нужен
+    // всегда, даже если нейросеть потратила все обращения к данным.
+    for (var call = 0; call <= _maxCalls; call++) {
+      final message = await _client.chat(messages,
+          functions: JarvisBrainFunctions.specs,
+          callFunctions: call < _maxCalls);
       final function = message['function_call'];
-      if (function is! Map) {
+      if (function is! Map || call == _maxCalls) {
         said = message['content'] as String? ?? '';
+        cut = message['finish_reason'] == 'length';
         break;
       }
       final name = '${function['name'] ?? ''}';
@@ -78,10 +86,11 @@ class JarvisBrain {
           if (message['functions_state_id'] != null)
             'functions_state_id': message['functions_state_id'],
         })
-        ..add({'role': 'function', 'name': name, 'content': jsonEncode(result)});
+        ..add(
+            {'role': 'function', 'name': name, 'content': jsonEncode(result)});
     }
     _lastAsked = now;
-    final reply = cleanBrainReply(said);
+    final reply = cleanBrainReply(said, cut: cut);
     final spoken = reply.isNotEmpty
         ? reply
         : outcomes.map((outcome) => outcome.say).join(' ');
@@ -111,10 +120,10 @@ class JarvisBrain {
         outcomes.add(outcome);
         return {'result': outcome.say};
       case JarvisBrainFunctions.listFinance:
-        final from = parseBrainDate(arguments['from']);
-        final to = parseBrainDate(arguments['to']) ?? from;
-        if (from == null || to == null) return {'error': 'Нужны даты YYYY-MM-DD'};
-        return financeForBrain(_executor.finance, from: from, to: to);
+        final period = _period(arguments);
+        if (period == null) return _needsDates;
+        return financeForBrain(_executor.finance,
+            from: period.from, to: period.to);
       case JarvisBrainFunctions.rememberFact:
         final outcome = await _executor.run(
             RememberFact('${arguments['fact'] ?? ''}'),
@@ -130,10 +139,9 @@ class JarvisBrain {
         outcomes.add(outcome);
         return {'result': outcome.say};
       case JarvisBrainFunctions.listDays:
-        final from = parseBrainDate(arguments['from']);
-        final to = parseBrainDate(arguments['to']) ?? from;
-        if (from == null || to == null) return {'error': 'Нужны даты YYYY-MM-DD'};
-        return _days(from, to);
+        final period = _period(arguments);
+        if (period == null) return _needsDates;
+        return _days(period.from, period.to);
       case JarvisBrainFunctions.weather:
         return _online.weather(
           place: arguments['place'] as String?,
@@ -199,6 +207,17 @@ class JarvisBrain {
         return _executor.run(command, mentioned: mentioned, now: now);
     }
   }
+
+  /// Период из вызова функции: `from` и `to` как YYYY-MM-DD; без `to` —
+  /// один день.
+  static ({DateTime from, DateTime to})? _period(
+      Map<String, dynamic> arguments) {
+    final from = parseBrainDate(arguments['from']);
+    final to = parseBrainDate(arguments['to']) ?? from;
+    return from == null || to == null ? null : (from: from, to: to);
+  }
+
+  static const _needsDates = {'error': 'Нужны даты YYYY-MM-DD'};
 
   static Map<String, dynamic> _arguments(Object? raw) {
     if (raw is Map) return Map<String, dynamic>.from(raw);

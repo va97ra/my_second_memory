@@ -49,16 +49,19 @@ class JarvisPhone {
         final label = await _call<String>('openApp', {'query': name});
         return JarvisOutcome(
             label == null ? PhoneReplies.noApp(name) : PhoneReplies.opened(label));
-      case PhoneCall(:final who):
+      case PhoneCall(:final who, :final say):
         final contact = await _contact(who);
         if (contact == null) return JarvisOutcome(PhoneReplies.notFound(who));
         if (contact.number.isEmpty) {
           return const JarvisOutcome(PhoneReplies.contactsDenied);
         }
-        final done = await _call<bool>('dial', {'number': contact.number}) == true;
-        return JarvisOutcome(done
-            ? PhoneReplies.dialing(contact.name)
-            : PhoneReplies.noMessenger(PhoneMessenger.sms));
+        // Звонит сам, если разрешили звонки; иначе открывает набор.
+        final how = await _call<String>('call', {'number': contact.number});
+        return JarvisOutcome(switch (how) {
+          'call' => PhoneReplies.calling(contact.name, say: say),
+          'dial' => PhoneReplies.dialing(contact.name, say: say),
+          _ => PhoneReplies.cannotCall,
+        });
       case PhoneMessage(:final who, :final text, :final app):
         // Telegram номер по ссылке не откроет: текст уходит в него, а чат
         // человек выбирает сам.
@@ -79,6 +82,14 @@ class JarvisPhone {
             ? PhoneReplies.written(contact.name, app)
             : PhoneReplies.noMessenger(app));
     }
+  }
+
+  /// Маршрут в картах телефона: «Яндекс Карты», а без них — Google Maps.
+  Future<JarvisOutcome> route(String to) async {
+    if (!_supported) return const JarvisOutcome(PhoneReplies.notHere);
+    final app = await _call<String>('route', {'to': to});
+    return JarvisOutcome(
+        app == null ? RouteReplies.noMaps : RouteReplies.opened(to, app));
   }
 
   /// Контакт по имени в любом падеже или номер, названный цифрами. Номер

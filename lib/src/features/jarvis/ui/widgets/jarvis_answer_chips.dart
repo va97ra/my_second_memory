@@ -8,31 +8,46 @@ import 'package:flutter/material.dart';
 /// второго пути ответа у него нет.
 class JarvisAnswerChips extends StatelessWidget {
   const JarvisAnswerChips({
-    required this.asking,
+    required this.need,
     required this.onAnswer,
     super.key,
   });
 
-  final ParsedTask asking;
+  /// О чём спросил Джарвис.
+  final TaskNeed need;
   final ValueChanged<String> onAnswer;
 
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    final answers = asking.need == TaskNeed.date
-        ? [
-            (strings.today, 'сегодня'),
-            (strings.tomorrow, 'завтра'),
-            (strings.jarvisNoDate, 'без даты'),
-            (strings.jarvisCancelAnswer, 'не надо'),
-          ]
-        : [
-            (strings.jarvisMorning, 'в 9 утра'),
-            (strings.jarvisAfternoon, 'в 13:00'),
-            (strings.jarvisEvening, 'в 19:00'),
-            (strings.jarvisAllDay, 'весь день'),
-            (strings.jarvisCancelAnswer, 'не надо'),
-          ];
+    final skip = (strings.jarvisSkip, 'не важно');
+    final answers = switch (need) {
+      TaskNeed.date => [
+          (strings.today, 'сегодня'),
+          (strings.tomorrow, 'завтра'),
+          (strings.jarvisNoDate, 'без даты'),
+          (strings.jarvisCancelAnswer, 'не надо'),
+        ],
+      TaskNeed.time => [
+          (strings.jarvisMorning, 'в 9 утра'),
+          (strings.jarvisAfternoon, 'в 13:00'),
+          (strings.jarvisEvening, 'в 19:00'),
+          (strings.jarvisAllDay, 'весь день'),
+          (strings.jarvisCancelAnswer, 'не надо'),
+        ],
+      TaskNeed.duration => [
+          (strings.jarvisQuarterHour, '15 минут'),
+          (strings.jarvisHalfHour, 'полчаса'),
+          (strings.jarvisHour, 'час'),
+          skip,
+        ],
+      TaskNeed.place => [(strings.jarvisNowhere, 'никуда'), skip],
+      TaskNeed.details => [(strings.jarvisNothing, 'ничего'), skip],
+      TaskNeed.urgency => [
+          (strings.jarvisUrgent, 'срочно'),
+          (strings.jarvisNotUrgent, 'не срочно'),
+        ],
+    };
     // Одна строка, которую листают пальцем, а не столбик: при крупном шрифте
     // перенесённые кнопки занимали пол-листа и выдавливали сам разговор.
     return SingleChildScrollView(

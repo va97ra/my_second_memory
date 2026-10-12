@@ -17,8 +17,14 @@ packages/ez_domain/lib/src/calendar/holiday_observance_table.dart     457
 packages/ez_domain/lib/src/calendar/holiday_russian_table.dart        994
    таблицы праздников: официальные, международные дни и праздники России
 
-packages/ez_core/lib/src/localization/app_strings.dart                742
+packages/ez_core/lib/src/localization/app_strings.dart                773
    строки интерфейса
+
+packages/ez_domain/lib/src/assistant/jarvis_command.dart              431
+   перечень того, что Джарвис умеет: одно «что» на класс, ни одного «как».
+   Команды — закрытый (sealed) класс, а Dart держит все его варианты в
+   одной библиотеке; part-файлы запрещены. Страницы из него уже вынуты
+   (jarvis_place.dart)
 
 packages/ez_design/lib/src/themes/app_theme.dart                      406
 packages/ez_design/lib/src/themes/notebook/notebook_theme.dart        407

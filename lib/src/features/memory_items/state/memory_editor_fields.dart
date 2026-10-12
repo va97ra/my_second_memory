@@ -1,6 +1,7 @@
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
+import '../../../shared/ui/styled_text_controller.dart';
 import 'memory_amount.dart';
 import 'memory_editor_draft.dart';
 import 'memory_editor_form.dart';
@@ -10,11 +11,12 @@ import 'memory_editor_form.dart';
 /// Ими владеет Flutter, поэтому они не в форме, а здесь — вместе со всем, что
 /// нужно из них прочитать.
 class MemoryEditorFields {
-  final body = TextEditingController();
+  /// Текст записи — с оформлением: жирный, цвет, шрифт.
+  final body = StyledTextController();
   final amount = TextEditingController();
 
   void loadFrom(MemoryItem item) {
-    body.text = item.body;
+    body.load(item.body);
     amount.text = formatAmount(item.amountMinor);
   }
 
@@ -42,8 +44,9 @@ class MemoryEditorFields {
     required String locale,
   }) {
     return form.toDraft(
+      // Название — из чистого текста, а сам текст — с оформлением.
       title: memoryTitleFromRecord(body.text, form.type, locale),
-      body: body.text.trim(),
+      body: body.stored,
       amountMinor: parseAmountMinor(amount.text),
       savedAt: DateTime.now(),
     );

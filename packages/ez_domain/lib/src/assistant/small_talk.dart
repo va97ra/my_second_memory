@@ -92,6 +92,27 @@ class SmallTalk {
   };
 
   /// Ответ на короткую реплику или null, если это не она.
+  /// Согласие на предложение Джарвиса: «да», «давай», «конечно».
+  static bool agrees(String text) => _agree.contains(text
+      .trim()
+      .toLowerCase()
+      .replaceAll('ё', 'е')
+      .replaceAll(RegExp('[,.!?]'), ''));
+
+  static const _agree = {
+    'да',
+    'давай',
+    'да давай',
+    'давайте',
+    'конечно',
+    'ага',
+    'угу',
+    'хочу',
+    'можно',
+    'да конечно',
+    'запланируй',
+  };
+
   static String? reply(String text, DateTime now) {
     final said = text.trim().toLowerCase().replaceAll('ё', 'е');
     for (final (pattern, lines) in _talk) {

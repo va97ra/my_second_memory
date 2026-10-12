@@ -37,7 +37,7 @@ class _JarvisLimitBarState extends ConsumerState<JarvisLimitBar> {
     final left = limit.left;
     final share = limit.share;
     final label = left != null
-        ? strings.gigaChatLeft(left)
+        ? strings.gigaChatLeft(left, spentThisMonth: limit.spentThisMonth)
         : limit.spentThisMonth > 0
             ? strings.gigaChatSpent(limit.spentThisMonth)
             : null;

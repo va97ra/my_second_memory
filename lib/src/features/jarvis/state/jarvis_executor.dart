@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../finance/finance.dart';
 import 'jarvis_answers.dart';
+import 'jarvis_calculator.dart';
 import 'jarvis_facts.dart';
+import 'jarvis_look.dart';
 import 'jarvis_outcome.dart';
 import 'jarvis_phone.dart';
 import 'jarvis_places.dart';
@@ -36,6 +38,8 @@ class JarvisExecutor {
   JarvisAnswers get answers => _answers;
   final JarvisAnswers _answers;
   final JarvisSettingsActions _settings;
+  late final _calculator = JarvisCalculator(_ref);
+  late final _look = JarvisLook(_ref, _answers);
 
   /// Выставляет странице нужную закладку или месяц до перехода на неё.
   void prepare(OpenPlace target) => preparePlace(_ref, target);
@@ -61,6 +65,7 @@ class JarvisExecutor {
         JarvisOutcome(JarvisReplies.opened(command, now), open: command),
       AskAgenda() => _answers.agenda(command, now),
       AskUndated() => _answers.undated(),
+      LookAtPage() => _look.look(command, now),
       AskWhen(:final query) => _records.when(query, now),
       AskShift() => _answers.shift(command, now),
       AskHolidays() => _answers.holidays(command, now),
@@ -81,13 +86,15 @@ class JarvisExecutor {
       ChangeRecord() =>
         await _records.change(command, mentioned: mentioned, now: now),
       SearchRecords(:final query) => _records.search(query, now),
-      Calculate() => JarvisOutcome(calculationReply(command)),
+      Calculate() => await _calculator.calculate(command),
+      CalculatorCommand() => await _calculator.run(command),
       ConvertUnits() => JarvisOutcome(unitReply(command)),
       ConvertCurrency() => await _answers.currency(command, now),
       AddFinanceEntry() => await _settings.addFinance(command, now),
       SwitchSetting() => await _settings.toggle(command),
       ChangeTheme() => await _settings.theme(command),
       PhoneCommand() => await _ref.read(jarvisPhoneProvider).run(command),
+      RouteTo(:final to) => await _route(to, mentioned, now),
     };
   }
 
@@ -102,6 +109,26 @@ class JarvisExecutor {
   JarvisOutcome? recall(String question) {
     final fact = factFor(question, facts);
     return fact == null ? null : JarvisOutcome(FactReplies.answer(fact));
+  }
+
+  /// Куда ехать: адрес из сказанного, адрес найденной записи или само
+  /// сказанное — карты найдут и «ТЦ Мега». Без слов — к записи, о которой
+  /// только что говорили.
+  Future<JarvisOutcome> _route(
+      String to, MemoryItem? mentioned, DateTime now) async {
+    final phone = _ref.read(jarvisPhoneProvider);
+    if (to.isNotEmpty) {
+      final address = addressIn(to);
+      if (address != null) return phone.route(address);
+      final record = _records.find(to, now).firstOrNull;
+      final recorded = record == null ? null : recordAddress(record);
+      return phone.route(recorded ?? to);
+    }
+    if (mentioned == null) return const JarvisOutcome(RouteReplies.where);
+    final address = recordAddress(mentioned);
+    return address == null
+        ? JarvisOutcome(RouteReplies.noAddress(mentioned.title))
+        : phone.route(address);
   }
 
   Future<JarvisOutcome> _remember(String fact) async {

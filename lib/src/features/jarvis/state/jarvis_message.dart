@@ -31,6 +31,7 @@ class JarvisConversation {
     this.messages = const [],
     this.busy = false,
     this.asking,
+    this.askingNeed,
     this.undoMessageId,
     this.navigation,
   });
@@ -41,8 +42,12 @@ class JarvisConversation {
   /// Джарвис выполняет команду: второй раз просить нельзя.
   final bool busy;
 
-  /// Дело, по которому Джарвис ждёт ответа: день или время.
+  /// Дело, по которому Джарвис ждёт ответа.
   final ParsedTask? asking;
+
+  /// О чём именно спросил: день, время, длительность, место, что сделать,
+  /// срочность.
+  final TaskNeed? askingNeed;
 
   /// Реплика, под которой стоит «Отменить». Отменить можно только последнее
   /// действие — так человек не отменит вслепую то, чего уже не видит.
@@ -56,6 +61,7 @@ class JarvisConversation {
     List<JarvisMessage>? messages,
     bool? busy,
     ParsedTask? asking,
+    TaskNeed? askingNeed,
     bool clearAsking = false,
     int? undoMessageId,
     bool clearUndo = false,
@@ -66,6 +72,7 @@ class JarvisConversation {
       messages: messages ?? this.messages,
       busy: busy ?? this.busy,
       asking: clearAsking ? null : asking ?? this.asking,
+      askingNeed: clearAsking ? null : askingNeed ?? this.askingNeed,
       undoMessageId: clearUndo ? null : undoMessageId ?? this.undoMessageId,
       navigation: clearNavigation ? null : navigation ?? this.navigation,
     );

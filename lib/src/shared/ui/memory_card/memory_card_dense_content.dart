@@ -2,6 +2,7 @@ import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
+import '../styled_text_span.dart';
 import 'memory_item_presentation.dart';
 import 'memory_card_attachment_icons.dart';
 import 'memory_card_dense_title_row.dart';
@@ -17,7 +18,8 @@ class MemoryCardDenseContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = item.title.trim();
-    final body = item.body.trim();
+    final styled = StyledText.parse(item.body.trim());
+    final body = styled.plain;
     // Заголовок, повторяющий начало записи, показывать дважды незачем.
     final showBody = body.isNotEmpty && _normalized(body) != _normalized(title);
     final hasAudio = item.voiceNotes.isNotEmpty;
@@ -53,7 +55,7 @@ class MemoryCardDenseContent extends StatelessWidget {
             if (title.isNotEmpty || status != null)
               MemoryCardDenseTitleRow(
                 itemId: item.id,
-                title: title,
+                title: styledMemoryTitle(item),
                 titleStyle: titleStyle,
                 status: status,
                 imageCount: item.imagePaths.length,
@@ -62,24 +64,22 @@ class MemoryCardDenseContent extends StatelessWidget {
               ),
             if (title.isNotEmpty && showBody) ...[
               const SizedBox(height: 2),
-              Text(
-                body,
+              Text.rich(
+                styledTextSpan(styled, bodyStyle),
                 key: ValueKey('memory_card_body_${item.id}'),
                 maxLines: bodyMaxLines,
                 overflow: TextOverflow.ellipsis,
-                style: bodyStyle,
               ),
             ] else if (title.isEmpty && body.isNotEmpty)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Text(
-                      body,
+                    child: Text.rich(
+                      styledTextSpan(styled, titleStyle),
                       key: ValueKey('memory_card_body_${item.id}'),
                       maxLines: bodyMaxLines,
                       overflow: TextOverflow.ellipsis,
-                      style: titleStyle,
                     ),
                   ),
                   if (hasAttachments) ...[

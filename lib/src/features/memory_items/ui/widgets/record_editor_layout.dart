@@ -1,4 +1,5 @@
-import 'package:flutter/widgets.dart';
+import 'package:ez_design/ez_design.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
 
@@ -44,4 +45,28 @@ class RecordEditorLayout {
   final double imageMaxWidth;
   final double bottomPadding;
   final double buttonSize;
+}
+
+/// Бумага листа записи. Собственный фон нужен только там, где у темы нет ни
+/// бумаги, ни текстуры.
+BoxDecoration recordEditorPaper(BuildContext context) {
+  final plain = NotebookVisuals.maybeOf(context) == null &&
+      AppSurfaceTextures.maybeOf(context) == null;
+  final colors = Theme.of(context).colorScheme;
+
+  return BoxDecoration(
+    color:
+        plain ? colors.surface.withValues(alpha: 0.97) : Colors.transparent,
+    borderRadius: BorderRadius.circular(8),
+    border: plain ? Border.all(color: colors.outlineVariant) : null,
+    boxShadow: plain
+        ? [
+            BoxShadow(
+              color: const Color(0xFF6B4F35).withValues(alpha: 0.09),
+              blurRadius: 18,
+              offset: const Offset(0, 7),
+            ),
+          ]
+        : null,
+  );
 }

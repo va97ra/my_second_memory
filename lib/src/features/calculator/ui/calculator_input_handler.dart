@@ -1,3 +1,4 @@
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/widgets.dart';
 
 import '../state/calculator_controller.dart';
@@ -12,13 +13,11 @@ class CalculatorInputHandler {
   final CalculatorController stateController;
 
   void handle(String key, CalculatorState state) {
+    // C, CE, x², 1/x, ± и корень степени меняют всё выражение — по общему
+    // правилу, которым нажимает и Джарвис.
+    final whole = wholeExpressionKey(key, state.expression);
+    if (whole != null) return replace(whole);
     switch (key) {
-      case 'C':
-        replace('');
-      case 'CE':
-        // Число стирается тем же набором знаков, каким его набирают: клавиша
-        // разделителя ставит запятую, и без неё «12,5» теряло только пятёрку.
-        replace(state.expression.replaceFirst(RegExp(r'[\d.,]+$'), ''));
       case 'backspace':
         _deleteSelection();
       case '=':
@@ -29,16 +28,6 @@ class CalculatorInputHandler {
         stateController.toggleHyperbolic();
       case 'angle':
         stateController.cycleAngleUnit();
-      case 'sign':
-        replace(state.expression.startsWith('-')
-            ? state.expression.substring(1)
-            : '-(${state.expression})');
-      case 'square':
-        replace('(${state.expression})^2');
-      case 'cube':
-        replace('(${state.expression})^3');
-      case 'reciprocal':
-        replace('1/(${state.expression})');
       case 'sqrt':
         _function('sqrt', state);
       case 'cbrt':
@@ -49,8 +38,6 @@ class CalculatorInputHandler {
         _insert('!');
       case 'power':
         _insert('^');
-      case 'root':
-        replace('root(${state.expression};');
       case 'pi':
         _insert('π');
       case 'e':
@@ -91,7 +78,7 @@ class CalculatorInputHandler {
 
   void _function(String name, CalculatorState state) {
     state.evaluation.isValid
-        ? replace('$name(${state.expression})')
+        ? replace(wrapExpression(name, state.expression))
         : _insert('$name(');
   }
 

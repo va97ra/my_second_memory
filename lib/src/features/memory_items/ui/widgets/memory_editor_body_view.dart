@@ -2,6 +2,8 @@ import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../shared/ui/styled_text_controller.dart';
+
 import '../../state/memory_editor_controller.dart';
 import '../memory_editor_actions.dart';
 import 'editor_body.dart';
@@ -21,7 +23,7 @@ class MemoryEditorBodyView extends StatelessWidget {
 
   final MemoryEditorController controller;
   final MemoryEditorActions actions;
-  final TextEditingController bodyController;
+  final StyledTextController bodyController;
   final TextEditingController amountController;
 
   /// Запись, которую правят, или null у ещё не сохранённого черновика.

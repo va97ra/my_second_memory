@@ -25,6 +25,19 @@ String jarvisLocation(OpenPlace target) {
   };
 }
 
+/// Какая из страниц Джарвиса на экране по адресу [location] — с днём, если
+/// он в адресе; null — ни одна. Таблица та же, что у [jarvisLocation]:
+/// страница, которую он умеет открыть, узнаётся сама. Лента и записки живут
+/// по одному адресу — это лента.
+OpenPlace? placeOnScreen(Uri location) {
+  for (final place in JarvisPlace.values) {
+    if (Uri.parse(jarvisLocation(OpenPlace(place))).path == location.path) {
+      return OpenPlace(place, date: dateInLocation(location));
+    }
+  }
+  return null;
+}
+
 /// Вкладки нижней панели меняют адрес целиком: они помнят себя сами. Всё
 /// остальное открывается поверх страницы, чтобы «назад» вернуло к разговору.
 const _branches = {'/calendar', '/', '/accounts', '/settings'};

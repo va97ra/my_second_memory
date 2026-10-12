@@ -1,8 +1,10 @@
 import '../feed/feed_rules.dart';
+import '../recurrence/recurrence_dates.dart';
 import '../memory/memory_item.dart';
 import '../memory/memory_status.dart';
 import 'russian_words.dart';
 import 'spoken_moments.dart';
+import 'repeat_phrases.dart' show isAnniversary;
 import '../language/russian_plural.dart';
 
 /// Как Джарвис рассказывает о делах — как дворецкий в кино: «Сэр, на
@@ -33,10 +35,25 @@ class AgendaSpeech {
     required String label,
     String address = '',
   }) {
-    final open = _open(items);
+    // Дни рождения и годовщины — не дела: их называют отдельно, а не
+    // посреди списка («всё подряд одной кучей» — отзыв владельца).
+    final festive = [
+      for (final item in _open(items))
+        if (isAnniversary(item.title)) item,
+    ];
+    final open = [
+      for (final item in _open(items))
+        if (!festive.contains(item)) item,
+    ];
     final on =
         label.startsWith('в ') || label.startsWith('на ') ? label : 'на $label';
-    if (open.isEmpty) return capitalizeFirst('${hello(address)}$on дел нет.');
+    final also = festive.isEmpty
+        ? ''
+        : ' Ещё в этот день: '
+            '${joinWithAnd([for (final item in festive) lowerFirst(item.title)])}.';
+    if (open.isEmpty) {
+      return capitalizeFirst('${hello(address)}$on дел нет.') + also;
+    }
     final today = isSameDay(day, now);
     if (open.length == 1) {
       final item = open.single;
@@ -46,10 +63,10 @@ class AgendaSpeech {
           ? ' Время уже прошло, но дело не отмечено.'
           : '';
       return '${capitalizeFirst('${hello(address)}$on одно дело: ')}'
-          '$when${lowerFirst(item.title)}.$passed';
+          '$when${lowerFirst(item.title)}.$passed$also';
     }
     return '${capitalizeFirst('${hello(address)}$on ${count(open.length)}.')} '
-        '${_inOrder(open, now: today ? now : null)}';
+        '${_inOrder(open, now: today ? now : null)}$also';
   }
 
   /// Дела нескольких дней списком: «На выходных 3 дела: в субботу в 10
@@ -69,8 +86,27 @@ class AgendaSpeech {
     if (open.isEmpty) {
       return capitalizeFirst('${hello(address)}$label дел нет.');
     }
-    return capitalizeFirst('${hello(address)}$label ${count(open.length)}: '
-        '${_list(open, daysFrom: now)}.');
+    return '${capitalizeFirst('${hello(address)}$label ${count(open.length)}.')} '
+        '${_byDays(open, now)}';
+  }
+
+  /// По дням, а не одним списком: «В субботу: в 10 часов утра — дача,
+  /// уборка. В воскресенье: …».
+  static String _byDays(List<MemoryItem> sorted, DateTime now) {
+    const shown = 10;
+    final days = <DateTime, List<MemoryItem>>{};
+    for (final item in sorted.take(shown)) {
+      days.putIfAbsent(dateOnly(item.memoryDate), () => []).add(item);
+    }
+    final sentences = [
+      for (final MapEntry(key: day, value: items) in days.entries)
+        '${capitalizeFirst(spokenDay(day, now))}: '
+            '${items.map((item) => _entry(item, null)).join(', ')}.',
+    ];
+    if (sorted.length > shown) {
+      sentences.add('И ещё ${count(sorted.length - shown)}.');
+    }
+    return sentences.join(' ');
   }
 
   /// Напоминание вслух в его момент: «Сэр, напоминаю: в 2 часа дня —
@@ -149,14 +185,15 @@ class AgendaSpeech {
   }
 
   /// Насколько дело важное — по признакам, которые человек сам оставил:
-  /// будильник, напоминание, время и слова вроде «срочно», «оплатить»,
-  /// «врач». Отдельной пометки «важно» у записей нет.
+  /// пометка важности («запиши срочно …»), будильник, напоминание, время и
+  /// слова вроде «оплатить», «врач».
   static int importance(MemoryItem item) {
-    var score = 0;
+    // Пометка «срочно» или «важно» — прямо сказанная важность.
+    var score = item.priority * 3;
     if (item.reminderSoundUri != null) score += 3;
     if (item.remindAt != null) score += 2;
     if (item.timeMinutes != null) score += 1;
-    if (_weighty.hasMatch(normalizePhrase('${item.title} ${item.body}'))) {
+    if (_weighty.hasMatch(normalizePhrase('${item.title} ${item.plainBody}'))) {
       score += 2;
     }
     return score;

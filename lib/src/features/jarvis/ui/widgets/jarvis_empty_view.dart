@@ -1,14 +1,12 @@
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
-/// Начало разговора: приветствие дворецкого и три примера, с чего начать.
+/// Начало разговора: приветствие дворецкого.
 ///
-/// Примеры — кнопки: нажатый пример уходит Джарвису как сказанный. Так
-/// новичок сразу видит, что Джарвис умеет, и не учит это по подсказке.
+/// Кнопок-примеров здесь больше нет: Джарвису говорят голосом, а три кнопки
+/// только занимали место (решение владельца 11 октября 2026).
 class JarvisEmptyView extends StatelessWidget {
-  const JarvisEmptyView({required this.onExample, super.key});
-
-  final ValueChanged<String> onExample;
+  const JarvisEmptyView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,20 +23,6 @@ class JarvisEmptyView extends StatelessWidget {
             strings.jarvisGreeting,
             style: Theme.of(context).textTheme.titleMedium,
             textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final example in strings.jarvisExamples)
-                OutlinedButton(
-                  key: ValueKey('jarvis_example_$example'),
-                  onPressed: () => onExample(example),
-                  child: Text('«$example»'),
-                ),
-            ],
           ),
         ],
       ),

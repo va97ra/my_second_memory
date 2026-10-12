@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 
 /// Physical surface of one calculator key.
 ///
-/// Notebook themes keep their raised solid key. Screen themes use a clear
-/// plate: the label sits below a thick concave profile, while a short-lived
-/// lamp glows from inside the plate for as long as the key is held.
+/// Notebook themes keep their raised solid key with a visible side. Screen
+/// themes use a clear plate: the label sits below a thick concave profile,
+/// while a short-lived lamp glows from inside the plate for as long as the
+/// key is held.
 class CalculatorKeySurface extends StatelessWidget {
   const CalculatorKeySurface({
     required this.baseColor,
@@ -32,31 +33,49 @@ class CalculatorKeySurface extends StatelessWidget {
     return screen == null ? _notebookSurface() : _glassSurface();
   }
 
+  /// Ход клавиши: столько видно её бока снизу, и на столько она уходит
+  /// под пальцем. Без бока клавиша читалась нарисованной плашкой.
+  static const _travel = 4.0;
+
   Widget _notebookSurface() {
-    final topColor = Color.alphaBlend(
-      Colors.white.withValues(alpha: 0.10),
-      baseColor,
-    );
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 80),
-      transform: Matrix4.translationValues(0, pressed ? 2 : 0, 0),
+    final top =
+        Color.alphaBlend(Colors.white.withValues(alpha: 0.16), baseColor);
+    final bottom =
+        Color.alphaBlend(Colors.black.withValues(alpha: 0.08), baseColor);
+    final side =
+        Color.alphaBlend(Colors.black.withValues(alpha: 0.45), baseColor);
+    // Бок клавиши и её тень на столе — снаружи; лицо с подписью сверху и
+    // опускается на бок, пока клавишу держат.
+    return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [topColor, baseColor],
-        ),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        color: side,
+        borderRadius: _radius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: pressed ? 0.18 : 0.38),
-            blurRadius: pressed ? 2 : 5,
-            offset: Offset(0, pressed ? 1 : 4),
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 3,
+            offset: const Offset(0, 2),
           ),
         ],
-        borderRadius: _radius,
       ),
-      child: _ink(child),
+      child: AnimatedContainer(
+        key: const ValueKey('calculator_key_face'),
+        duration: const Duration(milliseconds: 70),
+        curve: Curves.easeOut,
+        margin: pressed
+            ? const EdgeInsets.only(top: _travel - 1, bottom: 1)
+            : const EdgeInsets.only(bottom: _travel),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [top, bottom],
+          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+          borderRadius: _radius,
+        ),
+        child: _ink(child),
+      ),
     );
   }
 

@@ -68,7 +68,11 @@ void main() {
           final key = ref.watch(gigaChatKeyProvider).valueOrNull;
           return key == null
               ? null
-              : GigaChatClient(authKey: key, connect: () async => server);
+              : GigaChatClient(
+                  authKey: key,
+                  connect: () async => server,
+                  retryPause: Duration.zero,
+                );
         }),
       ],
       child: MaterialApp(

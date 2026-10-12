@@ -9,6 +9,8 @@
     <!-- Джарвис: будильник и таймер в «Часах», «позвони маме» (только набор номера). -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- «Позвони маме» — Джарвис набирает сам, если разрешили. -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
@@ -112,6 +114,13 @@
             <action android:name="android.intent.action.MAIN"/>
             <category android:name="android.intent.category.LAUNCHER"/>
         </intent>
+        <!-- Распознавание речи телефона для просьбы Джарвису: SystemSpeech.kt. -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
+        <!-- «Как доехать»: маршрут в «Яндекс Картах» или Google Maps. -->
+        <package android:name="ru.yandex.yandexmaps"/>
+        <package android:name="com.google.android.apps.maps"/>
         <package android:name="com.whatsapp"/>
         <package android:name="org.telegram.messenger"/>
     </queries>

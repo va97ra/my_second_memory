@@ -4,12 +4,14 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/media/voice_note_player.dart';
+import '../../../../shared/ui/styled_text_controller.dart';
 import 'media_delete_menu.dart';
 import 'record_editor_actions.dart';
 import 'record_editor_field.dart';
 import 'record_editor_images.dart';
 import 'record_editor_layout.dart';
 import 'recording_pill.dart';
+import 'text_format_panel.dart';
 
 /// Лист записи: вложения сверху, текст по линейке и действия снизу.
 class RecordEditor extends StatelessWidget {
@@ -29,7 +31,7 @@ class RecordEditor extends StatelessWidget {
     required this.onChanged,
   });
 
-  final TextEditingController controller;
+  final StyledTextController controller;
   final List<String> imagePaths;
   final List<VoiceNote> voiceNotes;
   final DateTime memoryDate;
@@ -54,7 +56,7 @@ class RecordEditor extends StatelessWidget {
           child: NotebookPageSurface(
             showLines: false,
             child: DecoratedBox(
-              decoration: _paper(context),
+              decoration: recordEditorPaper(context),
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   14,
@@ -91,13 +93,20 @@ class RecordEditor extends StatelessWidget {
                       ),
                     ),
                     gap,
-                    RecordEditorActions(
-                      recurrenceFrequency: recurrenceFrequency,
-                      isRecording: isRecording,
-                      buttonSize: layout.buttonSize,
-                      onRecurrenceTap: onRecurrenceTap,
-                      onPickImage: onPickImage,
-                      onVoicePressed: onVoicePressed,
+                    // Выделили текст — вместо действий записи панель
+                    // оформления: она нужна, пока есть что оформлять.
+                    ListenableBuilder(
+                      listenable: controller,
+                      builder: (context, _) => controller.hasSelection
+                          ? TextFormatPanel(controller: controller)
+                          : RecordEditorActions(
+                              recurrenceFrequency: recurrenceFrequency,
+                              isRecording: isRecording,
+                              buttonSize: layout.buttonSize,
+                              onRecurrenceTap: onRecurrenceTap,
+                              onPickImage: onPickImage,
+                              onVoicePressed: onVoicePressed,
+                            ),
                     ),
                   ],
                 ),
@@ -121,29 +130,6 @@ class RecordEditor extends StatelessWidget {
         recordedAt: memoryDate,
         durationSeconds: note.durationSeconds,
       ),
-    );
-  }
-
-  /// Собственный фон нужен только там, где у темы нет ни бумаги, ни текстуры.
-  BoxDecoration _paper(BuildContext context) {
-    final plain = NotebookVisuals.maybeOf(context) == null &&
-        AppSurfaceTextures.maybeOf(context) == null;
-    final colors = Theme.of(context).colorScheme;
-
-    return BoxDecoration(
-      color:
-          plain ? colors.surface.withValues(alpha: 0.97) : Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      border: plain ? Border.all(color: colors.outlineVariant) : null,
-      boxShadow: plain
-          ? [
-              BoxShadow(
-                color: const Color(0xFF6B4F35).withValues(alpha: 0.09),
-                blurRadius: 18,
-                offset: const Offset(0, 7),
-              ),
-            ]
-          : null,
     );
   }
 }

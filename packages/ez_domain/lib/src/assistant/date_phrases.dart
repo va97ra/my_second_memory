@@ -46,7 +46,9 @@ void collectDates(PhraseScan scan, MomentHits hits, DateTime now) {
   }
 
   for (final match in scan.take(_dayOfMonth)) {
-    final raw = match.namedGroup('d') ?? match.namedGroup('d2')!;
+    final raw = match.namedGroup('d') ??
+        match.namedGroup('d2') ??
+        match.namedGroup('d3')!;
     final day = numberFromWords(raw) ?? ordinalFromWords(raw);
     if (day == null || day < 1 || day > 31) continue;
     var date = _makeDate(day, today.month, today.year, today, rollYear: false);
@@ -138,12 +140,18 @@ final _numericDate = phrasePattern('$wordStart(?:(?:на|к|до)\\s+)?'
     '$wordEnd');
 
 final _monthDate = phrasePattern('$wordStart(?:(?:на|к|до)\\s+)?'
-    '(?<d>$ordinalPattern|$numberPattern)(?:\\s*-?\\s*(?:го|е|ое))?'
+    '(?<d>$ordinalDayPattern|$numberPattern)(?:\\s*-?\\s*(?:го|е|ое|му))?'
     '\\s+(?<mo>$monthsGenitivePattern)$wordEnd');
 
+/// Число этого месяца: «12 числа», «на 12 число», «к 12 числу», «12-го»,
+/// «на 12-е», «на двенадцатое». Порядковое без «числа» — только с
+/// предлогом и не перед блюдом: «на второе» бывает и котлетами.
 final _dayOfMonth = phrasePattern('$wordStart(?:(?:на|к|до)\\s+)?'
-    '(?:(?<d>$ordinalPattern|$numberPattern)(?:\\s*-?\\s*(?:го|е))?\\s+числа'
-    '|(?<d2>\\d{1,2})\\s*-\\s*(?:го))$wordEnd');
+    '(?:(?<d>$ordinalDayPattern|$numberPattern)(?:\\s*-?\\s*(?:го|е|ое|му))?'
+    '\\s+числ(?:а|о|у|ом)'
+    '|(?<d2>\\d{1,2})\\s*-\\s*(?:го|е|ое|му))$wordEnd'
+    '|$wordStart(?:на|к|до)\\s+(?<d3>$ordinalDayPattern)$wordEnd'
+    '(?!\\s+блюд)');
 
 final _dayWord = phrasePattern('$wordStart(?:(?:на|к|до|в)\\s+)?'
     '(?:(?:эти|этих|ближайшие|ближайших)\\s+)?'

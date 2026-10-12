@@ -1,6 +1,7 @@
 import 'memory_status.dart';
 import 'memory_type.dart';
 import 'voice_note.dart';
+import 'styled_text.dart';
 
 class MemoryItem {
   const MemoryItem({
@@ -72,6 +73,10 @@ class MemoryItem {
   final int? birthYear;
   final bool isGeneratedOccurrence;
   final bool isUndated;
+
+  /// Текст записи без оформления — для поиска, уведомлений, Джарвиса и
+  /// названия. Сам [body] может хранить оформление ([StyledText]).
+  String get plainBody => StyledText.plainOf(body);
 
   bool get isArchived => status == MemoryStatus.archived;
 

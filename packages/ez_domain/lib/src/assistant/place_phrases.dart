@@ -40,6 +40,40 @@ JarvisCommand? placeCommand(String work, DateTime now) {
   return null;
 }
 
+/// «Посмотри на календарь», «что в финансах», «загляни в записки», «что
+/// здесь», «прочитай» — Джарвис смотрит на страницу и рассказывает, что на
+/// ней. Страницы узнаются теми же словами, что и в «открой …».
+JarvisCommand? lookCommand(String work, DateTime now) {
+  if (_here.hasMatch(work)) return const LookAtPage();
+  final verb = _look.firstMatch(work);
+  if (verb == null) return null;
+  final rest = work.substring(verb.end).replaceAll(_filler, ' ').trim();
+  if (rest.isEmpty) return const LookAtPage();
+  for (final (pattern, place) in _places) {
+    final match = pattern.firstMatch(rest);
+    if (match == null) continue;
+    final leftover = rest.replaceRange(match.start, match.end, ' ').trim();
+    if (leftover.isEmpty) return LookAtPage(place: place);
+    final date = _onlyDate(leftover, now);
+    if (date == null) return null;
+    // «Посмотри календарь на пятницу» — это день, а не месяц.
+    final day = place == JarvisPlace.calendar ? JarvisPlace.day : place;
+    return LookAtPage(place: day, date: date);
+  }
+  return null;
+}
+
+/// «Что здесь», «прочитай» — о той странице, что на экране.
+final _here = phrasePattern('^(?:что\\s+(?:(?:здесь|тут)(?:\\s+(?:написано'
+    '|есть))?|на\\s+(?:экране|этой\\s+странице)|ты\\s+(?:тут\\s+|здесь\\s+)?'
+    'видишь)|(?:прочитай|прочти|почитай)(?:\\s+(?:это|что\\s+(?:здесь|тут)))?'
+    '|расскажи\\s+что\\s+(?:здесь|тут))\$');
+
+/// «Посмотри на …», «загляни в …», «что в …».
+final _look = phrasePattern('^(?:(?:посмотри|посмотрите|глянь|гляни|загляни'
+    '|взгляни|почитай|прочитай|прочти)(?:\\s+(?:на|в|во))?|что\\s+(?:в|во|на))'
+    '$wordEnd');
+
 /// День, если фраза — только он: «завтра», «в пятницу», «15 октября».
 DateTime? _onlyDate(String text, DateTime now) {
   final scan = PhraseScan(text);

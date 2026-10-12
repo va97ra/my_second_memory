@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_data/ez_data.dart' show GigaChatException;
 
+import '../../../shared/state/bool_setting_controller.dart';
 import 'jarvis_brain.dart';
 import 'jarvis_brain_providers.dart';
 import 'jarvis_executor.dart';
 import 'jarvis_message.dart';
 import 'jarvis_outcome.dart';
+import 'jarvis_task_questions.dart';
 
 final jarvisControllerProvider =
     StateNotifierProvider<JarvisController, JarvisConversation>((ref) {
@@ -19,8 +21,17 @@ final jarvisControllerProvider =
       await ref.read(gigaChatKeyProvider.notifier).ready;
       return ref.read(jarvisBrainProvider);
     },
+    detailed: () => ref.read(jarvisDetailedCardsProvider),
   );
 });
+
+/// «Подробная карточка дела»: о деле со временем Джарвис спрашивает ещё
+/// длительность, место, что сделать и срочность. Включено, пока владелец
+/// не выключит (решение 11 октября 2026).
+final jarvisDetailedCardsProvider = boolSettingProvider(
+  storageKey: 'jarvis_detailed_cards_v1',
+  initial: true,
+);
 
 /// Разговор с Джарвисом: реплики, уточнения по новым делам и отмена.
 ///
@@ -31,8 +42,10 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   JarvisController(
     this._executor, {
     Future<JarvisBrain?> Function()? brain,
+    bool Function()? detailed,
     DateTime Function()? clock,
   })  : _brain = brain ?? _noBrain,
+        _questions = JarvisTaskQuestions(detailed: detailed ?? _plain),
         _clock = clock ?? DateTime.now,
         super(const JarvisConversation());
 
@@ -43,6 +56,10 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   /// ещё читают с диска — тогда ответа дожидаются.
   final Future<JarvisBrain?> Function() _brain;
   static Future<JarvisBrain?> _noBrain() async => null;
+  static bool _plain() => false;
+
+  /// Уточнения по новым делам — день, время и подробности карточки.
+  final JarvisTaskQuestions _questions;
   final DateTime Function() _clock;
   final _persona = const ButlerPersona(jarvisAddress);
   final _replies = StreamController<String>.broadcast();
@@ -52,14 +69,14 @@ class JarvisController extends StateNotifier<JarvisConversation> {
 
   var _nextId = 0;
   MemoryItem? _mentioned;
+
+  /// Нейросеть только что спросила («Записать, сэр?»): короткий ответ —
+  /// ей, а не разбору фраз, где «да» — реплика, а «давай» — дело.
+  bool _brainAsked = false;
+
+  /// Последний ответ предложил записать ещё.
+  bool _planOffered = false;
   Future<void> Function()? _undo;
-
-  /// Дела, которым не хватает дня или времени; спрашивается первое.
-  final _waiting = <ParsedTask>[];
-
-  /// Дела, готовые к записи, пока уточняются остальные.
-  final _ready = <ParsedTask>[];
-  String _transcript = '';
 
   /// Каждый ответ Джарвиса — с обращением, как он показан. Для голоса.
   Stream<String> get replies => _replies.stream;
@@ -99,8 +116,7 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   /// нейросети о сказанном.
   Future<void> clear() async {
     if (state.busy) return;
-    _waiting.clear();
-    _ready.clear();
+    _questions.clear();
     _mentioned = null;
     _undo = null;
     state = const JarvisConversation();
@@ -121,9 +137,22 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   void navigationHandled() => state = state.copyWith(clearNavigation: true);
 
   Future<void> _handle(String said, DateTime now) async {
-    if (_waiting.isNotEmpty) {
+    if (_questions.asking) {
       final handled = await _clarify(said, now);
       if (handled) return;
+    }
+    // «Запланировать что-нибудь ещё?» — «да» значит «слушаю, что записать».
+    final offered = _planOffered;
+    _planOffered = false;
+    if (offered && SmallTalk.agrees(said)) {
+      _jarvis(JarvisReplies.whatToPlan);
+      return;
+    }
+    final asked = _brainAsked;
+    _brainAsked = false;
+    if (asked && said.trim().split(RegExp(r'\s+')).length <= 4) {
+      await _askBrain(said, now);
+      return;
     }
     final command = const JarvisCommandParser().parse(said, now);
     switch (command) {
@@ -147,10 +176,7 @@ class JarvisController extends StateNotifier<JarvisConversation> {
           _jarvis(JarvisReplies.whatToDo);
           return;
         }
-        _transcript = transcript;
-        for (final task in tasks) {
-          (task.need == null ? _ready : _waiting).add(task);
-        }
+        _questions.add(tasks, transcript: transcript);
         await _continue(now);
       default:
         _apply(await _executor.run(command, mentioned: _mentioned, now: now));
@@ -170,9 +196,12 @@ class JarvisController extends StateNotifier<JarvisConversation> {
     await _askBrainWith(brain, text, now);
   }
 
-  Future<void> _askBrainWith(JarvisBrain brain, String text, DateTime now) async {
+  Future<void> _askBrainWith(
+      JarvisBrain brain, String text, DateTime now) async {
     try {
-      _apply(await brain.ask(text, mentioned: _mentioned, now: now));
+      final outcome = await brain.ask(text, mentioned: _mentioned, now: now);
+      _apply(outcome);
+      _brainAsked = outcome.say.trim().endsWith('?');
     } on GigaChatException catch (failure) {
       final recalled = failure.offline ? _executor.recall(text) : null;
       if (recalled != null) {
@@ -183,69 +212,38 @@ class JarvisController extends StateNotifier<JarvisConversation> {
     }
   }
 
-  /// Ответ на «во сколько?». true — фраза была ответом и обработана.
+  /// Ответ на вопрос о деле. true — фраза была ответом и обработана.
   Future<bool> _clarify(String said, DateTime now) async {
-    final task = _waiting.first;
-    switch (readClarification(said, now, forDate: task.date)) {
-      case ClarificationCancel():
-        _waiting.removeAt(0);
-        if (_waiting.isEmpty && _ready.isEmpty) {
-          _jarvis(JarvisReplies.dropped(task));
-          state = state.copyWith(clearAsking: true);
-        } else {
-          await _continue(now);
-        }
+    final answered = _questions.answer(said, now);
+    switch (answered.result) {
+      case TaskQuestionResult.dropped
+          when !_questions.asking && !_questions.hasReady:
+        _jarvis(JarvisReplies.dropped(answered.task));
+        state = state.copyWith(clearAsking: true);
         return true;
-      case ClarificationAnswer(:final answer):
-        _waiting[0] = _answered(task, answer);
-        if (_waiting.first.need == null || answer.noDate) {
-          _ready.add(_waiting.removeAt(0));
-        }
+      case TaskQuestionResult.dropped:
+      case TaskQuestionResult.answered:
         await _continue(now);
         return true;
-      case ClarificationNewRequest():
-        // Заговорили о другом: начатое записывается как есть — без дня
-        // запиской, без времени на весь день, — а просьба выполняется.
-        for (final waiting in _waiting) {
-          _ready.add(waiting.need == TaskNeed.time
-              ? waiting.copyWith(allDay: true)
-              : waiting.copyWith(date: null));
-        }
-        _waiting.clear();
+      case TaskQuestionResult.newRequest:
         await _continue(now);
         return false;
     }
   }
 
-  ParsedTask _answered(ParsedTask task, TaskAnswer answer) {
-    if (answer.noDate) {
-      // «Не знаю» на вопрос о времени — день остаётся, время не важно.
-      return task.need == TaskNeed.time
-          ? task.copyWith(allDay: true)
-          : task.copyWith(date: null);
-    }
-    var result = task;
-    if (answer.date != null) result = result.copyWith(date: answer.date);
-    if (answer.minutes != null) {
-      result = result.copyWith(minutes: answer.minutes, allDay: false);
-    }
-    if (answer.allDay) result = result.copyWith(minutes: null, allDay: true);
-    return result;
-  }
-
   /// Спросить про следующее дело или записать всё готовое.
   Future<void> _continue(DateTime now) async {
-    if (_waiting.isNotEmpty) {
-      final task = _waiting.first;
-      _jarvis(JarvisReplies.question(task));
-      state = state.copyWith(asking: task);
+    final next = _questions.next;
+    if (next != null) {
+      _jarvis(JarvisReplies.question(next.task, next.need));
+      state = state.copyWith(asking: next.task, askingNeed: next.need);
       return;
     }
     state = state.copyWith(clearAsking: true);
-    if (_ready.isEmpty) return;
-    final tasks = [..._ready];
-    _ready.clear();
-    _apply(await _executor.create(tasks, transcript: _transcript, now: now));
+    final tasks = _questions.takeReady();
+    if (tasks.isEmpty) return;
+    _apply(await _executor.create(tasks,
+        transcript: _questions.transcript, now: now));
   }
 
   Future<void> _runUndo() async {
@@ -261,6 +259,7 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   }
 
   void _apply(JarvisOutcome outcome) {
+    _planOffered = outcome.say.endsWith(JarvisReplies.planMore);
     if (outcome.mentioned != null) _mentioned = outcome.mentioned;
     final id = _jarvis(outcome.say, link: outcome.link);
     if (outcome.undo != null) {

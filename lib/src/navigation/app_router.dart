@@ -144,10 +144,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/memory/new',
         pageBuilder: (context, state) {
-          final rawDate = state.uri.queryParameters['date'];
-          final date = rawDate == null
-              ? DateTime.now()
-              : DateTime.tryParse(rawDate) ?? DateTime.now();
+          final date = dateInLocation(state.uri) ?? DateTime.now();
           final query = state.uri.queryParameters;
           return pageTurnPage(
             context: context,
@@ -183,10 +180,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/calendar/day',
         pageBuilder: (context, state) {
-          final rawDate = state.uri.queryParameters['date'];
-          final date = rawDate == null
-              ? DateTime.now()
-              : DateTime.tryParse(rawDate) ?? DateTime.now();
+          final date = dateInLocation(state.uri) ?? DateTime.now();
           return pageTurnPage(
             context: context,
             state: state,
@@ -200,10 +194,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/calendar/holidays',
         pageBuilder: (context, state) {
-          final rawDate = state.uri.queryParameters['date'];
-          final date = rawDate == null
-              ? DateTime.now()
-              : DateTime.tryParse(rawDate) ?? DateTime.now();
+          final date = dateInLocation(state.uri) ?? DateTime.now();
           return pageTurnPage(
             context: context,
             state: state,
@@ -253,4 +244,3 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-

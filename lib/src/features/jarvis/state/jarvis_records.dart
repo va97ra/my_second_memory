@@ -32,11 +32,14 @@ class JarvisRecords {
   }) async {
     final created = <MemoryItem>[];
     final repeats = <String, RecurrenceFrequency>{};
+    final lengths = <String, int>{};
     final seriesIds = <String>[];
     for (final (index, task) in tasks.indexed) {
       final item = _itemFor(task, transcript: transcript, now: now, index: index);
       await _items.add(item);
       created.add(item);
+      final length = task.durationMinutes;
+      if (length != null && item.timeMinutes != null) lengths[item.id] = length;
       final frequency = _frequencyOf(task.repeat);
       if (frequency != null && !item.isUndated) {
         final series = await _series.setFrequency(item, frequency);
@@ -46,7 +49,8 @@ class JarvisRecords {
     }
     final last = created.last;
     return JarvisOutcome(
-      JarvisReplies.created(created, now, repeats: repeats),
+      JarvisReplies.created(created, now,
+          repeats: repeats, lengths: lengths),
       link: last.isUndated
           ? const OpenPlace(JarvisPlace.notes)
           : OpenPlace(JarvisPlace.day, date: last.memoryDate),
@@ -186,9 +190,15 @@ class JarvisRecords {
       id: '${now.microsecondsSinceEpoch}$suffix',
       type: MemoryType.note,
       title: memoryTitleFromRecord(task.title, MemoryType.note, 'ru'),
-      body: task.title,
+      // Карточка дела: куда, что сделать, срочность — строками таблицы. По
+      // строке «Куда» Джарвис потом прокладывает путь.
+      body: taskCard(task),
+      priority: task.urgent ? 1 : 0,
       memoryDate: DateTime(day.year, day.month, day.day),
       timeMinutes: date == null ? null : task.minutes,
+      endMinutes: date == null || task.minutes == null
+          ? null
+          : _endOf(task.minutes!, task.durationMinutes),
       remindAt: date == null ? null : defaultReminderAt(date, task.minutes, now: now),
       createdAt: now,
       updatedAt: now,
@@ -196,6 +206,15 @@ class JarvisRecords {
       isUndated: date == null,
     );
   }
+
+  /// Конец дела по его длительности — в пределах того же дня.
+  static int _endOf(int start, int? length) =>
+      (start + (length ?? _defaultLength)).clamp(start, 24 * 60 - 1);
+
+  /// Длительность дела, если её не назвали. Без конца табличка на шкале дня
+  /// была наименьшей, в четверть часа, — узкой (отзыв владельца 11 октября
+  /// 2026): полчаса.
+  static const _defaultLength = 30;
 
   static RecurrenceFrequency? _frequencyOf(PhraseRepeat? repeat) =>
       switch (repeat?.kind) {

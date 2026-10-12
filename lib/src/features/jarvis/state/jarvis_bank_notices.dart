@@ -16,10 +16,14 @@ final jarvisBankNoticesProvider = boolSettingProvider(
   initial: false,
 );
 
-/// Есть ли у приложения доступ к уведомлениям телефона.
-final jarvisBankAccessProvider = FutureProvider.autoDispose<bool>(
-  (ref) => ref.watch(jarvisBankWatcherProvider).accessGranted(),
-);
+/// Есть ли у приложения доступ к уведомлениям телефона. Перепроверяется,
+/// когда человек возвращается в приложение: доступ дают в настройках
+/// телефона, и узнать о нём раньше нельзя.
+final jarvisBankAccessProvider = FutureProvider.autoDispose<bool>((ref) {
+  final resumed = AppLifecycleListener(onResume: ref.invalidateSelf);
+  ref.onDispose(resumed.dispose);
+  return ref.watch(jarvisBankWatcherProvider).accessGranted();
+});
 
 /// Джарвис читает уведомления банков, пока приложение живо: при запуске, при
 /// возвращении на экран и сразу, как пришло новое.

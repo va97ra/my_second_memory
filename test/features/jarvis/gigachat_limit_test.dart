@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:ez_core/ez_core.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/gigachat_limit.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -81,5 +83,13 @@ void main() {
     await later.spent(100);
     await later.spent(20);
     expect(later.state.spentThisMonth, 120);
+  });
+
+  test('остаток — точным числом: видно, как он тает после ответа', () {
+    final strings = AppStrings(const Locale('ru'));
+    expect(strings.gigaChatLeft(249987432),
+        'GigaChat: осталось 249\u00A0987\u00A0432 токена');
+    expect(strings.gigaChatLeft(250000000, spentThisMonth: 12568),
+        'GigaChat: осталось 250\u00A0000\u00A0000 токенов · за месяц 12\u00A0568');
   });
 }

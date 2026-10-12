@@ -57,8 +57,8 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
           // где высоты вдвое больше ширины: пять рядов растягивались на всю
           // высоту, а клавиши превращались в вертикальные плашки.
           final keyboardHeight = constraints.maxHeight - _chromeHeight;
-          final wideScientific = state.scientific &&
-              constraints.maxWidth - 24 > keyboardHeight;
+          final wideScientific =
+              state.scientific && constraints.maxWidth - 24 > keyboardHeight;
           // Потолок ширины держит клавиатуру осмысленной на десктопе, но не
           // должен обрезать её на телефоне: 360 совпадали ровно с узким
           // экраном, и всё, что шире, получало поля по бокам. 480 перекрывают
@@ -116,6 +116,7 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                             : standardCalculatorLayout,
                         selectedKeys: _selectedKeys(state),
                         labels: _keyLabels(state, strings),
+                        litKey: ref.watch(calculatorLitKeyProvider),
                         onKey: (key) => _input.handle(key, state),
                       ),
                     ),
@@ -186,4 +187,5 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
 
 /// Высота всего, что стоит над клавиатурой: полоса режима, табло, ряд памяти
 /// и зазоры между ними вместе с полями колонки.
-const double _chromeHeight = 2 + calculatorModeBarHeight + 2 + 100 + 2 + 48 + 2 + 2;
+const double _chromeHeight =
+    2 + calculatorModeBarHeight + 2 + 100 + 2 + 48 + 2 + 2;

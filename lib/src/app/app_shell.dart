@@ -10,6 +10,7 @@ import '../navigation/active_panel.dart';
 import '../navigation/app_destination.dart';
 import '../navigation/app_destinations.dart';
 import '../navigation/app_router.dart';
+import '../navigation/jarvis_locations.dart';
 import '../navigation/shell_navigation.dart';
 import '../navigation/tool_destinations.dart';
 import 'page_media.dart';
@@ -53,6 +54,9 @@ class _AppShellState extends ConsumerState<AppShell> {
   void initState() {
     super.initState();
     _router.routerDelegate.addListener(_locationChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _markPage();
+    });
   }
 
   @override
@@ -71,12 +75,19 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (SchedulerBinding.instance.schedulerPhase ==
         SchedulerPhase.persistentCallbacks) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _location = _currentLocation);
+        if (!mounted) return;
+        setState(() => _location = _currentLocation);
+        _markPage();
       });
       return;
     }
     setState(() => _location = _currentLocation);
+    _markPage();
   }
+
+  /// Джарвис знает, где человек: «что здесь» и видно ли калькулятор.
+  void _markPage() =>
+      ref.read(jarvisPageProvider.notifier).state = placeOnScreen(_location);
 
   @override
   Widget build(BuildContext context) {

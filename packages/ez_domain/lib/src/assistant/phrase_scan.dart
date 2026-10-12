@@ -35,6 +35,17 @@ class PhraseScan {
   /// Есть ли совпадение с [pattern]; если есть — вынимается.
   bool takes(RegExp pattern) => take(pattern).isNotEmpty;
 
+  /// Вынуть одно найденное совпадение — когда из нескольких подходит не
+  /// каждое.
+  void takeMatch(RegExpMatch match) {
+    final chars = work.split('');
+    for (var i = match.start; i < match.end; i++) {
+      chars[i] = ' ';
+      _removed[i] = true;
+    }
+    work = chars.join();
+  }
+
   /// Исходный текст без вынутых кусков.
   String remainder() {
     final buffer = StringBuffer();

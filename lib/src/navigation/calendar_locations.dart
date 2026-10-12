@@ -11,6 +11,13 @@ String calendarDayLocation(DateTime date) =>
 String holidaysLocation(DateTime date) =>
     '/calendar/holidays?date=${_dateParameter(date)}';
 
+/// День из адреса, записанный [calendarDayLocation]; null — дня в адресе
+/// нет или он нечитаем.
+DateTime? dateInLocation(Uri location) {
+  final raw = location.queryParameters['date'];
+  return raw == null ? null : DateTime.tryParse(raw);
+}
+
 String _dateParameter(DateTime date) {
   final month = date.month.toString().padLeft(2, '0');
   final day = date.day.toString().padLeft(2, '0');

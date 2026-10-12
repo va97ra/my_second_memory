@@ -7,7 +7,8 @@ void main() {
   // Среда, 7 октября 2026, 14:00.
   final now = DateTime(2026, 10, 7, 14);
 
-  MemoryItem item(String title, {int? minutes, DateTime? date, bool done = false}) {
+  MemoryItem item(String title,
+      {int? minutes, DateTime? date, bool done = false}) {
     final day = date ?? DateTime(2026, 10, 8);
     return MemoryItem(
       id: title,
@@ -71,8 +72,10 @@ void main() {
         label: 'сегодня',
       );
       expect(text, startsWith('На сегодня 3 дела. Ближайшее — в 4 часа дня'));
-      expect(text, endsWith('Уже прошло, но не отмечено: в 10 часов утра — '
-          'планёрка.'));
+      expect(
+          text,
+          endsWith('Уже прошло, но не отмечено: в 10 часов утра — '
+              'планёрка.'));
     });
 
     test('одно дело и пустой день', () {
@@ -83,9 +86,42 @@ void main() {
       );
       expect(
         AgendaSpeech.day(const [],
-            day: DateTime(2026, 10, 8), now: now, label: 'в пятницу',
+            day: DateTime(2026, 10, 8),
+            now: now,
+            label: 'в пятницу',
             address: 'сэр'),
         'Сэр, в пятницу дел нет.',
+      );
+    });
+
+    test('день рождения — отдельно от дел', () {
+      expect(
+        AgendaSpeech.day(
+          [item('Врач', minutes: 600), item('День рождения мамы')],
+          day: DateTime(2026, 10, 8),
+          now: now,
+          label: 'завтра',
+        ),
+        'На завтра одно дело: в 10 часов утра — врач. '
+        'Ещё в этот день: день рождения мамы.',
+      );
+      expect(
+        AgendaSpeech.day([item('День рождения мамы')],
+            day: DateTime(2026, 10, 8), now: now, label: 'завтра'),
+        'На завтра дел нет. Ещё в этот день: день рождения мамы.',
+      );
+    });
+
+    test('несколько дней — по дням, а не одной кучей', () {
+      expect(
+        AgendaSpeech.range([
+          item('Уборка', date: DateTime(2026, 10, 11)),
+          item('Дача', minutes: 600, date: DateTime(2026, 10, 10)),
+          item('Гости', minutes: 15 * 60, date: DateTime(2026, 10, 10)),
+        ], now: now, label: 'На выходных'),
+        'На выходных 3 дела. '
+        '10 октября: в 10 часов утра — дача, в 3 часа дня — гости. '
+        '11 октября: уборка.',
       );
     });
   });
@@ -141,5 +177,28 @@ void main() {
         text,
         contains('Эта неделя — с понедельника 5 октября по воскресенье '
             '11 октября'));
+  });
+
+  test('подробный рассказ нейросети читается целиком', () {
+    // Решение 11 октября 2026: рассказ и новости — до семи-восьми
+    // предложений. По-русски это больше 700 знаков, на которых ответ
+    // раньше обрывался.
+    final story = List.filled(
+            8,
+            'Сэр, это одно из восьми длинных предложений подробного '
+            'рассказа о сегодняшних новостях и погоде в Казани.')
+        .join(' ');
+    expect(story.length, greaterThan(700));
+    expect(cleanBrainReply(story), story);
+  });
+
+  test('ответ, оборванный лимитом токенов, кончается целым предложением', () {
+    expect(
+        cleanBrainReply(
+            'Сэр, курс вырос на 2.5 рубля. Аналитики ждут, что к пятнице он',
+            cut: true),
+        'Сэр, курс вырос на 2.5 рубля.');
+    expect(cleanBrainReply('Сэр, аналитики ждут, что к пятнице', cut: true),
+        'Сэр, аналитики ждут, что к пятнице…');
   });
 }

@@ -22,7 +22,7 @@ class MemorySearch {
     if (_words.isEmpty) return true;
     // Перевод строки между заголовком и текстом не даёт слову склеиться из
     // конца одного и начала другого.
-    final text = _normalize('${item.title}\n${item.body}');
+    final text = _normalize('${item.title}\n${item.plainBody}');
     return _words.every(text.contains);
   }
 

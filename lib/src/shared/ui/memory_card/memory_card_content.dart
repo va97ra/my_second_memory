@@ -2,6 +2,7 @@ import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
+import '../styled_text_span.dart';
 import 'memory_item_presentation.dart';
 import '../media/voice_note_player.dart';
 import 'memory_card_attachment_icons.dart';
@@ -22,7 +23,11 @@ class MemoryCardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = item.title.trim().isNotEmpty ? item.title.trim() : item.body;
+    // Название — начало текста, и оформление у него то же; без названия
+    // карточка показывает сам текст.
+    final text = item.title.trim().isNotEmpty
+        ? styledMemoryTitle(item)
+        : StyledText.parse(item.body);
     final voiceNote =
         item.voiceNotes.isEmpty ? null : item.voiceNotes.first;
     final hasAudio = voiceNote != null;
@@ -50,13 +55,12 @@ class MemoryCardContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (text.isNotEmpty)
-                    Text(
-                      text,
+                  if (text.plain.isNotEmpty)
+                    Text.rich(
+                      styledTextSpan(text, contentStyle),
                       maxLines:
                           hasAudio ? (compact ? 1 : 2) : (compact ? 4 : 5),
                       overflow: TextOverflow.ellipsis,
-                      style: contentStyle,
                     ),
                   if (item.type == MemoryType.payment &&
                       item.amountMinor != null) ...[

@@ -5,9 +5,14 @@ import 'package:flutter_tts/flutter_tts.dart';
 /// Голос Джарвиса: синтез речи, установленный в телефоне, без сети. Каким
 /// голосом говорить — [JarvisTone].
 class JarvisVoice {
-  JarvisVoice([FlutterTts? tts]) : _tts = tts ?? FlutterTts();
+  JarvisVoice([FlutterTts? tts]) : _given = tts;
 
-  final FlutterTts _tts;
+  final FlutterTts? _given;
+
+  /// Синтез речи подключается к первой реплике, а не при запуске: связь с
+  /// движком речи занимала основной поток на полсекунды с лишним, пока
+  /// приложение открывалось.
+  late final FlutterTts _tts = _given ?? FlutterTts();
   Future<void>? _ready;
 
   var _speaking = 0;
@@ -28,7 +33,11 @@ class JarvisVoice {
     }
   }
 
-  Future<void> stop() => _tts.stop();
+  Future<void> stop() async {
+    // Ни разу не говорил — и останавливать нечего: не будить движок речи.
+    if (_ready == null) return;
+    await _tts.stop();
+  }
 
   Future<void> _prepare() async {
     await _tts.setLanguage('ru-RU');

@@ -6,7 +6,7 @@ import 'currency_phrases.dart';
 import 'history_phrases.dart' show monthsPrepositional;
 import 'russian_words.dart';
 import 'spoken_moments.dart';
-import 'task_phrase.dart' show isAnniversary;
+import 'repeat_phrases.dart' show isAnniversary;
 
 /// Что Джарвис замечает сам и добавляет к сводке, как дворецкий, который
 /// смотрит в календарь за хозяина: смена, неотмеченное вчера, два дела на

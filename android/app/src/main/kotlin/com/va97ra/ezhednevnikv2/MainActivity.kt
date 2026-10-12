@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.OpenableColumns
 import android.provider.MediaStore
+import android.view.WindowManager
 import androidx.activity.result.contract.ActivityResultContracts
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -17,14 +18,17 @@ import java.time.ZoneId
 
 class MainActivity : FlutterFragmentActivity() {
     private var pendingSoundResult: MethodChannel.Result? = null
-    private var pendingContacts: ((Boolean) -> Unit)? = null
+    private var pendingPermission: ((Boolean) -> Unit)? = null
 
-    /** Разрешение на контакты спрашивает Джарвис — когда просят позвонить. */
-    private val contactsPermission = registerForActivityResult(
+    /**
+     * Разрешения спрашивает Джарвис, когда просят позвонить: контакты — найти
+     * человека, звонки — набрать его самому.
+     */
+    private val permission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        pendingContacts?.invoke(granted)
-        pendingContacts = null
+        pendingPermission?.invoke(granted)
+        pendingPermission = null
     }
 
     private val audioFilePicker = registerForActivityResult(
@@ -91,12 +95,31 @@ class MainActivity : FlutterFragmentActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         SpokenReminders.register(this, flutterEngine.dartExecutor.binaryMessenger)
-        PhoneActions(this) { answer ->
-            pendingContacts?.invoke(false)
-            pendingContacts = answer
-            contactsPermission.launch(android.Manifest.permission.READ_CONTACTS)
+        PhoneActions(this) { name, answer ->
+            pendingPermission?.invoke(false)
+            pendingPermission = answer
+            permission.launch(name)
         }.register(flutterEngine.dartExecutor.binaryMessenger)
         BankNotices.register(this, flutterEngine.dartExecutor.binaryMessenger)
+        SystemSpeech.register(this, flutterEngine.dartExecutor.binaryMessenger)
+
+        // Пока открыт лист Джарвиса, экран не гаснет: на погасшем Android не
+        // даёт микрофон, и разговор обрывался (jarvis_keep_awake.dart).
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "ezhednevnik_v2/screen"
+        ).setMethodCallHandler { call, result ->
+            if (call.method != "keepOn") {
+                result.notImplemented()
+                return@setMethodCallHandler
+            }
+            if (call.arguments == true) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+            result.success(null)
+        }
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,

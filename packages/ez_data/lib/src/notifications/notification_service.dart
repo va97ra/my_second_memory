@@ -300,7 +300,7 @@ class NotificationService
         ).toIso8601String(),
       'notificationId': stableNotificationId(item.id),
     });
-    final body = item.body.trim();
+    final body = item.plainBody.trim();
 
     await _plugin.zonedSchedule(
       stableNotificationId(item.id),

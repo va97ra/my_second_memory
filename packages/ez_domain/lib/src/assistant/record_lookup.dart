@@ -38,6 +38,6 @@ List<MemoryItem> findRecordsByWords(
 }
 
 bool _matches(MemoryItem item, List<String> stems) {
-  final text = normalizePhrase('${item.title}\n${item.body}');
+  final text = normalizePhrase('${item.title}\n${item.plainBody}');
   return stems.every(text.contains);
 }

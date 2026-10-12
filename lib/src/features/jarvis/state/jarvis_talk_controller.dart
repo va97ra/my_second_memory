@@ -8,15 +8,25 @@ import 'jarvis_controller.dart';
 import 'jarvis_listener.dart';
 import 'jarvis_message.dart';
 import 'jarvis_voice.dart';
-import 'jarvis_wake_controller.dart';
 
 /// Голосовой разговор: что слышно прямо сейчас.
 @immutable
 class JarvisTalk {
-  const JarvisTalk({this.listening = false, this.heard = '', this.problem});
+  const JarvisTalk({
+    this.listening = false,
+    this.speaking = false,
+    this.heard = '',
+    this.problem,
+  });
 
   /// Микрофон включён.
   final bool listening;
+
+  /// Джарвис говорит вслух.
+  final bool speaking;
+
+  /// Слушает или говорит: разговор идёт.
+  bool get busy => listening || speaking;
 
   /// Что распознано по ходу речи.
   final String heard;
@@ -32,60 +42,71 @@ final jarvisTalkProvider =
     voice: ref.watch(jarvisVoiceProvider),
     jarvis: ref.watch(jarvisControllerProvider.notifier),
     conversation: () => ref.read(jarvisControllerProvider),
-    onAnswered: () =>
-        ref.read(jarvisWakeProvider.notifier).continueConversation(),
   );
 });
 
 /// Сказанное — Джарвису, его ответ — вслух.
 ///
-/// Если Джарвис в ответ сам спросил («во сколько?»), микрофон включается
-/// снова, как только он договорит: отвечать голосом, не нажимая кнопку, —
-/// так разговаривают, а не заполняют форму.
+/// Договорив, Джарвис слушает дальше: спросил сам («во сколько?») — ждёт
+/// ответа, ответил — ещё [conversationWindow] ждёт продолжения без имени.
+/// Так разговаривают, а не заполняют форму. Пока микрофон слушает, лист
+/// показывает это строкой «Слушаю»; промолчали — строка тихо исчезает, и
+/// дальше Джарвис ждёт только имя.
+///
+/// «Спасибо», «хватит» разговор заканчивают.
 class JarvisTalkController extends StateNotifier<JarvisTalk> {
   JarvisTalkController({
     required JarvisListener? listener,
     required JarvisVoice voice,
     required JarvisController jarvis,
     required JarvisConversation Function() conversation,
-    void Function()? onAnswered,
+    this.conversationWindow = const Duration(seconds: 12),
+    this.thinkingPause = const Duration(seconds: 3),
   })  : _listener = listener,
         _voice = voice,
         _jarvis = jarvis,
         _conversation = conversation,
-        _onAnswered = onAnswered ?? _nothing,
         super(const JarvisTalk());
-
-  static void _nothing() {}
 
   final JarvisListener? _listener;
   final JarvisVoice _voice;
   final JarvisController _jarvis;
   final JarvisConversation Function() _conversation;
 
-  /// Ответ прозвучал — можно продолжать без имени.
-  final void Function() _onAnswered;
+  /// Сколько после ответа ждать продолжения без имени.
+  final Duration conversationWindow;
+
+  /// Сколько ответ может думать молча; дольше — «Секунду, сэр».
+  final Duration thinkingPause;
 
   /// Слушать можно только там, где есть распознавание на устройстве.
   bool get canListen => _listener != null;
 
-  Future<void> listen() async {
+  /// Слушать просьбу. [continuation] — продолжение разговора после ответа:
+  /// ждём дольше, а промолчали — не ошибка.
+  Future<void> listen({bool continuation = false}) async {
     final listener = _listener;
     if (listener == null || state.listening) return;
     await _voice.stop();
     state = const JarvisTalk(listening: true);
     final String said;
     try {
-      said = await listener.listen(onPartial: (text) {
-        if (mounted) state = JarvisTalk(listening: true, heard: text);
-      });
+      said = await listener.listen(
+        onPartial: (text) {
+          if (mounted) state = JarvisTalk(listening: true, heard: text);
+        },
+        patience: continuation ? conversationWindow : null,
+      );
     } on JarvisListenerFailure catch (failure) {
       if (mounted) state = JarvisTalk(problem: failure.message);
       return;
     }
     if (!mounted) return;
     if (said.isEmpty) {
-      state = const JarvisTalk(problem: 'Не расслышал. Нажмите и скажите ещё раз.');
+      state = continuation
+          ? const JarvisTalk()
+          : const JarvisTalk(
+              problem: 'Не расслышал. Нажмите и скажите ещё раз.');
       return;
     }
     state = const JarvisTalk();
@@ -96,7 +117,7 @@ class JarvisTalkController extends StateNotifier<JarvisTalk> {
   /// просьбу; имя с просьбой — сразу ответить на неё.
   Future<void> respond(String command) async {
     if (command.isEmpty) {
-      await _voice.speak('Слушаю, $jarvisAddress.');
+      await _say('Слушаю, $jarvisAddress.');
       if (mounted) await listen();
       return;
     }
@@ -116,18 +137,40 @@ class JarvisTalkController extends StateNotifier<JarvisTalk> {
     // По номерам, а не по длине списка: старые реплики разговор отбрасывает,
     // и длина у полного списка не растёт.
     final lastId = _conversation().messages.lastOrNull?.id ?? -1;
+    // Нейросеть думает дольше обычного — сказать, что думает: тишина в
+    // десятки секунд выглядит поломкой (решение владельца 12 октября 2026).
+    Future<void>? thinking;
+    final pause = Timer(thinkingPause, () {
+      if (mounted) thinking = _say('Секунду, $jarvisAddress.');
+    });
     await _jarvis.send(said);
+    pause.cancel();
+    // Ответ ждёт конца этой фразы: голос обрывает начатую.
+    await thinking;
     final answer = [
       for (final message in _conversation().messages)
         if (message.id > lastId && message.fromJarvis) message.text,
     ].join(' ');
     if (answer.isEmpty || !mounted) return;
-    await _voice.speak(answer);
+    await _say(answer);
     if (!mounted) return;
     if (_conversation().asking != null) {
       await listen();
     } else if (!WakeWord.endsConversation(said)) {
-      _onAnswered();
+      await listen(continuation: true);
+    }
+  }
+
+  /// Говорит вслух — значок Джарвиса это показывает и не исчезает посреди
+  /// фразы.
+  Future<void> _say(String text) async {
+    if (mounted) state = JarvisTalk(speaking: true, problem: state.problem);
+    try {
+      await _voice.speak(text);
+    } finally {
+      if (mounted && state.speaking) {
+        state = JarvisTalk(problem: state.problem);
+      }
     }
   }
 

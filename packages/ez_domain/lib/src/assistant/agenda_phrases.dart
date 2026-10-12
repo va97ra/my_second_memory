@@ -2,6 +2,7 @@ import '../recurrence/recurrence_dates.dart';
 import 'date_phrases.dart';
 import 'jarvis_command.dart';
 import 'history_phrases.dart' show asksImportant;
+import 'russian_numbers.dart';
 import 'russian_words.dart';
 import 'spoken_moments.dart';
 import 'task_phrase.dart';
@@ -39,7 +40,12 @@ JarvisCommand? agendaCommand(String work, DateTime now) {
       important: asksImportant(work),
     );
   }
-  final day = const TaskPhraseParser().parseAnswer(work, now).date ?? today;
+  final asked = const TaskPhraseParser().parseAnswer(work, now).date;
+  // День назван, но не разобран — не отвечать за сегодня: «на 12 число»
+  // однажды получило «сегодня дел нет». Пусть разберётся нейросеть, она
+  // видит календарь.
+  if (asked == null && _namesDay.hasMatch(work)) return null;
+  final day = asked ?? today;
   return AskAgenda(
     from: day,
     to: day,
@@ -73,6 +79,10 @@ final _notSchedule = phrasePattern('$wordStart(?:перенеси|перенес
     '|смен[а-я]*|праздник[а-я]*)$wordEnd');
 
 final _undated = phrasePattern('без\\s+(?:даты|дня|срока)');
+
+/// В вопросе есть число или месяц — значит, спрашивают о каком-то дне.
+final _namesDay = phrasePattern('\\d|$wordStartчисл[а-я]*$wordEnd'
+    '|$wordStart(?:$monthsGenitivePattern)$wordEnd');
 final _nextWeek = phrasePattern('следующ[а-я]*\\s+недел');
 final _week = phrasePattern('недел');
 final _weekend = phrasePattern('выходн');

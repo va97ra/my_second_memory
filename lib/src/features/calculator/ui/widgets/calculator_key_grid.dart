@@ -10,12 +10,17 @@ import 'calculator_key.dart';
 /// высоту лучше отдать полям, чем строке цифр.
 const double _maxKeyAspect = 1.25;
 
+/// Промежуток между клавишами — один по вертикали и горизонтали: сетка, а
+/// не полосы. Ряды стояли почти вплотную (2 точки), и клавиши сливались.
+const double _gap = 8;
+
 class CalculatorKeyGrid extends StatelessWidget {
   const CalculatorKeyGrid({
     required this.layout,
     required this.onKey,
     this.selectedKeys = const {},
     this.labels = const {},
+    this.litKey,
     super.key,
   });
 
@@ -24,6 +29,9 @@ class CalculatorKeyGrid extends StatelessWidget {
   final Set<String> selectedKeys;
   final Map<String, String> labels;
 
+  /// Клавиша, которую сейчас нажимает Джарвис.
+  final String? litKey;
+
   int get columns => layout.columns;
 
   @override
@@ -31,11 +39,13 @@ class CalculatorKeyGrid extends StatelessWidget {
     final rowCount = layout.keys.length ~/ columns;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final keyWidth = (constraints.maxWidth - 8 * (columns - 1)) / columns;
-        final rowHeight = (constraints.maxHeight - 2 * (rowCount - 1)) / rowCount;
+        final keyWidth =
+            (constraints.maxWidth - _gap * (columns - 1)) / columns;
+        final rowHeight =
+            (constraints.maxHeight - _gap * (rowCount - 1)) / rowCount;
         final height = rowHeight <= keyWidth * _maxKeyAspect
             ? constraints.maxHeight
-            : keyWidth * _maxKeyAspect * rowCount + 2 * (rowCount - 1);
+            : keyWidth * _maxKeyAspect * rowCount + _gap * (rowCount - 1);
         return Center(
           child: SizedBox(
             height: height,
@@ -46,7 +56,7 @@ class CalculatorKeyGrid extends StatelessWidget {
                     child: Row(
                       children: [
                         for (var column = 0; column < columns; column++) ...[
-                          if (column > 0) const SizedBox(width: 8),
+                          if (column > 0) const SizedBox(width: _gap),
                           Expanded(
                             child: _key(layout.keys[row * columns + column]),
                           ),
@@ -54,7 +64,7 @@ class CalculatorKeyGrid extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (row < rowCount - 1) const SizedBox(height: 2),
+                  if (row < rowCount - 1) const SizedBox(height: _gap),
                 ],
               ],
             ),
@@ -68,6 +78,7 @@ class CalculatorKeyGrid extends StatelessWidget {
         label: labels[keyValue] ?? _label(keyValue),
         icon: keyValue == 'backspace' ? Icons.backspace_outlined : null,
         selected: selectedKeys.contains(keyValue),
+        lit: keyValue == litKey,
         role: calculatorKeyRole(keyValue),
         onPressed: () => onKey(keyValue),
       );

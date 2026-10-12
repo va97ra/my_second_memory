@@ -1,6 +1,9 @@
 import '../finance/finance_entry.dart';
 import '../tools/unit_converter.dart';
+import 'jarvis_place.dart';
 import 'task_phrase.dart';
+
+export 'jarvis_place.dart';
 
 /// Что Джарвис понял из фразы — одно действие или вопрос.
 ///
@@ -18,30 +21,22 @@ final class JarvisSay extends JarvisCommand {
   final String text;
 }
 
-/// Страницы, которые Джарвис открывает.
-enum JarvisPlace {
-  calendar,
-  day,
-  holidays,
-  feed,
-  notes,
-  archive,
-  accounts,
-  calculator,
-  finance,
-  converter,
-  shifts,
-  productionCalendar,
-  settings,
-  backup,
-  sync,
-}
-
 /// Открыть страницу; [date] — для дня, праздников и месяца календаря.
 final class OpenPlace extends JarvisCommand {
   const OpenPlace(this.place, {this.date});
 
   final JarvisPlace place;
+  final DateTime? date;
+}
+
+/// «Посмотри на календарь», «что в финансах», «что здесь» — посмотреть на
+/// страницу и рассказать, что на ней. [place] пуст — та, что на экране.
+final class LookAtPage extends JarvisCommand {
+  const LookAtPage({this.place, this.date});
+
+  final JarvisPlace? place;
+
+  /// День для календаря и праздников: «посмотри календарь на пятницу».
   final DateTime? date;
 }
 
@@ -149,10 +144,45 @@ final class AskBrain extends JarvisCommand {
 
 /// Посчитать выражение калькулятором.
 final class Calculate extends JarvisCommand {
-  const Calculate(this.expression);
+  const Calculate(this.expression, {this.show = false});
 
   /// Выражение языком калькулятора: «25*4», «sqrt(16)».
   final String expression;
+
+  /// «Посчитай на калькуляторе» — открыть его, а не только сказать ответ.
+  final bool show;
+}
+
+/// Что сделать калькулятором Ежедневника.
+enum CalculatorMove {
+  /// Продолжить от того, что на калькуляторе: «прибавь 10».
+  chain,
+
+  /// «Сколько получилось».
+  result,
+  clear,
+  memorySave,
+  memoryAdd,
+  memorySubtract,
+  memoryRecall,
+  memoryClear,
+  memoryRead,
+  scientific,
+  basic,
+  degrees,
+  radians,
+}
+
+/// «Прибавь 10», «сохрани в память», «очисти калькулятор» — действие
+/// калькулятором, который на странице.
+final class CalculatorCommand extends JarvisCommand {
+  const CalculatorCommand(this.move, {this.tail = ''});
+
+  final CalculatorMove move;
+
+  /// Для [CalculatorMove.chain] — что сделать с тем, что на калькуляторе,
+  /// языком калькулятора: «+10», «*3», «^2»; «sqrt» — корень из него.
+  final String tail;
 }
 
 /// Перевести величину: «сколько сантиметров в 3 дюймах».
@@ -272,8 +302,9 @@ final class UndoLast extends JarvisCommand {
   const UndoLast();
 }
 
-/// Команды телефону. Ничего не уходит само: звонок открывает набор номера,
-/// сообщение — чат с готовым текстом, нажимает человек.
+/// Команды телефону. Звонок Джарвис набирает сам, если хозяин разрешил
+/// звонки, иначе открывает набор; сообщение — чат с готовым текстом,
+/// «Отправить» нажимает человек.
 sealed class PhoneCommand extends JarvisCommand {
   const PhoneCommand();
 }
@@ -300,11 +331,16 @@ final class PhoneTimer extends PhoneCommand {
   final int seconds;
 }
 
-/// «Позвони маме», «набери 8 916 123-45-67».
+/// «Позвони маме», «набери 8 916 123-45-67», «позвони Андрею и скажи, что
+/// опоздаю».
 final class PhoneCall extends PhoneCommand {
-  const PhoneCall(this.who);
+  const PhoneCall(this.who, {this.say});
 
   final String who;
+
+  /// Что передать; сказать это в разговоре Android приложению не даёт —
+  /// Джарвис напоминает хозяину.
+  final String? say;
 }
 
 /// Чем отправить сообщение.
@@ -395,4 +431,12 @@ final class AskFinanceHistory extends JarvisCommand {
 
   /// «Когда пришла зарплата» — нужны даты, а не сумма за период.
   final bool asksWhen;
+}
+
+/// «Как доехать до врача», «проложи маршрут на Ленина 5» — маршрут в картах
+/// телефона. [to] пуст — к делу, о котором только что говорили.
+final class RouteTo extends JarvisCommand {
+  const RouteTo(this.to);
+
+  final String to;
 }

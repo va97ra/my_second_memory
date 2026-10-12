@@ -28,7 +28,8 @@ import '../../support/widget_test_harness.dart';
 const _key = 'Y2xpZW50LWlkOmNsaWVudC1zZWNyZXQ=';
 
 /// Подставной GigaChat: выдаёт токен и заготовленные ответы модели по
-/// очереди, запоминая, что ему прислали.
+/// очереди, запоминая, что ему прислали. `finish_reason` заготовки уходит
+/// туда, где его кладёт Сбер, — рядом с сообщением, а не внутрь него.
 class _FakeGigaChat {
   final replies = <Map<String, dynamic>>[];
   final requests = <Map<String, dynamic>>[];
@@ -47,10 +48,12 @@ class _FakeGigaChat {
           200);
     }
     requests.add(jsonDecode(request.body) as Map<String, dynamic>);
+    final reply = Map<String, dynamic>.of(replies.removeAt(0));
+    final finish = reply.remove('finish_reason');
     return http.Response.bytes(
       utf8.encode(jsonEncode({
         'choices': [
-          {'message': replies.removeAt(0)},
+          {'message': reply, if (finish != null) 'finish_reason': finish},
         ],
       })),
       200,
@@ -388,6 +391,42 @@ void main() {
     final finance = jsonDecode(answer['content'] as String) as Map;
     expect((finance['entries'] as List).single['category'], 'Зарплата');
     expect((finance['totals'] as Map)['доходы RUB'], '45000.00');
+  });
+
+  test('исчерпав обращения к данным, нейросеть всё равно отвечает словами',
+      () async {
+    // Полгода инструкция велит смотреть по шесть недель — это уже пять
+    // обращений. Шестое съедало ответ: текста у нейросети больше не
+    // просили, и Джарвис молчал.
+    final c = await start();
+    for (var call = 0; call < 6; call++) {
+      server.replies.add({
+        'role': 'assistant',
+        'content': '',
+        'function_call': {
+          'name': 'list_days',
+          'arguments': {'from': '2099-04-01', 'to': '2099-05-12'},
+        },
+        'functions_state_id': 'state-$call',
+      });
+    }
+    server.replies
+        .add({'role': 'assistant', 'content': 'За полгода всё сделано, сэр.'});
+    expect(
+        await say(c, 'почему небо голубое?'), 'За полгода всё сделано, сэр.');
+    expect([for (final request in server.requests) request['function_call']],
+        [...List.filled(6, 'auto'), 'none']);
+  });
+
+  test('ответ, оборванный лимитом токенов, не читается на полуслове', () async {
+    final c = await start();
+    server.replies.add({
+      'role': 'assistant',
+      'content': 'Сэр, новостей сегодня много. Главная из них — то, что',
+      'finish_reason': 'length',
+    });
+    expect(
+        await say(c, 'почему небо голубое?'), 'Сэр, новостей сегодня много.');
   });
 }
 

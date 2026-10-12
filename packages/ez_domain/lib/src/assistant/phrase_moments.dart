@@ -14,6 +14,9 @@ MomentHits collectMoments(PhraseScan scan, DateTime now) {
   collectRepeat(scan, hits);
   collectRelativeTime(scan, hits);
   collectDates(scan, hits, now);
+  // Длительность раньше времени: «с 12 до 13» — не два времени, а начало и
+  // длина.
+  collectDuration(scan, hits);
   collectTimes(scan, hits);
   if (scan.takes(_allDay)) hits.allDay = true;
   if (scan.takes(_noDate)) hits.noDate = true;

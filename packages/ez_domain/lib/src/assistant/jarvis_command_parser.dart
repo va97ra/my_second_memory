@@ -1,4 +1,5 @@
 import '../metro/metro_guide.dart';
+import 'address_phrases.dart';
 import 'agenda_phrases.dart';
 import 'calculation_phrases.dart';
 import 'currency_phrases.dart';
@@ -39,9 +40,12 @@ class JarvisCommandParser {
         undoCommand(work) ??
         (talk == null ? null : JarvisSay(talk)) ??
         settingCommand(work) ??
+        calculatorCommand(work) ??
+        lookCommand(work, now) ??
         factCommand(phrase, now) ??
         phoneCommand(phrase, now) ??
         _metroCommand(phrase.text) ??
+        routeCommand(work) ??
         historyCommand(work, now) ??
         agendaCommand(work, now) ??
         dayQuestionCommand(work, now) ??
@@ -60,6 +64,9 @@ class JarvisCommandParser {
 
   /// Вопрос о дороге на метро; станции узнаёт схема метро.
   JarvisCommand? _metroCommand(String text) {
+    // «Проложи маршрут на Ленина 5» — улица с домом, а не станция
+    // «Библиотека имени Ленина».
+    if (addressIn(text) != null) return null;
     final asked = MetroGuide.moscow.question(text);
     return asked == null ? null : AskMetroRoute(from: asked.from, to: asked.to);
   }

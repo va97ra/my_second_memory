@@ -70,11 +70,10 @@ final gigaChatClientProvider = Provider<GigaChatClient?>((ref) {
   if (key == null) return null;
   final client = GigaChatClient(
     authKey: key,
-    onUsage: (tokens) {
-      final limit = ref.read(gigaChatLimitProvider.notifier);
-      unawaited(limit.spent(tokens));
-      unawaited(limit.refresh());
-    },
+    // Остаток уменьшается на месте: спрашивать его у Сбера после каждого
+    // ответа — лишний запрос, а лишние запросы и упираются в «подождите».
+    onUsage: (tokens) =>
+        unawaited(ref.read(gigaChatLimitProvider.notifier).spent(tokens)),
   );
   ref.onDispose(client.close);
   return client;

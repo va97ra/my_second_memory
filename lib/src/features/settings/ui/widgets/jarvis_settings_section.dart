@@ -47,6 +47,13 @@ class JarvisSettingsSection extends ConsumerWidget {
           onTap: () => showJarvisFactsSheet(context),
         ),
         SettingsSwitchTile(
+          key: const ValueKey('settings_jarvis_cards'),
+          icon: Icons.assignment_rounded,
+          title: strings.jarvisDetailedCards,
+          subtitle: strings.jarvisDetailedCardsHint,
+          setting: jarvisDetailedCardsProvider,
+        ),
+        SettingsSwitchTile(
           key: const ValueKey('settings_jarvis_wake'),
           icon: Icons.record_voice_over_rounded,
           title: strings.jarvisWakeWord,

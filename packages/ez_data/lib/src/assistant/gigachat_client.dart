@@ -34,6 +34,8 @@ class GigaChatClient {
     this.model = defaultModel,
     Future<http.Client> Function()? connect,
     this.timeout = const Duration(seconds: 30),
+    this.retryPause = const Duration(seconds: 1),
+    this.quickFailure = const Duration(seconds: 5),
     this.onUsage,
     DateTime Function()? clock,
   })  : _connect = connect ?? connectGigaChat,
@@ -59,6 +61,15 @@ class GigaChatClient {
   final String authKey;
   final String model;
   final Duration timeout;
+
+  /// Пауза перед повтором после сбоя, который проходит сам.
+  final Duration retryPause;
+
+  /// Отказ быстрее этого — сбой, который проходит сам, и его повторяют.
+  /// Сервер, думавший дольше и всё же отказавший, второй раз думает столько
+  /// же: 12 октября 2026 Сбер отвечал 500 через 20 с, и с повтором Джарвис
+  /// молчал 42 с.
+  final Duration quickFailure;
 
   /// Сколько токенов ушло на ответ — GigaChat сообщает это в каждом.
   final void Function(int tokens)? onUsage;
@@ -114,33 +125,42 @@ class GigaChatClient {
   }
 
   /// Один запрос к модели. Возвращает её сообщение: текст (`content`) или
-  /// вызов функции (`function_call`).
+  /// вызов функции (`function_call`), — и почему она остановилась
+  /// (`finish_reason`; `length` — текст оборвал лимит токенов).
+  ///
+  /// [callFunctions] false — модель видит [functions], но вызвать их уже не
+  /// может и отвечает словами (`function_call: none`).
   Future<Map<String, dynamic>> chat(
     List<Map<String, dynamic>> messages, {
     List<Map<String, dynamic>> functions = const [],
+    bool callFunctions = true,
   }) async {
-    final bearer = await token();
-    final response = await _send(() async => (await _http()).post(
-          _chatUrl,
-          headers: {
-            'Authorization': 'Bearer $bearer',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: jsonEncode({
-            'model': model,
-            'messages': messages,
-            if (functions.isNotEmpty) 'functions': functions,
-            if (functions.isNotEmpty) 'function_call': 'auto',
-            'temperature': 0.3,
-            'max_tokens': 600,
-          }),
-        ));
+    final body = jsonEncode({
+      'model': model,
+      'messages': messages,
+      if (functions.isNotEmpty) 'functions': functions,
+      if (functions.isNotEmpty)
+        'function_call': callFunctions ? 'auto' : 'none',
+      'temperature': 0.3,
+      'max_tokens': 600,
+    });
+    final asked = Stopwatch()..start();
+    var response = await _ask(body);
+    // Сбой, который проходит сам, — повторить один раз, а не обрывать
+    // разговор: токен умер раньше срока, «подождите» или сервер сбоит.
+    if ((response.statusCode == 401 ||
+            response.statusCode == 429 ||
+            response.statusCode >= 500) &&
+        asked.elapsed < quickFailure) {
+      if (response.statusCode == 401) _token = null;
+      await Future<void>.delayed(
+          response.statusCode == 429 ? retryPause * 2 : retryPause);
+      response = await _ask(body);
+    }
     switch (response.statusCode) {
       case 200:
         break;
       case 401:
-        // Токен умер раньше срока: следующий запрос возьмёт новый.
         _token = null;
         throw const GigaChatException(
             'GigaChat не принял доступ. Попробуйте ещё раз.');
@@ -166,8 +186,25 @@ class GigaChatClient {
     if (choices.isEmpty) {
       throw const GigaChatException('GigaChat ничего не ответил.');
     }
-    return Map<String, dynamic>.from(
-        (choices.first as Map)['message'] as Map);
+    final choice = choices.first as Map;
+    return {
+      ...Map<String, dynamic>.from(choice['message'] as Map),
+      if (choice['finish_reason'] != null)
+        'finish_reason': choice['finish_reason'],
+    };
+  }
+
+  Future<http.Response> _ask(String body) async {
+    final bearer = await token();
+    return _send(() async => (await _http()).post(
+          _chatUrl,
+          headers: {
+            'Authorization': 'Bearer $bearer',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: body,
+        ));
   }
 
   /// Сколько токенов модели [model] осталось в пакете; null — Сбер не
@@ -217,11 +254,30 @@ class GigaChatClient {
 
   /// Отказ сети — не поломка: о нём говорят словами, а Джарвис продолжает
   /// отвечать правилами.
+  ///
+  /// Оборванное соединение пробуется ещё раз — новым. Телефон переходит с
+  /// Wi-Fi на мобильную сеть, и сохранённое соединение умирает молча:
+  /// первый же запрос по нему падал, и связь с GigaChat «слетала».
   Future<http.Response> _send(Future<http.Response> Function() request) async {
+    try {
+      return await _once(request);
+    } on GigaChatException catch (failure) {
+      if (!failure.offline || failure.message == _silent) rethrow;
+      _client?.close();
+      _client = null;
+      await Future<void>.delayed(retryPause);
+      return _once(request);
+    }
+  }
+
+  static const _silent = 'GigaChat не отвечает.';
+
+  Future<http.Response> _once(Future<http.Response> Function() request) async {
     try {
       return await request().timeout(timeout);
     } on TimeoutException {
-      throw const GigaChatException('GigaChat не отвечает.', offline: true);
+      // Ответа ждали полминуты — второй раз ждать столько же незачем.
+      throw const GigaChatException(_silent, offline: true);
     } on http.ClientException {
       throw const GigaChatException('Нет связи с GigaChat.', offline: true);
     } on GigaChatConnectionException catch (error) {

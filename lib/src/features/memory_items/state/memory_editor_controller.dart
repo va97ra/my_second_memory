@@ -27,7 +27,10 @@ class MemoryEditorController extends ChangeNotifier {
         // У только что заведённой записи область правки уже выбрана: её и
         // спрашивать не о чем, серии у неё пока нет.
         scopeRequested = newlyCreated,
-        _coordinator = coordinator ?? MemoryEditorSaveCoordinator();
+        _coordinator = coordinator ?? MemoryEditorSaveCoordinator() {
+    // Оформление текста — такая же правка, как набор: сохраняется так же.
+    fields.body.onStyleChanged = scheduleAutosave;
+  }
 
   /// Поля ввода: текст записи и сумма.
   final MemoryEditorFields fields;
@@ -71,6 +74,7 @@ class MemoryEditorController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    fields.body.onStyleChanged = null;
     _coordinator.dispose();
     super.dispose();
   }

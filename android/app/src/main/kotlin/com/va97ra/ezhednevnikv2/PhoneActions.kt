@@ -24,8 +24,8 @@ import io.flutter.plugin.common.MethodChannel
  */
 class PhoneActions(
     private val activity: Activity,
-    /** Спросить разрешение на контакты; ответ — в колбэк. */
-    private val askContacts: ((Boolean) -> Unit) -> Unit,
+    /** Спросить разрешение; ответ — в колбэк. */
+    private val ask: (String, (Boolean) -> Unit) -> Unit,
 ) {
     fun register(messenger: BinaryMessenger) {
         MethodChannel(messenger, "ezhednevnik_v2/phone").setMethodCallHandler { call, result ->
@@ -42,14 +42,23 @@ class PhoneActions(
                     }))
                     "torch" -> result.success(torch(call.argument<Boolean>("on") ?: true))
                     "openApp" -> result.success(openApp(call.argument<String>("query") ?: ""))
-                    "dial" -> result.success(start(Intent(Intent.ACTION_DIAL,
-                        Uri.fromParts("tel", call.argument<String>("number") ?: "", null))))
+                    // Есть разрешение на звонки — Джарвис звонит сам; нет —
+                    // открывает набор, «Вызов» нажимает человек.
+                    "call" -> withPermission(Manifest.permission.CALL_PHONE) { allowed ->
+                        val number = Uri.fromParts("tel", call.argument<String>("number") ?: "", null)
+                        result.success(when {
+                            allowed && start(Intent(Intent.ACTION_CALL, number)) -> "call"
+                            start(Intent(Intent.ACTION_DIAL, number)) -> "dial"
+                            else -> null
+                        })
+                    }
                     "message" -> result.success(message(
                         call.argument<String>("number") ?: "",
                         call.argument<String>("text") ?: "",
                         call.argument<String>("app") ?: "sms",
                     ))
-                    "contacts" -> withContacts { allowed ->
+                    "route" -> result.success(route(call.argument<String>("to") ?: ""))
+                    "contacts" -> withPermission(Manifest.permission.READ_CONTACTS) { allowed ->
                         result.success(if (allowed) contacts() else null)
                     }
                     else -> result.notImplemented()
@@ -64,6 +73,9 @@ class PhoneActions(
         activity.startActivity(intent)
         true
     } catch (e: ActivityNotFoundException) {
+        false
+    } catch (e: SecurityException) {
+        // Звонок без разрешения — тогда открывается набор.
         false
     }
 
@@ -120,6 +132,24 @@ class PhoneActions(
         return match.loadLabel(packages).toString()
     }
 
+    /**
+     * Куда ехать — в картах телефона: «Яндекс Карты» покажут место с кнопкой
+     * «Маршрут», Google Maps сразу строят путь оттуда, где вы сейчас. Карты
+     * знают пробки и транспорт лучше, чем любой разбор фраз. Возвращает, в
+     * каких картах открыто, или null — карт нет.
+     */
+    private fun route(to: String): String? {
+        if (to.isBlank()) return null
+        val place = Uri.encode(to)
+        if (start(Intent(Intent.ACTION_VIEW, Uri.parse("yandexmaps://maps.yandex.ru/?text=$place"))
+                .setPackage("ru.yandex.yandexmaps"))) return "Яндекс Картах"
+        if (start(Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$place"))
+                .setPackage("com.google.android.apps.maps"))) return "Google Картах"
+        if (start(Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=$place")))) return "картах"
+        return null
+    }
+
     /** Чат с готовым текстом: WhatsApp по номеру, Telegram — выбрать чат, иначе SMS. */
     private fun message(number: String, text: String, app: String): Boolean = when (app) {
         "whatsapp" -> start(Intent(Intent.ACTION_VIEW, Uri.parse(
@@ -134,12 +164,11 @@ class PhoneActions(
             .putExtra("sms_body", text))
     }
 
-    private fun withContacts(then: (Boolean) -> Unit) {
-        if (activity.checkSelfPermission(Manifest.permission.READ_CONTACTS) ==
-            PackageManager.PERMISSION_GRANTED) {
+    private fun withPermission(name: String, then: (Boolean) -> Unit) {
+        if (activity.checkSelfPermission(name) == PackageManager.PERMISSION_GRANTED) {
             then(true)
         } else {
-            askContacts(then)
+            ask(name, then)
         }
     }
 

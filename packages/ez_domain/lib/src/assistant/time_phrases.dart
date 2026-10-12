@@ -25,6 +25,32 @@ void collectRelativeTime(PhraseScan scan, MomentHits hits) {
   }
 }
 
+/// Вынимает длительность: «с 12 до 13» (а с ним и начало), «на полчаса»,
+/// «минут на 20», «на полтора часа», «на час». «На 2 часа» не берётся:
+/// это бывает и временем — «на 2 часа дня».
+void collectDuration(PhraseScan scan, MomentHits hits) {
+  for (final match in scan.take(_range)) {
+    final h1 = int.parse(match.namedGroup('h1')!);
+    final m1 = int.parse(match.namedGroup('m1') ?? '0');
+    final h2 = int.parse(match.namedGroup('h2')!);
+    final m2 = int.parse(match.namedGroup('m2') ?? '0');
+    if (h1 > 23 || h2 > 23 || m1 > 59 || m2 > 59) continue;
+    hits.times.add(TimeHit(h1, m1, match.namedGroup('q')));
+    var length = (h2 * 60 + m2) - (h1 * 60 + m1);
+    if (length <= 0) length += 12 * 60;
+    hits.durationMinutes = length;
+  }
+  if (hits.durationMinutes != null) return;
+  for (final match in scan.take(_lengthMinutes)) {
+    final count =
+        numberFromWords(match.namedGroup('n') ?? match.namedGroup('n2')!);
+    if (count != null && count > 0) hits.durationMinutes = count;
+  }
+  if (scan.takes(_halfHourLength)) hits.durationMinutes = 30;
+  if (scan.takes(_hourAndHalfLength)) hits.durationMinutes = 90;
+  if (scan.takes(_hourLength)) hits.durationMinutes = 60;
+}
+
 /// Вынимает время суток: «в 10», «в 7:30», «в половине восьмого», «в полдень»,
 /// «7 вечера» — и часть суток: «утром», «после обеда».
 void collectTimes(PhraseScan scan, MomentHits hits) {
@@ -53,6 +79,14 @@ void collectTimes(PhraseScan scan, MomentHits hits) {
     final minute = rawMinute == null ? 0 : numberFromWords(rawMinute);
     if (hour == null || minute == null || hour > 23 || minute > 59) continue;
     hits.times.add(TimeHit(hour, minute, match.namedGroup('q')));
+  }
+  for (final match in scan.take(_hourWithNa)) {
+    final hour = numberFromWords(match.namedGroup('h')!);
+    final rawMinute = match.namedGroup('m');
+    final minute = rawMinute == null ? 0 : numberFromWords(rawMinute);
+    if (hour == null || minute == null || hour > 23 || minute > 59) continue;
+    hits.times.add(TimeHit(
+        hour, minute, match.namedGroup('q') ?? match.namedGroup('q2')));
   }
   for (final match in scan.take(_hourWithQualifier)) {
     final hour = numberFromWords(match.namedGroup('h')!);
@@ -155,13 +189,20 @@ final _clock = phrasePattern('$wordStart(?:(?:в|во|к|на|до|с)\\s+)?'
     '(?<h>\\d{1,2}):(?<m>\\d{2})$_qualifier$wordEnd');
 
 final _oneOClock =
-    phrasePattern('$wordStart(?:в|к|до)\\s+час(?:\\s+(?<q>дня|ночи))?$wordEnd');
+    phrasePattern('$wordStart(?:в|к|до)\\s+часу?(?:\\s+(?<q>дня|ночи))?$wordEnd');
 
 final _hourWithPreposition =
     phrasePattern('$wordStart(?:в|во|к|до)\\s+(?<h>$numberPattern)'
         '(?:\\s+(?:часов|часа|час))?'
         '(?:\\s+(?<m>$numberPattern)\\s+(?:минут|минуты|минуту))?'
         '$_qualifier$wordEnd');
+
+/// «На 12 часов дня», «на 9 утра» — время, только если сказано «часов» или
+/// часть суток: «на 2 человек» временем не станет.
+final _hourWithNa = phrasePattern('$wordStartна\\s+(?<h>$numberPattern)'
+    '(?:\\s+(?:часов|часа|час)(?:\\s+(?<m>$numberPattern)\\s+(?:минут|минуты'
+    '|минуту))?(?:\\s+(?<q>утра|дня|вечера|ночи))?'
+    '|\\s+(?<q2>утра|дня|вечера|ночи))$wordEnd');
 
 final _hourWithQualifier = phrasePattern('$wordStart(?<h>$numberPattern)'
     '(?:\\s+(?:часов|часа|час))?\\s+(?<q>утра|вечера|ночи)$wordEnd');
@@ -174,3 +215,17 @@ final _bareTime = phrasePattern('^(?:в\\s+)?(?<h>$numberPattern)'
     '(?:\\s+(?:часов|часа|час))?'
     '(?:\\s+(?<m>$numberPattern)(?:\\s+(?:минут|минуты|минуту))?)?'
     '$_qualifier\$');
+
+final _range = phrasePattern(
+    '$wordStart(?:с|со)\\s+(?<h1>\\d{1,2})(?::(?<m1>\\d{2}))?'
+    '\\s+до\\s+(?<h2>\\d{1,2})(?::(?<m2>\\d{2}))?'
+    '(?:\\s+(?<q>утра|дня|вечера|ночи))?$wordEnd');
+final _lengthMinutes = phrasePattern('$wordStart(?:(?:на|около|примерно\\s+на)'
+    '\\s+(?<n>$numberPattern)\\s+минут[а-я]*|минут\\s+на\\s+'
+    '(?<n2>$numberPattern))$wordEnd');
+final _halfHourLength =
+    phrasePattern('$wordStartна\\s+(?:полчаса|пол\\s+часа)$wordEnd');
+final _hourAndHalfLength =
+    phrasePattern('$wordStartна\\s+полтора\\s+часа$wordEnd');
+final _hourLength = phrasePattern(
+    '$wordStartна\\s+(?:час|часок)$wordEnd(?!\\s+(?:дня|ночи|утра|вечера))');

@@ -60,7 +60,7 @@ JarvisCommand? phoneCommand(JarvisPhrase phrase, DateTime now) {
 
   final call = _call.firstMatch(work);
   if (call != null && !_scheduled(work, now)) {
-    return PhoneCall(call.namedGroup('who')!);
+    return PhoneCall(call.namedGroup('who')!, say: call.namedGroup('say'));
   }
   return null;
 }
@@ -154,7 +154,18 @@ abstract final class PhoneReplies {
 
   static String notFound(String who) => 'Не нашёл «$who» в контактах.';
 
-  static String dialing(String name) => 'Набираю: $name. Нажмите «Вызов».';
+  static String dialing(String name, {String? say}) =>
+      'Набираю: $name. Нажмите «Вызов».${_relay(say)}';
+
+  static String calling(String name, {String? say}) =>
+      'Звоню: $name.${_relay(say)}';
+
+  /// Говорить в звонке Android приложениям не даёт — честно и с
+  /// напоминанием, что передать.
+  static String _relay(String? say) => say == null
+      ? ''
+      : ' Сказать за вас в разговоре не смогу: Android не пускает приложения '
+          'в звонок. Передайте сами: «$say».';
 
   static String written(String name, PhoneMessenger app) => switch (app) {
         PhoneMessenger.telegram =>
@@ -169,6 +180,9 @@ abstract final class PhoneReplies {
         PhoneMessenger.whatsapp => 'WhatsApp на телефоне не нашёл.',
         PhoneMessenger.sms => 'Не получилось открыть сообщения.',
       };
+
+  /// Ни позвонить, ни открыть набор не вышло.
+  static const cannotCall = 'Не получилось набрать номер: звонилка не открылась.';
 
   static String opened(String label) => 'Открываю «$label».';
 
@@ -203,8 +217,12 @@ final _unit = phrasePattern(
     '$wordStart(?<u>час|часа|часов|минуту|минуты|минут|мин|секунду|секунды'
     '|секунд|сек)$wordEnd');
 
-final _call = phrasePattern(
-    '^(?:позвони|набери|звякни|вызови)\\s+(?<who>.+)\$');
+/// Кому — до «и скажи / передай / сообщи / спроси»: всё после этого — что
+/// передать, а не имя. Иначе «Александру Лаврову и скажи ему привет»
+/// искалось в контактах целиком и не находилось.
+final _call = phrasePattern('^(?:позвони|набери|звякни|вызови)\\s+(?<who>.+?)'
+    '(?:\\s*,?\\s+(?:и\\s+)?(?:скажи|передай|сообщи|спроси)'
+    '(?:\\s+(?:ему|ей|им))?\\s*,?\\s*(?<say>.+))?\$');
 
 final _message = phrasePattern(
     '^(?:напиши|отправь|скинь)\\s+(?<noun>сообщение\\s+)?'

@@ -74,7 +74,8 @@ class GigaChatLimitController extends StateNotifier<GigaChatLimit> {
     );
   }
 
-  /// GigaChat ответил и сообщил расход.
+  /// GigaChat ответил и сообщил расход: остаток уменьшается на него же, без
+  /// запроса к Сберу.
   Future<void> spent(int tokens) async {
     final preferences = await SharedPreferences.getInstance();
     final sameMonth = preferences.getString(_monthKey) == _month;
@@ -82,11 +83,11 @@ class GigaChatLimitController extends StateNotifier<GigaChatLimit> {
     await preferences.setString(_monthKey, _month);
     await preferences.setInt(_spentKey, total);
     if (!mounted) return;
-    state = GigaChatLimit(
-      left: state.left,
-      most: state.most,
-      spentThisMonth: total,
-    );
+    final left = state.left == null
+        ? null
+        : (state.left! - tokens).clamp(0, state.left!);
+    state = GigaChatLimit(left: left, most: state.most, spentThisMonth: total);
+    if (left != null) await preferences.setInt(_leftKey, left);
   }
 
   /// Спросить у Сбера остаток. Не ответил — остаётся прежний.

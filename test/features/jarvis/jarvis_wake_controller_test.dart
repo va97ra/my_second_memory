@@ -27,7 +27,11 @@ class _FakeMic implements JarvisListener {
   Future<void> stopContinuous() async => continuous = false;
 
   @override
-  Future<String> listen({void Function(String text)? onPartial}) async => '';
+  Future<String> listen({
+    void Function(String text)? onPartial,
+    Duration? patience,
+  }) async =>
+      '';
 
   @override
   Future<void> stop() async {}
@@ -57,7 +61,6 @@ void main() {
       busy: () => busy,
       tick: const Duration(milliseconds: 10),
       nameOnlyPause: const Duration(milliseconds: 30),
-      conversationWindow: const Duration(milliseconds: 150),
     );
     wake.addListener((call) {
       if (call != null) calls.add(call.command);
@@ -95,6 +98,32 @@ void main() {
     expect(calls, ['']);
   });
 
+  test('повтор того же имени не отодвигает паузу', () async {
+    // Распознавание телефона повторяет один и тот же кусок по нескольку раз
+    // в секунду — каждый повтор заново заводил паузу, и она не наступала.
+    wake.setForeground(true);
+    await settle();
+    // Выключенный микрофон кусков не присылает — как и настоящий.
+    for (var i = 0; i < 8 && mic.continuous; i++) {
+      mic.partial!('Джарвис');
+      await settle(10);
+    }
+    expect(calls, ['']);
+  });
+
+  test('имя, слитое в записи со следующим словом, — всё равно зов', () async {
+    // С телефона владельца, 12 октября 2026: по ходу — «Джарвис», в конце
+    // фразы — «джарвисцию как». Имя прозвучало, Джарвис откликается.
+    wake.setForeground(true);
+    await settle();
+    mic.partial!('Джарвис под');
+    mic.partial!('джарвисцию');
+    mic.phrase!('джарвисцию как');
+    expect(calls, ['']);
+    mic.phrase!('обезболивающее смотрите как');
+    expect(calls, [''], reason: 'чужая речь после зова — не зов');
+  });
+
   test('пока Джарвис говорит или выключен в настройках — не слушает', () async {
     wake.setForeground(true);
     await settle();
@@ -110,18 +139,13 @@ void main() {
     expect(mic.continuous, isTrue);
   });
 
-  test('после ответа можно продолжить без имени, потом — снова по имени',
+  test('без имени фраза — не вызов: продолжение слушает лист, а не здесь',
       () async {
     wake.setForeground(true);
     await settle();
-    wake.continueConversation();
-    await settle();
     mic.phrase!('а послезавтра');
-    expect(calls, ['а послезавтра']);
-    // Секунда тишины после вызова, затем окно закрывается без новых слов.
-    await settle(1100);
-    await settle(200);
-    mic.phrase!('что у меня завтра');
-    expect(calls, ['а послезавтра'], reason: 'окно разговора закрылось');
+    expect(calls, isEmpty);
+    mic.phrase!('джарвис что у меня завтра');
+    expect(calls, ['что у меня завтра']);
   });
 }

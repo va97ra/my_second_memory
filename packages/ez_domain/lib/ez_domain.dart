@@ -5,13 +5,15 @@
 /// приложении, а не тут — провайдер это способ доставки, а не правило.
 library;
 
+export 'src/assistant/address_phrases.dart'
+    show addressIn, recordAddress;
 export 'src/assistant/agenda_speech.dart';
 export 'src/assistant/brain_instructions.dart';
 export 'src/assistant/bank_notice_phrases.dart';
 export 'src/assistant/briefing_notes.dart';
 export 'src/assistant/butler_persona.dart';
 export 'src/assistant/calculation_phrases.dart'
-    show calculationReply, spokenNumber;
+    show calculationReply, calculatorReply, spokenNumber;
 export 'src/assistant/clarification_phrases.dart';
 export 'src/assistant/currency_phrases.dart' show currencyReply;
 export 'src/assistant/day_question_phrases.dart'
@@ -29,11 +31,13 @@ export 'src/assistant/moment_hits.dart' show PhraseRepeat, PhraseRepeatKind;
 export 'src/assistant/russian_words.dart'
     show capitalizeFirst, joinWithAnd, lowerFirst, normalizePhrase, searchStems;
 export 'src/assistant/small_talk.dart';
+export 'src/assistant/task_card.dart';
 export 'src/assistant/spoken_moments.dart';
 export 'src/assistant/task_phrase.dart';
 export 'src/assistant/unit_phrases.dart' show unitReply;
 export 'src/assistant/wake_word.dart' show WakeWord;
 export 'src/calculator/calculator_engine.dart';
+export 'src/calculator/calculator_keys.dart';
 export 'src/calculator/calculator_types.dart';
 export 'src/finance/exchange_rates.dart';
 export 'src/finance/finance_entry.dart';
@@ -53,6 +57,7 @@ export 'src/feed/feed_rules.dart';
 export 'src/language/russian_plural.dart';
 export 'src/feed/memory_search.dart';
 export 'src/memory/memory_item.dart';
+export 'src/memory/styled_text.dart';
 export 'src/memory/memory_move.dart';
 export 'src/memory/reminder_rules.dart';
 export 'src/memory/memory_status.dart';

@@ -77,10 +77,29 @@ void main() {
       expect(tomorrow.from, DateTime(2026, 10, 8));
       expect(tomorrow.isOneDay, isTrue);
       expect(tomorrow.label, 'завтра');
-      expect(as<AskAgenda>('какие задачи на пятницу').from,
-          DateTime(2026, 10, 9));
-      expect(as<AskAgenda>('покажи дела на сегодня').from,
-          DateTime(2026, 10, 7));
+      expect(
+          as<AskAgenda>('какие задачи на пятницу').from, DateTime(2026, 10, 9));
+      expect(
+          as<AskAgenda>('покажи дела на сегодня').from, DateTime(2026, 10, 7));
+    });
+
+    test('число месяца — как его говорят', () {
+      // «На 12 число» однажды получило «сегодня дел нет».
+      for (final phrase in [
+        'какие дела на 12 число',
+        'что у меня к 12 числу',
+        'какие дела на двенадцатое',
+        'что у меня на 12-е',
+        'дела на двенадцатое число',
+      ]) {
+        expect(as<AskAgenda>(phrase).from, DateTime(2026, 10, 12),
+            reason: phrase);
+      }
+      // Число уже прошло в этом месяце — значит, следующий.
+      expect(
+          as<AskAgenda>('какие дела на 3 число').from, DateTime(2026, 11, 3));
+      // День назван, но не разобран — не «сегодня».
+      expect(parse('какие дела на 40 число'), isNot(isA<AskAgenda>()));
     });
 
     test('периоды и без даты', () {
@@ -106,15 +125,16 @@ void main() {
       expect(as<CreateTasks>('ты знаешь фильм Soulmate').requested, isFalse);
       expect(as<CreateTasks>('завтра в 10 врач').requested, isFalse);
       expect(as<CreateTasks>('запиши купить молоко').requested, isTrue);
-      expect(as<CreateTasks>('напомни завтра позвонить маме').requested, isTrue);
+      expect(
+          as<CreateTasks>('напомни завтра позвонить маме').requested, isTrue);
       expect(as<CreateTasks>('надо заплатить за свет').requested, isTrue);
     });
 
     test('повтор, которого календарь не умеет, — честный ответ', () {
       expect(as<JarvisSay>('каждый день в 9 пить таблетки').text,
           contains('«каждый день»'));
-      expect(parse('каждый месяц 10-го платить за квартиру'),
-          isA<CreateTasks>());
+      expect(
+          parse('каждый месяц 10-го платить за квартиру'), isA<CreateTasks>());
     });
 
     test('записка сохраняет регистр', () {
@@ -141,7 +161,8 @@ void main() {
     });
 
     test('перенести', () {
-      final move = as<ChangeRecord>('перенеси встречу с юристом на пятницу в 10');
+      final move =
+          as<ChangeRecord>('перенеси встречу с юристом на пятницу в 10');
       expect(move.change, RecordChange.move);
       expect(move.query, 'встречу юристом');
       expect(move.date, DateTime(2026, 10, 9));
@@ -163,14 +184,17 @@ void main() {
   group('инструменты', () {
     test('счёт', () {
       expect(as<Calculate>('сколько будет 25 на 4').expression, '25*4');
-      expect(as<Calculate>('посчитай двадцать пять умножить на четыре')
-          .expression, '25*4');
+      expect(
+          as<Calculate>('посчитай двадцать пять умножить на четыре').expression,
+          '25*4');
       expect(as<Calculate>('15 процентов от 2000').expression, '2000*15%');
       expect(as<Calculate>('корень из 144').expression, 'sqrt(144)');
-      expect(calculationReply(as<Calculate>('сколько будет 1 разделить на 3')),
-          'Получается 0,333333.');
-      expect(calculationReply(as<Calculate>('сколько будет 2 в степени 10')),
-          'Получается 1024.');
+      // Считает калькулятор, Джарвис читает его ответ вслух.
+      String said(String phrase) => calculationReply(const CalculatorEngine()
+          .evaluate(as<Calculate>(phrase).expression)
+          .value);
+      expect(said('сколько будет 1 разделить на 3'), 'Получается 0,333333.');
+      expect(said('сколько будет 2 в степени 10'), 'Получается 1024.');
     });
 
     test('величины', () {
@@ -182,8 +206,7 @@ void main() {
       expect(unitReply(as<ConvertUnits>('переведи 5 километров в мили')),
           '5 километров — это 3,1069 мили.');
       expect(as<ConvertUnits>('сколько метров в миле').fromUnit, 'mile');
-      expect(
-          unitReply(as<ConvertUnits>('30 градусов цельсия в фаренгейты')),
+      expect(unitReply(as<ConvertUnits>('30 градусов цельсия в фаренгейты')),
           '30 градусов Цельсия — это 86 градусов Фаренгейта.');
     });
 
@@ -214,16 +237,15 @@ void main() {
       expect(salary.kind, FinanceEntryKind.income);
       expect((salary.amount, salary.category), ('50000', 'Зарплату'));
       expect(as<AddFinanceEntry>('заплатил 600').category, 'Прочее');
-      expect(as<AddFinanceEntry>('потратил 20 долларов на такси').currency,
-          'USD');
+      expect(
+          as<AddFinanceEntry>('потратил 20 долларов на такси').currency, 'USD');
     });
 
     test('вопросы о деньгах', () {
       final spent = as<AskFinance>('сколько я потратил в этом месяце');
       expect(spent.kind, FinanceEntryKind.expense);
       expect(spent.month, DateTime(2026, 10));
-      expect(as<AskFinance>('какой доход в сентябре').month,
-          DateTime(2026, 9));
+      expect(as<AskFinance>('какой доход в сентябре').month, DateTime(2026, 9));
       expect(as<AskFinance>('сколько я потратил в прошлом месяце').month,
           DateTime(2026, 9));
     });
@@ -232,11 +254,11 @@ void main() {
   group('дни и настройки', () {
     test('смены и праздники', () {
       expect(as<AskShift>('я завтра работаю').day, DateTime(2026, 10, 8));
-      expect(as<AskShift>('у меня в субботу смена').day,
-          DateTime(2026, 10, 10));
+      expect(
+          as<AskShift>('у меня в субботу смена').day, DateTime(2026, 10, 10));
       expect(as<AskShift>('когда смена').findNext, isTrue);
-      expect(as<AskHolidays>('какой сегодня праздник').day,
-          DateTime(2026, 10, 7));
+      expect(
+          as<AskHolidays>('какой сегодня праздник').day, DateTime(2026, 10, 7));
       expect(as<AskHolidays>('что за праздник 4 ноября').day,
           DateTime(2026, 11, 4));
     });
@@ -249,8 +271,8 @@ void main() {
       expect((hints.setting, hints.enabled), (JarvisSwitch.hints, false));
       expect(as<SwitchSetting>('включи международные праздники').setting,
           JarvisSwitch.observances);
-      expect(as<SwitchSetting>('скрой праздники').setting,
-          JarvisSwitch.holidays);
+      expect(
+          as<SwitchSetting>('скрой праздники').setting, JarvisSwitch.holidays);
     });
   });
 
@@ -259,8 +281,8 @@ void main() {
       expect(as<JarvisSay>('какой у меня пароль от почты').text,
           contains('Пароли'));
       expect(parse('войди в синхронизацию'), isA<JarvisSay>());
-      expect(parse('напомни завтра сменить пароль от почты'),
-          isA<CreateTasks>());
+      expect(
+          parse('напомни завтра сменить пароль от почты'), isA<CreateTasks>());
     });
 
     test('дело со временем — не вопрос о смене', () {

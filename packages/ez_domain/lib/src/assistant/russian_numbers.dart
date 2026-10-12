@@ -19,6 +19,15 @@ const ordinalPattern = '(?:(?:двадцать|тридцать)\\s+(?:$_ordinal
     '|шестнадцатого|семнадцатого|восемнадцатого|девятнадцатого|десятого'
     '|двадцатого|тридцатого|$_ordinalUnits)';
 
+const _ordinalStems = 'перв|втор|четверт|пят|шест|седьм|восьм|девят|десят'
+    '|одиннадцат|двенадцат|тринадцат|четырнадцат|пятнадцат|шестнадцат'
+    '|семнадцат|восемнадцат|девятнадцат|двадцат|тридцат';
+
+/// Порядковое числа месяца в любом падеже, в каком его говорят:
+/// «двенадцатого», «на двенадцатое», «к двенадцатому», «двадцать первое».
+const ordinalDayPattern = '(?:(?:двадцать|тридцать)\\s+)?'
+    '(?:(?:$_ordinalStems)(?:ого|ое|ому|ом)|треть(?:его|е|ему|ем))';
+
 /// Месяцы в родительном падеже — «15 октября».
 const monthsGenitive = [
   'января',
@@ -117,8 +126,18 @@ int? numberFromWords(String raw) {
   return _sum(text, _numberWords);
 }
 
-/// «пятнадцатого», «двадцать первого» → число; иначе null.
-int? ordinalFromWords(String raw) => _sum(raw.trim(), _ordinalWords);
+/// «пятнадцатого», «двадцать первое», «к двенадцатому» → число; иначе null.
+int? ordinalFromWords(String raw) => _sum(
+    raw.trim().split(RegExp(r'\s+')).map(_genitive).join(' '), _ordinalWords);
+
+/// Порядковое — в родительный падеж, как в словаре: «двенадцатое» и
+/// «двенадцатому» → «двенадцатого», «третье» → «третьего».
+String _genitive(String word) {
+  final plain = word.replaceAll('ё', 'е');
+  if (RegExp(r'^треть(?:е|ему|ем)$').hasMatch(plain)) return 'третьего';
+  final other = RegExp(r'^(.+[^ь])(?:ое|ому|ом)$').firstMatch(plain);
+  return other == null ? plain : '${other[1]}ого';
+}
 
 int? _sum(String text, Map<String, int> words) {
   var total = 0;

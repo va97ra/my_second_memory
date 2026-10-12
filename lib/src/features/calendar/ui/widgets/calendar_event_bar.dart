@@ -55,7 +55,7 @@ class CalendarEventBar extends StatelessWidget {
     if (title.isNotEmpty) {
       return title;
     }
-    final body = item.body.trim();
+    final body = item.plainBody.trim();
     if (body.isNotEmpty) {
       return body.split(RegExp(r'\s+')).take(4).join(' ');
     }

@@ -17,10 +17,8 @@ class BankNoticesTile extends ConsumerWidget {
     final enabled = ref.watch(jarvisBankNoticesProvider);
     final access = ref.watch(jarvisBankAccessProvider).valueOrNull ?? true;
     final needsAccess = enabled && !access;
-    Future<void> openAccess() async {
-      await ref.read(jarvisBankWatcherProvider).openAccess();
-      ref.invalidate(jarvisBankAccessProvider);
-    }
+    Future<void> openAccess() =>
+        ref.read(jarvisBankWatcherProvider).openAccess();
 
     return SettingsTile(
       key: const ValueKey('settings_jarvis_bank'),

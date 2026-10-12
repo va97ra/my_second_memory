@@ -12,8 +12,14 @@ abstract interface class JarvisListener {
   /// Слушает одну фразу до паузы. [onPartial] получает текст по ходу речи.
   /// Возвращает итог; пустая строка — ничего не расслышано.
   ///
+  /// [patience] — продолжение разговора: начала речи ждут столько, а
+  /// тишина до неё — не конец фразы. Без него молчание в 2,4 с — уже итог.
+  ///
   /// Бросает [JarvisListenerFailure], если микрофон недоступен.
-  Future<String> listen({void Function(String text)? onPartial});
+  Future<String> listen({
+    void Function(String text)? onPartial,
+    Duration? patience,
+  });
 
   /// Дослушать досрочно: [listen] вернёт то, что уже распознано.
   Future<void> stop();
