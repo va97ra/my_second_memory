@@ -12,7 +12,13 @@ import 'task_phrase.dart';
 ///
 /// Ответ строится по календарю, без нейросети: мгновенно и всегда точно.
 JarvisCommand? agendaCommand(String work, DateTime now) {
-  if (!_question.hasMatch(work) || _notSchedule.hasMatch(work)) return null;
+  final short = _shortDay.hasMatch(work);
+  if (short && const TaskPhraseParser().parseAnswer(work, now).date == null) {
+    return null;
+  }
+  if (!short && !_question.hasMatch(work) || _notSchedule.hasMatch(work)) {
+    return null;
+  }
   if (_undated.hasMatch(work)) return const AskUndated();
   final today = dateOnly(now);
   final monday = _addDays(today, 1 - today.weekday);
@@ -72,6 +78,11 @@ final _question = phrasePattern('$wordStart(?:что\\s+у\\s+меня'
     '|есть\\s+ли[^?.!]*$wordStart(?:дела|планы|задачи|встречи)$wordEnd'
     '|(?:покажи|расскажи|напомни)\\s+(?:мне\\s+)?(?:дела|планы|задачи'
     '|расписание))');
+
+/// «Что в пятницу?», «а что завтра», «что на 12-е» — коротко о дне. День
+/// должен разобраться: «что в машине» — не о расписании.
+final _shortDay = phrasePattern('^(?:а\\s+)?что\\s+(?:(?:в|во|на)\\s+)?'
+    '[^\\s?]+(?:\\s+[^\\s?]+)?\\s*\\??\$');
 
 /// Похоже на вопрос о расписании, но это правка, деньги или настройки.
 final _notSchedule = phrasePattern('$wordStart(?:перенеси|перенести|удали'

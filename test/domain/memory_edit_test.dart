@@ -24,6 +24,31 @@ void main() {
         (doctor.memoryDate, doctor.timeMinutes, doctor.body));
   });
 
+  test('будильник — звук телефона в момент напоминания, снять — тише', () {
+    const sound = (uri: 'content://alarm', name: 'Будильник телефона');
+    final loud = editedMemoryItem(doctor, const RecordEdit(alarm: true),
+        now: now, alarmSound: sound);
+    expect((loud.remindAt, loud.reminderSoundUri),
+        (DateTime(2099, 10, 8, 9), 'content://alarm'));
+    final quiet =
+        editedMemoryItem(loud, const RecordEdit(alarm: false), now: now);
+    expect((quiet.remindAt, quiet.reminderSoundUri),
+        (DateTime(2099, 10, 8, 9), null));
+    // Без напоминания будильник звенит к началу дела; без времени — никак.
+    final bare = doctor.copyWith(clearReminder: true);
+    expect(
+        editedMemoryItem(bare, const RecordEdit(alarm: true),
+                now: now, alarmSound: sound)
+            .remindAt,
+        DateTime(2099, 10, 8, 10));
+    final allDay = bare.copyWith(clearTime: true);
+    expect(
+        editedMemoryItem(allDay, const RecordEdit(alarm: true),
+                now: now, alarmSound: sound)
+            .reminderSoundUri,
+        isNull);
+  });
+
   test('перенос — напоминание едет вместе с делом', () {
     final moved =
         editedMemoryItem(doctor, const RecordEdit(minutes: 11 * 60), now: now);

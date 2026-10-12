@@ -87,8 +87,9 @@ int? alarmMinutes(String when, DateTime now) {
   return minutes;
 }
 
-/// Длина таймера в секундах: «10 минут», «полтора часа», «1 час 20 минут»,
-/// «45 секунд», «минуту». null — длины не названо.
+/// Длина в секундах: «10 минут», «полтора часа», «1 час 20 минут», «45
+/// секунд», «минуту», «за день» — для таймера, дела и напоминания. null —
+/// длины не названо.
 int? durationSeconds(String text) {
   final work = normalizePhrase(text);
   var total = 0;
@@ -100,9 +101,16 @@ int? durationSeconds(String text) {
         ? 3600
         : unit.startsWith('м')
             ? 60
-            : 1;
+            : unit.startsWith('д') || unit.startsWith('сут')
+                ? 86400
+                : 1;
     if (raw == 'полтора' || raw == 'полторы') {
       total += seconds * 3 ~/ 2;
+      continue;
+    }
+    // «До часу дня» — время суток; дни — только с числом: «2 дня».
+    if (unit == 'дня' &&
+        (raw == null || (int.tryParse(raw) ?? numberFromWords(raw)) == null)) {
       continue;
     }
     // «На минуту», «одну минуту» — одна; «пару минут» — две.
@@ -215,7 +223,7 @@ final _halfHour = phrasePattern('$wordStartполчаса$wordEnd');
 final _unit = phrasePattern(
     '(?:$wordStart(?<n>\\d+|полтора|полторы|[а-я]+(?:\\s+[а-я]+)?)\\s+)?'
     '$wordStart(?<u>час|часа|часов|минуту|минуты|минут|мин|секунду|секунды'
-    '|секунд|сек)$wordEnd');
+    '|секунд|сек|день|дня|дней|сутки|суток)$wordEnd');
 
 /// Кому — до «и скажи / передай / сообщи / спроси»: всё после этого — что
 /// передать, а не имя. Иначе «Александру Лаврову и скажи ему привет»

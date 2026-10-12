@@ -93,7 +93,7 @@ class JarvisRecords {
     required DateTime now,
   }) async {
     final target =
-        command.query.isEmpty ? _fresh(mentioned, now) : _find(command, now);
+        command.query.isEmpty ? fresh(mentioned, now) : _find(command, now);
     if (target == null) {
       return JarvisOutcome(command.query.isEmpty
           ? JarvisReplies.nothingMentioned(command.change)
@@ -190,7 +190,7 @@ class JarvisRecords {
   /// списка дней или поиска.
   MemoryItem? byId(String id, DateTime now) {
     for (final item in [..._living(now), ...archived()]) {
-      if (item.id == id) return _fresh(item, now);
+      if (item.id == id) return fresh(item, now);
     }
     return null;
   }
@@ -204,69 +204,6 @@ class JarvisRecords {
   /// Архив — убранные последними первыми.
   List<MemoryItem> archived() => [..._ref.read(archivedMemoryItemsProvider)]
     ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-
-  /// Поправить запись одной правкой — с одной отменой.
-  Future<JarvisOutcome> edit(
-    MemoryItem target,
-    RecordEdit edit, {
-    required DateTime now,
-  }) async {
-    final result = editedMemoryItem(target, edit, now: now);
-    await _commands.save(result, original: target);
-    return JarvisOutcome(
-      JarvisReplies.edited(result, now),
-      link: result.isUndated
-          ? const OpenPlace(JarvisPlace.notes)
-          : OpenPlace(JarvisPlace.day, date: result.memoryDate),
-      mentioned: result,
-      undo: () => _commands.save(target, original: target),
-    );
-  }
-
-  /// Повторять запись каждый месяц или год; null — перестать. Путь тот же,
-  /// что у редактора записи: серия. Снятый повтор отмена заводит заново, но
-  /// правки отдельных повторов, как и в редакторе, при снятии пропадают.
-  Future<JarvisOutcome> repeat(
-    MemoryItem target,
-    RecurrenceFrequency? frequency, {
-    required DateTime now,
-  }) async {
-    final seriesId = target.seriesId;
-    final before = seriesId == null
-        ? null
-        : _ref
-            .read(recurrenceSeriesControllerProvider)
-            .where((series) => series.id == seriesId)
-            .firstOrNull;
-    final link = OpenPlace(JarvisPlace.day, date: target.memoryDate);
-    if (frequency != null) {
-      final series = await _series.setFrequency(target, frequency);
-      final repeated = target.copyWith(seriesId: series.id);
-      final previous = before?.frequency;
-      return JarvisOutcome(
-        JarvisReplies.repeating(target, frequency),
-        link: link,
-        mentioned: repeated,
-        undo: previous == null
-            ? () => _series.clearFrequency(repeated)
-            : () => _series.setFrequency(target, previous),
-      );
-    }
-    if (before == null) {
-      return JarvisOutcome(JarvisReplies.notRepeating(target));
-    }
-    await _series.clearFrequency(target);
-    // Запись снова живёт строкой — с номером той, из которой вырос повтор.
-    final single = _ref.read(memoryItemByIdProvider(before.originItemId));
-    return JarvisOutcome(
-      JarvisReplies.notRepeating(target),
-      link: link,
-      mentioned: single,
-      undo: single == null
-          ? null
-          : () => _series.setFrequency(single, before.frequency),
-    );
-  }
 
   MemoryItem _itemFor(
     ParsedTask task, {
@@ -330,7 +267,7 @@ class JarvisRecords {
 
   /// Та же запись, но такой, какой она лежит сейчас: её могли поменять с
   /// экрана, пока шёл разговор.
-  MemoryItem? _fresh(MemoryItem? item, DateTime now) {
+  MemoryItem? fresh(MemoryItem? item, DateTime now) {
     if (item == null) return null;
     return _ref.read(memoryItemByIdProvider(item.id)) ?? item;
   }

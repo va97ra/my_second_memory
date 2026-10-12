@@ -116,8 +116,10 @@ class JarvisAnswers {
   JarvisOutcome shift(AskShift command, DateTime now) {
     var day = command.day;
     if (command.findNext && hasShiftSchedules) {
-      // Ближайшая смена — не дальше двух месяцев: дальше графики не ведут.
-      for (var i = 0; i < 62 && shiftsOn(day).isEmpty; i++) {
+      // Ближайшая смена или выходной — не дальше двух месяцев: дальше
+      // графики не ведут.
+      bool found(DateTime day) => shiftsOn(day).isEmpty == command.dayOff;
+      for (var i = 0; i < 62 && !found(day); i++) {
         day = DateTime(day.year, day.month, day.day + 1);
       }
     }
@@ -129,6 +131,90 @@ class JarvisAnswers {
         dayLabel: spokenWhen(day, now),
       ),
       link: hasShiftSchedules ? null : const OpenPlace(JarvisPlace.shifts),
+    );
+  }
+
+  /// Сколько смен в месяце — по графикам. Часов в графиках нет, и Джарвис
+  /// говорит об этом, а не выдумывает.
+  JarvisOutcome shiftCount(AskShiftCount command, DateTime now) {
+    if (!hasShiftSchedules) {
+      return const JarvisOutcome(
+        'Графиков смен у вас нет. Их можно завести в настройках.',
+        link: OpenPlace(JarvisPlace.shifts),
+      );
+    }
+    final month = command.month;
+    final today = DateTime(now.year, now.month, now.day);
+    var count = 0;
+    for (var day = month;
+        day.month == month.month && !(command.pastOnly && day.isAfter(today));
+        day = DateTime(day.year, day.month, day.day + 1)) {
+      if (shiftsOn(day).isNotEmpty) count++;
+    }
+    return JarvisOutcome(
+      shiftCountReply(command, count: count, now: now),
+      link: const OpenPlace(JarvisPlace.shifts),
+    );
+  }
+
+  /// Ближайшее дело со временем — сегодня позже или в ближайшие две недели.
+  JarvisOutcome next(DateTime now) {
+    final today = DateTime(now.year, now.month, now.day);
+    final minute = now.hour * 60 + now.minute;
+    for (var offset = 0; offset < 14; offset++) {
+      final day = DateTime(today.year, today.month, today.day + offset);
+      final timed = [
+        for (final item in _ref.read(memoryItemsForDayProvider(day)))
+          if (item.timeMinutes case final start?
+              when !item.isDone && (offset > 0 || start >= minute))
+            item,
+      ]..sort((left, right) => left.timeMinutes!.compareTo(right.timeMinutes!));
+      if (timed.isNotEmpty) {
+        final item = timed.first;
+        return JarvisOutcome(
+          FreeTime.nextReply(item, now),
+          link: OpenPlace(JarvisPlace.day, date: day),
+          mentioned: item,
+        );
+      }
+    }
+    return JarvisOutcome(FreeTime.nextReply(null, now));
+  }
+
+  /// Свободное время: окна дня или свободные дни периода.
+  JarvisOutcome free(AskFree command, DateTime now) {
+    if (command.isOneDay) {
+      final day = command.from;
+      final items = _ref.read(memoryItemsForDayProvider(day));
+      return JarvisOutcome(
+        FreeTime.dayReply(
+          label: command.label,
+          windows: FreeTime.windows(items, day: day, now: now),
+          shifts: shiftsOn(day),
+          timed: items.where((item) => item.timeMinutes != null).length,
+        ),
+        link: OpenPlace(JarvisPlace.day, date: day),
+      );
+    }
+    return JarvisOutcome(
+      FreeTime.rangeReply(
+        label: command.label,
+        days: [
+          for (var day = command.from;
+              !day.isAfter(command.to);
+              day = DateTime(day.year, day.month, day.day + 1))
+            (
+              day: day,
+              timed: _ref
+                  .read(memoryItemsForDayProvider(day))
+                  .where((item) => item.timeMinutes != null && !item.isDone)
+                  .length,
+              shift: shiftsOn(day).isNotEmpty,
+            ),
+        ],
+        now: now,
+      ),
+      link: const OpenPlace(JarvisPlace.calendar),
     );
   }
 

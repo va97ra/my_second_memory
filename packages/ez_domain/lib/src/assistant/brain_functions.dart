@@ -1,4 +1,4 @@
-import 'jarvis_place.dart';
+import 'jarvis_command.dart';
 
 /// Что нейросеть Джарвиса может вызвать.
 ///
@@ -26,13 +26,15 @@ abstract final class JarvisBrainFunctions {
   static const listNotes = 'list_notes';
   static const listArchive = 'list_archive';
   static const lookAtScreen = 'look_at_screen';
+  static const getSettings = 'get_settings';
+  static const changeSetting = 'change_setting';
 
   static final specs = <Map<String, Object?>>[
     {
       'name': runCommand,
       'description': 'Выполнить действие, для которого нет своей функции: '
           'калькулятор и конвертер Ежедневника, курс валют, смены, '
-          'праздники, будильники Ежедневника, тема и настройки. И телефон: '
+          'праздники, будильники Ежедневника, тема. И телефон: '
           'фонарик, будильник и таймер в «Часах», позвонить или написать '
           'контакту, открыть приложение, маршрут. Записи, деньги и страницы '
           '— своими функциями. Возвращает, что сделано.',
@@ -215,6 +217,11 @@ abstract final class JarvisBrainFunctions {
           },
           'date': {'type': 'string', 'description': 'Новый день, YYYY-MM-DD'},
           'time': {'type': 'string', 'description': 'Новое время, ЧЧ:ММ'},
+          'shift_minutes': {
+            'type': 'integer',
+            'description': 'Сдвинуть на столько минут: 60 — на час позже, '
+                '-30 — на полчаса раньше, 1440 — на день позже',
+          },
           'duration_minutes': {
             'type': 'integer',
             'description': 'Сколько займёт, минут',
@@ -231,6 +238,11 @@ abstract final class JarvisBrainFunctions {
                 'момент начала',
           },
           'remove_reminder': {'type': 'boolean'},
+          'alarm': {
+            'type': 'boolean',
+            'description': 'Будильник: звенит громко, как будильник, а не '
+                'тихим уведомлением; false — снять будильник',
+          },
           'repeat': {
             'type': 'string',
             'enum': ['monthly', 'yearly', 'none'],
@@ -304,6 +316,35 @@ abstract final class JarvisBrainFunctions {
       'name': listArchive,
       'description': 'Записи в архиве, убранные последними — первыми.',
       'parameters': {'type': 'object', 'properties': {}},
+    },
+    {
+      'name': getSettings,
+      'description': 'Настройки Ежедневника и твои: тема, подсказки, '
+          'праздники, международные дни, отзыв на имя (wakeWord), '
+          'напоминания вслух, подробная карточка дела, утренняя и вечерняя '
+          'сводки со временем.',
+      'parameters': {'type': 'object', 'properties': {}},
+    },
+    {
+      'name': changeSetting,
+      'description': 'Включить или выключить настройку; сводке — назначить '
+          'время. Тема — run_command «тёмная тема». PIN, синхронизацию и '
+          'резервные копии меняет только хозяин — open_page settings.',
+      'parameters': {
+        'type': 'object',
+        'properties': {
+          'setting': {
+            'type': 'string',
+            'enum': [for (final setting in JarvisSwitch.values) setting.name],
+          },
+          'enabled': {'type': 'boolean'},
+          'time': {
+            'type': 'string',
+            'description': 'Для сводок: во сколько, ЧЧ:ММ',
+          },
+        },
+        'required': ['setting'],
+      },
     },
     {
       'name': lookAtScreen,

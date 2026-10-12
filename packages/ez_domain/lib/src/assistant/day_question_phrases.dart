@@ -1,4 +1,6 @@
+import '../language/russian_plural.dart';
 import '../recurrence/recurrence_dates.dart';
+import 'history_phrases.dart' show monthsPrepositional;
 import 'jarvis_command.dart';
 import 'russian_words.dart';
 import 'spoken_moments.dart';
@@ -17,7 +19,8 @@ JarvisCommand? dayQuestionCommand(String work, DateTime now) {
   if (_shift.hasMatch(work) &&
       _asksShift.hasMatch(work) &&
       const TaskPhraseParser().parse(work, now).task.minutes == null) {
-    return AskShift(_dayOf(work, now), findNext: _whenNext.hasMatch(work));
+    return AskShift(_dayOf(work, now),
+        findNext: _whenNext.hasMatch(work), dayOff: _dayOff.hasMatch(work));
   }
   return null;
 }
@@ -33,9 +36,33 @@ String shiftReply(
     return 'Графиков смен у вас нет. Их можно завести в настройках.';
   }
   final day = capitalizeFirst(dayLabel);
+  if (command.findNext && command.dayOff && working.isNotEmpty) {
+    return 'Выходного в ближайшие два месяца нет — смены каждый день.';
+  }
   if (working.isEmpty) return '$day у вас выходной.';
   if (working.length == 1) return '$day у вас смена: ${working.single}.';
   return '$day у вас смены: ${joinWithAnd(working)}.';
+}
+
+/// «В октябре у вас 15 смен.» Часов в графиках нет — так и сказать.
+String shiftCountReply(
+  AskShiftCount command, {
+  required int count,
+  required DateTime now,
+}) {
+  final month = command.month;
+  final current = month.year == now.year && month.month == now.month;
+  final when = current
+      ? (command.pastOnly ? 'С начала месяца' : 'В этом месяце')
+      : 'В ${monthsPrepositional[month.month - 1]}';
+  final verb = command.pastOnly ? 'отработано' : 'у вас';
+  final shifts = count == 0
+      ? 'смен нет'
+      : '$verb $count ${russianPlural(count, 'смена', 'смены', 'смен')}';
+  final days = '$when $shifts.';
+  return command.hours
+      ? 'Часы в графиках смен не записаны — только дни. $days'
+      : days;
 }
 
 /// Будильник Ежедневника для ответа: когда и о чём.
@@ -72,7 +99,8 @@ String holidaysReply({required List<String> titles, required String dayLabel}) {
 DateTime _dayOf(String work, DateTime now) =>
     const TaskPhraseParser().parseAnswer(work, now).date ?? dateOnly(now);
 
-final _whenNext = phrasePattern('^когда$wordEnd');
+final _whenNext = phrasePattern('^(?:а\\s+)?когда$wordEnd');
+final _dayOff = phrasePattern('$wordStartвыходн[а-я]*$wordEnd');
 
 final _alarm = phrasePattern('$wordStartбудильник[а-я]*$wordEnd');
 

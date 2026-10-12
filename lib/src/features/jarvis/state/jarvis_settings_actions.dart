@@ -3,13 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_theme_controller.dart';
 import '../../../shared/state/app_hints_provider.dart';
+import '../../../shared/state/bool_setting_controller.dart';
 import '../../calendar/calendar.dart';
 import '../../finance/finance.dart';
+import 'jarvis_briefings.dart';
+import 'jarvis_controller.dart';
 import 'jarvis_outcome.dart';
+import 'jarvis_wake_controller.dart';
 
 /// Джарвис меняет то, что человек может переключить и сам: тему,
-/// переключатели настроек, запись в журнале финансов. Каждое действие
-/// отменяется возвратом прежнего значения.
+/// переключатели настроек, свои сводки, запись в журнале финансов. Каждое
+/// действие отменяется возвратом прежнего значения.
 class JarvisSettingsActions {
   const JarvisSettingsActions(this._ref);
 
@@ -26,19 +30,84 @@ class JarvisSettingsActions {
   }
 
   Future<JarvisOutcome> toggle(SwitchSetting command) async {
-    final provider = switch (command.setting) {
-      JarvisSwitch.hints => appHintsProvider,
-      JarvisSwitch.holidays => appHolidaysProvider,
-      JarvisSwitch.observances => appObservancesProvider,
-    };
-    final controller = _ref.read(provider.notifier);
-    final previous = _ref.read(provider);
-    await controller.setEnabled(command.enabled);
+    final reply = JarvisReplies.switched(command.setting, command.enabled);
+    final briefings = _ref.read(jarvisBriefingSettingsProvider.notifier);
+    final before = _ref.read(jarvisBriefingSettingsProvider);
+    switch (command.setting) {
+      case JarvisSwitch.morningBriefing:
+        await briefings.setMorning(enabled: command.enabled);
+        return JarvisOutcome(reply,
+            undo: () => briefings.setMorning(enabled: before.morning));
+      case JarvisSwitch.eveningBriefing:
+        await briefings.setEvening(enabled: command.enabled);
+        return JarvisOutcome(reply,
+            undo: () => briefings.setEvening(enabled: before.evening));
+      default:
+        final provider = _switchProvider(command.setting)!;
+        final controller = _ref.read(provider.notifier);
+        final previous = _ref.read(provider);
+        await controller.setEnabled(command.enabled);
+        return JarvisOutcome(reply,
+            undo: () => controller.setEnabled(previous));
+    }
+  }
+
+  /// «Утреннюю сводку в 8»: сводка включается на это время.
+  Future<JarvisOutcome> briefingAt(BriefingAt command) async {
+    final briefings = _ref.read(jarvisBriefingSettingsProvider.notifier);
+    final before = _ref.read(jarvisBriefingSettingsProvider);
+    if (command.evening) {
+      await briefings.setEvening(enabled: true, at: command.minutes);
+    } else {
+      await briefings.setMorning(enabled: true, at: command.minutes);
+    }
     return JarvisOutcome(
-      JarvisReplies.switched(command.setting, command.enabled),
-      undo: () => controller.setEnabled(previous),
+      JarvisReplies.briefingAt(command),
+      undo: () async {
+        await briefings.setMorning(
+            enabled: before.morning, at: before.morningAt);
+        await briefings.setEvening(
+            enabled: before.evening, at: before.eveningAt);
+      },
     );
   }
+
+  /// Настройки, как их видит нейросеть: что включено и когда сводки.
+  Map<String, Object?> forBrain() {
+    final style = _ref.read(appThemeControllerProvider);
+    final briefings = _ref.read(jarvisBriefingSettingsProvider);
+    return {
+      'theme': JarvisTheme.values
+              .where((theme) => appThemeStyleOf(theme) == style)
+              .firstOrNull
+              ?.name ??
+          style.name,
+      for (final setting in JarvisSwitch.values)
+        setting.name: switch (setting) {
+          JarvisSwitch.morningBriefing =>
+            briefings.morning ? 'в ${_clock(briefings.morningAt)}' : false,
+          JarvisSwitch.eveningBriefing =>
+            briefings.evening ? 'в ${_clock(briefings.eveningAt)}' : false,
+          _ => _ref.read(_switchProvider(setting)!),
+        },
+    };
+  }
+
+  static String _clock(int minutes) => '${minutes ~/ 60}:'
+      '${(minutes % 60).toString().padLeft(2, '0')}';
+
+  /// Переключатель-флажок; сводки — не флажки, у них ещё и время.
+  static StateNotifierProvider<BoolSettingController, bool>? _switchProvider(
+          JarvisSwitch setting) =>
+      switch (setting) {
+        JarvisSwitch.hints => appHintsProvider,
+        JarvisSwitch.holidays => appHolidaysProvider,
+        JarvisSwitch.observances => appObservancesProvider,
+        JarvisSwitch.wakeWord => jarvisWakeEnabledProvider,
+        JarvisSwitch.speakReminders => jarvisSpeakRemindersProvider,
+        JarvisSwitch.detailedCards => jarvisDetailedCardsProvider,
+        JarvisSwitch.morningBriefing || JarvisSwitch.eveningBriefing => null,
+      };
 
   /// Доход или расход в журнал. Валюта — названная, а если не названа —
   /// та, чей журнал открыт в финансах. Категория пишется так, как она уже

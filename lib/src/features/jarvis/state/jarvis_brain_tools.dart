@@ -56,6 +56,14 @@ class JarvisBrainTools {
           for (final item in _executor.records.archived().take(30))
             recordForBrain(item, textLimit: 600),
         ];
+      case JarvisBrainFunctions.getSettings:
+        return _executor.settings;
+      case JarvisBrainFunctions.changeSetting:
+        final command = _setting(arguments);
+        if (command == null) {
+          return {'error': 'Нужны setting и enabled, а сводке — time'};
+        }
+        return done(_executor.run(command, mentioned: mentioned, now: now));
       case JarvisBrainFunctions.lookAtScreen:
         // Только посмотреть: рассказ о странице без перехода на неё.
         final told = await _executor.run(const LookAtPage(),
@@ -88,8 +96,7 @@ class JarvisBrainTools {
     );
   }
 
-  /// Поправить запись: сначала поля, потом повтор, потом — сделано, архив
-  /// или возврат.
+  /// Поправить запись тем же путём, что и правка голосом без сети.
   Future<Object?> _update(
     Map<String, dynamic> arguments,
     List<JarvisOutcome> outcomes,
@@ -100,12 +107,14 @@ class JarvisBrainTools {
     final edit = RecordEdit(
       date: parseBrainDate(arguments['date']),
       minutes: _clock(arguments['time']),
+      shiftMinutes: _number(arguments['shift_minutes'])?.round(),
       durationMinutes: _number(arguments['duration_minutes'])?.round(),
       title: _text(arguments['title']),
       addText: _text(arguments['add_text']),
       urgent: arguments['urgent'] is bool ? arguments['urgent'] as bool : null,
       reminderBefore: _number(arguments['remind_minutes_before'])?.round(),
       removeReminder: arguments['remove_reminder'] == true,
+      alarm: arguments['alarm'] is bool ? arguments['alarm'] as bool : null,
     );
     final status = switch (arguments['status']) {
       'done' => RecordChange.complete,
@@ -127,28 +136,16 @@ class JarvisBrainTools {
     if (edit.isEmpty && status == null && !repeats) {
       return {'error': 'Не названо, что поправить'};
     }
-    final said = <String>[];
-    var record = target;
-    if (!edit.isEmpty) {
-      final edited = await _executor.records.edit(record, edit, now: now);
-      outcomes.add(edited);
-      said.add(edited.say);
-      record = edited.mentioned ?? record;
-    }
-    if (repeats) {
-      final repeated =
-          await _executor.records.repeat(record, frequency, now: now);
-      outcomes.add(repeated);
-      said.add(repeated.say);
-      record = repeated.mentioned ?? record;
-    }
-    if (status != null) {
-      final changed = await _executor.records
-          .changeItem(record, ChangeRecord(status, query: ''), now: now);
-      outcomes.add(changed);
-      said.add(changed.say);
-    }
-    return {'result': said.join(' ')};
+    final applied = await _executor.edits.apply(
+      target,
+      edit: edit,
+      repeat: frequency,
+      stopRepeat: repeat == 'none',
+      status: status,
+      now: now,
+    );
+    outcomes.add(applied);
+    return {'result': applied.say};
   }
 
   /// Запись по номеру или по словам. Подходят несколько — нейросети
@@ -174,6 +171,21 @@ class JarvisBrainTools {
       'choose': [for (final item in found.take(5)) recordForBrain(item)],
       'hint': 'Подходят несколько — выбери id по дню или переспроси хозяина',
     };
+  }
+
+  /// Настройка из полей: у сводки со временем — время, иначе флажок.
+  static JarvisCommand? _setting(Map<String, dynamic> arguments) {
+    final setting = JarvisSwitch.values.asNameMap()['${arguments['setting']}'];
+    if (setting == null) return null;
+    final at = _clock(arguments['time']);
+    final enabled = arguments['enabled'];
+    final briefing = setting == JarvisSwitch.morningBriefing ||
+        setting == JarvisSwitch.eveningBriefing;
+    if (briefing && at != null && enabled != false) {
+      return BriefingAt(
+          evening: setting == JarvisSwitch.eveningBriefing, minutes: at);
+    }
+    return enabled is bool ? SwitchSetting(setting, enabled: enabled) : null;
   }
 
   /// Расход или доход из полей. Валюта — только известная журналу.

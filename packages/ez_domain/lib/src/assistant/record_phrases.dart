@@ -20,13 +20,14 @@ JarvisCommand? recordChangeCommand(String work, DateTime now) {
   }
   final move = _move.firstMatch(work);
   if (move == null) return null;
-  final scan = PhraseScan(move.namedGroup('rest')!);
+  // «На то же время завтра» — время остаётся, меняется только день.
+  final rest = move.namedGroup('rest')!.replaceAll(_sameTime, ' ');
+  final scan = PhraseScan(rest);
   final hits = collectMoments(scan, now);
   if (hits.dates.isEmpty && hits.times.isEmpty && hits.relative.isEmpty) {
     return null;
   }
-  final answer =
-      const TaskPhraseParser().parseAnswer(move.namedGroup('rest')!, now);
+  final answer = const TaskPhraseParser().parseAnswer(rest, now);
   return ChangeRecord(
     RecordChange.move,
     query: _query(scan.work),
@@ -90,7 +91,10 @@ JarvisCommand? refusalCommand(String work, DateTime now) {
       'аккаунты, дальше вы сами.');
 }
 
-/// Слова запроса без местоимений и служебных слов.
+/// Слова запроса без местоимений и служебных слов: «у врача» → «врача»,
+/// «его» → пусто, то есть запись, о которой говорили.
+String recordQuery(String raw) => _query(raw);
+
 String _query(String raw) {
   final words = compactPhrase(raw.replaceAll(_queryNoise, ' '));
   return _pronoun.hasMatch(words) ? '' : words;
@@ -139,6 +143,9 @@ final _changes = <(RegExp, RecordChange)>[
 final _move = phrasePattern('^(?:перенеси|передвинь|перемести|сдвинь|подвинь'
     '|отложи|поменяй\\s+время)\\s+(?<rest>.+)\$');
 
+final _sameTime = phrasePattern(
+    '$wordStart(?:на|в)\\s+(?:то\\s+же|тоже)\\s+(?:самое\\s+)?время$wordEnd');
+
 final _search = phrasePattern('^(?:найди|поищи|ищи|отыщи|покажи'
     '\\s+(?:записи|запись|записки|заметки)\\s+(?:про|о|об|со?\\s+словом))'
     '\\s+(?<q>.+)\$');
@@ -167,7 +174,7 @@ final _signIn = phrasePattern('^(?:войди|зайди\\s+в\\s+аккаунт
 
 final _queryNoise = phrasePattern('$wordStart(?:мне|пожалуйста|запись|записи'
     '|дело|задачу|задача|на|про|о|об|в|из|с|со|как|все|всё|моя|мою|мое|мой'
-    '|у\\s+меня|у)$wordEnd');
+    '|у\\s+меня|у|к|ко|для)$wordEnd');
 
 final _pronoun = phrasePattern('^(?:его|ее|это|эту|этот|ее|их|последн[а-я]*'
     '|только\\s+что[а-я\\s]*)?\$');

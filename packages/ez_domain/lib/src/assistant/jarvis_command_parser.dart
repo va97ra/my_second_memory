@@ -14,6 +14,8 @@ import 'phone_phrases.dart';
 import 'place_phrases.dart';
 import 'record_phrases.dart';
 import 'russian_words.dart';
+import 'record_edit_phrases.dart';
+import 'schedule_phrases.dart';
 import 'setting_phrases.dart';
 import 'small_talk.dart';
 import 'task_phrase.dart';
@@ -40,6 +42,7 @@ class JarvisCommandParser {
         undoCommand(work) ??
         (talk == null ? null : JarvisSay(talk)) ??
         settingCommand(work) ??
+        recordEditCommand(phrase, now) ??
         calculatorCommand(work) ??
         lookCommand(work, now) ??
         factCommand(phrase, now) ??
@@ -47,6 +50,7 @@ class JarvisCommandParser {
         _metroCommand(phrase.text) ??
         routeCommand(work) ??
         historyCommand(work, now) ??
+        scheduleCommand(work, now) ??
         agendaCommand(work, now) ??
         dayQuestionCommand(work, now) ??
         financeCommand(work, now) ??
@@ -114,6 +118,18 @@ class JarvisCommandParser {
   static int _words(String text) =>
       text.split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length;
 }
+
+/// Две просьбы в одной фразе: «перенеси врача на пятницу и напомни за
+/// час», «запиши расход 500 и открой финансы». Правила исполняют одну
+/// команду на фразу и вторую потеряли бы — такую фразу понимает нейросеть,
+/// если она подключена.
+bool isCompoundRequest(String said) =>
+    _action.allMatches(normalizePhrase(said)).length >= 2;
+
+final _action = phrasePattern('$wordStart(?:запиши|запишите|напомни'
+    '|напомните|перенеси|сдвинь|отложи|допиши|добавь|удали|убери|отметь'
+    '|поставь|переименуй|открой|покажи|посчитай|переведи|позвони|напиши'
+    '|включи|выключи|запомни|сделай)$wordEnd');
 
 /// Ответ на вопрос Джарвиса — короткая фраза, которая не просьба: «на
 /// такси», «да», «давай». «Что у меня завтра» и «открой календарь» — уже

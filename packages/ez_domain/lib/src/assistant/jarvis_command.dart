@@ -1,4 +1,6 @@
 import '../finance/finance_entry.dart';
+import '../memory/memory_edit.dart';
+import '../recurrence/recurrence_series.dart';
 import '../tools/unit_converter.dart';
 import 'jarvis_place.dart';
 import 'task_phrase.dart';
@@ -62,6 +64,35 @@ final class AskAgenda extends JarvisCommand {
       from.year == to.year && from.month == to.month && from.day == to.day;
 }
 
+/// «Что у меня дальше», «следующее дело» — ближайшее дело со временем.
+final class AskNext extends JarvisCommand {
+  const AskNext();
+}
+
+/// «Когда я свободен на неделе», «есть окно в пятницу».
+final class AskFree extends JarvisCommand {
+  const AskFree({required this.from, required this.to, required this.label});
+
+  final DateTime from;
+  final DateTime to;
+
+  /// «на неделе», «в пятницу».
+  final String label;
+
+  bool get isOneDay =>
+      from.year == to.year && from.month == to.month && from.day == to.day;
+}
+
+/// «Сколько смен в этом месяце»; [hours] — спросили про часы, а их в
+/// графиках нет; [pastOnly] — «отработал»: только прошедшие дни.
+final class AskShiftCount extends JarvisCommand {
+  const AskShiftCount(this.month, {this.hours = false, this.pastOnly = false});
+
+  final DateTime month;
+  final bool hours;
+  final bool pastOnly;
+}
+
 /// «Что без даты», «какие у меня записки».
 final class AskUndated extends JarvisCommand {
   const AskUndated();
@@ -118,6 +149,31 @@ final class ChangeRecord extends JarvisCommand {
 
   /// Новое время для [RecordChange.move].
   final int? minutes;
+}
+
+/// Поправить запись, найденную по словам [query]: «перенеси врача на час
+/// позже», «напомни о враче за час», «переименуй врача в стоматолога»,
+/// «сделай врача ежемесячным». Пустой запрос — запись, о которой только
+/// что говорили.
+final class EditRecord extends JarvisCommand {
+  const EditRecord({
+    this.query = '',
+    this.edit = const RecordEdit(),
+    this.repeat,
+    this.stopRepeat = false,
+    this.appendTo,
+  });
+
+  final String query;
+  final RecordEdit edit;
+
+  /// Повторять каждый месяц или год.
+  final RecurrenceFrequency? repeat;
+  final bool stopRepeat;
+
+  /// «Допиши к врачу взять полис» без паузы: где кончается название и
+  /// начинается текст, решают записи — какое начало фразы их находит.
+  final String? appendTo;
 }
 
 /// Найти записи по словам и показать их в ленте.
@@ -274,10 +330,13 @@ final class AskFinance extends JarvisCommand {
 /// «Я завтра работаю?» — по графикам смен. «Когда смена?» — ближайшая
 /// рабочая смена начиная с [day].
 final class AskShift extends JarvisCommand {
-  const AskShift(this.day, {this.findNext = false});
+  const AskShift(this.day, {this.findNext = false, this.dayOff = false});
 
   final DateTime day;
   final bool findNext;
+
+  /// «Когда у меня выходной» — ищется день без смены, а не со сменой.
+  final bool dayOff;
 }
 
 /// «Какие у меня будильники», «когда будильник» — будильники Ежедневника:
@@ -302,14 +361,34 @@ final class AskHolidays extends JarvisCommand {
   final DateTime day;
 }
 
-/// Переключатели настроек, которыми управляет Джарвис.
-enum JarvisSwitch { hints, holidays, observances }
+/// Переключатели настроек, которыми управляет Джарвис: приложения и его
+/// собственные. Отзыв на имя голосом только выключается — включённым его
+/// уже никто не услышит.
+enum JarvisSwitch {
+  hints,
+  holidays,
+  observances,
+  wakeWord,
+  speakReminders,
+  detailedCards,
+  morningBriefing,
+  eveningBriefing,
+}
 
 final class SwitchSetting extends JarvisCommand {
   const SwitchSetting(this.setting, {required this.enabled});
 
   final JarvisSwitch setting;
   final bool enabled;
+}
+
+/// «Утреннюю сводку в 8»: сводка включается и приходит в [minutes] от
+/// полуночи.
+final class BriefingAt extends JarvisCommand {
+  const BriefingAt({required this.evening, required this.minutes});
+
+  final bool evening;
+  final int minutes;
 }
 
 /// Темы, которые можно назвать голосом.

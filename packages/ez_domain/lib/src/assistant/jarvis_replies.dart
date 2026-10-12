@@ -87,7 +87,7 @@ class JarvisReplies {
 
   static String nothingMentioned(RecordChange change) => switch (change) {
         RecordChange.move => 'Какую запись перенести? Назовите её.',
-        _ => 'Какую запись? Назовите её.',
+        _ => whichRecord,
       };
 
   /// «Стоматолог — в пятницу в 10 часов утра.»
@@ -95,9 +95,18 @@ class JarvisReplies {
   static String edited(MemoryItem item, DateTime now) =>
       'Поправил. ${when(item, now)}';
 
+  /// Будильник у записи не встал: нет времени, оно прошло или телефон не
+  /// дал звука.
+  static const noAlarm = 'Будильник не поставил: у записи нет времени впереди.';
+
   /// «Врач — каждый месяц 8-го в 10 часов утра.»
   static String repeating(MemoryItem item, RecurrenceFrequency frequency) =>
       '${capitalizeFirst(item.title)} — ${_repeatOf(item, frequency)}.';
+
+  static const undatedRepeat =
+      'У записки без даты повтора нет — сначала назовите день.';
+
+  static const whichRecord = 'Какую запись? Назовите её.';
 
   static String notRepeating(MemoryItem item) =>
       '«${item.title}» больше не повторяется.';
@@ -152,13 +161,30 @@ class JarvisReplies {
       };
 
   static String switched(JarvisSwitch setting, bool enabled) {
-    final what = switch (setting) {
-      JarvisSwitch.hints => 'подсказки',
-      JarvisSwitch.holidays => 'праздники в календаре',
-      JarvisSwitch.observances => 'международные дни',
-    };
+    if (setting == JarvisSwitch.wakeWord && !enabled) {
+      return 'Больше не отзываюсь на имя. Вернуть — в настройках Джарвиса '
+          'или кнопкой.';
+    }
+    final what = switchName(setting);
     return enabled ? 'Включил $what.' : 'Выключил $what.';
   }
+
+  /// Как переключатель называется вслух — и для нейросети.
+  static String switchName(JarvisSwitch setting) => switch (setting) {
+        JarvisSwitch.hints => 'подсказки',
+        JarvisSwitch.holidays => 'праздники в календаре',
+        JarvisSwitch.observances => 'международные дни',
+        JarvisSwitch.wakeWord => 'отзыв на имя',
+        JarvisSwitch.speakReminders => 'напоминания вслух',
+        JarvisSwitch.detailedCards => 'подробную карточку дела',
+        JarvisSwitch.morningBriefing => 'утреннюю сводку',
+        JarvisSwitch.eveningBriefing => 'вечернюю сводку',
+      };
+
+  /// «Утренняя сводка — в 8 часов утра.»
+  static String briefingAt(BriefingAt command) =>
+      '${command.evening ? 'Вечерняя' : 'Утренняя'} сводка — '
+      '${spokenAt(command.minutes)}.';
 
   /// Фраза без просьбы записать и без дня — дело это или разговор, не
   /// ясно. Спросить честнее, чем записать наугад.

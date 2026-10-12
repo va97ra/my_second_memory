@@ -10,6 +10,7 @@ import 'jarvis_look.dart';
 import 'jarvis_outcome.dart';
 import 'jarvis_phone.dart';
 import 'jarvis_places.dart';
+import 'jarvis_record_edits.dart';
 import 'jarvis_records.dart';
 import 'jarvis_settings_actions.dart';
 
@@ -33,6 +34,9 @@ class JarvisExecutor {
 
   /// Записи — для нейросети: она видит их, прежде чем отвечать о делах.
   JarvisRecords get records => _records;
+
+  /// Правка записей — для нейросети тем же путём, что и голосом.
+  late final edits = JarvisRecordEdits(_ref, _records);
 
   /// Смены и праздники — тоже для нейросети: «свободный день» без них не
   /// понять.
@@ -70,6 +74,9 @@ class JarvisExecutor {
       LookAtPage() => _look.look(command, now),
       AskWhen(:final query) => _records.when(query, now),
       AskShift() => _answers.shift(command, now),
+      AskShiftCount() => _answers.shiftCount(command, now),
+      AskNext() => _answers.next(now),
+      AskFree() => _answers.free(command, now),
       AskHolidays() => _answers.holidays(command, now),
       AskAlarms() => _answers.alarms(now),
       AskMetroRoute(:final from, :final to) =>
@@ -87,6 +94,8 @@ class JarvisExecutor {
       CreateNote(:final text) => await _records.createNote(text, now),
       ChangeRecord() =>
         await _records.change(command, mentioned: mentioned, now: now),
+      EditRecord() =>
+        await edits.editRecord(command, mentioned: mentioned, now: now),
       SearchRecords(:final query) => _records.search(query, now),
       Calculate() => await _calculator.calculate(command),
       CalculatorCommand() => await _calculator.run(command),
@@ -95,11 +104,15 @@ class JarvisExecutor {
       ConvertCurrency() => await _answers.currency(command, now),
       AddFinanceEntry() => await _settings.addFinance(command, now),
       SwitchSetting() => await _settings.toggle(command),
+      BriefingAt() => await _settings.briefingAt(command),
       ChangeTheme() => await _settings.theme(command),
       PhoneCommand() => await _ref.read(jarvisPhoneProvider).run(command),
       RouteTo(:final to) => await _route(to, mentioned, now),
     };
   }
+
+  /// Настройки — для нейросети: что включено, какая тема, когда сводки.
+  Map<String, Object?> get settings => _settings.forBrain();
 
   /// Журнал финансов — для нейросети: только то, что записано в Ежедневнике.
   List<FinanceEntry> get finance => _ref.read(financeControllerProvider);

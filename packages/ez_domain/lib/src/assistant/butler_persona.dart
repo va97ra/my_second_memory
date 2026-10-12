@@ -32,8 +32,9 @@ class ButlerPersona {
 
     // «Записал: …» — обращение перед двоеточием, если оно близко к началу
     // и первая фраза не кончилась раньше: «Что вы хотите? …: …» — в конец
-    // вопроса, а не в середину подсказки.
-    final colon = trimmed.indexOf(':');
+    // вопроса, а не в середину подсказки. Двоеточие времени («10:30») — не
+    // разделитель: иначе выходило «с 10, сэр:30 утра».
+    final colon = trimmed.indexOf(RegExp(r':(\s|$)'));
     final end = RegExp(r'[.?!…](\s|$)').firstMatch(trimmed);
     if (colon > 0 && colon < 60 && (end == null || colon < end.start)) {
       return '${trimmed.substring(0, colon)}, $name${trimmed.substring(colon)}';

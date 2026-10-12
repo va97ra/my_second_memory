@@ -33,4 +33,17 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(controller.state, isFalse);
   });
+
+  test('switched before the stored value arrived — the switch wins', () async {
+    // Джарвис выключил настройку сразу после запуска: дочитанное с диска
+    // старее и не должно вернуть её обратно.
+    SharedPreferences.setMockInitialValues({});
+    // Как в работающем приложении: хранилище уже открыто.
+    await SharedPreferences.getInstance();
+    final controller =
+        BoolSettingController(storageKey: 'jarvis_speak_v1', initial: true);
+    await controller.setEnabled(false);
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.state, isFalse);
+  });
 }

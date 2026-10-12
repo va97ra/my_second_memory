@@ -123,7 +123,7 @@ class JarvisBrain {
     while (_history.length > _keptReplies) {
       _history.removeAt(0);
     }
-    return _merge(spoken, outcomes);
+    return JarvisOutcome.merged(spoken, outcomes);
   }
 
   Future<Object?> _run(
@@ -252,34 +252,5 @@ class JarvisBrain {
       if (decoded is Map) return Map<String, dynamic>.from(decoded);
     }
     return const {};
-  }
-
-  /// Несколько действий за один ответ — одна отмена на все: возвращается
-  /// всё, что нейросеть сделала по этой просьбе, в обратном порядке.
-  static JarvisOutcome _merge(String say, List<JarvisOutcome> outcomes) {
-    final undos = [
-      for (final outcome in outcomes)
-        if (outcome.undo != null) outcome.undo!,
-    ];
-    JarvisOutcome? lastWith(bool Function(JarvisOutcome) has) {
-      for (final outcome in outcomes.reversed) {
-        if (has(outcome)) return outcome;
-      }
-      return null;
-    }
-
-    return JarvisOutcome(
-      say,
-      open: lastWith((outcome) => outcome.open != null)?.open,
-      link: lastWith((outcome) => outcome.link != null)?.link,
-      mentioned: lastWith((outcome) => outcome.mentioned != null)?.mentioned,
-      undo: undos.isEmpty
-          ? null
-          : () async {
-              for (final undo in undos.reversed) {
-                await undo();
-              }
-            },
-    );
   }
 }

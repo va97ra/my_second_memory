@@ -106,6 +106,11 @@ class FakeReminderScheduler implements ReminderScheduler {
   Future<List<ReminderSoundSelection>> systemSounds() async => const [];
 
   @override
+  Future<ReminderSoundSelection?> defaultAlarmSound() async =>
+      const ReminderSoundSelection(
+          uri: 'content://alarm/default', name: defaultAlarmSoundName);
+
+  @override
   Future<void> schedule(MemoryItem item) async => scheduled.add(item.id);
 
   @override

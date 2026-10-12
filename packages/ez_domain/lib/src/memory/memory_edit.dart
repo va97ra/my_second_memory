@@ -11,12 +11,14 @@ class RecordEdit {
   const RecordEdit({
     this.date,
     this.minutes,
+    this.shiftMinutes,
     this.durationMinutes,
     this.title,
     this.addText,
     this.urgent,
     this.reminderBefore,
     this.removeReminder = false,
+    this.alarm,
   });
 
   /// Новый день.
@@ -24,6 +26,10 @@ class RecordEdit {
 
   /// Новое время начала, минут от полуночи.
   final int? minutes;
+
+  /// Сдвинуть на столько минут: «на час позже» — 60, «на полчаса раньше» —
+  /// −30. Через полночь дело переезжает на соседний день.
+  final int? shiftMinutes;
 
   /// Сколько займёт: конец — начало плюс столько.
   final int? durationMinutes;
@@ -40,28 +46,43 @@ class RecordEdit {
   final int? reminderBefore;
   final bool removeReminder;
 
+  /// Будильник: звенит громко в момент напоминания, а без напоминания — в
+  /// начале дела. false — снять будильник, тихое напоминание остаётся.
+  final bool? alarm;
+
   bool get isEmpty =>
       date == null &&
       minutes == null &&
+      shiftMinutes == null &&
       durationMinutes == null &&
       title == null &&
       addText == null &&
       urgent == null &&
       reminderBefore == null &&
-      !removeReminder;
+      !removeReminder &&
+      alarm == null;
 }
 
 /// Запись после правки [edit]. День и время переносятся по правилам
 /// переноса ([movedMemoryItem]): напоминание едет вместе с делом.
 /// Напоминание в прошлом не ставится — оно не сработало бы молча.
+/// Будильник звенит [alarmSound]; нет его или нет времени — не ставится.
 MemoryItem editedMemoryItem(
   MemoryItem item,
   RecordEdit edit, {
   required DateTime now,
+  ({String uri, String name})? alarmSound,
 }) {
   var result = edit.date != null || edit.minutes != null
       ? movedMemoryItem(item, date: edit.date, minutes: edit.minutes, now: now)
       : item.copyWith(updatedAt: now);
+  if (edit.shiftMinutes case final shift? when result.timeMinutes != null) {
+    final day = result.memoryDate;
+    final moment =
+        DateTime(day.year, day.month, day.day, 0, result.timeMinutes! + shift);
+    result = movedMemoryItem(result,
+        date: moment, minutes: moment.hour * 60 + moment.minute, now: now);
+  }
   final start = result.timeMinutes;
   if (edit.durationMinutes case final length? when start != null) {
     result =
@@ -77,11 +98,24 @@ MemoryItem editedMemoryItem(
     result = result.copyWith(priority: urgent ? 1 : 0);
   }
   if (edit.removeReminder) {
-    result = result.copyWith(clearReminder: true);
+    result = result.copyWith(clearReminder: true, clearReminderSound: true);
   } else if (edit.reminderBefore case final before? when start != null) {
     final at = reminderMomentOn(result.memoryDate, start)
         .subtract(Duration(minutes: before));
     if (at.isAfter(now)) result = result.copyWith(remindAt: at);
+  }
+  if (edit.alarm == false) {
+    result = result.copyWith(clearReminderSound: true);
+  } else if (edit.alarm == true && !edit.removeReminder) {
+    final at = result.remindAt ??
+        (start == null ? null : reminderMomentOn(result.memoryDate, start));
+    if (alarmSound != null && at != null && at.isAfter(now)) {
+      result = result.copyWith(
+        remindAt: at,
+        reminderSoundUri: alarmSound.uri,
+        reminderSoundName: alarmSound.name,
+      );
+    }
   }
   return result;
 }

@@ -63,9 +63,12 @@ class JarvisBriefingSettingsController
   static const _evening = 'jarvis_briefing_evening_v1';
   static const _eveningAt = 'jarvis_briefing_evening_at_v1';
 
+  /// Поменяли раньше, чем дочиталось с диска, — прочитанное старее.
+  var _changed = false;
+
   Future<void> _load() async {
     final preferences = await SharedPreferences.getInstance();
-    if (!mounted) return;
+    if (_changed || !mounted) return;
     state = state.copyWith(
       morning: preferences.getBool(_morning),
       morningAt: preferences.getInt(_morningAt),
@@ -75,6 +78,7 @@ class JarvisBriefingSettingsController
   }
 
   Future<void> setMorning({bool? enabled, int? at}) async {
+    _changed = true;
     state = state.copyWith(morning: enabled, morningAt: at);
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool(_morning, state.morning);
@@ -82,6 +86,7 @@ class JarvisBriefingSettingsController
   }
 
   Future<void> setEvening({bool? enabled, int? at}) async {
+    _changed = true;
     state = state.copyWith(evening: enabled, eveningAt: at);
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool(_evening, state.evening);

@@ -6,6 +6,7 @@ import 'package:ez_domain/ez_domain.dart'
 import 'package:ezhednevnik_v2/src/app/local_storage_scope_provider.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_brain.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_brain_providers.dart';
+import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_briefings.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_controller.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_message.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_online.dart';
@@ -272,7 +273,7 @@ void main() {
         },
       })
       ..add({'role': 'assistant', 'content': 'Свободна суббота.'});
-    await say(c, 'какой день на этой неделе самый свободный?');
+    await say(c, 'в какие дни на этой неделе я посвободнее?');
     final days = jsonDecode(((server.requests.last['messages'] as List).last
         as Map)['content'] as String) as List;
     expect(days[0], {
@@ -485,7 +486,9 @@ void main() {
       ..add(calls('update_record', {'query': 'врач', 'repeat': 'none'}))
       ..add({'role': 'assistant', 'content': 'Больше не повторяю.'});
 
-    await say(c, 'пусть врач будет каждый месяц');
+    // «Пусть врач будет каждый месяц» правила понимают сами — нейросети
+    // достаётся то, что сказано по-своему.
+    await say(c, 'а врача можно сделать постоянным, раз в месяц чтоб был');
     expect(lastResult()['result'], 'Врач — каждый месяц 8-го в 10 часов утра.');
     expect(c.read(recurrenceSeriesControllerProvider).single.frequency,
         RecurrenceFrequency.monthly);
@@ -499,6 +502,56 @@ void main() {
     await c.read(jarvis.notifier).undo();
     expect(c.read(recurrenceSeriesControllerProvider).single.frequency,
         RecurrenceFrequency.monthly);
+  });
+
+  test('настройки нейросеть видит и меняет — с отменой', () async {
+    final c = await start();
+    server.replies
+      ..add(calls('get_settings', {}))
+      ..add(calls(
+          'change_setting', {'setting': 'speakReminders', 'enabled': false}))
+      ..add(calls(
+          'change_setting', {'setting': 'morningBriefing', 'time': '07:30'}))
+      ..add({'role': 'assistant', 'content': 'Готово, сэр.'});
+    await say(c,
+        'напоминания вслух не читай, а утром присылай сводку пораньше, к половине восьмого');
+    final requests = server.requests;
+    final seen = jsonDecode(((requests[1]['messages'] as List).last
+        as Map)['content'] as String) as Map;
+    expect((seen['speakReminders'], seen['morningBriefing']), (true, 'в 9:00'));
+    expect(c.read(jarvisSpeakRemindersProvider), isFalse);
+    expect(c.read(jarvisBriefingSettingsProvider).morningAt, 7 * 60 + 30);
+
+    await c.read(jarvis.notifier).undo();
+    expect(c.read(jarvisSpeakRemindersProvider), isTrue);
+    expect(c.read(jarvisBriefingSettingsProvider).morningAt, 9 * 60);
+  });
+
+  test('будильник у записи — звук будильника телефона', () async {
+    final c = await start();
+    await say(c, 'запиши завтра в 10 врач');
+    server.replies
+      ..add(calls('update_record', {'query': 'врач', 'alarm': true}))
+      ..add({'role': 'assistant', 'content': 'Разбужу.'});
+    await say(c, 'к врачу меня разбуди будильником, а не пиликалкой');
+    final item = c.read(memoryItemsControllerProvider).single;
+    expect((item.reminderSoundUri, item.reminderSoundName),
+        ('content://alarm/default', defaultAlarmSoundName));
+  });
+
+  test('две просьбы в одной фразе — нейросети, а не половина правилам',
+      () async {
+    final c = await start();
+    await say(c, 'запиши завтра в 10 врач');
+    final id = c.read(memoryItemsControllerProvider).single.id;
+    server.replies
+      ..add(calls('update_record',
+          {'id': id, 'date': '2099-10-09', 'remind_minutes_before': 60}))
+      ..add({'role': 'assistant', 'content': 'Перенёс и напомню за час.'});
+    await say(c, 'перенеси врача на пятницу и напомни за час');
+    final doctor = c.read(memoryItemsControllerProvider).single;
+    expect((doctor.memoryDate, doctor.remindAt),
+        (DateTime(2099, 10, 9), DateTime(2099, 10, 9, 9)));
   });
 
   test('трату нейросеть пишет в журнал финансов со статьёй', () async {

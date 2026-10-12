@@ -148,6 +148,14 @@ class JarvisController extends StateNotifier<JarvisConversation> {
       }
     }
     final command = const JarvisCommandParser().parse(said, now);
+    // Две просьбы сразу правила исполнили бы наполовину.
+    if (command is! UndoLast && isCompoundRequest(said)) {
+      final brain = await _brain();
+      if (brain != null) {
+        await _askBrainWith(brain, said, now);
+        return;
+      }
+    }
     switch (command) {
       case null:
         return;

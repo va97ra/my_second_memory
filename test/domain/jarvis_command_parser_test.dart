@@ -320,6 +320,109 @@ void main() {
       expect(
           as<SwitchSetting>('скрой праздники').setting, JarvisSwitch.holidays);
     });
+
+    test('свои настройки Джарвиса', () {
+      (JarvisSwitch, bool) switched(String phrase) {
+        final command = as<SwitchSetting>(phrase);
+        return (command.setting, command.enabled);
+      }
+
+      expect(switched('не отзывайся на имя'), (JarvisSwitch.wakeWord, false));
+      expect(switched('не читай напоминания вслух'),
+          (JarvisSwitch.speakReminders, false));
+      expect(switched('читай напоминания вслух'),
+          (JarvisSwitch.speakReminders, true));
+      expect(switched('без подробной карточки дела'),
+          (JarvisSwitch.detailedCards, false));
+      expect(switched('не присылай вечернюю сводку'),
+          (JarvisSwitch.eveningBriefing, false));
+      expect(switched('включи утреннюю сводку'),
+          (JarvisSwitch.morningBriefing, true));
+      final morning = as<BriefingAt>('утреннюю сводку в 8');
+      expect((morning.evening, morning.minutes), (false, 8 * 60));
+      final evening = as<BriefingAt>('присылай вечернюю сводку в 9');
+      expect((evening.evening, evening.minutes), (true, 21 * 60));
+      // Напоминание о деле — дело, а не настройка голоса.
+      expect(parse('напомни завтра в 9 позвонить маме'), isA<CreateTasks>());
+    });
+  });
+
+  test('две просьбы в одной фразе узнаются', () {
+    expect(isCompoundRequest('перенеси врача на пятницу и напомни за час'),
+        isTrue);
+    expect(isCompoundRequest('перенеси врача на пятницу'), isFalse);
+    expect(isCompoundRequest('в пятницу врач, в субботу дача'), isFalse);
+  });
+
+  group('время и работа', () {
+    test('дальше, свободно, выходной, смены', () {
+      expect(parse('что у меня дальше'), isA<AskNext>());
+      expect(parse('какое следующее дело'), isA<AskNext>());
+      final week = as<AskFree>('когда я свободен на неделе');
+      expect((week.from, week.to),
+          (DateTime(2026, 10, 7), DateTime(2026, 10, 11)));
+      expect(as<AskFree>('есть окно в пятницу').isOneDay, isTrue);
+      final off = as<AskShift>('когда у меня выходной');
+      expect((off.findNext, off.dayOff), (true, true));
+      final count = as<AskShiftCount>('сколько часов отработал');
+      expect((count.month, count.hours, count.pastOnly),
+          (DateTime(2026, 10), true, true));
+      expect(
+          as<AskShiftCount>('сколько смен в ноябре').month, DateTime(2026, 11));
+    });
+
+    test('«что в пятницу?» — вопрос, а не дело', () {
+      expect(as<AskAgenda>('что в пятницу?').from, DateTime(2026, 10, 9));
+      expect(as<AskAgenda>('а что завтра').from, DateTime(2026, 10, 8));
+    });
+
+    test('«на что больше всего тратил» — по статьям, а не статья', () {
+      expect(as<AskFinanceHistory>('на что больше всего тратил').what, isEmpty);
+    });
+  });
+
+  group('правка записей', () {
+    RecordEdit edit(String phrase) => as<EditRecord>(phrase).edit;
+
+    test('время, напоминание, будильник', () {
+      expect(edit('перенеси врача на час позже').shiftMinutes, 60);
+      expect(edit('перенеси врача на 15 минут раньше').shiftMinutes, -15);
+      expect(edit('отложи врача на полчаса').shiftMinutes, 30);
+      expect(edit('напомни о враче за час').reminderBefore, 60);
+      expect(
+          edit('напомни мне про стоматолога за день').reminderBefore, 24 * 60);
+      expect(edit('убери напоминание у врача').removeReminder, isTrue);
+      expect(as<EditRecord>('убери напоминание').query, isEmpty);
+      expect(edit('поставь будильник на врача').alarm, isTrue);
+      expect(edit('сними будильник с врача').alarm, isFalse);
+      // Названо время — это будильник телефона и перенос, а не правка.
+      expect(parse('поставь будильник на 7 утра'), isA<PhoneAlarm>());
+      expect(
+          as<ChangeRecord>('перенеси встречу на 2 часа дня').minutes, 14 * 60);
+      final sameTime = as<ChangeRecord>('перенеси врача на то же время завтра');
+      expect((sameTime.query, sameTime.date, sameTime.minutes),
+          ('врача', DateTime(2026, 10, 8), null));
+    });
+
+    test('название, текст, длительность, срочность, повтор', () {
+      expect(edit('переименуй врача в стоматолог').title, 'Стоматолог');
+      final colon = as<EditRecord>('допиши к врачу: взять полис');
+      expect((colon.query, colon.edit.addText), ('врачу', 'взять полис'));
+      final note = as<EditRecord>('допиши в записку про ремонт — обои');
+      expect((note.query, note.edit.addText), ('ремонт', 'обои'));
+      expect(as<EditRecord>('допиши к врачу взять полис').appendTo,
+          'врачу взять полис');
+      expect(edit('врач займёт два часа').durationMinutes, 120);
+      expect(edit('сделай врача срочным').urgent, isTrue);
+      expect(edit('сними срочность с врача').urgent, isFalse);
+      expect(as<EditRecord>('сделай врача ежемесячным').repeat,
+          RecurrenceFrequency.monthly);
+      expect(as<EditRecord>('пусть врач повторяется каждый год').repeat,
+          RecurrenceFrequency.yearly);
+      expect(as<EditRecord>('перестань повторять врача').stopRepeat, isTrue);
+      // Новое дело с повтором — не правка.
+      expect(parse('сделай уборку каждый месяц'), isA<CreateTasks>());
+    });
   });
 
   group('пересечения', () {

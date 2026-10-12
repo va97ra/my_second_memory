@@ -5,6 +5,7 @@ import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
 import 'package:ezhednevnik_v2/src/features/calculator/state/calculator_controller.dart';
 import 'package:ezhednevnik_v2/src/features/converter/state/converter_controller.dart';
 import 'package:ezhednevnik_v2/src/features/finance/finance.dart';
+import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_briefings.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_controller.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_executor.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_facts.dart';
@@ -13,6 +14,7 @@ import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_page.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/memory_items.dart';
 import 'package:ezhednevnik_v2/src/features/recurrence/recurrence.dart';
 import 'package:ezhednevnik_v2/src/features/security/security.dart';
+import 'package:ezhednevnik_v2/src/features/shift_schedules/shift_schedules.dart';
 import 'package:ezhednevnik_v2/src/shared/state/notification_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -128,6 +130,103 @@ void main() {
 
     await say(c, 'отмени');
     expect(rows(c).single.memoryDate, DateTime(2099, 10, 8));
+  });
+
+  test('правка голосом без сети: каждое — одно и с отменой', () async {
+    final c = await start();
+    await say(c, 'завтра в 10 врач');
+    MemoryItem doctor() => rows(c).single;
+
+    expect(await say(c, 'перенеси врача на час позже'),
+        'Поправил, сэр. Врач — завтра в 11 часов утра.');
+    expect((doctor().timeMinutes, doctor().remindAt),
+        (11 * 60, DateTime(2099, 10, 8, 11)));
+    await say(c, 'отмени');
+    expect(doctor().timeMinutes, 10 * 60);
+
+    await say(c, 'напомни о враче за час');
+    expect(doctor().remindAt, DateTime(2099, 10, 8, 9));
+    // Без двоеточия: где кончается название, решают записи.
+    await say(c, 'допиши к врачу взять полис');
+    expect(doctor().body, contains('взять полис'));
+    await say(c, 'сделай врача срочным');
+    expect(doctor().priority, 1);
+    await say(c, 'врач займёт два часа');
+    expect(doctor().endMinutes, 12 * 60);
+
+    // Раньше «убери» отправляло врача в архив вместе с напоминанием.
+    await say(c, 'убери напоминание у врача');
+    expect((doctor().remindAt, doctor().isArchived), (null, false));
+
+    expect(await say(c, 'перенеси бассейн на час позже'),
+        startsWith('Не нашёл записи про «бассейн»'));
+  });
+
+  test('будильник и повтор у готовой записи — голосом без сети', () async {
+    final c = await start();
+    await say(c, 'завтра в 10 врач');
+    await say(c, 'поставь будильник на врача');
+    expect(rows(c).single.reminderSoundUri, 'content://alarm/default');
+    await say(c, 'сними будильник с врача');
+    expect(rows(c).single.reminderSoundUri, isNull);
+
+    expect(await say(c, 'сделай врача ежемесячным'),
+        'Врач — каждый месяц 8-го в 10 часов утра, сэр.');
+    expect(c.read(recurrenceSeriesControllerProvider), hasLength(1));
+    await say(c, 'перестань повторять врача');
+    expect(c.read(recurrenceSeriesControllerProvider), isEmpty);
+    expect(rows(c), hasLength(1));
+  });
+
+  test('свои настройки Джарвиса голосом — с отменой', () async {
+    final c = await start();
+    expect(await say(c, 'не читай напоминания вслух'),
+        'Выключил напоминания вслух, сэр.');
+    expect(c.read(jarvisSpeakRemindersProvider), isFalse);
+    await say(c, 'отмени');
+    expect(c.read(jarvisSpeakRemindersProvider), isTrue);
+
+    expect(await say(c, 'утреннюю сводку в 7'),
+        'Утренняя сводка — в 7 часов утра, сэр.');
+    expect(c.read(jarvisBriefingSettingsProvider).morningAt, 7 * 60);
+    await say(c, 'не присылай вечернюю сводку');
+    expect(c.read(jarvisBriefingSettingsProvider).evening, isFalse);
+  });
+
+  test('вопросы о времени без сети: дальше, окна, свободные дни', () async {
+    final c = await start();
+    await say(c, 'завтра в 10 врач');
+    await say(c, 'завтра в 15 стрижка');
+    expect(await say(c, 'что у меня дальше'),
+        'Дальше — врач, завтра в 10 часов утра, сэр.');
+    expect(
+        await say(c, 'есть окно завтра'),
+        'Завтра свободно с 8 часов утра до 10 часов утра, '
+        'с 10:30 утра до 3 часа дня и с 3:30 дня до 10 часов вечера, сэр.');
+    // Неделя — с сегодняшней среды по воскресенье; четверг занят.
+    expect(await say(c, 'когда я свободен на неделе'),
+        'На неделе свободны, сэр: сегодня, послезавтра, в субботу, в воскресенье.');
+  });
+
+  test('смены: выходной, сколько смен, часов в графиках нет', () async {
+    final c = await start();
+    await c.read(shiftSchedulesControllerProvider.notifier).add(ShiftSchedule(
+          id: 'yandex',
+          organizationName: 'Яндекс',
+          colorValue: 0xFFE53935,
+          startDate: DateTime(2099, 10, 1),
+          workDays: 2,
+          restDays: 2,
+        ));
+    // 1–2 октября работа, 3–4 отдых, …: 7 октября — третий день цикла.
+    expect(
+        await say(c, 'когда у меня выходной'), 'Сегодня у вас выходной, сэр.');
+    expect(await say(c, 'сколько смен в этом месяце'),
+        'В этом месяце у вас 16 смен, сэр.');
+    expect(
+        await say(c, 'сколько часов отработал'),
+        'Часы в графиках смен не записаны — только дни, сэр. С начала месяца '
+        'отработано 4 смены.');
   });
 
   test('отметить по словам и вернуть в работу', () async {

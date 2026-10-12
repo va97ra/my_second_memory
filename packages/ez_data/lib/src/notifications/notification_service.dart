@@ -25,6 +25,9 @@ class ReminderSoundSelection {
 
 enum ReminderSoundSource { system, audioFile }
 
+/// Имя звука будильника по умолчанию — им он подписан в записи.
+const defaultAlarmSoundName = 'Будильник телефона';
+
 abstract class ReminderScheduler {
   Stream<String> get openedItemIds;
 
@@ -35,6 +38,10 @@ abstract class ReminderScheduler {
   Future<bool> requestPermissions();
 
   Future<List<ReminderSoundSelection>> systemSounds();
+
+  /// Звук будильника телефона по умолчанию: им звенят будильники смен и
+  /// записи, которым будильник поставил Джарвис.
+  Future<ReminderSoundSelection?> defaultAlarmSound();
 
   Future<ReminderSoundSelection?> selectSound({
     String? currentUri,
@@ -165,6 +172,16 @@ class NotificationService
             name: entry['name'] as String? ?? 'Системный звук',
           ),
     ];
+  }
+
+  @override
+  Future<ReminderSoundSelection?> defaultAlarmSound() async {
+    if (!isSupported) return null;
+    final uri =
+        await _notificationChannel.invokeMethod<String>('getDefaultAlarmSound');
+    return uri == null || uri.isEmpty
+        ? null
+        : ReminderSoundSelection(uri: uri, name: defaultAlarmSoundName);
   }
 
   @override
@@ -371,9 +388,11 @@ class NotificationService
     }
     // Голос — одной пересылкой на весь источник: так он догоняет и
     // напоминания, поставленные до того, как у Джарвиса появился голос.
-    await _voice.sync(source, [
-      for (final item in items.where(wantsReminder)) _spoken(item),
-    ].nonNulls);
+    await _voice.sync(
+        source,
+        [
+          for (final item in items.where(wantsReminder)) _spoken(item),
+        ].nonNulls);
   }
 
   @override
@@ -454,10 +473,7 @@ class NotificationService
         if (times.isEmpty) continue;
         // Звук берётся один раз на будильник: обращение за системным звуком
         // ходит на платформу, а дней у одного графика десятки.
-        var soundUri = alarm.soundUri ??
-            await _notificationChannel.invokeMethod<String>(
-              'getDefaultAlarmSound',
-            );
+        var soundUri = alarm.soundUri ?? (await defaultAlarmSound())?.uri;
         for (final alarmAt in times) {
           final notificationId = _shiftAlarmId(schedule.id, slot, alarmAt);
           desiredIds.add(notificationId);

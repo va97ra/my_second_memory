@@ -40,6 +40,7 @@ void main() {
         (readDetail(task, need, said, now) as ClarificationDetail).task;
     expect(answer(TaskNeed.duration, 'полчаса').durationMinutes, 30);
     expect(answer(TaskNeed.duration, 'до часу дня').durationMinutes, 60);
+    expect(answer(TaskNeed.duration, 'два дня').durationMinutes, 2 * 24 * 60);
     expect(answer(TaskNeed.place, 'на Ленина 5').address, 'Ленина, 5');
     expect(answer(TaskNeed.place, 'в поликлинику').address, 'В поликлинику');
     expect(answer(TaskNeed.details, 'взять паспорт и полис').details,

@@ -18,7 +18,8 @@ export 'src/assistant/calculation_phrases.dart'
 export 'src/assistant/clarification_phrases.dart';
 export 'src/assistant/currency_phrases.dart' show currencyReply, currencyWords;
 export 'src/assistant/day_question_phrases.dart'
-    show AlarmMention, alarmsReply, holidaysReply, shiftReply;
+    show AlarmMention, alarmsReply, holidaysReply, shiftCountReply, shiftReply;
+export 'src/assistant/free_time.dart';
 export 'src/assistant/fact_phrases.dart' show FactReplies, factFor;
 export 'src/assistant/finance_phrases.dart'
     show defaultFinanceCategory, financeCategoryAnswer, financeReply;
@@ -29,6 +30,7 @@ export 'src/assistant/jarvis_replies.dart';
 export 'src/assistant/phone_phrases.dart'
     show PhoneReplies, alarmMinutes, bestContact, durationSeconds, spokenSeconds;
 export 'src/assistant/record_lookup.dart';
+export 'src/assistant/record_phrases.dart' show recordQuery;
 export 'src/assistant/moment_hits.dart' show PhraseRepeat, PhraseRepeatKind;
 export 'src/assistant/russian_words.dart'
     show capitalizeFirst, joinWithAnd, lowerFirst, normalizePhrase, searchStems;
