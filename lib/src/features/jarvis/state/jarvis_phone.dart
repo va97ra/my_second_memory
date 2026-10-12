@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/state/maps_route.dart';
 import 'jarvis_outcome.dart';
 
 final jarvisPhoneProvider = Provider<JarvisPhone>((ref) => const JarvisPhone());
@@ -84,10 +85,11 @@ class JarvisPhone {
     }
   }
 
-  /// Маршрут в картах телефона: «Яндекс Карты», а без них — Google Maps.
+  /// Маршрут в картах телефона — тем же путём, что кнопка «Маршрут» у
+  /// записи.
   Future<JarvisOutcome> route(String to) async {
     if (!_supported) return const JarvisOutcome(PhoneReplies.notHere);
-    final app = await _call<String>('route', {'to': to});
+    final app = await const MapsRoute().open(to);
     return JarvisOutcome(
         app == null ? RouteReplies.noMaps : RouteReplies.opened(to, app));
   }

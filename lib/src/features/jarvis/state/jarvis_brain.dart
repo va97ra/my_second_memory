@@ -3,16 +3,18 @@ import 'dart:convert';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 
+import 'jarvis_brain_tools.dart';
 import 'jarvis_executor.dart';
 import 'jarvis_online.dart';
 import 'jarvis_outcome.dart';
 
 /// Нейросеть Джарвиса: свободная речь, советы, ответы на любые вопросы.
 ///
-/// Действует она той же рукой, что и правила: функция `run_command` отдаёт
-/// короткую команду разбору фраз и исполнителю. Своих способов менять
-/// данные у нейросети нет, а значит, нет и второго описания того, что
-/// Джарвис умеет.
+/// Видит она весь Ежедневник, кроме «Аккаунтов», а действует теми же руками,
+/// что и правила: записи, деньги и страницы — точными функциями
+/// ([JarvisBrainTools]), остальное — `run_command`, короткой командой разбору
+/// фраз. Своих способов менять данные у нейросети нет: всё идёт через
+/// исполнителя, с той же отменой.
 class JarvisBrain {
   JarvisBrain({
     required GigaChatClient client,
@@ -25,6 +27,7 @@ class JarvisBrain {
   final GigaChatClient _client;
   final JarvisExecutor _executor;
   final JarvisOnline _online;
+  late final _tools = JarvisBrainTools(_executor);
 
   /// Разговор помнится полчаса и не дольше двенадцати реплик: дальше он уже
   /// не помогает понять просьбу, а только дорожает.
@@ -42,6 +45,26 @@ class JarvisBrain {
   void forget() {
     _history.clear();
     _lastAsked = null;
+  }
+
+  /// Ответ нейросети для разговора. Спросила сама («Записать, сэр?») —
+  /// короткий ответ уходит ей же, а не разбору фраз, где «да» — реплика, а
+  /// «давай» — дело. Нет связи — Джарвис говорит об этом прямо или
+  /// отвечает тем, что ему велели помнить.
+  Future<JarvisOutcome> answer(
+    String text, {
+    required MemoryItem? mentioned,
+    required DateTime now,
+  }) async {
+    try {
+      final outcome = await ask(text, mentioned: mentioned, now: now);
+      if (!outcome.say.trim().endsWith('?')) return outcome;
+      return outcome.awaiting(
+          (said, now) => answer(said, mentioned: mentioned, now: now));
+    } on GigaChatException catch (failure) {
+      final recalled = failure.offline ? _executor.recall(text) : null;
+      return recalled ?? JarvisOutcome(failure.message);
+    }
   }
 
   /// Спрашивает нейросеть. Бросает [GigaChatException], если она не ответила.
@@ -110,6 +133,9 @@ class JarvisBrain {
     required MemoryItem? mentioned,
     required DateTime now,
   }) async {
+    final tooled = await _tools.run(name, arguments,
+        outcomes: outcomes, mentioned: mentioned, now: now);
+    if (tooled != null) return tooled;
     switch (name) {
       case JarvisBrainFunctions.runCommand:
         final phrase = '${arguments['phrase'] ?? ''}';

@@ -2,8 +2,10 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../calculator/state/calculator_controller.dart';
+import '../../converter/state/converter_controller.dart';
 import '../../memory_items/memory_items.dart';
 import 'jarvis_answers.dart';
+import 'jarvis_converter.dart';
 import 'jarvis_outcome.dart';
 import 'jarvis_page.dart';
 
@@ -28,7 +30,12 @@ class JarvisLook {
         asked == null ? screen : OpenPlace(asked, date: command.date);
     if (target == null) return const JarvisOutcome(JarvisReplies.lookNowhere);
     final told = _tell(target, now);
-    return JarvisOutcome(told.say, open: target, mentioned: told.mentioned);
+    return JarvisOutcome(
+      told.say,
+      open: target,
+      mentioned: told.mentioned,
+      followUp: told.followUp,
+    );
   }
 
   JarvisOutcome _tell(OpenPlace target, DateTime now) {
@@ -54,17 +61,22 @@ class JarvisLook {
         _answers.shift(AskShift(today, findNext: true), now),
       JarvisPlace.holidays => _answers.holidays(AskHolidays(day), now),
       JarvisPlace.calculator => _calculator(),
+      JarvisPlace.converter => _converter(),
       JarvisPlace.archive => _archive(),
       JarvisPlace.accounts => const JarvisOutcome(JarvisReplies.lookAccounts),
       _ => JarvisOutcome(JarvisReplies.lookAbout(target.place)),
     };
   }
 
-  /// После рассказа о делах — предложить записать ещё.
+  /// После рассказа о делах — предложить записать ещё; «да» — «Что
+  /// записать?».
   JarvisOutcome _plan(JarvisOutcome told) => JarvisOutcome(
         '${told.say} ${JarvisReplies.planMore}',
         link: told.link,
         mentioned: told.mentioned,
+        followUp: (said, _) async => SmallTalk.agrees(said)
+            ? const JarvisOutcome(JarvisReplies.whatToPlan)
+            : null,
       );
 
   JarvisOutcome _calculator() {
@@ -74,6 +86,13 @@ class JarvisLook {
       value: shown.evaluation.value,
       empty: shown.expression.isEmpty,
     ));
+  }
+
+  JarvisOutcome _converter() {
+    final reading = converterReading(_ref.read(converterControllerProvider));
+    return JarvisOutcome(reading == null
+        ? JarvisReplies.lookAbout(JarvisPlace.converter)
+        : unitReply(reading.asked, reading.result));
   }
 
   JarvisOutcome _archive() {

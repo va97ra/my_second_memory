@@ -11,9 +11,14 @@ import 'unit_words.dart';
 ///
 /// Единица сразу после числа — та, из которой переводят; вторая — в которую.
 /// Без числа переводят одну единицу: «сколько сантиметров в дюйме».
+///
+/// Переводит конвертер Ежедневника, а Джарвис его заполняет: «а в метрах?»,
+/// «а если 10?», «поменяй местами» продолжают то, что на нём.
 JarvisCommand? unitCommand(String work) {
-  final text = replaceNumberWords(work);
+  final text = replaceNumberWords(work.replaceAll(_onConverter, ' ')).trim();
+  if (_swap.hasMatch(text)) return const ConverterCommand(ConverterMove.swap);
   final mentions = _mentions(text);
+  if (mentions.length < 2) return _continued(text, mentions);
   if (mentions.length != 2) return null;
   final first = mentions.first;
   final second = mentions.last;
@@ -48,23 +53,49 @@ JarvisCommand? unitCommand(String work) {
   );
 }
 
-/// Ответ вслух: «3 дюйма — это 7,62 сантиметра.»
-String unitReply(ConvertUnits command) {
-  final from = _wordFor(command.fromUnit, command.category);
-  final to = _wordFor(command.toUnit, command.category);
-  final result = UnitConverter.convert(
-    category: command.category,
-    fromUnitId: command.fromUnit,
-    toUnitId: command.toUnit,
-    value: command.value,
+/// «А в метрах?», «переведи в метры», «а если 10?», «а 10 футов?» —
+/// продолжение того, что на конвертере. Число — только после «а»: «в 3
+/// часа» и «на 10 минут» — не конвертер.
+JarvisCommand? _continued(String text, List<_Mention> mentions) {
+  if (!_onlyUnitsAndNumbers(text, mentions)) return null;
+  final unit = mentions.isEmpty ? null : mentions.single.word;
+  final number = _number.firstMatch(text);
+  if (number == null) {
+    if (unit == null || !_into.hasMatch(text)) return null;
+    return ConverterCommand(ConverterMove.retarget,
+        unit: unit.unitId, category: unit.category);
+  }
+  if (!_and.hasMatch(text)) return null;
+  return ConverterCommand(
+    ConverterMove.revalue,
+    value: double.parse(number.group(0)!.replaceAll(',', '.')),
+    unit: unit?.unitId,
+    category: unit?.category,
   );
-  final shown = _rounded(result);
-  return '${_rounded(command.value)} ${from.nameFor(command.value)} — это '
-      '$shown ${to.nameFor(result)}.';
 }
 
-UnitWord _wordFor(String unitId, UnitCategory category) => unitWords
-    .firstWhere((word) => word.unitId == unitId && word.category == category);
+/// Ответ вслух тем, что показал конвертер: «3 дюйма — это 7,62
+/// сантиметра.» [result] — его ответ.
+String unitReply(ConvertUnits command, double result) {
+  final from = _nameOf(command.fromUnit, command.category, command.value);
+  final to = _nameOf(command.toUnit, command.category, result);
+  return '${_rounded(command.value)} $from — это ${_rounded(result)} $to.';
+}
+
+/// На конвертере другая величина, чем названная единица.
+const converterMismatch = 'На конвертере сейчас другая величина. Скажите '
+    'перевод целиком — например, «сколько граммов в 2 фунтах».';
+
+/// Единица словом по числу; единица без русского названия — обозначением,
+/// как на конвертере.
+String _nameOf(String unitId, UnitCategory category, double value) {
+  for (final word in unitWords) {
+    if (word.unitId == unitId && word.category == category) {
+      return word.nameFor(value);
+    }
+  }
+  return UnitConverter.unitOrNull(category, unitId)?.symbol ?? unitId;
+}
 
 /// До четырёх знаков после запятой: «7,62», «0,3048», «1609,344».
 String _rounded(double value) {
@@ -130,4 +161,17 @@ final _question = phrasePattern('^(?:сколько|скажи|подскажи)
 
 final _service = phrasePattern('$wordStart(?:сколько|будет|это|в|во|на'
     '|переведи|перевести|пересчитай|конвертируй|по|из|получится|скажи'
-    '|подскажи|а|равно|равен|равна|содержится|одном|одной|одних)$wordEnd');
+    '|подскажи|а|равно|равен|равна|содержится|одном|одной|одних|если'
+    '|для|теперь|покажи)$wordEnd');
+
+/// «На конвертере» — лишние слова: переводит всегда он.
+final _onConverter = phrasePattern('\\s*(?:на|в)\\s+конвертер[а-я]*$wordEnd');
+
+/// «А в метрах?» — во что переводить.
+final _into = phrasePattern('$wordStart(?:в|во)$wordEnd');
+
+/// «А если 10?» — продолжение начинается с «а».
+final _and = phrasePattern('^а$wordEnd');
+
+final _swap = phrasePattern('^(?:поменяй(?:\\s+их)?\\s+местами|наоборот'
+    '|переведи\\s+обратно)\$');

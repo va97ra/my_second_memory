@@ -8,6 +8,7 @@ import 'phrase_scan.dart';
 import 'time_phrases.dart';
 import 'russian_numbers.dart';
 import 'russian_words.dart';
+import 'task_title.dart';
 
 /// Деньги голосом: «потратил 500 на продукты», «купил хлеб за 80», «расход
 /// 1200 такси», «получил зарплату 50 тысяч», «вчера заплатил за интернет
@@ -20,8 +21,10 @@ JarvisCommand? financeCommand(String work, DateTime now) {
   final FinanceEntryKind kind;
   if (_expenseVerb.hasMatch(work)) {
     kind = FinanceEntryKind.expense;
-  } else if (_incomeVerb.hasMatch(work)) {
+  } else if (_incomeVerb.hasMatch(work) || _incomeNoun.hasMatch(work)) {
     kind = FinanceEntryKind.income;
+  } else if (_financeContext.hasMatch(work)) {
+    kind = FinanceEntryKind.expense;
   } else {
     return null;
   }
@@ -56,7 +59,8 @@ JarvisCommand? financeCommand(String work, DateTime now) {
     amount: amount,
     date: date,
     currency: currency,
-    category: category.isEmpty ? _defaultCategory(kind) : category,
+    // Не назвали, на что, — пусто: Джарвис запишет в «Прочее» и спросит.
+    category: category,
   );
 }
 
@@ -83,15 +87,30 @@ String financeReply(
   return '$period $what — ${total.replaceAll('.', ',')} $name.';
 }
 
-String _defaultCategory(FinanceEntryKind kind) =>
+/// Статья, когда её не назвали.
+String defaultFinanceCategory(FinanceEntryKind kind) =>
     kind == FinanceEntryKind.expense ? 'Прочее' : 'Доход';
+
+/// Ответ на «На что потратили?»: «на такси» → «Такси». Пусто — «не
+/// важно»: статья остаётся как есть.
+String financeCategoryAnswer(String said) {
+  final work = normalizePhrase(said).replaceAll(RegExp('[,.!?]'), ' ').trim();
+  if (_dontCare.hasMatch(work)) return '';
+  return _category(work);
+}
+
+final _dontCare = phrasePattern('^(?:не\\s*важно|без\\s+разницы|оставь'
+    '(?:\\s+так)?|прочее|не\\s+знаю|никак|ничего)\$');
 
 /// Категория из того, что осталось: «на продукты» → «Продукты».
 String _category(String text) {
-  var rest = text.replaceAll(_expenseVerb, ' ').replaceAll(_incomeVerb, ' ');
+  var rest = text
+      .replaceAll(_expenseVerb, ' ')
+      .replaceAll(_incomeVerb, ' ')
+      .replaceAll(_financeContext, ' ');
   rest = rest.replaceAll(_serviceWords, ' ');
   rest = compactPhrase(rest.replaceAll(RegExp(r'[,.!?:;]'), ' '));
-  rest = rest
+  rest = withoutEdgeFillers(rest)
       .replaceFirst(_leadingPreposition, '')
       .replaceFirst(_trailingPreposition, '')
       .trim();
@@ -141,12 +160,22 @@ const _monthsPrepositional = [
 ];
 
 final _expenseVerb = phrasePattern('$wordStart(?:потратил[а-я]*|истратил[а-я]*'
-    '|заплатил[а-я]*|оплатил[а-я]*|отдал[а-я]*|купил[а-я]*|расход|трат[аы]'
-    '|списали|списание)$wordEnd');
+    '|заплатил[а-я]*|оплатил[а-я]*|отдал[а-я]*|купил[а-я]*|купить|покупк[а-я]*'
+    '|расход[а-я]*|трат[аы]|списали|списание)$wordEnd');
 
 final _incomeVerb = phrasePattern('$wordStart(?:получил[а-я]*|заработал[а-я]*'
     '|доход|поступлени[ея]|приход|пришл[оаи]|поступил[оаи]?|начислили'
     '|перевели\\s+мне)$wordEnd');
+
+/// Доход и без глагола: «запиши в финансы зарплату 50000». Слово остаётся
+/// статьёй — «Зарплата».
+final _incomeNoun =
+    phrasePattern('$wordStart(?:зарплат[а-я]*|аванс|преми[яюи])$wordEnd');
+
+/// «Запиши в финансы …» — о деньгах, даже без глагола: без слов о доходе
+/// это трата (владелец, 12 октября 2026: покупки ушли мимо финансов).
+final _financeContext =
+    phrasePattern('$wordStart(?:в|во)\\s+(?:финанс[а-я]*|бюджет)$wordEnd');
 
 final _amount = RegExp(r'\d+(?: \d{3})*(?:[.,]\d+)?');
 

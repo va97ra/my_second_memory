@@ -35,7 +35,8 @@ class JarvisRecords {
     final lengths = <String, int>{};
     final seriesIds = <String>[];
     for (final (index, task) in tasks.indexed) {
-      final item = _itemFor(task, transcript: transcript, now: now, index: index);
+      final item =
+          _itemFor(task, transcript: transcript, now: now, index: index);
       await _items.add(item);
       created.add(item);
       final length = task.durationMinutes;
@@ -49,8 +50,7 @@ class JarvisRecords {
     }
     final last = created.last;
     return JarvisOutcome(
-      JarvisReplies.created(created, now,
-          repeats: repeats, lengths: lengths),
+      JarvisReplies.created(created, now, repeats: repeats, lengths: lengths),
       link: last.isUndated
           ? const OpenPlace(JarvisPlace.notes)
           : OpenPlace(JarvisPlace.day, date: last.memoryDate),
@@ -92,14 +92,23 @@ class JarvisRecords {
     required MemoryItem? mentioned,
     required DateTime now,
   }) async {
-    final target = command.query.isEmpty
-        ? _fresh(mentioned, now)
-        : _find(command, now);
+    final target =
+        command.query.isEmpty ? _fresh(mentioned, now) : _find(command, now);
     if (target == null) {
       return JarvisOutcome(command.query.isEmpty
           ? JarvisReplies.nothingMentioned(command.change)
           : JarvisReplies.notFound(command.query));
     }
+    return changeItem(target, command, now: now);
+  }
+
+  /// Отметить, вернуть, убрать в архив, вернуть из архива или перенести
+  /// уже найденную запись — правилами или нейросетью.
+  Future<JarvisOutcome> changeItem(
+    MemoryItem target,
+    ChangeRecord command, {
+    required DateTime now,
+  }) async {
     final MemoryItem result;
     switch (command.change) {
       case RecordChange.complete:
@@ -177,6 +186,88 @@ class JarvisRecords {
   List<MemoryItem> find(String query, DateTime now) =>
       findRecordsByWords(_living(now), query, now: now);
 
+  /// Запись по номеру — живая или в архиве: номер нейросеть берёт из
+  /// списка дней или поиска.
+  MemoryItem? byId(String id, DateTime now) {
+    for (final item in [..._living(now), ...archived()]) {
+      if (item.id == id) return _fresh(item, now);
+    }
+    return null;
+  }
+
+  /// Записки без даты.
+  List<MemoryItem> notes(DateTime now) => [
+        for (final item in _living(now))
+          if (item.isUndated) item,
+      ];
+
+  /// Архив — убранные последними первыми.
+  List<MemoryItem> archived() => [..._ref.read(archivedMemoryItemsProvider)]
+    ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+  /// Поправить запись одной правкой — с одной отменой.
+  Future<JarvisOutcome> edit(
+    MemoryItem target,
+    RecordEdit edit, {
+    required DateTime now,
+  }) async {
+    final result = editedMemoryItem(target, edit, now: now);
+    await _commands.save(result, original: target);
+    return JarvisOutcome(
+      JarvisReplies.edited(result, now),
+      link: result.isUndated
+          ? const OpenPlace(JarvisPlace.notes)
+          : OpenPlace(JarvisPlace.day, date: result.memoryDate),
+      mentioned: result,
+      undo: () => _commands.save(target, original: target),
+    );
+  }
+
+  /// Повторять запись каждый месяц или год; null — перестать. Путь тот же,
+  /// что у редактора записи: серия. Снятый повтор отмена заводит заново, но
+  /// правки отдельных повторов, как и в редакторе, при снятии пропадают.
+  Future<JarvisOutcome> repeat(
+    MemoryItem target,
+    RecurrenceFrequency? frequency, {
+    required DateTime now,
+  }) async {
+    final seriesId = target.seriesId;
+    final before = seriesId == null
+        ? null
+        : _ref
+            .read(recurrenceSeriesControllerProvider)
+            .where((series) => series.id == seriesId)
+            .firstOrNull;
+    final link = OpenPlace(JarvisPlace.day, date: target.memoryDate);
+    if (frequency != null) {
+      final series = await _series.setFrequency(target, frequency);
+      final repeated = target.copyWith(seriesId: series.id);
+      final previous = before?.frequency;
+      return JarvisOutcome(
+        JarvisReplies.repeating(target, frequency),
+        link: link,
+        mentioned: repeated,
+        undo: previous == null
+            ? () => _series.clearFrequency(repeated)
+            : () => _series.setFrequency(target, previous),
+      );
+    }
+    if (before == null) {
+      return JarvisOutcome(JarvisReplies.notRepeating(target));
+    }
+    await _series.clearFrequency(target);
+    // Запись снова живёт строкой — с номером той, из которой вырос повтор.
+    final single = _ref.read(memoryItemByIdProvider(before.originItemId));
+    return JarvisOutcome(
+      JarvisReplies.notRepeating(target),
+      link: link,
+      mentioned: single,
+      undo: single == null
+          ? null
+          : () => _series.setFrequency(single, before.frequency),
+    );
+  }
+
   MemoryItem _itemFor(
     ParsedTask task, {
     required String transcript,
@@ -199,7 +290,8 @@ class JarvisRecords {
       endMinutes: date == null || task.minutes == null
           ? null
           : _endOf(task.minutes!, task.durationMinutes),
-      remindAt: date == null ? null : defaultReminderAt(date, task.minutes, now: now),
+      remindAt:
+          date == null ? null : defaultReminderAt(date, task.minutes, now: now),
       createdAt: now,
       updatedAt: now,
       transcript: transcript,

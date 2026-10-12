@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart'
-    show FinanceEntry, FinanceEntryKind, ShiftSchedule;
+    show FinanceEntry, FinanceEntryKind, RecurrenceFrequency, ShiftSchedule;
 import 'package:ezhednevnik_v2/src/app/local_storage_scope_provider.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_brain.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_brain_providers.dart';
@@ -285,10 +285,13 @@ void main() {
       ],
       'records': [
         {
+          // Номер — чтобы поправить именно эту запись (update_record).
+          'id': c.read(memoryItemsControllerProvider).single.id,
           'title': 'Врач',
           'date': '2099-10-08',
           'day': 'четверг, 8 октября',
           'time': '10 часов утра',
+          'until': '10:30 утра',
           // Напоминание — признак важного: по нему нейросеть начинает с главного.
           'reminder': true,
         },
@@ -391,6 +394,127 @@ void main() {
     final finance = jsonDecode(answer['content'] as String) as Map;
     expect((finance['entries'] as List).single['category'], 'Зарплата');
     expect((finance['totals'] as Map)['доходы RUB'], '45000.00');
+  });
+
+  Map<String, dynamic> calls(String name, Map<String, Object?> arguments) => {
+        'role': 'assistant',
+        'content': '',
+        'function_call': {'name': name, 'arguments': arguments},
+      };
+
+  Map<Object?, Object?> lastResult() => jsonDecode(
+      ((server.requests.last['messages'] as List).last as Map)['content']
+          as String) as Map;
+
+  test('наговоренное нейросеть раскладывает по полям записи, а не в название',
+      () async {
+    final c = await start();
+    server.replies
+      ..add(calls('create_record', {
+        'title': 'врач',
+        'date': '2099-10-08',
+        'time': '10:00',
+        'duration_minutes': 90,
+        'address': 'улица Ленина, 5',
+        'todo': 'взять полис',
+        'urgent': true,
+      }))
+      ..add({'role': 'assistant', 'content': 'Записал врача на четверг.'});
+    await say(c,
+        'короче в четверг к десяти к врачу на Ленина 5, там часа полтора, полис не забыть, это срочно');
+    final item = c.read(memoryItemsControllerProvider).single;
+    expect(item.title, 'Врач');
+    expect(item.memoryDate, DateTime(2099, 10, 8));
+    expect((item.timeMinutes, item.endMinutes), (600, 690));
+    expect(item.priority, 1);
+    expect(item.body, allOf(contains('Ленина, 5'), contains('взять полис')));
+    expect(item.body, isNot(contains('Врач')),
+        reason: 'название и длительность — у самой записи');
+
+    await c.read(jarvis.notifier).undo();
+    expect(c.read(memoryItemsControllerProvider), isEmpty);
+  });
+
+  test('нейросеть правит запись одной правкой — и одной отменой', () async {
+    final c = await start();
+    await say(c, 'запиши завтра в 10 врач');
+    server.replies
+      ..add(calls('update_record', {
+        'query': 'врач',
+        'time': '12:00',
+        'add_text': 'взять полис',
+        'remind_minutes_before': 60,
+      }))
+      ..add({'role': 'assistant', 'content': 'Перенёс врача на полдень.'});
+    await say(c, 'врача сдвинь на полдень, напомни за час и полис допиши');
+    final moved = c.read(memoryItemsControllerProvider).single;
+    expect(moved.timeMinutes, 720);
+    expect(moved.remindAt, DateTime(2099, 10, 8, 11));
+    expect(moved.body, contains('взять полис'));
+    expect(lastResult()['result'], startsWith('Поправил.'));
+
+    await c.read(jarvis.notifier).undo();
+    final back = c.read(memoryItemsControllerProvider).single;
+    expect(back.timeMinutes, 600);
+    expect(back.body, isNot(contains('взять полис')));
+  });
+
+  test('подходят несколько записей — нейросеть выбирает, а не правит наугад',
+      () async {
+    final c = await start();
+    await say(c, 'запиши завтра в 10 врач');
+    await say(c, 'запиши послезавтра в 9 врач');
+    server.replies
+      ..add(calls('update_record', {'query': 'врач', 'time': '12:00'}))
+      ..add({'role': 'assistant', 'content': 'Какого из врачей, сэр?'});
+    await say(c, 'врача сдвинь на полдень');
+    expect(lastResult()['choose'], hasLength(2));
+    expect(
+        c.read(memoryItemsControllerProvider).map((item) => item.timeMinutes),
+        unorderedEquals([600, 540]));
+  });
+
+  test('повтор у готовой записи — серией, как в редакторе, и с отменой',
+      () async {
+    final c = await start();
+    await say(c, 'запиши завтра в 10 врач');
+    final id = c.read(memoryItemsControllerProvider).single.id;
+    server.replies
+      ..add(calls('update_record', {'id': id, 'repeat': 'monthly'}))
+      ..add({'role': 'assistant', 'content': 'Теперь каждый месяц.'})
+      ..add(calls('update_record', {'query': 'врач', 'repeat': 'none'}))
+      ..add({'role': 'assistant', 'content': 'Больше не повторяю.'});
+
+    await say(c, 'пусть врач будет каждый месяц');
+    expect(lastResult()['result'], 'Врач — каждый месяц 8-го в 10 часов утра.');
+    expect(c.read(recurrenceSeriesControllerProvider).single.frequency,
+        RecurrenceFrequency.monthly);
+
+    await say(c, 'врача больше не повторяй');
+    expect(lastResult()['result'], '«Врач» больше не повторяется.');
+    expect(c.read(recurrenceSeriesControllerProvider), isEmpty);
+    expect(c.read(memoryItemsControllerProvider).single.id, id,
+        reason: 'запись снова живёт строкой со своим номером');
+
+    await c.read(jarvis.notifier).undo();
+    expect(c.read(recurrenceSeriesControllerProvider).single.frequency,
+        RecurrenceFrequency.monthly);
+  });
+
+  test('трату нейросеть пишет в журнал финансов со статьёй', () async {
+    final c = await start();
+    server.replies
+      ..add(calls('add_finance',
+          {'kind': 'expense', 'amount': 1000, 'category': 'продукты'}))
+      ..add({'role': 'assistant', 'content': 'Записал тысячу на продукты.'});
+    // Правила «косаря» не знают — понимает нейросеть.
+    await say(c, 'в пятёрочке косарь оставил на продукты');
+    final entry = c.read(financeControllerProvider).single;
+    expect((entry.kind, entry.amount, entry.category, entry.occurredOn),
+        (FinanceEntryKind.expense, '1000', 'Продукты', DateTime(2099, 10, 7)));
+
+    await c.read(jarvis.notifier).undo();
+    expect(c.read(financeControllerProvider), isEmpty);
   });
 
   test('исчерпав обращения к данным, нейросеть всё равно отвечает словами',

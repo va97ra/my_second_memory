@@ -8,6 +8,7 @@ library;
 export 'src/assistant/address_phrases.dart'
     show addressIn, recordAddress;
 export 'src/assistant/agenda_speech.dart';
+export 'src/assistant/brain_functions.dart';
 export 'src/assistant/brain_instructions.dart';
 export 'src/assistant/bank_notice_phrases.dart';
 export 'src/assistant/briefing_notes.dart';
@@ -15,11 +16,12 @@ export 'src/assistant/butler_persona.dart';
 export 'src/assistant/calculation_phrases.dart'
     show calculationReply, calculatorReply, spokenNumber;
 export 'src/assistant/clarification_phrases.dart';
-export 'src/assistant/currency_phrases.dart' show currencyReply;
+export 'src/assistant/currency_phrases.dart' show currencyReply, currencyWords;
 export 'src/assistant/day_question_phrases.dart'
     show AlarmMention, alarmsReply, holidaysReply, shiftReply;
 export 'src/assistant/fact_phrases.dart' show FactReplies, factFor;
-export 'src/assistant/finance_phrases.dart' show financeReply;
+export 'src/assistant/finance_phrases.dart'
+    show defaultFinanceCategory, financeCategoryAnswer, financeReply;
 export 'src/assistant/history_phrases.dart' show financeHistoryReply;
 export 'src/assistant/jarvis_command.dart';
 export 'src/assistant/jarvis_command_parser.dart';
@@ -34,7 +36,7 @@ export 'src/assistant/small_talk.dart';
 export 'src/assistant/task_card.dart';
 export 'src/assistant/spoken_moments.dart';
 export 'src/assistant/task_phrase.dart';
-export 'src/assistant/unit_phrases.dart' show unitReply;
+export 'src/assistant/unit_phrases.dart' show converterMismatch, unitReply;
 export 'src/assistant/wake_word.dart' show WakeWord;
 export 'src/calculator/calculator_engine.dart';
 export 'src/calculator/calculator_keys.dart';
@@ -58,6 +60,7 @@ export 'src/language/russian_plural.dart';
 export 'src/feed/memory_search.dart';
 export 'src/memory/memory_item.dart';
 export 'src/memory/styled_text.dart';
+export 'src/memory/memory_edit.dart';
 export 'src/memory/memory_move.dart';
 export 'src/memory/reminder_rules.dart';
 export 'src/memory/memory_status.dart';

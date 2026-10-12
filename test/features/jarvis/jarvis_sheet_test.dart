@@ -2,6 +2,7 @@ import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart' show JarvisPlace;
 import 'package:ezhednevnik_v2/src/app/app.dart';
 import 'package:ezhednevnik_v2/src/features/calculator/state/calculator_controller.dart';
+import 'package:ezhednevnik_v2/src/features/converter/state/converter_controller.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_brain_providers.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/memory_items.dart';
 import 'package:ezhednevnik_v2/src/features/security/security.dart';
@@ -208,6 +209,21 @@ void main() {
     expect(container.read(jarvisPageProvider)?.place, JarvisPlace.calendar);
     expect(find.byKey(const ValueKey('jarvis_badge')), findsOneWidget);
     expect(find.textContaining('Запланировать что-нибудь ещё'), findsOneWidget);
+    await tester.pump(JarvisBadge.quiet);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('«переведи на конвертере» — Джарвис идёт к нему и набирает',
+      (tester) async {
+    final container = await openApp(tester);
+    await tester.tap(find.byKey(const ValueKey('bottom_jarvis')));
+    await tester.pumpAndSettle();
+    await say(tester, 'переведи 5 футов в метры на конвертере');
+    expect(container.read(jarvisPageProvider)?.place, JarvisPlace.converter);
+    final shown = container.read(converterControllerProvider);
+    expect((shown.from, shown.to, shown.raw), ('foot', 'm', '5'));
+    expect(find.byKey(const ValueKey('jarvis_badge')), findsOneWidget);
+    expect(find.textContaining('5 футов — это 1,524 метра'), findsOneWidget);
     await tester.pump(JarvisBadge.quiet);
     await tester.pumpAndSettle();
   });

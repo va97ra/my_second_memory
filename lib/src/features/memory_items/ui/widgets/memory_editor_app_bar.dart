@@ -1,14 +1,13 @@
 import 'package:ez_core/ez_core.dart';
-import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/screen_chrome.dart';
 import '../../state/memory_editor_controller.dart';
-import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
 import 'memory_editor_menu.dart';
+import 'memory_route_button.dart';
 import 'memory_save_status.dart';
-import 'type_picker_sheet.dart';
+import 'memory_type_button.dart';
 
 /// Шапка редактора: что правят, как идёт сохранение и меню записи.
 class MemoryEditorAppBar extends StatelessWidget
@@ -56,6 +55,8 @@ class MemoryEditorAppBar extends StatelessWidget
     final strings = AppStrings.of(context);
     final colors = Theme.of(context).colorScheme;
     final isSaving = controller.isSaving;
+    // Адрес дела — «Куда:» в карточке или улица с домом в тексте.
+    final address = item == null ? null : recordAddress(item!);
     final hasSaveError = controller.hasSaveError;
 
     return AppPageAppBar(
@@ -97,19 +98,10 @@ class MemoryEditorAppBar extends StatelessWidget
         ],
       ),
       actions: [
-        // Вид записи — кнопкой, а не строкой формы: он у записи один и
-        // меняется редко, а место занимал постоянно. У записки вид тоже
-        // есть и виден в ленте, поэтому кнопка нужна и ей.
-        IconButton(
-            key: const ValueKey('memory_type_picker'),
-            tooltip: strings.recordType,
-            iconSize: 22,
-            style: notebookIconButtonStyle(),
-            onPressed: () => _pickType(context),
-          icon: Icon(
-            memoryTypeIcon(controller.form.type),
-            color: memoryTypeColor(controller.form.type),
-          ),
+        if (address != null) MemoryRouteButton(address: address),
+        MemoryTypeButton(
+          type: controller.form.type,
+          onChanged: onTypeChanged,
         ),
         // У новой записки нечего ни повторять, ни удалять: меню ей незачем.
         if (!isUndated || hasItem)
@@ -126,14 +118,6 @@ class MemoryEditorAppBar extends StatelessWidget
           ),
       ],
     );
-  }
-
-  Future<void> _pickType(BuildContext context) async {
-    final selected = await showMemoryTypePicker(
-      context,
-      selected: controller.form.type,
-    );
-    if (selected != null) onTypeChanged(selected);
   }
 
   /// Заголовок называет вещь, а не действие.

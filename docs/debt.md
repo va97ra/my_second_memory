@@ -20,7 +20,7 @@ packages/ez_domain/lib/src/calendar/holiday_russian_table.dart        994
 packages/ez_core/lib/src/localization/app_strings.dart                773
    строки интерфейса
 
-packages/ez_domain/lib/src/assistant/jarvis_command.dart              431
+packages/ez_domain/lib/src/assistant/jarvis_command.dart              473
    перечень того, что Джарвис умеет: одно «что» на класс, ни одного «как».
    Команды — закрытый (sealed) класс, а Dart держит все его варианты в
    одной библиотеке; part-файлы запрещены. Страницы из него уже вынуты

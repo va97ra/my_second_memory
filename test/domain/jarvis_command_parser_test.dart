@@ -202,11 +202,25 @@ void main() {
       expect(inches.fromUnit, 'inch');
       expect(inches.toUnit, 'cm');
       expect(inches.value, 3);
-      expect(unitReply(inches), '3 дюйма — это 7,62 сантиметра.');
-      expect(unitReply(as<ConvertUnits>('переведи 5 километров в мили')),
+      // Переводит конвертер, Джарвис читает его ответ вслух.
+      String said(String phrase) {
+        final asked = as<ConvertUnits>(phrase);
+        return unitReply(
+            asked,
+            UnitConverter.convert(
+              category: asked.category,
+              fromUnitId: asked.fromUnit,
+              toUnitId: asked.toUnit,
+              value: asked.value,
+            ));
+      }
+
+      expect(said('сколько сантиметров в 3 дюймах'),
+          '3 дюйма — это 7,62 сантиметра.');
+      expect(said('переведи 5 километров в мили'),
           '5 километров — это 3,1069 мили.');
       expect(as<ConvertUnits>('сколько метров в миле').fromUnit, 'mile');
-      expect(unitReply(as<ConvertUnits>('30 градусов цельсия в фаренгейты')),
+      expect(said('30 градусов цельсия в фаренгейты'),
           '30 градусов Цельсия — это 86 градусов Фаренгейта.');
     });
 
@@ -236,9 +250,41 @@ void main() {
       final salary = as<AddFinanceEntry>('получил зарплату пятьдесят тысяч');
       expect(salary.kind, FinanceEntryKind.income);
       expect((salary.amount, salary.category), ('50000', 'Зарплату'));
-      expect(as<AddFinanceEntry>('заплатил 600').category, 'Прочее');
+      // Не назвали, на что, — пусто: Джарвис спросит.
+      expect(as<AddFinanceEntry>('заплатил 600').category, isEmpty);
       expect(
           as<AddFinanceEntry>('потратил 20 долларов на такси').currency, 'USD');
+    });
+
+    test('покупки — расход, даже без «потратил»', () {
+      // С телефона владельца, 12 октября 2026: морковь и сигареты ушли в
+      // доход — фразы о покупках правила не знали.
+      for (final phrase in [
+        'покупки морковь и сигареты 500',
+        'запиши покупки морковь и сигареты на 500 рублей',
+        'добавь покупку морковь и сигареты 500',
+        'запиши в финансы морковь и сигареты 500',
+      ]) {
+        final entry = as<AddFinanceEntry>(phrase);
+        expect(entry.kind, FinanceEntryKind.expense, reason: phrase);
+        expect((entry.amount, entry.category), ('500', 'Морковь и сигареты'),
+            reason: phrase);
+      }
+      final salary = as<AddFinanceEntry>('запиши в финансы зарплату 50000');
+      expect((salary.kind, salary.category),
+          (FinanceEntryKind.income, 'Зарплату'));
+      expect(as<AddFinanceEntry>('пришла зарплата 45000').category, 'Зарплата');
+    });
+
+    test('обращение к Джарвису — не статья расхода', () {
+      // «Такси учти» — так статью собирало всё, что осталось от фразы.
+      for (final phrase in [
+        'я сегодня на такси пятьсот отдал, учти',
+        'короче потратил 500 на такси, запомни',
+        'отдал 500 на такси, имей в виду',
+      ]) {
+        expect(as<AddFinanceEntry>(phrase).category, 'Такси', reason: phrase);
+      }
     });
 
     test('вопросы о деньгах', () {

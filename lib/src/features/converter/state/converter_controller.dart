@@ -154,6 +154,9 @@ class ConverterController extends StateNotifier<ConverterState> {
     );
   }
 
+  /// Конвертер как был — «отмени» Джарвису.
+  void restore(ConverterState previous) => state = previous;
+
   ConverterSide _other(ConverterSide side) =>
       side == ConverterSide.left ? ConverterSide.right : ConverterSide.left;
 }

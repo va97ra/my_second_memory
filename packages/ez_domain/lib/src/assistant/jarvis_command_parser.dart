@@ -115,6 +115,18 @@ class JarvisCommandParser {
       text.split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length;
 }
 
+/// Ответ на вопрос Джарвиса — короткая фраза, которая не просьба: «на
+/// такси», «да», «давай». «Что у меня завтра» и «открой календарь» — уже
+/// новые просьбы, и разбираются как обычно.
+bool answersJarvis(String said, DateTime now) {
+  if (JarvisCommandParser._words(said) > 5) return false;
+  final command = const JarvisCommandParser().parse(said, now);
+  return command == null ||
+      command is CreateTasks ||
+      command is AskBrain ||
+      command is JarvisSay;
+}
+
 /// Календарь повторяет записи раз в месяц и раз в год — и только.
 bool _calendarRepeats(PhraseRepeatKind kind) =>
     kind == PhraseRepeatKind.monthly || kind == PhraseRepeatKind.yearly;

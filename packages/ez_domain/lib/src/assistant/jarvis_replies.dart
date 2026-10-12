@@ -91,6 +91,17 @@ class JarvisReplies {
       };
 
   /// «Стоматолог — в пятницу в 10 часов утра.»
+  /// Запись поправлена: какой она стала.
+  static String edited(MemoryItem item, DateTime now) =>
+      'Поправил. ${when(item, now)}';
+
+  /// «Врач — каждый месяц 8-го в 10 часов утра.»
+  static String repeating(MemoryItem item, RecurrenceFrequency frequency) =>
+      '${capitalizeFirst(item.title)} — ${_repeatOf(item, frequency)}.';
+
+  static String notRepeating(MemoryItem item) =>
+      '«${item.title}» больше не повторяется.';
+
   static String when(MemoryItem item, DateTime now) {
     if (item.isUndated) return '«${item.title}» — записка без даты.';
     return '${capitalizeFirst(item.title)} — ${_whenOf(item, now)}.';
@@ -156,6 +167,11 @@ class JarvisReplies {
 
   static const undone = 'Отменил.';
   static const nothingToUndo = 'Отменять нечего: я ещё ничего не менял.';
+
+  /// Просьба сломалась на полпути — человек должен об этом узнать.
+  static const failed =
+      'Не получилось — что-то пошло не так. Попробуйте ещё раз.';
+
   static const notUnderstood =
       'Не понял, что сделать. Скажите иначе — например, «что у меня завтра».';
   static const needsBrain =
@@ -183,6 +199,16 @@ class JarvisReplies {
 
   /// Согласились на [planMore].
   static const whatToPlan = 'Что записать?';
+
+  /// Расход или доход записан без статьи — спросить, на что.
+  static String askCategory(FinanceEntryKind kind) =>
+      kind == FinanceEntryKind.expense
+          ? 'На что потратили?'
+          : 'Откуда этот доход?';
+
+  static String categorized(String category) => 'Записал в «$category».';
+
+  static String categoryKept(String category) => 'Хорошо, оставил «$category».';
 
   /// «Что здесь» на странице, у которой нет названия.
   static const lookNowhere = 'Здесь мне читать нечего. Спросите о делах, '

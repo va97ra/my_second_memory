@@ -144,13 +144,10 @@ final class AskBrain extends JarvisCommand {
 
 /// Посчитать выражение калькулятором.
 final class Calculate extends JarvisCommand {
-  const Calculate(this.expression, {this.show = false});
+  const Calculate(this.expression);
 
   /// Выражение языком калькулятора: «25*4», «sqrt(16)».
   final String expression;
-
-  /// «Посчитай на калькуляторе» — открыть его, а не только сказать ответ.
-  final bool show;
 }
 
 /// Что сделать калькулятором Ежедневника.
@@ -198,6 +195,33 @@ final class ConvertUnits extends JarvisCommand {
   final UnitCategory category;
   final String fromUnit;
   final String toUnit;
+}
+
+/// Что сделать с переводом, который на конвертере.
+enum ConverterMove {
+  /// «А в метрах?» — другая единица ответа.
+  retarget,
+
+  /// «А если 10?», «а 10 футов?» — другое число.
+  revalue,
+
+  /// «Поменяй местами».
+  swap,
+}
+
+/// Продолжение перевода на конвертере Ежедневника.
+final class ConverterCommand extends JarvisCommand {
+  const ConverterCommand(this.move, {this.unit, this.category, this.value});
+
+  final ConverterMove move;
+
+  /// Единица: во что переводить ([ConverterMove.retarget]) или что
+  /// переводят ([ConverterMove.revalue]).
+  final String? unit;
+  final UnitCategory? category;
+
+  /// Новое число для [ConverterMove.revalue].
+  final double? value;
 }
 
 /// Курс или пересчёт валют по курсу ЦБ.

@@ -44,14 +44,12 @@ void main() {
       final command = parse('сколько будет 25 на 4');
       expect(command, isA<Calculate>());
       expect((command as Calculate).expression, '25*4');
-      expect(command.show, isFalse);
       expect(parse('сколько будет минус 5'), isA<Calculate>());
     });
 
-    test('«на калькуляторе» — посчитать и показать', () {
+    test('«на калькуляторе» — лишние слова, считает всегда он', () {
       final command = parse('посчитай на калькуляторе 25 на 4');
       expect((command as Calculate).expression, '25*4');
-      expect(command.show, isTrue);
     });
   });
 

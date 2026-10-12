@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../finance/finance.dart';
 import 'jarvis_answers.dart';
 import 'jarvis_calculator.dart';
+import 'jarvis_converter.dart';
 import 'jarvis_facts.dart';
 import 'jarvis_look.dart';
 import 'jarvis_outcome.dart';
@@ -39,6 +40,7 @@ class JarvisExecutor {
   final JarvisAnswers _answers;
   final JarvisSettingsActions _settings;
   late final _calculator = JarvisCalculator(_ref);
+  late final _converter = JarvisConverter(_ref);
   late final _look = JarvisLook(_ref, _answers);
 
   /// Выставляет странице нужную закладку или месяц до перехода на неё.
@@ -88,7 +90,8 @@ class JarvisExecutor {
       SearchRecords(:final query) => _records.search(query, now),
       Calculate() => await _calculator.calculate(command),
       CalculatorCommand() => await _calculator.run(command),
-      ConvertUnits() => JarvisOutcome(unitReply(command)),
+      ConvertUnits() => await _converter.convert(command),
+      ConverterCommand() => await _converter.run(command),
       ConvertCurrency() => await _answers.currency(command, now),
       AddFinanceEntry() => await _settings.addFinance(command, now),
       SwitchSetting() => await _settings.toggle(command),

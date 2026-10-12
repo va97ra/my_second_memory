@@ -146,6 +146,12 @@ class StyledText {
     return StyledText(text.toString(), marks);
   }
 
+  /// Дописать чистый текст в конец, сохранив оформление написанного.
+  StyledText appended(String text) => StyledText('$plain$text', [
+        ..._marks,
+        ...List.filled(text.length, TextMark.plain),
+      ]);
+
   /// Как хранить: без оформления — сам текст.
   String toStored() {
     if (isPlain) return plain;

@@ -3,6 +3,8 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/app/local_storage_scope_provider.dart';
 import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
 import 'package:ezhednevnik_v2/src/features/calculator/state/calculator_controller.dart';
+import 'package:ezhednevnik_v2/src/features/converter/state/converter_controller.dart';
+import 'package:ezhednevnik_v2/src/features/finance/finance.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_controller.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_executor.dart';
 import 'package:ezhednevnik_v2/src/features/jarvis/state/jarvis_facts.dart';
@@ -249,10 +251,9 @@ void main() {
     expect(doctor.timeMinutes, 12 * 60);
     expect(doctor.endMinutes, 12 * 60 + 30);
     expect(doctor.priority, 1);
-    expect(
-        doctor.body,
-        'Что: Врач\nСколько: 30 минут\nКуда: Ленина, 5\n'
-        'Что сделать: Взять паспорт\nСрочность: срочно');
+    // Название и длительность — у самой записи, в тексте их не повторяют.
+    expect(doctor.body,
+        'Куда: Ленина, 5\nЧто сделать: Взять паспорт\nСрочность: срочно');
     expect(c.read(detailed).askingNeed, isNull);
   });
 
@@ -281,6 +282,9 @@ void main() {
 
   test('калькулятор: Джарвис нажимает клавиши и читает ответ', () async {
     final c = await start();
+    // Джарвис считает на калькуляторе — он на экране.
+    c.read(jarvisPageProvider.notifier).state =
+        const OpenPlace(JarvisPlace.calculator);
     String shown() => c.read(calculatorControllerProvider).expression;
 
     expect(await say(c, 'сколько будет 25 на 4'), contains('будет 100'));
@@ -298,6 +302,53 @@ void main() {
     expect(shown(), '(25×4+10)×2', reason: 'отмена возвращает калькулятор');
     await say(c, 'сбрось');
     expect(await say(c, 'прибавь 5'), contains('Калькулятор пуст'));
+  });
+
+  test('конвертер: Джарвис заполняет его и читает ответ', () async {
+    final c = await start();
+    // Джарвис переводит на конвертере — он на экране.
+    c.read(jarvisPageProvider.notifier).state =
+        const OpenPlace(JarvisPlace.converter);
+    ConverterState shown() => c.read(converterControllerProvider);
+
+    expect(await say(c, 'сколько сантиметров в 3 дюймах'),
+        contains('3 дюйма — это 7,62 сантиметра'));
+    expect((shown().from, shown().to, shown().raw), ('inch', 'cm', '3'),
+        reason: 'переведённое голосом — на конвертере');
+    expect(await say(c, 'а в метрах'), contains('0,0762 метра'));
+    expect(shown().to, 'm');
+    expect(await say(c, 'а если 10'), contains('10 дюймов — это 0,254 метра'));
+    expect(await say(c, 'поменяй местами'), contains('0,254 метра — это 10'));
+    await say(c, 'отмени');
+    expect((shown().from, shown().to), ('inch', 'm'),
+        reason: 'отмена возвращает конвертер');
+    expect(await say(c, 'а в килограммах'), contains('другая величина'));
+  });
+
+  test('расход без статьи: записать, перейти в финансы и спросить, на что',
+      () async {
+    final c = await start();
+    await c.read(financeControllerProvider.notifier).load();
+    FinanceEntry last() => c.read(financeControllerProvider).last;
+
+    final told = await say(c, 'добавь расход 500');
+    expect(told, contains('На что потратили'));
+    expect(c.read(jarvis).navigation?.target.place, JarvisPlace.finance,
+        reason: 'расход записывается на странице финансов');
+    expect(last().category, 'Прочее', reason: 'промолчат — запись цела');
+
+    expect(await say(c, 'на такси'), contains('«Такси»'));
+    expect(last().category, 'Такси');
+    await say(c, 'отмени');
+    expect(last().category, 'Прочее');
+
+    await say(c, 'расход 300');
+    expect(await say(c, 'что у меня завтра'), isNot(contains('Записал в')),
+        reason: 'новая просьба — не ответ на вопрос');
+    expect(last().category, 'Прочее');
+
+    expect(await say(c, 'расход 200 на кофе'), isNot(contains('На что')));
+    expect(last().category, 'Кофе');
   });
 
   test('посмотри: о странице на экране и о названной', () async {

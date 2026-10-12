@@ -44,36 +44,69 @@ class JarvisSettingsActions {
   /// та, чей журнал открыт в финансах. Категория пишется так, как она уже
   /// встречается в журнале: «на продукты» попадает в «Продукты», а не
   /// заводит вторую такую же.
-  Future<JarvisOutcome> addFinance(AddFinanceEntry command, DateTime now) async {
+  Future<JarvisOutcome> addFinance(
+      AddFinanceEntry command, DateTime now) async {
     final controller = _ref.read(financeControllerProvider.notifier);
     final String journal = _ref.read(financeCurrencyProvider);
     final currency = command.currency ?? journal;
+    final named = command.category.isNotEmpty;
     final entry = FinanceEntry(
       id: 'finance_${now.microsecondsSinceEpoch}',
       kind: command.kind,
       amount: command.amount,
       currencyCode: currency,
-      category: _knownCategory(command.category),
+      category: named
+          ? _knownCategory(command.category)
+          : defaultFinanceCategory(command.kind),
       occurredOn: command.date,
       createdAt: now,
       updatedAt: now,
     );
     await controller.add(entry);
-    return JarvisOutcome(
-      JarvisReplies.financeAdded(
-        AddFinanceEntry(
-          kind: entry.kind,
-          amount: entry.amount,
-          date: entry.occurredOn,
-          currency: currency,
-          category: entry.category,
-          source: command.source,
-        ),
-        currency,
-        now,
+    // Продиктовано — Джарвис идёт в «Финансы» и записывает там; не сказали,
+    // на что, — записывает в «Прочее» и спрашивает (просьба владельца
+    // 12 октября 2026). Покупка из уведомления банка — без перехода и без
+    // вопросов: её Джарвис записывает сам, за спиной.
+    final dictated = command.source == null;
+    final asks = dictated && !named;
+    final added = JarvisReplies.financeAdded(
+      AddFinanceEntry(
+        kind: entry.kind,
+        amount: entry.amount,
+        date: entry.occurredOn,
+        currency: currency,
+        category: named ? entry.category : '',
+        source: command.source,
       ),
-      link: const OpenPlace(JarvisPlace.finance),
+      currency,
+      now,
+    );
+    const place = OpenPlace(JarvisPlace.finance);
+    return JarvisOutcome(
+      asks ? '$added ${JarvisReplies.askCategory(entry.kind)}' : added,
+      open: dictated ? place : null,
+      link: dictated ? null : place,
       undo: () => controller.delete(entry.id),
+      followUp: asks ? (said, now) => _categorize(entry, said, now) : null,
+    );
+  }
+
+  /// Ответ на «На что потратили?»: статья этой же записи.
+  Future<JarvisOutcome> _categorize(
+      FinanceEntry entry, String said, DateTime now) async {
+    final answer = financeCategoryAnswer(said);
+    if (answer.isEmpty) {
+      return JarvisOutcome(JarvisReplies.categoryKept(entry.category));
+    }
+    final controller = _ref.read(financeControllerProvider.notifier);
+    final named = entry.copyWith(
+      category: _knownCategory(answer),
+      updatedAt: now,
+    );
+    await controller.update(named);
+    return JarvisOutcome(
+      JarvisReplies.categorized(named.category),
+      undo: () => controller.update(entry),
     );
   }
 

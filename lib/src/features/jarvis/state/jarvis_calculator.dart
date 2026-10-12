@@ -4,7 +4,6 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../calculator/state/calculator_controller.dart';
-import 'jarvis_controller.dart';
 import 'jarvis_outcome.dart';
 import 'jarvis_page.dart';
 
@@ -24,10 +23,6 @@ class JarvisCalculator {
   static const press = Duration(milliseconds: 150);
   static const _between = Duration(milliseconds: 70);
 
-  /// Сколько ждать, пока откроется калькулятор, и пока доиграет переворот.
-  static const _arrival = Duration(seconds: 3);
-  static const _settle = Duration(milliseconds: 450);
-
   static const _place = OpenPlace(JarvisPlace.calculator);
 
   CalculatorController get _keys =>
@@ -36,11 +31,12 @@ class JarvisCalculator {
   bool get _onScreen =>
       _ref.read(jarvisPageProvider)?.place == JarvisPlace.calculator;
 
-  /// «Сколько будет 25 на 4»: набрать заново и прочитать ответ.
-  /// «Посчитай на калькуляторе» — сначала перейти к нему.
+  /// «Сколько будет 25 на 4»: перейти к калькулятору, набрать заново и
+  /// прочитать ответ (просьба владельца 12 октября 2026: «посчитай» — сразу
+  /// на калькулятор, а не счёт в разговоре).
   Future<JarvisOutcome> calculate(Calculate command) async {
     final before = _shown;
-    if (command.show && !_onScreen) await _comeToCalculator();
+    await comeToPage(_ref, _place);
     final keys = keyedExpression(command.expression);
     if (_onScreen) {
       await _type(['C', ...keys.split(''), '=']);
@@ -64,6 +60,7 @@ class JarvisCalculator {
     }
     switch (move) {
       case CalculatorMove.chain:
+        await comeToPage(_ref, _place);
         await _chain(command.tail, before.expression);
       case CalculatorMove.memorySave:
         _keys.memoryCommand('MS');
@@ -138,23 +135,6 @@ class JarvisCalculator {
       lit.state = null;
       await Future<void>.delayed(_between);
     }
-  }
-
-  /// Перейти к калькулятору тем же путём, что «Показать», и дождаться его.
-  Future<void> _comeToCalculator() async {
-    _ref.read(jarvisControllerProvider.notifier).show(_place);
-    final arrived = Completer<void>();
-    final watch = _ref.listen(jarvisPageProvider, (_, page) {
-      if (page?.place == JarvisPlace.calculator && !arrived.isCompleted) {
-        arrived.complete();
-      }
-    });
-    try {
-      await arrived.future.timeout(_arrival, onTimeout: () {});
-    } finally {
-      watch.close();
-    }
-    if (_onScreen) await Future<void>.delayed(_settle);
   }
 
   Future<void> Function() _undo(CalculatorState before) =>

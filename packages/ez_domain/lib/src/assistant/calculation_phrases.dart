@@ -12,7 +12,6 @@ import 'russian_words.dart';
 /// Фраза, которая начинается с действия, — «прибавь 10», «а теперь умножь
 /// на 3», — продолжает то, что уже на калькуляторе.
 JarvisCommand? calculationCommand(String work) {
-  final show = _onCalculator.hasMatch(work);
   final asked = work.replaceAll(_onCalculator, ' ').trim();
   final trigger = _trigger.firstMatch(asked);
   if (trigger == null) {
@@ -26,7 +25,7 @@ JarvisCommand? calculationCommand(String work) {
   if (expression == null) return null;
   // Без «сколько будет» фраза должна быть одним выражением: «25 на 4».
   if (trigger == null && !_hasOperator.hasMatch(expression)) return null;
-  return Calculate(expression, show: show);
+  return Calculate(expression);
 }
 
 /// Память, сброс, режимы и «сколько получилось» — действия калькулятором
@@ -198,7 +197,7 @@ RegExp _named(String shape) =>
 
 final _hasOperator = RegExp(r'[+\-*/^%]|sqrt');
 
-/// «На калькуляторе» — показать посчитанное.
+/// «На калькуляторе» — лишние слова: считает всегда он.
 final _onCalculator =
     phrasePattern('\\s*(?:на|в)\\s+калькулятор[а-я]*$wordEnd');
 

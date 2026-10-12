@@ -614,6 +614,10 @@ class AppStrings {
   String get settings => isRu ? 'Настройки' : 'Settings';
   String get title => isRu ? 'Название' : 'Title';
   String get recordType => isRu ? 'Тип записи' : 'Record type';
+  String get recordRoute => isRu ? 'Маршрут' : 'Route';
+  String get recordRouteNoMaps => isRu
+      ? 'Карт на телефоне не нашёл: поставьте «Яндекс Карты» или Google Maps.'
+      : 'No maps app found on this phone.';
   String get description => isRu ? 'Запись' : 'Record';
   String get date => isRu ? 'Дата' : 'Date';
   String get time => isRu ? 'Время' : 'Time';

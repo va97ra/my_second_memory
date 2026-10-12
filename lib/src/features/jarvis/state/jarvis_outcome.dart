@@ -8,6 +8,7 @@ class JarvisOutcome {
     this.link,
     this.undo,
     this.mentioned,
+    this.followUp,
   });
 
   /// Ответ без обращения: «сэр» добавляется при выводе.
@@ -24,4 +25,20 @@ class JarvisOutcome {
 
   /// Запись, о которой шла речь: «перенеси её» дальше — про неё.
   final MemoryItem? mentioned;
+
+  /// Джарвис спросил и ждёт ответа — что с ним сделать. Null из функции:
+  /// фраза оказалась не ответом и разбирается как обычно.
+  final Future<JarvisOutcome?> Function(String said, DateTime now)? followUp;
+
+  /// То же, но с вопросом, ответ на который ждёт [next].
+  JarvisOutcome awaiting(
+          Future<JarvisOutcome?> Function(String said, DateTime now) next) =>
+      JarvisOutcome(
+        say,
+        open: open,
+        link: link,
+        undo: undo,
+        mentioned: mentioned,
+        followUp: next,
+      );
 }

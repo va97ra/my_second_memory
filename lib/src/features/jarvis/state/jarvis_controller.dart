@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:ez_data/ez_data.dart' show GigaChatException;
-
 import '../../../shared/state/bool_setting_controller.dart';
 import 'jarvis_brain.dart';
 import 'jarvis_brain_providers.dart';
@@ -70,12 +68,9 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   var _nextId = 0;
   MemoryItem? _mentioned;
 
-  /// Нейросеть только что спросила («Записать, сэр?»): короткий ответ —
-  /// ей, а не разбору фраз, где «да» — реплика, а «давай» — дело.
-  bool _brainAsked = false;
+  /// Что сделать с ответом на вопрос, который Джарвис задал последним.
+  Future<JarvisOutcome?> Function(String said, DateTime now)? _followUp;
 
-  /// Последний ответ предложил записать ещё.
-  bool _planOffered = false;
   Future<void> Function()? _undo;
 
   /// Каждый ответ Джарвиса — с обращением, как он показан. Для голоса.
@@ -92,8 +87,7 @@ class JarvisController extends StateNotifier<JarvisConversation> {
     } catch (error, stack) {
       // Человек должен узнать, что просьба не выполнена; сама ошибка уходит
       // дальше, в журнал, а не глохнет здесь.
-      _add(JarvisAuthor.jarvis,
-          'Не получилось — что-то пошло не так. Попробуйте ещё раз.');
+      _add(JarvisAuthor.jarvis, JarvisReplies.failed);
       Error.throwWithStackTrace(error, stack);
     } finally {
       if (mounted) state = state.copyWith(busy: false);
@@ -119,6 +113,7 @@ class JarvisController extends StateNotifier<JarvisConversation> {
     _questions.clear();
     _mentioned = null;
     _undo = null;
+    _followUp = null;
     state = const JarvisConversation();
     (await _brain())?.forget();
   }
@@ -141,18 +136,16 @@ class JarvisController extends StateNotifier<JarvisConversation> {
       final handled = await _clarify(said, now);
       if (handled) return;
     }
-    // «Запланировать что-нибудь ещё?» — «да» значит «слушаю, что записать».
-    final offered = _planOffered;
-    _planOffered = false;
-    if (offered && SmallTalk.agrees(said)) {
-      _jarvis(JarvisReplies.whatToPlan);
-      return;
-    }
-    final asked = _brainAsked;
-    _brainAsked = false;
-    if (asked && said.trim().split(RegExp(r'\s+')).length <= 4) {
-      await _askBrain(said, now);
-      return;
+    // Джарвис спросил сам («На что потратили?», «Записать, сэр?») —
+    // короткая фраза, которая не просьба, это ответ.
+    final followUp = _followUp;
+    _followUp = null;
+    if (followUp != null && answersJarvis(said, now)) {
+      final answered = await followUp(said, now);
+      if (answered != null) {
+        _apply(answered);
+        return;
+      }
     }
     final command = const JarvisCommandParser().parse(said, now);
     switch (command) {
@@ -197,20 +190,8 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   }
 
   Future<void> _askBrainWith(
-      JarvisBrain brain, String text, DateTime now) async {
-    try {
-      final outcome = await brain.ask(text, mentioned: _mentioned, now: now);
-      _apply(outcome);
-      _brainAsked = outcome.say.trim().endsWith('?');
-    } on GigaChatException catch (failure) {
-      final recalled = failure.offline ? _executor.recall(text) : null;
-      if (recalled != null) {
-        _apply(recalled);
-      } else {
-        _jarvis(failure.message);
-      }
-    }
-  }
+          JarvisBrain brain, String text, DateTime now) async =>
+      _apply(await brain.answer(text, mentioned: _mentioned, now: now));
 
   /// Ответ на вопрос о деле. true — фраза была ответом и обработана.
   Future<bool> _clarify(String said, DateTime now) async {
@@ -259,7 +240,7 @@ class JarvisController extends StateNotifier<JarvisConversation> {
   }
 
   void _apply(JarvisOutcome outcome) {
-    _planOffered = outcome.say.endsWith(JarvisReplies.planMore);
+    _followUp = outcome.followUp;
     if (outcome.mentioned != null) _mentioned = outcome.mentioned;
     final id = _jarvis(outcome.say, link: outcome.link);
     if (outcome.undo != null) {
