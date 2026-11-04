@@ -23,24 +23,25 @@ List<AppDestination> appDestinations(AppStrings strings) => [
         location: '/',
         branchIndex: 1,
       ),
-      AppDestination.route(
-        id: 'add_note',
+      AppDestination.branch(
+        id: 'notes',
         icon: Icons.edit_note_rounded,
-        label: strings.noteCard,
-        location: '/memory/note/new',
+        label: strings.notes,
+        location: '/notes',
+        branchIndex: 2,
       ),
       AppDestination.branch(
         id: 'accounts',
         icon: Icons.vpn_key_rounded,
         label: strings.accounts,
         location: '/accounts',
-        branchIndex: 2,
+        branchIndex: 3,
       ),
       AppDestination.branch(
         id: 'settings',
         icon: Icons.tune_rounded,
         label: strings.settings,
         location: '/settings',
-        branchIndex: 3,
+        branchIndex: 4,
       ),
     ];

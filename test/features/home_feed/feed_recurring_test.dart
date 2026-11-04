@@ -35,21 +35,6 @@ void main() {
     await openTab(tester, 'feed');
 
     expect(find.text('Постоянная записка'), findsNothing);
-    for (final section in ['day', 'notes']) {
-      final tab = find.byKey(ValueKey('feed_section_$section'));
-      expect(tester.getSize(tab).width, greaterThanOrEqualTo(48));
-      expect(tester.getSize(tab).height, greaterThanOrEqualTo(48));
-    }
-    final sheetRect = tester.getRect(
-      find.byKey(const ValueKey('notebook_feed_sheet')),
-    );
-    final dayTabRect = tester.getRect(
-      find.byKey(const ValueKey('feed_section_day')),
-    );
-    expect(sheetRect.right, closeTo(356, 0.1));
-    expect(dayTabRect.top, greaterThanOrEqualTo(sheetRect.bottom - 12));
-    expect(dayTabRect.bottom, greaterThan(sheetRect.bottom + 40));
-
     // Закладка задаёт день, а не разновидность записи: повтор, выпавший на
     // сегодня, стоит рядом с обычными записями.
     expect(find.text('Лента дня'), findsOneWidget);
@@ -72,15 +57,6 @@ void main() {
     expect(find.text('Ежемесячный информер'), findsNothing);
     expect(find.text('Ежегодный информер'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('feed_section_notes')));
-    await tester.pumpAndSettle();
-    expect(find.text('Записки'), findsWidgets);
-    expect(find.text('Постоянная записка'), findsOneWidget);
-    expect(find.byKey(const ValueKey('feed_previous_period')), findsNothing);
-
-    await tester.tap(find.byKey(const ValueKey('feed_section_day')));
-    await tester.pumpAndSettle();
-    expect(find.text('Постоянная записка'), findsNothing);
   });
 
   testWidgets('feed marks a projected occurrence done through its series',

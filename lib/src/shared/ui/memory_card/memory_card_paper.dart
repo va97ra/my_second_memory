@@ -32,7 +32,6 @@ class MemoryCardPaper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final notebook = NotebookVisuals.maybeOf(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final roundedBorder = BorderRadius.circular(8);
 
     return PaperSheet(
@@ -41,8 +40,7 @@ class MemoryCardPaper extends StatelessWidget {
         child: Material(
           color: notebookCardSurface,
           elevation: 6,
-          shadowColor:
-              _shadowColor(isNotebook: notebook != null, isDark: isDark),
+          shadowColor: shadowColor(context),
           surfaceTintColor: Colors.transparent,
           shape: notebook == null
               ? RoundedRectangleBorder(borderRadius: roundedBorder)
@@ -55,7 +53,9 @@ class MemoryCardPaper extends StatelessWidget {
             key: cardKey,
             height: height,
             child: Ink(
-              decoration: _surface(context, roundedBorder),
+              decoration: surface(
+                PaperSheet.pageIsNotebook(context) ? null : roundedBorder,
+              ),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -78,15 +78,18 @@ class MemoryCardPaper extends StatelessWidget {
     );
   }
 
-  Color _shadowColor({required bool isNotebook, required bool isDark}) {
-    if (isNotebook) return const Color(0xFF3B1D0E).withValues(alpha: 0.45);
-    return isDark
+  /// Цвет тени листка в этой теме.
+  static Color shadowColor(BuildContext context) {
+    if (NotebookVisuals.maybeOf(context) != null) {
+      return const Color(0xFF3B1D0E).withValues(alpha: 0.45);
+    }
+    return Theme.of(context).brightness == Brightness.dark
         ? Colors.black.withValues(alpha: 0.68)
         : const Color(0xFF536575).withValues(alpha: 0.34);
   }
 
   /// Фон листка: зерно бумаги, одно во всех темах.
-  BoxDecoration _surface(BuildContext context, BorderRadius roundedBorder) {
+  static BoxDecoration surface(BorderRadius? radius) {
     return BoxDecoration(
       color: notebookCardSurface,
       image: const DecorationImage(
@@ -94,8 +97,7 @@ class MemoryCardPaper extends StatelessWidget {
         fit: BoxFit.cover,
         opacity: 0.5,
       ),
-      borderRadius:
-          PaperSheet.pageIsNotebook(context) ? null : roundedBorder,
+      borderRadius: radius,
     );
   }
 }

@@ -8,10 +8,11 @@ import '../../../../shared/ui/page_hint_button.dart';
 import 'feed_period_row.dart';
 import 'feed_search_row.dart';
 
-/// Шапка страницы ленты: закладка, период и кнопки над ними.
+/// Шапка ленты и записок: закладка, период и кнопки над ними.
 class FeedHeader extends StatelessWidget {
   const FeedHeader({
     super.key,
+    required this.hint,
     required this.title,
     required this.periodLabel,
     required this.filter,
@@ -30,11 +31,13 @@ class FeedHeader extends StatelessWidget {
   /// Открыт ли поиск. Строка поиска встаёт на место периода.
   final bool searching;
 
-  /// Где ищет поиск открытой закладки.
+  /// Где ищет поиск этой страницы.
   final String searchHint;
   final VoidCallback onToggleSearch;
   final String searchQuery;
   final ValueChanged<String> onSearch;
+  /// Подсказка страницы.
+  final String hint;
   final String title;
   final String? periodLabel;
   final FeedFilter filter;
@@ -59,7 +62,7 @@ class FeedHeader extends StatelessWidget {
               SizedBox(
                   width: notebookHeaderSlot * 2,
                   child: Row(children: [
-                    PageHintButton(hint: strings.feedPageHint),
+                    PageHintButton(hint: hint),
                     IconButton(
                         key: const ValueKey('feed_search'),
                         tooltip: searching ? strings.closeSearch : searchHint,
@@ -85,18 +88,23 @@ class FeedHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              IconButton(
-                key: const ValueKey('feed_today'),
-                tooltip: strings.backToToday,
-                onPressed: onGoToToday,
-                icon: const Icon(Icons.today_rounded, size: 22),
-                style: notebookIconButtonStyle(),
-              ),
+              // Без периода вернуться не к чему, но слот остаётся: заголовок
+              // стоит посередине страницы.
+              if (periodLabel == null)
+                const SizedBox(width: notebookHeaderSlot)
+              else
+                IconButton(
+                  key: const ValueKey('feed_today'),
+                  tooltip: strings.backToToday,
+                  onPressed: onGoToToday,
+                  icon: const Icon(Icons.today_rounded, size: 22),
+                  style: notebookIconButtonStyle(),
+                ),
               MemoryFilterButton(
                 selected: filter,
                 onSelected: onFilterSelected,
-                // Записки не повторяются: на их закладке фильтров повтора
-                // нет.
+                // Записки не повторяются: у страницы без периода фильтров
+                // повторов нет.
                 filters: [
                   for (final filter in FeedFilter.values)
                     if (periodLabel != null ||

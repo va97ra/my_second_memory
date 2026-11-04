@@ -128,8 +128,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
-    await tester.pumpAndSettle();
+    await openNewNote(tester);
 
     final panel = tester.getRect(
       find.byKey(const ValueKey('record_editor_panel')),
@@ -176,7 +175,7 @@ void main() {
     // Возврат не должен упереться в страницу удалённой записи.
     expect(find.text('Запись не найдена'), findsNothing);
     expect(find.text('План на сегодня'), findsNothing);
-    expect(find.byKey(const ValueKey('feed_section_day')), findsWidgets);
+    expect(find.byKey(const ValueKey('feed_header_card')), findsWidgets);
   });
 
   testWidgets('an image opens the fullscreen viewer from the editor', (tester) async {

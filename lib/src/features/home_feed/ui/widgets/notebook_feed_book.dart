@@ -1,23 +1,17 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
-import '../../state/feed_providers.dart';
-import 'notebook_section_tabs.dart';
 
 /// Блокнот в блокнотной теме: обложка, лист с лентой и закладки снизу.
 class NotebookFeedBook extends StatelessWidget {
   const NotebookFeedBook({
     super.key,
-    required this.selected,
-    required this.onSelected,
     required this.page,
   });
 
-  /// Высота полосы закладок под листом.
-  static const double tabHeight = 52;
+  /// Сколько стопки листов видно под верхним.
+  static const double _sheetInset = 8;
 
-  final FeedSection selected;
-  final ValueChanged<FeedSection> onSelected;
   final Widget page;
 
   @override
@@ -63,7 +57,7 @@ class NotebookFeedBook extends StatelessWidget {
           left: 4,
           right: 4,
           top: 3,
-          bottom: tabHeight,
+          bottom: _sheetInset,
           child: SizedBox.expand(
             key: const ValueKey('notebook_feed_sheet'),
             child: page,
@@ -73,7 +67,7 @@ class NotebookFeedBook extends StatelessWidget {
         Positioned(
           left: 4,
           top: 3,
-          bottom: tabHeight,
+          bottom: _sheetInset,
           width: 14,
           child: IgnorePointer(
             child: DecoratedBox(
@@ -86,16 +80,6 @@ class NotebookFeedBook extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-        ),
-        Positioned(
-          left: 4,
-          right: 4,
-          bottom: 8,
-          height: tabHeight,
-          child: NotebookSectionTabs(
-            selected: selected,
-            onSelected: onSelected,
           ),
         ),
       ],

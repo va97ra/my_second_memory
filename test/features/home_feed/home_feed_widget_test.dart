@@ -89,10 +89,6 @@ void main() {
     expect(find.text('План на сегодня'), findsOneWidget);
     expect(find.text('Подготовить задачи на день'), findsOneWidget);
     expect(find.text('Ежедневник V2'), findsWidgets);
-    expect(find.byKey(const ValueKey('feed_section_day')), findsOneWidget);
-    expect(find.byKey(const ValueKey('feed_section_month')), findsNothing);
-    expect(find.byKey(const ValueKey('feed_section_year')), findsNothing);
-    expect(find.byKey(const ValueKey('feed_section_notes')), findsOneWidget);
     expect(find.text('Вчерашняя заметка'), findsNothing);
     expect(find.text('Позавчерашняя заметка'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('feed_previous_period')));
@@ -248,36 +244,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Вчерашняя заметка'), findsNothing);
     expect(find.text('План на сегодня'), findsOneWidget);
-  });
-
-  testWidgets('notes tab has no page to turn', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(360, 800));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(
-      testProviderScope(
-        overrides: [
-          securityServiceProvider.overrideWithValue(UnlockedSecurityService()),
-          memoryRepositoryProvider.overrideWithValue(FeedMemoryRepository()),
-          shiftScheduleRepositoryProvider.overrideWithValue(
-            FakeShiftScheduleRepository(),
-          ),
-        ],
-        child: const EzhednevnikV2App(),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await openTab(tester, 'feed');
-
-    await tester.tap(find.byKey(const ValueKey('feed_section_notes')));
-    await tester.pumpAndSettle();
-    // Обёртка листания остаётся на месте — иначе у рамки перелистывания на
-    // смене закладки меняется родитель и под листом мигает подложка, — но
-    // листать записки нечем: у них нет периода.
-    final swipeArea = tester.widget<PageSwipeArea>(
-      find.byKey(const ValueKey('feed_period_swipe_area')),
-    );
-    expect(swipeArea.onHorizontalSwipe, isNull);
   });
 
   testWidgets('hides empty previous day sections', (tester) async {

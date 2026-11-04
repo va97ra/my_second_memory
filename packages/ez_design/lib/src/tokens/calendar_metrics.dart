@@ -6,8 +6,8 @@ const calendarGridSpacing = 2.0;
 /// Day backgrounds remain quieter than shift caps and event ribbons.
 Color productionDaySurface(Color base,
     {required bool dayOff, required bool shortened}) {
-  final tint = shortened ? const Color(0xFFE5A51A) : const Color(0xFFE66074);
+  final tint = shortened ? const Color(0xFFE5A51A) : const Color(0xFFFF2F4B);
   return dayOff || shortened
-      ? Color.alphaBlend(tint.withValues(alpha: 0.26), base)
+      ? Color.alphaBlend(tint.withValues(alpha: 0.55), base)
       : base;
 }

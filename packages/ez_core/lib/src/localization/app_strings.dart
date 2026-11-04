@@ -24,8 +24,6 @@ class AppStrings {
   String get appTitle => 'Ежедневник V2';
   String get feed => isRu ? 'Лента' : 'Feed';
   String get dayFeed => isRu ? 'Лента дня' : 'Day feed';
-  String get dayTab => isRu ? 'День' : 'Day';
-  String get notesTabShort => isRu ? 'Зап.' : 'Notes';
   String get monthlyRecurring => isRu ? 'Каждый месяц' : 'Every month';
   String get yearlyRecurring => isRu ? 'Каждый год' : 'Every year';
   String get feedFilter => isRu ? 'Фильтр' : 'Filter';
@@ -314,6 +312,12 @@ class AppStrings {
   String get addRecord => isRu ? 'Добавить запись' : 'Add record';
   String get notes => isRu ? 'Записки' : 'Notes';
   String get noteCard => isRu ? 'Записка' : 'Note';
+  String get newNote => isRu ? 'Новая записка' : 'New note';
+  String get notesPageHint => isRu
+      ? 'Записки без даты. Плюс внизу заводит новую, нажатие открывает её, '
+          'долгое нажатие — меню: отметить или убрать в архив.'
+      : 'Notes without a date. The plus adds one, a tap opens it, a long '
+          'press shows its menu.';
   String get people => isRu ? 'Люди' : 'People';
   String get projects => isRu ? 'Проекты' : 'Projects';
   String get memoryArchive => isRu ? 'Архив памяти' : 'Memory archive';

@@ -92,8 +92,7 @@ void main() {
     await openTab(tester, 'accounts');
     final inPageHeader = visibleKey();
 
-    await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
-    await tester.pumpAndSettle();
+    await openNewNote(tester);
     final inAppBar = visibleKey();
 
     const expected = Size(notebookIconButtonSize, notebookIconButtonSize);
@@ -122,7 +121,7 @@ void main() {
 
     // Порядок кнопок задан списком пунктов, а не разбором индексов внутри
     // панели: каждая кнопка на своём месте и ни одна не особенная.
-    const order = ['calendar', 'feed', 'add_note', 'accounts', 'settings'];
+    const order = ['calendar', 'feed', 'notes', 'accounts', 'settings'];
     for (final id in order) {
       expect(find.byKey(ValueKey('bottom_$id')), findsOneWidget);
     }
@@ -370,8 +369,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
-    await tester.pumpAndSettle();
+    await openNewNote(tester);
     expectEditorTitle(tester, 'Записка');
     expect(find.byType(AppToolBar), findsOneWidget);
 
@@ -405,9 +403,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('bottom_add_note')), findsOneWidget);
+    await openNewNote(tester);
+    expect(find.byKey(const ValueKey('bottom_notes')), findsOneWidget);
 
     // Первая же буква запускает автосохранение: черновик становится записью,
     // и адрес экрана меняется. Панель обязана это пережить - человек с неё не
@@ -420,7 +417,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.savedItems.any((item) => item.isUndated), isTrue);
-    for (final id in ['calendar', 'feed', 'add_note', 'accounts', 'settings']) {
+    for (final id in ['calendar', 'feed', 'notes', 'accounts', 'settings']) {
       expect(
         find.byKey(ValueKey('bottom_$id')),
         findsOneWidget,
@@ -452,13 +449,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
-    await tester.pumpAndSettle();
+    await openNewNote(tester);
 
     expectEditorTitle(tester, 'Записка');
     // Записку заводят с панели, поэтому панель остаётся под рукой: уйти с
     // экрана можно тем же способом, каким на него пришли.
-    for (final id in ['calendar', 'feed', 'add_note', 'accounts', 'settings']) {
+    for (final id in ['calendar', 'feed', 'notes', 'accounts', 'settings']) {
       expect(find.byKey(ValueKey('bottom_$id')), findsOneWidget);
     }
     expect(

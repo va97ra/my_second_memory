@@ -221,7 +221,7 @@ class _MemoryItemDetailScreenState extends ConsumerState<MemoryItemDetailScreen>
     if (!mounted || widget.itemId != null) return;
     // Записку заводят с панели, поэтому новый адрес несёт её пункт: иначе
     // панель исчезнет в тот момент, когда автосохранение сменит адрес.
-    final panel = widget.createUndated ? '&panel=add_note' : '';
+    final panel = widget.createUndated ? '&panel=notes' : '';
     context.replace('/memory/item/${Uri.encodeComponent(item.id)}?new=1$panel');
   }
 

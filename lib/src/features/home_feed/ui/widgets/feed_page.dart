@@ -1,3 +1,4 @@
+import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
@@ -32,18 +33,19 @@ class FeedPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // У записок нет периода: листать и выбирать дату им нечем.
-    final dated = view.section != FeedSection.notes && !view.allDates;
+    final dated = !view.allDates;
     final feed = ref.read(feedViewProvider.notifier);
+    final strings = AppStrings.of(context);
     final content = Column(
       children: [
         FeedHeader(
           searching: view.searching,
-          searchHint: feedSearchHint(context, view.section),
+          hint: strings.feedPageHint,
+          searchHint: strings.searchAllDates,
           onToggleSearch: feed.toggleSearch,
           searchQuery: view.searchQuery,
           onSearch: feed.search,
-          title: feedSectionTitle(context, view.section),
+          title: strings.dayFeed,
           periodLabel: feedPeriodLabel(context, view),
           filter: view.filter,
           onGoToToday: onGoToToday,
@@ -54,7 +56,6 @@ class FeedPage extends ConsumerWidget {
         ),
         Expanded(
           child: FeedBody(
-            section: view.section,
             hasQuery: view.hasQuery,
             filter: view.filter,
             layout: layout,

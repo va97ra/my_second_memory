@@ -17,6 +17,7 @@ void main() {
     // Шапка из полос: два ряда не ложатся в один слотовый.
     'calendar_screen.dart',
     'home_feed_screen.dart',
+    'notes_screen.dart',
     // Снимок во весь экран, шапка прозрачная поверх него.
     'memory_image_viewer_screen.dart',
     // Пустое место в панели: экран говорит, что здесь пусто.

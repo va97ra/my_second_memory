@@ -36,6 +36,13 @@ Future<void> openTab(WidgetTester tester, String tab) async {
   await tester.pumpAndSettle();
 }
 
+/// Заводит новую записку: окно записок, затем плюс.
+Future<void> openNewNote(WidgetTester tester) async {
+  await openTab(tester, 'notes');
+  await tester.tap(find.byKey(const ValueKey('notes_add')));
+  await tester.pumpAndSettle();
+}
+
 Widget testProviderScope({
   required Widget child,
   List<Override> overrides = const [],

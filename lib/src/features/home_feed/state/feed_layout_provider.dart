@@ -7,13 +7,12 @@ import '../../recurrence/recurrence.dart';
 import 'feed_providers.dart';
 
 // Что лежит на странице ленты: какой период открыт и какие записи в него
-// попали. Выбор человека — закладка, день, фильтр и запрос — живёт рядом, в
+// попали. Выбор человека — день, фильтр и запрос — живёт рядом, в
 // `feed_providers.dart`; отсюда только раскладка по этому выбору.
 
 @immutable
 class FeedPeriodQuery {
   const FeedPeriodQuery({
-    required this.section,
     required this.anchorDate,
     this.start,
     this.end,
@@ -21,26 +20,21 @@ class FeedPeriodQuery {
 
   factory FeedPeriodQuery.fromState(FeedViewState state) {
     final anchor = _dateOnly(state.anchorDate);
-    if (state.section == FeedSection.notes || state.allDates) {
-      return FeedPeriodQuery(section: state.section, anchorDate: anchor);
-    }
+    if (state.allDates) return FeedPeriodQuery(anchorDate: anchor);
     // Обычная лента показывает один день. Фильтр повторов раскрывает её на
     // тот период, в котором повтор вообще случается.
     return switch (state.filter.recurringFrequency) {
       null => FeedPeriodQuery(
-          section: state.section,
           anchorDate: anchor,
           start: anchor,
           end: anchor,
         ),
       RecurrenceFrequency.monthly => FeedPeriodQuery(
-          section: state.section,
           anchorDate: anchor,
           start: DateTime(anchor.year, anchor.month),
           end: DateTime(anchor.year, anchor.month + 1, 0),
         ),
       RecurrenceFrequency.yearly => FeedPeriodQuery(
-          section: state.section,
           anchorDate: anchor,
           start: DateTime(anchor.year),
           end: DateTime(anchor.year, 12, 31),
@@ -48,7 +42,6 @@ class FeedPeriodQuery {
     };
   }
 
-  final FeedSection section;
   final DateTime anchorDate;
   final DateTime? start;
   final DateTime? end;
@@ -79,24 +72,6 @@ final feedLayoutProvider = Provider<FeedLayout>((ref) {
   final query = FeedPeriodQuery.fromState(state);
 
   final search = MemorySearch(state.searchQuery);
-  if (state.section == FeedSection.notes) {
-    final notes = ref
-        .watch(undatedNotesProvider)
-        .where((item) =>
-            matchesFeedFilter(item, state.filter) && search.matches(item))
-        .toList(growable: false);
-    return FeedLayout(
-      query: query,
-      groups: [
-        if (notes.isNotEmpty)
-          FeedGroupLayout(
-            period: query.anchorDate,
-            itemIds: [for (final item in notes) item.id],
-          ),
-      ],
-    );
-  }
-
   final start = query.start;
   final end = query.end;
   final source = <MemoryItem>[];
@@ -127,13 +102,10 @@ final feedLayoutProvider = Provider<FeedLayout>((ref) {
   final items = byId.values.toList()..sort(_compareDatedItems);
   final grouped = <DateTime, List<String>>{};
   for (final item in items) {
-    final period = switch (state.section) {
-      FeedSection.notes => query.anchorDate,
-      FeedSection.day => !state.allDates &&
-              state.filter.recurringFrequency == RecurrenceFrequency.yearly
-          ? DateTime(item.memoryDate.year, item.memoryDate.month)
-          : _dateOnly(item.memoryDate),
-    };
+    final period = !state.allDates &&
+            state.filter.recurringFrequency == RecurrenceFrequency.yearly
+        ? DateTime(item.memoryDate.year, item.memoryDate.month)
+        : _dateOnly(item.memoryDate);
     grouped.putIfAbsent(period, () => <String>[]).add(item.id);
   }
 

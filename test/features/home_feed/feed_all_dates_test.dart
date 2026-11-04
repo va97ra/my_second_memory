@@ -62,7 +62,6 @@ void main() {
     expect(layout.itemIds, ['past', 'today', 'future']);
     expect(layout.groups.length, 3);
     expect(find.byType(FeedGroupDivider), findsWidgets);
-    expect(find.byKey(const ValueKey('feed_section_allDates')), findsNothing);
     await tester.tap(button);
     await tester.pumpAndSettle();
     expect(c.read(feedLayoutProvider).itemIds, ['today']);

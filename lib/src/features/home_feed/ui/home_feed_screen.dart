@@ -7,8 +7,7 @@ import '../../recurrence/recurrence.dart';
 import '../state/feed_layout_provider.dart';
 import '../state/feed_providers.dart';
 import 'widgets/feed_page.dart';
-import 'widgets/feed_section_selector.dart';
-import 'widgets/notebook_feed_book.dart';
+import 'widgets/feed_page_shell.dart';
 
 /// Лента: страница выбранного периода, которую листают закладками и пальцем.
 class HomeFeedScreen extends ConsumerStatefulWidget {
@@ -27,54 +26,9 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     ref.watch(recurrenceLoadProvider);
     final view = ref.watch(feedViewProvider);
     final layout = ref.watch(feedLayoutProvider);
-    final notebook = NotebookVisuals.maybeOf(context);
 
-    return WarmGradientBackground(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final useSideTabs = notebook != null && constraints.maxHeight >= 360;
-          final page = _page(
-            view: view,
-            layout: layout,
-            loadState: loadState,
-          );
-
-          if (!useSideTabs) {
-            // Закладки стоят внизу, у самой нижней панели: там их достаёт
-            // большой палец, а вверху страницы место принадлежит периоду и
-            // самим записям. В блокноте они остаются сбоку — там это торчащие
-            // из книги закладки, и переносить их вниз бессмысленно.
-            return Column(
-              children: [
-                Expanded(
-                  child: MediaQuery.removePadding(
-                    context: context,
-                    removeBottom: true,
-                    child: page,
-                  ),
-                ),
-                FeedSectionSelector(
-                  selected: view.section,
-                  onSelected: _selectSection,
-                ),
-              ],
-            );
-          }
-
-          return Align(
-            alignment: Alignment.topCenter,
-            child: SizedBox(
-              width: constraints.maxWidth.clamp(0, 760),
-              height: constraints.maxHeight,
-              child: NotebookFeedBook(
-                selected: view.section,
-                onSelected: _selectSection,
-                page: page,
-              ),
-            ),
-          );
-        },
-      ),
+    return FeedPageShell(
+      page: _page(view: view, layout: layout, loadState: loadState),
     );
   }
 
@@ -97,26 +51,11 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
       ),
     );
 
-    // Страницу листают пальцем, а не только стрелками. У записок периода нет,
-    // и листать им нечего — но обёртка остаётся на месте: без неё у рамки
-    // перелистывания на смене закладки меняется родитель, она вместе с листом
-    // на кадр выпадает из дерева, и под ним мигает подложка.
+    // Страницу листают пальцем, а не только стрелками.
     return PageSwipeArea(
       key: const ValueKey('feed_period_swipe_area'),
-      onHorizontalSwipe: view.section == FeedSection.notes || view.searching
-          ? null
-          : _movePeriod,
+      onHorizontalSwipe: view.searching ? null : _movePeriod,
       child: sheet,
-    );
-  }
-
-  Future<void> _selectSection(FeedSection section) async {
-    final current = ref.read(feedViewProvider).section;
-    if (section == current) return;
-    await _turnPage(
-      forward: section.index > current.index,
-      switchContent: () =>
-          ref.read(feedViewProvider.notifier).selectSection(section),
     );
   }
 

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../state/feed_layout_provider.dart';
-import '../../state/feed_providers.dart';
 import '../feed_labels.dart';
 import 'feed_group_divider.dart';
 import 'memory_sliver_list.dart';
@@ -13,14 +12,12 @@ import 'memory_sliver_list.dart';
 class FeedBody extends StatelessWidget {
   const FeedBody({
     super.key,
-    required this.section,
     required this.hasQuery,
     required this.filter,
     required this.layout,
     required this.loadState,
   });
 
-  final FeedSection section;
   /// Есть ли в строке поиска запрос.
   final bool hasQuery;
   final FeedFilter filter;
@@ -35,13 +32,12 @@ class FeedBody extends StatelessWidget {
     if (loadState.hasError) {
       return Center(child: Text(AppStrings.of(context).loadFailed));
     }
-    // Запрос на дне раскрывает ленту на все даты, и дни разделяются
-    // подписями.
-    final allDates = hasQuery && section == FeedSection.day;
+    // Запрос раскрывает ленту на все даты, и дни разделяются подписями.
+    final allDates = hasQuery;
 
     return KeyedSubtree(
       key: ValueKey(
-        'feed_content_${section.name}_${filter.name}_${allDates}_'
+        'feed_content_${filter.name}_${allDates}_'
         '${layout.query.anchorDate.toIso8601String()}',
       ),
       child: CustomScrollView(

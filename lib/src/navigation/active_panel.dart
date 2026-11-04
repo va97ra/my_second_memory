@@ -16,7 +16,7 @@ String? panelIdForLocation(Uri location) {
     '/' => 'feed',
     '/memory' || '/security' => 'settings',
     '/memory/new' => 'calendar',
-    '/memory/note/new' => 'add_note',
+    '/notes' || '/memory/note/new' => 'notes',
     _ when path.startsWith('/calendar') => 'calendar',
     _ when path.startsWith('/accounts') => 'accounts',
     _ when path.startsWith('/settings') => 'settings',

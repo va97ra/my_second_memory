@@ -31,8 +31,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('bottom_add_note')));
-    await tester.pumpAndSettle();
+    await openNewNote(tester);
     final field = find.byKey(const ValueKey('record_editor_text'));
     await tester.enterText(field, 'Купить хлеб');
     await tester.pump(const Duration(seconds: 1));

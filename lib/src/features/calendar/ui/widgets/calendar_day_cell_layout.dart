@@ -1,5 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/foundation.dart';
+
+import 'day_number.dart';
 
 /// Что помещается в ячейку дня при её нынешней высоте.
 ///
@@ -19,8 +23,17 @@ class CalendarDayCellLayout {
     required double height,
     required List<MemoryItem> items,
     required bool hasHoliday,
+    double textScale = 1,
   }) {
-    final slots = ((height - _headerExtent) / _eventSlotExtent).floor();
+    // Крупный шрифт телефона растит и кружок сегодняшнего числа: шапка
+    // забирает у строк столько, сколько занимает на самом деле.
+    final header = math.max(
+      _headerExtent,
+      DayNumber.todayFontSize * textScale +
+          DayNumber.todayCircleExtra +
+          _headerGaps,
+    );
+    final slots = ((height - header) / _eventSlotExtent).floor();
     final maxEvents = slots.clamp(0, _maxEventRows);
     // Праздник забирает одну строку: он относится ко всему дню и важнее
     // очередной записи в списке.
@@ -56,6 +69,9 @@ class CalendarDayCellLayout {
 
   /// Высота шапки с числом месяца.
   static const _headerExtent = 30.0;
+
+  /// Отступы над числом и под ним.
+  static const _headerGaps = 6.0;
 
   /// Высота одной строки содержимого.
   static const _eventSlotExtent = 12.0;

@@ -1,10 +1,10 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Число месяца в ячейке дня.
 ///
-/// Все числа одного размера. Сегодняшнее — крупнее и обведено красным по
-/// контуру: рамка вокруг него спорила с рамкой ячейки и с шапкой графика, а
-/// обводка по самой цифре видна на любом фоне и ничего не занимает.
+/// Все числа одного размера. Сегодняшнее лежит на сплошном кружке: его видно
+/// на любой бумаге и на шапке любого графика.
 class DayNumber extends StatelessWidget {
   const DayNumber({
     super.key,
@@ -12,52 +12,72 @@ class DayNumber extends StatelessWidget {
     required this.isToday,
     required this.isSelected,
     required this.color,
-    this.outlined = true,
+    required this.todayColor,
     this.isDayOff = false,
     this.isShortened = false,
     this.statusLabel,
   });
 
-  /// Обводка сегодняшнего числа.
-  static const todayRing = Color(0xFFD32020);
-
   /// Размер обычного числа и сегодняшнего.
   static const fontSize = 12.5;
-  static const todayFontSize = 17.0;
+  static const todayFontSize = 13.5;
+
+  /// На сколько кружок шире сегодняшнего числа.
+  static const todayCircleExtra = 6.0;
 
   final int day;
   final bool isToday;
   final bool isSelected;
   final Color color;
+  final Color todayColor;
   final bool isDayOff;
   final bool isShortened;
   final String? statusLabel;
 
-  /// Обводить ли сегодняшнее число красным контуром. На цветной шапке оно
-  /// стоит отдельно и без обводки — см. [CalendarDayHeaderRow.outlinedNumber].
-  final bool outlined;
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final ink = isToday
+        ? readableInkOn(todayColor)
+        : isSelected
+            ? colors.onPrimary
+            : color;
     final content = Text(
       '$day${isShortened ? '*' : ''}',
       semanticsLabel: statusLabel == null ? null : '$day, $statusLabel',
       style: TextStyle(
         decoration: isDayOff ? TextDecoration.underline : null,
-        decorationColor: isSelected && !isToday ? colors.onPrimary : color,
+        decorationColor: ink,
         decorationThickness: 2,
-        color: isSelected && !isToday ? colors.onPrimary : color,
+        color: ink,
         fontSize: isToday ? todayFontSize : fontSize,
         fontWeight: isSelected || isToday ? FontWeight.w900 : FontWeight.w800,
         height: 1,
-        // Обводка собрана тенями по четырём сторонам: у текста нет способа
-        // нарисовать контур и заливку одним проходом.
-        shadows: isToday && outlined ? _ring : null,
       ),
     );
 
-    if (isToday || !isSelected) return content;
+    if (isToday) {
+      final diameter =
+          MediaQuery.textScalerOf(context).scale(todayFontSize) +
+              todayCircleExtra;
+      return Container(
+        key: const ValueKey('calendar_today_circle'),
+        width: diameter,
+        height: diameter,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: todayColor,
+          // Светлый ободок отделяет кружок от шапки графика того же цвета.
+          border: Border.all(color: Colors.white, width: 1.2),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: FittedBox(fit: BoxFit.scaleDown, child: content),
+        ),
+      );
+    }
+    if (!isSelected) return content;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -70,15 +90,4 @@ class DayNumber extends StatelessWidget {
       ),
     );
   }
-
-  static const _ring = <Shadow>[
-    Shadow(color: todayRing, offset: Offset(-1.4, 0)),
-    Shadow(color: todayRing, offset: Offset(1.4, 0)),
-    Shadow(color: todayRing, offset: Offset(0, -1.4)),
-    Shadow(color: todayRing, offset: Offset(0, 1.4)),
-    Shadow(color: todayRing, offset: Offset(-1, -1)),
-    Shadow(color: todayRing, offset: Offset(1, -1)),
-    Shadow(color: todayRing, offset: Offset(-1, 1)),
-    Shadow(color: todayRing, offset: Offset(1, 1)),
-  ];
 }

@@ -61,7 +61,7 @@ class CalendarDayCell extends ConsumerWidget {
             isInVisibleMonth &&
             shiftSchedules.isEmpty &&
             (screen?.isDark ?? false)
-        ? screen!.today
+        ? calendarTodayColor(context)
         : null;
     // Число, будильник и отметка архива стоят на шапке графика, а цвет ей
     // задаёт человек: чернила выбираются по её светлоте, иначе на светлом
@@ -79,7 +79,7 @@ class CalendarDayCell extends ConsumerWidget {
         isInVisibleMonth &&
         !isSelected &&
         items.isEmpty &&
-        !(isToday && screen != null);
+        !isToday;
 
     // Нажатие рисуется поверх плитки, а не под ней: `InkWell` снаружи
     // заливки отдаёт свою волну ближайшему материалу выше — материалу
@@ -102,7 +102,7 @@ class CalendarDayCell extends ConsumerWidget {
         hasAlarm: hasAlarm,
         foreground: foreground,
         todayCap: todayCap,
-        outlinedNumber: screen == null,
+        todayColor: calendarTodayColor(context),
       ),
     );
     // Цветные отражения не обязательны для преломления: у «Космоса» стекло

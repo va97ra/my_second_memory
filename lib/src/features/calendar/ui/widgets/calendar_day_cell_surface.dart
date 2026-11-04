@@ -3,6 +3,15 @@ import 'package:flutter/material.dart';
 
 import 'calendar_day_cell.dart';
 
+/// Цвет отметки сегодняшнего дня: рамка ячейки и кружок под числом.
+///
+/// Зелёный нарочно: красный в сетке заняли выходные, синий — шапки графиков
+/// и записи, и отметка этих цветов с ними сливалась.
+const calendarTodayGreen = Color(0xFF00A152);
+
+Color calendarTodayColor(BuildContext context) =>
+    ScreenVisuals.maybeOf(context)?.colors.today ?? calendarTodayGreen;
+
 /// Бумага ячейки дня: заливка, рамка и тень.
 ///
 /// Одно место, где решается, чем день отличается от соседей: выбором,
@@ -27,25 +36,9 @@ class CalendarDayCellSurface {
   final bool shortened;
 
   /// Значения экранной темы или null в блокноте.
-  ///
-  /// Заливка сегодняшнего дня рассчитана на светлую плитку: подмешанная к ней
-  /// отметка светлеет, и день выступает вперёд. На тёмной плитке та же
-  /// примесь темнеет и даёт грязное пятно — день выглядит не отмеченным, а
-  /// испачканным. Поэтому на тёмной теме сегодня получает цветную шапку и
-  /// свечение, а плитка остаётся обычной; на светлой — подложку, как и на
-  /// бумаге. Обводка отметкой есть в обеих.
   final ScreenThemeColors? screen;
 
-  bool get _ringsToday => isToday && isInVisibleMonth && screen != null;
-
-  /// Насколько сегодняшний день отделён от соседних.
-  ///
-  /// Подмешивается акцентный цвет приложения: притенение цветом текста давало
-  /// серую плитку, и сегодня выглядел не отмеченным, а выцветшим.
-  ///
-  /// Больше трёх десятых брать нельзя: заливка становится плотной, и тексту
-  /// записей поверх неё перестаёт хватать запаса контраста.
-  static const todayTintOpacity = 0.28;
+  bool get _ringsToday => isToday && isInVisibleMonth;
 
   BoxDecoration decoration(
     BuildContext context,
@@ -53,10 +46,9 @@ class CalendarDayCellSurface {
     AppSurfacePalette palette,
   ) {
     return BoxDecoration(
-      // Сегодня отмечено подкрашенной бумагой: чёрная обводка спорила с
-      // рамками соседей и терялась среди них. В день открытия сегодня — ещё
-      // и выбранный день, и акцентная заливка его примету не съедает: их
-      // теперь двое, заливка и рамка выбора.
+      // Сегодня отмечено рамкой и кружком под числом, бумага у него обычная:
+      // подмес цвета давал мутное пятно. В день открытия сегодня он же и
+      // выбранный день, поэтому заливка выбора ему не положена.
       gradient: isSelected && !isToday
           ? screen == null
               ? palette.accentGradient
@@ -71,18 +63,15 @@ class CalendarDayCellSurface {
                   : _glass(_paper(colors, palette))
               : null,
       borderRadius: BorderRadius.circular(CalendarDayCell.cornerRadius),
-      // Отметка сегодня сильнее рамки выбора: в день открытия сегодня и есть
-      // выбранный день, и тёмная рамка выбора стирала его примету — день
-      // выглядел как любой другой, по которому нажали.
       border: Border.all(
         color: _ringsToday
-            ? screen!.today
+            ? calendarTodayColor(context)
             : isSelected
                 ? colors.onSurface
                 : hasItems && isInVisibleMonth
                     ? colors.outline
                     : Colors.transparent,
-        width: _ringsToday ? 1.8 : (isSelected ? 2 : 1),
+        width: _ringsToday ? 2.6 : (isSelected ? 2 : 1),
       ),
       boxShadow: _shadow(context, colors),
     );
@@ -98,8 +87,8 @@ class CalendarDayCellSurface {
     if (_ringsToday) {
       return [
         BoxShadow(
-          color: screen!.glow.withValues(alpha: screen.isDark ? 0.45 : 0.3),
-          blurRadius: 10,
+          color: calendarTodayColor(context).withValues(alpha: 0.6),
+          blurRadius: 9,
         ),
       ];
     }
@@ -123,25 +112,12 @@ class CalendarDayCellSurface {
     return notebookSurfaceShadow(context, NotebookSurfaceDepth.tile);
   }
 
-  /// Заливка одна и та же и для дня с записями, и для дня со сменой: записи
-  /// показывает рамка, смену — полоса сверху, а бумага под ними одна.
-  /// Сегодняшний день — та же бумага, подкрашенная акцентом.
+  /// Заливка одна и та же и для дня с записями, и для дня без них, и для
+  /// сегодняшнего: записи показывает рамка, смену — полоса сверху, а бумага
+  /// говорит только о том, рабочий ли это день.
   Color _paper(ColorScheme colors, AppSurfacePalette palette) {
     if (!isInVisibleMonth) return Colors.transparent;
-    final tile = productionDaySurface(palette.calendarTile,
+    return productionDaySurface(palette.calendarTile,
         dayOff: dayOff, shortened: shortened);
-    if (!isToday) return tile;
-    final screen = this.screen;
-    if (screen == null) {
-      return Color.alphaBlend(
-        colors.primary.withValues(alpha: todayTintOpacity),
-        tile,
-      );
-    }
-    if (screen.isDark) return tile;
-    return Color.alphaBlend(
-      screen.today.withValues(alpha: 0.12),
-      tile,
-    );
   }
 }

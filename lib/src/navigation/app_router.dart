@@ -6,6 +6,7 @@ import '../features/backup/backup.dart';
 import '../features/calendar/calendar.dart';
 import '../features/home_feed/home_feed.dart';
 import '../features/memory_items/memory_items.dart';
+import '../features/notes/notes.dart';
 import '../features/security/security.dart';
 import '../features/settings/settings.dart';
 import '../features/sync/sync.dart';
@@ -53,6 +54,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   context: context,
                   state: state,
                   child: const HomeFeedScreen(),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/notes',
+                pageBuilder: (context, state) => pageTurnPage(
+                  context: context,
+                  state: state,
+                  child: const NotesScreen(),
                 ),
               ),
             ],

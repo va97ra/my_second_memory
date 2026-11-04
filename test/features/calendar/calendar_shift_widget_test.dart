@@ -9,6 +9,10 @@ import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/day_number.dart'
 import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/shift_marks.dart';
 import '../../support/widget_test_harness.dart';
 
+/// Число дня в ячейке. Сокращённый день пишется со звёздочкой: «3*».
+Finder dayNumber(DateTime day) =>
+    find.textContaining(RegExp('^${day.day}\\*?\$'));
+
 void main() {
   useTestEnvironment();
 
@@ -73,9 +77,12 @@ void main() {
       find.descendant(of: cell, matching: find.byType(AnimatedContainer)).first,
     );
     final todayDecoration = todayContainer.decoration! as BoxDecoration;
-    // Сегодня отмечено серой тенью на бумаге, а не собственной обводкой:
-    // чёрная рамка спорила с рамками соседей и терялась среди них.
-    expect((todayDecoration.border! as Border).top.color, isNot(Colors.black));
+    // Сегодня отмечено рамкой цвета отметки, а не подмесом в бумагу.
+    final ring = (todayDecoration.border! as Border).top;
+    expect(ring.color, tester.widget<DayNumber>(
+      find.descendant(of: cell, matching: find.byType(DayNumber)),
+    ).todayColor);
+    expect(ring.width, greaterThan(2));
     final plainContainer = tester.widget<AnimatedContainer>(
       find
           .descendant(
@@ -84,29 +91,26 @@ void main() {
           )
           .first,
     );
-    final plainDecoration = plainContainer.decoration! as BoxDecoration;
-    expect(
-      todayDecoration.gradient!.colors.first.computeLuminance(),
-      lessThan(plainDecoration.gradient!.colors.first.computeLuminance()),
-    );
+    expect(plainContainer.decoration, isA<BoxDecoration>());
     // И крупным числом: другой приметы внутри ячейки у него нет.
     final todayNumber = tester.widget<Text>(
-      find.descendant(of: cell, matching: find.text('${today.day}')),
+      find.descendant(of: cell, matching: dayNumber(today)),
     );
     expect(todayNumber.style?.fontSize, DayNumber.todayFontSize);
-    // И красной обводкой по самой цифре: рамка вокруг числа спорила бы с
-    // рамкой ячейки и с шапкой графика, а чёрной рамки ячейки среди цветных
-    // дней не видно.
+    // И кружком под самой цифрой: его видно на любой бумаге и шапке.
     expect(
-      todayNumber.style?.shadows?.map((shadow) => shadow.color).toSet(),
-      {DayNumber.todayRing},
+      find.descendant(
+        of: cell,
+        matching: find.byKey(const ValueKey('calendar_today_circle')),
+      ),
+      findsOneWidget,
     );
     // Обычное число остаётся обычного размера.
     final plainSize = tester
         .widget<Text>(
           find.descendant(
             of: find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
-            matching: find.text('${secondWorkDay.day}'),
+            matching: dayNumber(secondWorkDay),
           ),
         )
         .style
@@ -116,7 +120,7 @@ void main() {
     final plainOnHeader = tester.getRect(
       find.descendant(
         of: find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
-        matching: find.text('${secondWorkDay.day}'),
+        matching: dayNumber(secondWorkDay),
       ),
     );
     final secondHeader = tester.getRect(
@@ -170,7 +174,7 @@ void main() {
     // крупнее обычного и нижним краем выходит за шапку — это и есть его
     // примета, поэтому проверяется, что оно на шапке начинается.
     final numberRect = tester.getRect(
-      find.descendant(of: cell, matching: find.text('${today.day}')),
+      find.descendant(of: cell, matching: dayNumber(today)),
     );
     final alarm = tester.getRect(
       find.descendant(of: cell, matching: find.byIcon(Icons.alarm_rounded)),
@@ -206,7 +210,7 @@ void main() {
           plainCellFinder = plainCell;
           plainNumber = find.descendant(
             of: plainCell,
-            matching: find.text('${day.day}'),
+            matching: dayNumber(day),
           );
           break;
         }
@@ -217,7 +221,7 @@ void main() {
     // свой размер и кольцо.
     final shiftNumber = find.descendant(
       of: find.byKey(ValueKey('calendar_day_$secondWorkDayKey')),
-      matching: find.text('${secondWorkDay.day}'),
+      matching: dayNumber(secondWorkDay),
     );
     expect(
       tester.getRect(plainNumber!).top - tester.getRect(plainCellFinder!).top,
