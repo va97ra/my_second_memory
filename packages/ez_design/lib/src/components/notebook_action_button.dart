@@ -34,7 +34,6 @@ class NotebookActionButton extends StatelessWidget {
     final enabled = onPressed != null;
     return NotebookPressable(
       onTap: onPressed,
-      pressedOffset: 3,
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(

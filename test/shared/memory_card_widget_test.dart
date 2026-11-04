@@ -83,7 +83,6 @@ void main() {
                     item: item,
                     showDate: false,
                     compact: true,
-                    denseFeedLayout: true,
                     onOpen: () {},
                     onToggleDone: () {},
                   ),
@@ -99,16 +98,8 @@ void main() {
         .widget<MemoryCardTypeRail>(
             find.byKey(ValueKey('memory_card_type_$id')))
         .color;
-    Color? titleOf(String id) {
-      // Название — с оформлением текста, его цвет — в стиле самого текста.
-      final text =
-          tester.widget<Text>(find.byKey(ValueKey('memory_card_title_$id')));
-      return (text.style ?? text.textSpan?.style)?.color;
-    }
-
     expect(railOf('done'), memoryDoneColor);
     expect(railOf('waiting'), memoryTypeColor(MemoryType.task));
-    expect(titleOf('done'), isNot(titleOf('waiting')));
     expect(tester.takeException(), isNull);
   });
 

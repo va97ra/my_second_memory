@@ -136,8 +136,7 @@ void main() {
       initialState: FeedViewState(
         anchorDate: DateTime(2026, 10, 1),
         filter: FeedFilter.day,
-        searching: true,
-        searchQuery: 'счётчик',
+        search: const MemorySearchBar(isOpen: true, query: 'счётчик'),
       ),
     );
 

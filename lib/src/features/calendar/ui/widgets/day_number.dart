@@ -10,7 +10,6 @@ class DayNumber extends StatelessWidget {
     super.key,
     required this.day,
     required this.isToday,
-    required this.isSelected,
     required this.color,
     required this.todayColor,
     this.isDayOff = false,
@@ -27,7 +26,6 @@ class DayNumber extends StatelessWidget {
 
   final int day;
   final bool isToday;
-  final bool isSelected;
   final Color color;
   final Color todayColor;
   final bool isDayOff;
@@ -36,12 +34,7 @@ class DayNumber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final ink = isToday
-        ? readableInkOn(todayColor)
-        : isSelected
-            ? colors.onPrimary
-            : color;
+    final ink = isToday ? readableInkOn(todayColor) : color;
     final content = Text(
       '$day${isShortened ? '*' : ''}',
       semanticsLabel: statusLabel == null ? null : '$day, $statusLabel',
@@ -51,42 +44,30 @@ class DayNumber extends StatelessWidget {
         decorationThickness: 2,
         color: ink,
         fontSize: isToday ? todayFontSize : fontSize,
-        fontWeight: isSelected || isToday ? FontWeight.w900 : FontWeight.w800,
+        fontWeight: isToday ? FontWeight.w900 : FontWeight.w800,
         height: 1,
       ),
     );
 
-    if (isToday) {
-      final diameter =
-          MediaQuery.textScalerOf(context).scale(todayFontSize) +
-              todayCircleExtra;
-      return Container(
-        key: const ValueKey('calendar_today_circle'),
-        width: diameter,
-        height: diameter,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: todayColor,
-          // Светлый ободок отделяет кружок от шапки графика того же цвета.
-          border: Border.all(color: Colors.white, width: 1.2),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(2),
-          child: FittedBox(fit: BoxFit.scaleDown, child: content),
-        ),
-      );
-    }
-    if (!isSelected) return content;
+    if (!isToday) return content;
 
-    return DecoratedBox(
+    final diameter =
+        MediaQuery.textScalerOf(context).scale(todayFontSize) +
+            todayCircleExtra;
+    return Container(
+      key: const ValueKey('calendar_today_circle'),
+      width: diameter,
+      height: diameter,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: colors.onPrimary.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(8),
+        shape: BoxShape.circle,
+        color: todayColor,
+        // Светлый ободок отделяет кружок от шапки графика того же цвета.
+        border: Border.all(color: Colors.white, width: 1.2),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-        child: content,
+        padding: const EdgeInsets.all(2),
+        child: FittedBox(fit: BoxFit.scaleDown, child: content),
       ),
     );
   }

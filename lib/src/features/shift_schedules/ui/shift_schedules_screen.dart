@@ -68,9 +68,9 @@ class ShiftSchedulesScreen extends ConsumerWidget {
                     else
                       for (final schedule in schedules)
                         ShiftScheduleTile(
-                          schedule: schedule,
+                          scheduleId: schedule.id,
                           locale: locale,
-                          onEdit: () => _openEditor(context, schedule),
+                          onEdit: (edited) => _openEditor(context, edited),
                           onToggle: () => ref
                               .read(shiftSchedulesControllerProvider.notifier)
                               .toggleEnabled(schedule.id),

@@ -15,15 +15,11 @@ class CalendarPanel extends ConsumerWidget {
     super.key,
     required this.locale,
     required this.visibleMonth,
-    required this.selectedDate,
-    required this.monthData,
     required this.onSelectDate,
   });
 
   final String locale;
   final DateTime visibleMonth;
-  final DateTime selectedDate;
-  final CalendarMonthData monthData;
   final ValueChanged<DateTime> onSelectDate;
 
   @override
@@ -46,13 +42,11 @@ class CalendarPanel extends ConsumerWidget {
           Expanded(
             child: Row(children: [
               if (settings.weekNumbers)
-                CalendarWeekNumbers(days: monthData.days),
+                CalendarWeekNumbers(days: calendarDaysForMonth(visibleMonth)),
               Expanded(
                   child: CalendarMonthGrid(
                 locale: locale,
                 visibleMonth: visibleMonth,
-                selectedDate: selectedDate,
-                monthData: monthData,
                 onSelectDate: onSelectDate,
               )),
             ]),

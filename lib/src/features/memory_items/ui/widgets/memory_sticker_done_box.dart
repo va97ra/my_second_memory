@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
 
-/// Квадратик в углу карточки записки: зелёная галочка у записки в работе,
+/// Квадратик в углу листка: зелёная галочка у записи в работе,
 /// серая у выполненной. Рисуется мелко, а нажимается с запасом вокруг.
-class NoteCardDoneBox extends StatelessWidget {
-  const NoteCardDoneBox({
+class MemoryStickerDoneBox extends StatelessWidget {
+  const MemoryStickerDoneBox({
     super.key,
     required this.isDone,
     required this.onToggle,
@@ -33,7 +33,6 @@ class NoteCardDoneBox extends StatelessWidget {
       excludeSemantics: true,
       child: NotebookPressable(
         onTap: onToggle,
-        pressedOffset: 0,
         borderRadius: BorderRadius.circular(8),
         child: SizedBox.square(
           dimension: _touchSize,

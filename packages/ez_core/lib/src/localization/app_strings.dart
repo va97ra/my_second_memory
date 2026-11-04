@@ -198,10 +198,12 @@ class AppStrings {
       isRu ? 'Что здесь можно' : 'What you can do here';
 
   String get feedPageHint => isRu
-      ? 'Лента открывается на одном дне, стрелки листают дни. «Все записи» в '
-          'фильтре показывают все даты, лупа ищет записи.'
-      : 'The feed opens on one day and the arrows move between days. All '
-          'records in the filter covers all dates, the magnifier finds records.';
+      ? 'Лента открывается на одном дне, «Все записи» в фильтре показывают все '
+          'даты. Долгое нажатие на листок открывает меню, а если его понести, '
+          'он переедет на другой день.'
+      : 'The feed opens on one day, All records in the filter covers all '
+          'dates. A long press opens a menu, carrying a note moves it to '
+          'another day.';
 
   String get dayPageHint => isRu
       ? 'Нажмите свободное время на шкале: встанет рамка, её тянут за кружки '
@@ -322,11 +324,12 @@ class AppStrings {
   String get notes => isRu ? 'Записки' : 'Notes';
   String get noteCard => isRu ? 'Записка' : 'Note';
   String get newNote => isRu ? 'Новая записка' : 'New note';
+  String get moveToDay => isRu ? 'Перенести на другой день' : 'Move to another day';
   String get notesPageHint => isRu
       ? 'Плюс внизу заводит новую записку, нажатие открывает её. Квадратик в '
-          'углу отмечает выполненной, долгое нажатие убирает в архив.'
+          'углу отмечает выполненной, долгое нажатие открывает меню.'
       : 'The plus adds a note and a tap opens it. The box in the corner marks '
-          'it done, a long press moves it to the archive.';
+          'it done, a long press opens the menu.';
   String get people => isRu ? 'Люди' : 'People';
   String get projects => isRu ? 'Проекты' : 'Projects';
   String get memoryArchive => isRu ? 'Архив памяти' : 'Memory archive';

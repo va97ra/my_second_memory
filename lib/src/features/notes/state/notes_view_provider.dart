@@ -9,28 +9,23 @@ import '../../memory_items/memory_items.dart';
 class NotesViewState {
   const NotesViewState({
     this.filter = FeedFilter.all,
-    this.searching = false,
-    this.searchQuery = '',
+    this.search = const MemorySearchBar(),
   });
 
   final FeedFilter filter;
-  final bool searching;
+  final MemorySearchBar search;
 
-  /// Что ищут. Живёт только при открытом поиске.
-  final String searchQuery;
-
-  /// Ищет ли окно прямо сейчас: пустая строка ничего не ищет.
-  bool get hasQuery => searching && !MemorySearch(searchQuery).isEmpty;
+  bool get searching => search.isOpen;
+  String get searchQuery => search.query;
+  bool get hasQuery => search.hasQuery;
 
   NotesViewState copyWith({
     FeedFilter? filter,
-    bool? searching,
-    String? searchQuery,
+    MemorySearchBar? search,
   }) {
     return NotesViewState(
       filter: filter ?? this.filter,
-      searching: searching ?? this.searching,
-      searchQuery: searchQuery ?? this.searchQuery,
+      search: search ?? this.search,
     );
   }
 }
@@ -38,14 +33,10 @@ class NotesViewState {
 class NotesViewController extends StateNotifier<NotesViewState> {
   NotesViewController() : super(const NotesViewState());
 
-  /// Каждый вход в поиск начинается с пустой строки.
-  void toggleSearch() =>
-      state = state.copyWith(searching: !state.searching, searchQuery: '');
+  void toggleSearch() => state = state.copyWith(search: state.search.toggled());
 
-  void search(String query) {
-    if (!state.searching) return;
-    state = state.copyWith(searchQuery: query);
-  }
+  void search(String query) =>
+      state = state.copyWith(search: state.search.withQuery(query));
 
   void selectFilter(FeedFilter filter) =>
       state = state.copyWith(filter: filter);

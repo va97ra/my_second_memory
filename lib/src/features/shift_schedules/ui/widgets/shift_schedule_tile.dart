@@ -2,28 +2,32 @@ import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../state/shift_schedules_controller.dart';
 import 'shift_schedule_tile_details.dart';
 
 /// Карточка графика в списке: цвет, содержимое, переключатель и меню.
-class ShiftScheduleTile extends StatelessWidget {
+class ShiftScheduleTile extends ConsumerWidget {
   const ShiftScheduleTile({
     super.key,
-    required this.schedule,
+    required this.scheduleId,
     required this.locale,
     required this.onEdit,
     required this.onToggle,
     required this.onDelete,
   });
 
-  final ShiftSchedule schedule;
+  final String scheduleId;
   final String locale;
-  final VoidCallback onEdit;
+  final ValueChanged<ShiftSchedule> onEdit;
   final VoidCallback onToggle;
   final VoidCallback onDelete;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final schedule = ref.watch(shiftScheduleByIdProvider(scheduleId));
+    if (schedule == null) return const SizedBox.shrink();
     final strings = AppStrings.of(context);
     final colors = Theme.of(context).colorScheme;
     final color = Color(schedule.colorValue);
@@ -35,7 +39,7 @@ class ShiftScheduleTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
-          onTap: onEdit,
+          onTap: () => onEdit(schedule),
           child: Ink(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
@@ -47,7 +51,7 @@ class ShiftScheduleTile extends StatelessWidget {
               color: schedule.isEnabled
                   ? color.withValues(alpha: 0.1)
                   : colors.surface.withValues(alpha: 0.92),
-              boxShadow: _shadow(context, color),
+              boxShadow: _shadow(context, color, schedule),
             ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
@@ -73,7 +77,7 @@ class ShiftScheduleTile extends StatelessWidget {
                   ),
                   PopupMenuButton<String>(
                     onSelected: (value) {
-                      if (value == 'edit') onEdit();
+                      if (value == 'edit') onEdit(schedule);
                       if (value == 'delete') onDelete();
                     },
                     itemBuilder: (context) => [
@@ -97,7 +101,11 @@ class ShiftScheduleTile extends StatelessWidget {
   }
 
   /// Тень блокнотной темы, если она есть; иначе — своя, по цвету графика.
-  List<BoxShadow> _shadow(BuildContext context, Color color) {
+  List<BoxShadow> _shadow(
+    BuildContext context,
+    Color color,
+    ShiftSchedule schedule,
+  ) {
     final notebook = notebookSurfaceShadow(context, NotebookSurfaceDepth.card);
     if (notebook.isNotEmpty) return notebook;
     return [

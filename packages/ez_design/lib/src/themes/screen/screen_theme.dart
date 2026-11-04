@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../components/press_pulse.dart';
 import '../app_theme.dart';
 import '../app_theme_style.dart';
 import '../surface_palette.dart';
@@ -56,7 +57,7 @@ ThemeData buildScreenTheme(ScreenThemeColors c) {
     error: c.holiday,
   );
 
-  return base.copyWith(
+  return withPressPulse(base.copyWith(
     colorScheme: scheme,
     progressIndicatorTheme: quietProgressTheme(scheme),
     canvasColor: c.backgroundStart,
@@ -152,9 +153,7 @@ ThemeData buildScreenTheme(ScreenThemeColors c) {
           return c.accent.withValues(alpha: 0.82);
         }),
         foregroundColor: WidgetStateProperty.resolveWith((states) {
-          return states.contains(WidgetState.disabled)
-              ? c.dimInk
-              : c.onAccent;
+          return states.contains(WidgetState.disabled) ? c.dimInk : c.onAccent;
         }),
         shadowColor: WidgetStatePropertyAll(
           c.accentDeep.withValues(alpha: 0.6),
@@ -196,7 +195,7 @@ ThemeData buildScreenTheme(ScreenThemeColors c) {
     // экран на деревянный стол.
     extensions: [palette, ScreenVisuals(c)],
     textTheme: base.textTheme.apply(bodyColor: c.ink, displayColor: c.ink),
-  );
+  ));
 }
 
 /// Значения темы-экрана или null, если тема блокнотная.

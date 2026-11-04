@@ -4,6 +4,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'memory_card_labels.dart';
 import 'memory_item_presentation.dart';
 
 /// Левая полоса карточки: вид записи, её дата и время.
@@ -14,14 +15,12 @@ class MemoryCardTypeRail extends StatelessWidget {
     required this.color,
     required this.showDate,
     required this.compact,
-    required this.denseFeedLayout,
   });
 
   final MemoryItem item;
   final Color color;
   final bool showDate;
   final bool compact;
-  final bool denseFeedLayout;
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +34,7 @@ class MemoryCardTypeRail extends StatelessWidget {
     // Рваный край откусывает часть этой полосы, поэтому её содержимое
     // отодвинуто от него.
     final tearInset = notebookPage ? TornPaperShapeBorder.tearDepth : 0.0;
-    final verticalPadding = denseFeedLayout
-        ? 4.0
-        : compact
-            ? 6.0
-            : 8.0;
+    final verticalPadding = compact ? 6.0 : 8.0;
     final time = item.timeMinutes == null
         ? DateFormat.Hm(locale).format(item.createdAt)
         : formatMinutesOfDay(item.timeMinutes!);
@@ -64,27 +59,17 @@ class MemoryCardTypeRail extends StatelessWidget {
             Icon(
               memoryTypeIcon(item.type),
               color: foreground,
-              size: denseFeedLayout
-                  ? 17
-                  : compact
-                      ? 19
-                      : 21,
+              size: compact ? 19 : 21,
             ),
-            SizedBox(height: denseFeedLayout ? 2 : (compact ? 3 : 5)),
+            SizedBox(height: compact ? 3 : 5),
             Text(
-              item.isUndated
-                  ? AppStrings.of(context).noteCard
-                  : item.type.label(locale),
+              memoryKindLabel(context, item),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: foreground,
-                    fontSize: denseFeedLayout
-                        ? 7.8
-                        : compact
-                            ? 8.2
-                            : 8.8,
+                    fontSize: compact ? 8.2 : 8.8,
                     fontWeight: FontWeight.w900,
                     height: 1.05,
                   ),

@@ -1,10 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
 import '../../../home_feed/home_feed.dart';
-import 'note_grid_card.dart';
+import '../../../memory_items/memory_items.dart';
 import 'notes_add_button.dart';
 
 /// Сетка записок: квадратные карточки, на телефоне три в ряд. Выполненные лежат
@@ -15,10 +13,6 @@ class NotesGrid extends StatelessWidget {
   /// Насколько плюс приподнят над низом окна.
   static const addButtonInset = 14.0;
 
-  /// На широком экране ряд длиннее, чтобы карточки не вырастали во весь лист.
-  static const _maxCardWidth = 180.0;
-  static const _gap = 8.0;
-  static const _edge = 12.0;
 
   final ({List<String> active, List<String> done}) notes;
   final bool hasQuery;
@@ -31,7 +25,7 @@ class NotesGrid extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = math.max(3, constraints.maxWidth ~/ _maxCardWidth);
+        final columns = memoryStickerColumns(constraints.maxWidth);
         return CustomScrollView(
           key: const ValueKey('notes_grid'),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -59,18 +53,10 @@ class NotesGrid extends StatelessWidget {
     );
   }
 
-  Widget _grid(List<String> ids, int columns) {
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: _edge),
-      sliver: SliverGrid.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          mainAxisSpacing: _gap,
-          crossAxisSpacing: _gap,
-        ),
-        itemCount: ids.length,
-        itemBuilder: (context, index) => NoteGridCard(itemId: ids[index]),
-      ),
-    );
-  }
+  Widget _grid(List<String> ids, int columns) => MemoryStickerGrid(
+        itemIds: ids,
+        columns: columns,
+        stamp: StickerStamp.created,
+        openQuery: '?panel=notes',
+      );
 }

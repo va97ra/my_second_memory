@@ -55,7 +55,7 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 20),
               itemCount: items.length,
-              itemBuilder: (context, index) => _card(items[index]),
+              itemBuilder: (context, index) => _card(items[index].id),
             ),
           ),
         ],
@@ -63,13 +63,20 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
     );
   }
 
-  Widget _card(MemoryItem item) {
-    return MemoryItemCard(
-      item: item,
-      onOpen: () => context.pageTurnPush(
-        '/memory/item/${Uri.encodeComponent(item.id)}',
-      ),
-      onRestore: () => _restore(item),
+  /// Карточка получает идентификатор и читает запись сама.
+  Widget _card(String itemId) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final item = ref.watch(memoryItemByIdProvider(itemId));
+        if (item == null) return const SizedBox.shrink();
+        return MemoryItemCard(
+          item: item,
+          onOpen: () => context.pageTurnPush(
+            '/memory/item/${Uri.encodeComponent(item.id)}',
+          ),
+          onRestore: () => _restore(item),
+        );
+      },
     );
   }
 

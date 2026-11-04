@@ -1,4 +1,29 @@
+import 'package:meta/meta.dart';
+
 import '../memory/memory_item.dart';
+
+/// Строка поиска страницы: открыта ли и что в ней набрано. Одна на ленту и
+/// записки.
+@immutable
+class MemorySearchBar {
+  const MemorySearchBar({this.isOpen = false, this.query = ''});
+
+  final bool isOpen;
+
+  /// Что ищут. Живёт только при открытой строке.
+  final String query;
+
+  /// Ищет ли страница прямо сейчас: пустая строка ничего не ищет, и под ней
+  /// обычное содержимое — иначе прошлые находки казались бы новыми.
+  bool get hasQuery => isOpen && !MemorySearch(query).isEmpty;
+
+  /// Каждый вход начинается с пустой строки: прошлый запрос, всплывший сам,
+  /// выглядел бы как правка.
+  MemorySearchBar toggled() => MemorySearchBar(isOpen: !isOpen);
+
+  MemorySearchBar withQuery(String value) =>
+      isOpen ? MemorySearchBar(isOpen: true, query: value) : this;
+}
 
 /// Поиск записи по словам.
 ///

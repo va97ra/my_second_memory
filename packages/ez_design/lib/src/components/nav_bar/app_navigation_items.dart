@@ -77,7 +77,6 @@ class _NavigationItemButton extends StatelessWidget {
         child: NotebookPressable(
           onTap: onTap,
           playClick: false,
-          pressedOffset: 1,
           borderRadius: BorderRadius.circular(14),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

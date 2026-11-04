@@ -86,7 +86,6 @@ class _Tool extends StatelessWidget {
         child: NotebookPressable(
           onTap: onTap,
           playClick: false,
-          pressedOffset: 1,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
             child: Column(

@@ -1,9 +1,43 @@
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
+import '../../state/memory_item_commands.dart';
+
 /// Что именно удаляют, когда запись принадлежит серии.
-enum MemoryDeleteScope { one, future, series }
 
 /// Спрашивает область удаления. null — человек ушёл, не ответив.
+/// Спрашивает, удалять ли запись и какую часть серии. Null — передумали.
+Future<MemoryDeleteScope?> askMemoryDelete(
+  BuildContext context,
+  MemoryItem item,
+) async {
+  final scope = item.seriesId == null
+      ? MemoryDeleteScope.one
+      : await askDeleteScope(context);
+  if (scope == null || !context.mounted) return null;
+
+  final strings = AppStrings.of(context);
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(strings.deleteRecordQuestion),
+      content: Text(item.title),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(strings.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(strings.delete),
+        ),
+      ],
+    ),
+  );
+  return confirmed == true ? scope : null;
+}
+
 Future<MemoryDeleteScope?> askDeleteScope(BuildContext context) {
   return showModalBottomSheet<MemoryDeleteScope>(
     context: context,

@@ -30,6 +30,18 @@ final financeControllerProvider =
   );
 });
 
+/// Одна операция по идентификатору: правка другой её карточку не трогает.
+final financeEntryByIdProvider = Provider.family<FinanceEntry?, String>((ref, id) {
+  return ref.watch(
+    financeControllerProvider.select((entries) {
+      for (final entry in entries) {
+        if (entry.id == id) return entry;
+      }
+      return null;
+    }),
+  );
+});
+
 final financeMonthLedgerProvider = Provider<FinanceMonthLedger>((ref) {
   final currency = ref.watch(financeCurrencyProvider);
   final month = ref.watch(financeMonthProvider);

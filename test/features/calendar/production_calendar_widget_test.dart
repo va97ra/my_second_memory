@@ -63,7 +63,6 @@ void main() {
                           date: DateTime(2026, 5, d),
                           locale: 'ru',
                           isInVisibleMonth: true,
-                          isSelected: false,
                           isToday: false,
                           items: const [],
                           holidays: const [],

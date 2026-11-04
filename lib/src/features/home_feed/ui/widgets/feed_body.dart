@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../state/feed_layout_provider.dart';
+import '../../../memory_items/memory_items.dart';
 import '../feed_labels.dart';
 import 'feed_group_divider.dart';
-import 'memory_sliver_list.dart';
+import 'feed_day_drop_target.dart';
 
 /// Содержимое страницы ленты: группы записей выбранного периода.
 class FeedBody extends StatelessWidget {
@@ -38,7 +39,17 @@ class FeedBody extends StatelessWidget {
         'feed_content_${filter.name}_${allDates}_'
         '${layout.query.anchorDate.toIso8601String()}',
       ),
-      child: CustomScrollView(
+      child: LayoutBuilder(
+        builder: (context, constraints) => _scroll(
+          context,
+          memoryStickerColumns(constraints.maxWidth),
+        ),
+      ),
+    );
+  }
+
+  Widget _scroll(BuildContext context, int columns) {
+    return CustomScrollView(
         key: const ValueKey('feed_dated_scroll'),
         // Найденное листают, чтобы рассмотреть: клавиатура тогда только
         // закрывает список.
@@ -56,14 +67,21 @@ class FeedBody extends StatelessWidget {
             // подписями. В обычной ленте дня разделять нечего.
             if (allDates || filter.recurringFrequency != null)
               SliverToBoxAdapter(
-                child: FeedGroupDivider(
-                  label: feedGroupLabel(context, filter, group.period,
-                      allDates: allDates),
+                child: _dayLabel(
+                  group.period,
+                  FeedGroupDivider(
+                    label: feedGroupLabel(context, filter, group.period,
+                        allDates: allDates),
+                  ),
                 ),
               ),
-            MemorySliverList(
+            MemoryStickerGrid(
               itemIds: group.itemIds,
-              showDate: filter.recurringFrequency == RecurrenceFrequency.yearly,
+              columns: columns,
+              canCarry: true,
+              stamp: filter.recurringFrequency == null
+                  ? StickerStamp.time
+                  : StickerStamp.dayAndTime,
             ),
           ],
           if (layout.doneItemIds.isNotEmpty) ...[
@@ -72,14 +90,22 @@ class FeedBody extends StatelessWidget {
                 label: AppStrings.of(context).completedRecords,
               ),
             ),
-            MemorySliverList(
+            MemoryStickerGrid(
               itemIds: layout.doneItemIds,
-              showDate: allDates || filter.recurringFrequency != null,
+              columns: columns,
+              canCarry: true,
+              stamp: allDates || filter.recurringFrequency != null
+                  ? StickerStamp.dayAndTime
+                  : StickerStamp.time,
             ),
           ],
           const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
         ],
-      ),
     );
   }
+
+  /// На подпись дня можно бросить листок. Только среди всех дат: там период —
+  /// это день. Группы по месяцу в фильтре «Каждый год» дня не называют.
+  Widget _dayLabel(DateTime period, Widget label) =>
+      allDates ? FeedDayDropTarget(day: period, child: label) : label;
 }

@@ -22,6 +22,7 @@ export 'src/components/notebook_action_button.dart';
 export 'src/components/notebook_icon_button.dart';
 export 'src/components/notebook_page_header.dart';
 export 'src/components/notebook_pressable.dart';
+export 'src/components/press_pulse.dart';
 export 'src/components/overlay_host.dart';
 export 'src/components/page_swipe_area.dart';
 export 'src/components/screen_glass_button.dart';

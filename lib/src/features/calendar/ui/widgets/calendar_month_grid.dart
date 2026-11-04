@@ -1,6 +1,7 @@
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../state/calendar_month_data.dart';
 import 'calendar_day_cell.dart';
@@ -14,20 +15,16 @@ class CalendarMonthGrid extends StatelessWidget {
     super.key,
     required this.locale,
     required this.visibleMonth,
-    required this.selectedDate,
-    required this.monthData,
     required this.onSelectDate,
   });
 
   final String locale;
   final DateTime visibleMonth;
-  final DateTime selectedDate;
-  final CalendarMonthData monthData;
   final ValueChanged<DateTime> onSelectDate;
 
   @override
   Widget build(BuildContext context) {
-    final days = monthData.days;
+    final days = calendarDaysForMonth(visibleMonth);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -57,30 +54,54 @@ class CalendarMonthGrid extends StatelessWidget {
     );
   }
 
-  /// Дни соседних месяцев показываются пустыми: их содержимое принадлежит
-  /// другой странице календаря.
   Widget _cell(DateTime day) {
+    return _CalendarDaySlot(
+      key: ValueKey('calendar_day_${calendarDateStringKey(day)}'),
+      day: day,
+      locale: locale,
+      visibleMonth: visibleMonth,
+      onTap: () => onSelectDate(day),
+    );
+  }
+}
+
+/// Место дня в сетке. Подписано только на данные своего дня: правка записи
+/// перерисовывает одну ячейку, а не весь месяц. Дни соседних месяцев показываются
+/// пустыми: их данные живут на другой странице календаря.
+class _CalendarDaySlot extends ConsumerWidget {
+  const _CalendarDaySlot({
+    super.key,
+    required this.day,
+    required this.locale,
+    required this.visibleMonth,
+    required this.onTap,
+  });
+
+  final DateTime day;
+  final String locale;
+  final DateTime visibleMonth;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final isInVisibleMonth = day.month == visibleMonth.month;
-    final key = dateKey(day);
+    final data = isInVisibleMonth
+        ? ref.watch(
+            calendarMonthDataProvider(visibleMonth)
+                .select((month) => month.cellFor(day)),
+          )
+        : const CalendarDayCellData();
 
     return CalendarDayCell(
-      key: ValueKey('calendar_day_${calendarDateStringKey(day)}'),
       date: day,
       locale: locale,
       isInVisibleMonth: isInVisibleMonth,
-      isSelected: isSameDay(day, selectedDate),
       isToday: isSameDay(day, DateTime.now()),
-      items: isInVisibleMonth
-          ? monthData.itemsByDay[key] ?? const <MemoryItem>[]
-          : const <MemoryItem>[],
-      shiftSchedules: isInVisibleMonth
-          ? monthData.shiftsByDay[key] ?? const <ShiftSchedule>[]
-          : const <ShiftSchedule>[],
-      holidays: isInVisibleMonth
-          ? monthData.holidaysByDay[key] ?? const <HolidayOccurrence>[]
-          : const <HolidayOccurrence>[],
-      hasAlarm: isInVisibleMonth && monthData.alarmDays.contains(key),
-      onTap: () => onSelectDate(day),
+      items: data.items,
+      shiftSchedules: data.shifts,
+      holidays: data.holidays,
+      hasAlarm: data.hasAlarm,
+      onTap: onTap,
     );
   }
 }

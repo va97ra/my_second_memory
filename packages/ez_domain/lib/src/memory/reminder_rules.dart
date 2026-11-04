@@ -29,6 +29,19 @@ abstract final class ReminderSource {
 }
 
 /// Момент напоминания: время суток на дне записи.
+/// Напоминание записи, переехавшей на другой день: идёт за ней, а если новое
+/// время уже прошло, напоминать не о чем.
+DateTime? reminderAfterMove(
+  DateTime? remindAt,
+  int? timeMinutes,
+  DateTime memoryDate, {
+  DateTime? now,
+}) {
+  if (remindAt == null || timeMinutes == null) return remindAt;
+  final next = reminderMomentOn(memoryDate, timeMinutes);
+  return next.isAfter(now ?? DateTime.now()) ? next : null;
+}
+
 DateTime reminderMomentOn(DateTime memoryDate, int minutes) => DateTime(
       memoryDate.year,
       memoryDate.month,

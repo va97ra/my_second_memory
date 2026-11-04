@@ -11,7 +11,6 @@ class CalendarDayHeaderRow extends StatelessWidget {
     required this.day,
     required this.foreground,
     required this.isInVisibleMonth,
-    required this.isSelected,
     required this.isToday,
     required this.hasAlarm,
     required this.items,
@@ -23,7 +22,6 @@ class CalendarDayHeaderRow extends StatelessWidget {
   final ProductionDay? productionDay;
   final Color foreground;
   final bool isInVisibleMonth;
-  final bool isSelected;
   final bool isToday;
   final bool hasAlarm;
   final List<MemoryItem> items;
@@ -33,8 +31,6 @@ class CalendarDayHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -52,7 +48,6 @@ class CalendarDayHeaderRow extends StatelessWidget {
                     : AppStrings.of(context)
                         .productionDayLabel(productionDay!.name),
                 isToday: isToday,
-                isSelected: isSelected,
                 color: foreground,
                 todayColor: todayColor,
               ),
@@ -64,7 +59,7 @@ class CalendarDayHeaderRow extends StatelessWidget {
             Icon(
               Icons.alarm_rounded,
               size: 12.5,
-              color: isSelected && !isToday ? colors.onPrimary : foreground,
+              color: foreground,
             ),
             const SizedBox(width: 2),
           ],

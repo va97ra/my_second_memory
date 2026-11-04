@@ -25,6 +25,18 @@ final shiftScheduleRepositoryProvider =
   return plainRepository;
 });
 
+/// Один график по идентификатору.
+final shiftScheduleByIdProvider = Provider.family<ShiftSchedule?, String>((ref, id) {
+  return ref.watch(
+    shiftSchedulesControllerProvider.select((schedules) {
+      for (final schedule in schedules) {
+        if (schedule.id == id) return schedule;
+      }
+      return null;
+    }),
+  );
+});
+
 final shiftSchedulesControllerProvider =
     StateNotifierProvider<ShiftSchedulesController, List<ShiftSchedule>>((ref) {
   return ShiftSchedulesController(

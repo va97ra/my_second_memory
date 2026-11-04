@@ -34,7 +34,7 @@ void main() {
       await tester.pumpAndSettle();
       await openTab(tester, 'feed');
 
-      final card = find.byKey(const ValueKey('memory_card_today-plan'));
+      final card = find.byKey(const ValueKey('memory_sticker_today-plan'));
       await tester.scrollUntilVisible(
         card,
         120,
@@ -45,15 +45,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        tester.getSize(card).height,
-        closeTo(88, 0.1),
-      );
+      final size = tester.getSize(card);
+      expect(size.width, closeTo(size.height, 1));
       expect(
         tester.getSize(
-          find.byKey(const ValueKey('memory_card_done_today-plan')),
+          find.byKey(const ValueKey('memory_sticker_done_today-plan')),
         ),
-        const Size.square(36),
+        const Size.square(44),
       );
       expect(tester.takeException(), isNull);
     });
@@ -82,7 +80,7 @@ void main() {
       await tester.pumpAndSettle();
       await openTab(tester, 'feed');
 
-      final card = find.byKey(const ValueKey('memory_card_today-plan'));
+      final card = find.byKey(const ValueKey('memory_sticker_today-plan'));
       if (card.evaluate().isEmpty) {
         await tester.scrollUntilVisible(
           card,
@@ -94,13 +92,8 @@ void main() {
         );
         await tester.pumpAndSettle();
       }
-      final expectedHeight = scale <= 1.3
-          ? 76 + ((scale - 1).clamp(0.0, 0.3) * 40)
-          : 88 + (((scale - 1.3) / 0.7).clamp(0.0, 1.0) * 64);
-      expect(
-        tester.getSize(card).height,
-        closeTo(expectedHeight, 0.1),
-      );
+      final size = tester.getSize(card);
+      expect(size.width, closeTo(size.height, 1));
       expect(tester.takeException(), isNull);
     });
   }
@@ -133,7 +126,7 @@ void main() {
       await openTab(tester, 'feed');
 
       expect(
-        find.byKey(const ValueKey('memory_card_today-plan')),
+        find.byKey(const ValueKey('memory_sticker_today-plan')),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);

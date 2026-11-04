@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 
 import '../themes/notebook/notebook_visuals.dart';
 import '../themes/screen/screen_visuals.dart';
+import 'press_pulse.dart';
 
-/// Нажатие без волны: клавиша уходит вниз и на миг притеняется.
+/// Нажатие без волны: клавиша мягко сжимается и на миг притеняется.
 ///
 /// Материаловская волна здесь не годится. Она рисуется на ближайшем материале
 /// выше по дереву — а это материал `Scaffold` во весь экран, — и на стеклянных
@@ -17,7 +18,7 @@ class NotebookPressable extends StatefulWidget {
     required this.child,
     required this.onTap,
     this.borderRadius = const BorderRadius.all(Radius.circular(8)),
-    this.pressedOffset = 2,
+    this.pulse = true,
     this.playClick = true,
     this.onHighlightChanged,
     super.key,
@@ -26,7 +27,10 @@ class NotebookPressable extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
   final BorderRadius borderRadius;
-  final double pressedOffset;
+
+  /// Сжиматься ли самому. Выключают, когда сжимается вещь снаружи: плитка дня,
+  /// листок целиком.
+  final bool pulse;
   final bool playClick;
   final ValueChanged<bool>? onHighlightChanged;
 
@@ -61,26 +65,26 @@ class _NotebookPressableState extends State<NotebookPressable> {
     return Semantics(
       button: true,
       enabled: enabled,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: enabled ? _activate : null,
-        onTapDown: enabled ? (_) => _setPressed(true) : null,
-        onTapUp: enabled ? (_) => _setPressed(false) : null,
-        onTapCancel: enabled ? () => _setPressed(false) : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 90),
-          transform: Matrix4.translationValues(
-            0,
-            _pressed ? widget.pressedOffset : 0,
-            0,
+      child: _pulsed(
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: enabled ? _activate : null,
+          onTapDown: enabled ? (_) => _setPressed(true) : null,
+          onTapUp: enabled ? (_) => _setPressed(false) : null,
+          onTapCancel: enabled ? () => _setPressed(false) : null,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 90),
+            foregroundDecoration: BoxDecoration(
+              borderRadius: widget.borderRadius,
+              color: _pressed ? pressedTint : Colors.transparent,
+            ),
+            child: widget.child,
           ),
-          foregroundDecoration: BoxDecoration(
-            borderRadius: widget.borderRadius,
-            color: _pressed ? pressedTint : Colors.transparent,
-          ),
-          child: widget.child,
         ),
       ),
     );
   }
+
+  Widget _pulsed(Widget child) =>
+      widget.pulse ? PressPulse(child: child) : child;
 }

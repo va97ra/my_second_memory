@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -208,9 +207,11 @@ class PageTurnFrameState extends State<PageTurnFrame>
     if (renderObject is! RenderRepaintBoundary) return null;
     if (kDebugMode && renderObject.debugNeedsPaint) return null;
     try {
-      final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+      // Снимок ложится поверх живой страницы, поэтому пиксель в пиксель: снятый
+      // мельче экрана, он растягивался, буквы съезжали и мылились, и страница
+      // дёргалась ещё до начала переворота.
       return await renderObject.toImage(
-        pixelRatio: math.min(devicePixelRatio, 2.0),
+        pixelRatio: MediaQuery.devicePixelRatioOf(context),
       );
     } catch (_) {
       return null;

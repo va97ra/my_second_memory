@@ -18,7 +18,6 @@ class CalendarDayCellBody extends StatelessWidget {
     required this.date,
     required this.locale,
     required this.isInVisibleMonth,
-    required this.isSelected,
     required this.isToday,
     required this.items,
     required this.shiftSchedules,
@@ -34,7 +33,6 @@ class CalendarDayCellBody extends StatelessWidget {
   final ProductionDay? productionDay;
   final String locale;
   final bool isInVisibleMonth;
-  final bool isSelected;
   final bool isToday;
   final List<MemoryItem> items;
   final List<ShiftSchedule> shiftSchedules;
@@ -96,7 +94,6 @@ class CalendarDayCellBody extends StatelessWidget {
                     productionDay: productionDay,
                     foreground: foreground,
                     isInVisibleMonth: isInVisibleMonth,
-                    isSelected: isSelected,
                     isToday: isToday,
                     hasAlarm: hasAlarm,
                     items: items,

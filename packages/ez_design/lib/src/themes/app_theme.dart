@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../components/press_pulse.dart';
 import 'surface_palette.dart';
 import 'surface_textures.dart';
 
@@ -78,7 +79,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     onSurfaceVariant: secondary,
   );
 
-  return ThemeData(
+  return withPressPulse(ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
     scaffoldBackgroundColor: Colors.transparent,
@@ -411,5 +412,5 @@ ThemeData buildAppTheme({required Brightness brightness}) {
         borderRadius: BorderRadius.circular(8),
       ),
     ),
-  );
+  ));
 }

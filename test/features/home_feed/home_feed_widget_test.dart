@@ -95,8 +95,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Вчерашняя заметка'), findsOneWidget);
     expect(find.byIcon(Icons.delete_rounded), findsNothing);
-    expect(find.byIcon(Icons.task_alt_rounded), findsWidgets);
-    expect(find.byIcon(Icons.archive_rounded), findsWidgets);
+    expect(find.byIcon(Icons.check_rounded), findsWidgets);
     // Повторы за месяц достаются фильтром, а не отдельной закладкой.
     await tester.tap(find.byKey(const ValueKey('feed_filter')));
     await tester.pumpAndSettle();

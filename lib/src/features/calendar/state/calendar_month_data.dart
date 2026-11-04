@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_domain/ez_domain.dart';
@@ -5,6 +6,42 @@ import 'calendar_preferences_controller.dart';
 import '../../memory_items/memory_items.dart';
 import '../../shift_schedules/shift_schedules.dart';
 import 'holiday_providers.dart';
+
+/// Что нужно одной ячейке дня. Равенство сравнивает содержимое: ячейка
+/// подписана на него и не перерисовывается, если её день не изменился.
+@immutable
+class CalendarDayCellData {
+  const CalendarDayCellData({
+    this.items = const [],
+    this.shifts = const [],
+    this.holidays = const [],
+    this.hasAlarm = false,
+  });
+
+  final List<MemoryItem> items;
+  final List<ShiftSchedule> shifts;
+  final List<HolidayOccurrence> holidays;
+  final bool hasAlarm;
+
+  @override
+  bool operator ==(Object other) =>
+      other is CalendarDayCellData &&
+      other.hasAlarm == hasAlarm &&
+      listEquals(other.items, items) &&
+      listEquals(other.shifts, shifts) &&
+      listEquals(
+        [for (final holiday in other.holidays) holiday.id],
+        [for (final holiday in holidays) holiday.id],
+      );
+
+  @override
+  int get hashCode => Object.hash(
+        hasAlarm,
+        Object.hashAll(items),
+        Object.hashAll(shifts),
+        holidays.length,
+      );
+}
 
 class CalendarMonthData {
   const CalendarMonthData({
@@ -86,6 +123,17 @@ class CalendarMonthData {
       shiftSchedules: shiftSchedules,
       holidaysByDay: holidaysByDay,
       alarmDays: alarmDays,
+    );
+  }
+
+  /// Данные одной ячейки.
+  CalendarDayCellData cellFor(DateTime day) {
+    final key = dateKey(day);
+    return CalendarDayCellData(
+      items: itemsByDay[key] ?? const [],
+      shifts: shiftsByDay[key] ?? const [],
+      holidays: holidaysByDay[key] ?? const [],
+      hasAlarm: alarmDays.contains(key),
     );
   }
 

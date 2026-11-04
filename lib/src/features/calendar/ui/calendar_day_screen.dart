@@ -46,7 +46,9 @@ class CalendarDayScreen extends ConsumerWidget {
               if (untimed.isNotEmpty)
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 148),
-                  child: DayRecordsList(items: untimed),
+                  child: DayRecordsList(
+                    itemIds: [for (final item in untimed) item.id],
+                  ),
                 ),
               Expanded(
                 child: DayTimeline(

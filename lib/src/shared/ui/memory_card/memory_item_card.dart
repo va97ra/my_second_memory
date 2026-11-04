@@ -5,9 +5,6 @@ import 'package:flutter/material.dart';
 import 'memory_item_presentation.dart';
 import 'memory_card_action_rail.dart';
 import 'memory_card_content.dart';
-import 'memory_card_dense_action_rail.dart';
-import 'memory_card_dense_content.dart';
-import 'memory_card_labels.dart';
 import 'memory_card_paper.dart';
 import 'memory_card_type_rail.dart';
 
@@ -22,7 +19,6 @@ class MemoryItemCard extends StatelessWidget {
     this.onRestore,
     this.showDate = true,
     this.compact = false,
-    this.denseFeedLayout = false,
     this.margin = const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
   });
 
@@ -33,7 +29,6 @@ class MemoryItemCard extends StatelessWidget {
   final VoidCallback? onRestore;
   final bool showDate;
   final bool compact;
-  final bool denseFeedLayout;
   final EdgeInsetsGeometry margin;
 
   @override
@@ -45,7 +40,7 @@ class MemoryItemCard extends StatelessWidget {
       cardKey: ValueKey('memory_card_${item.id}'),
       variantKey: item.id,
       borderColor: accent.withValues(alpha: 0.34),
-      height: _height(context),
+      height: _height,
       margin: margin,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -65,46 +60,29 @@ class MemoryItemCard extends StatelessWidget {
                     color: accent,
                     showDate: showDate,
                     compact: compact,
-                    denseFeedLayout: denseFeedLayout,
                   ),
                   Expanded(
                     child: KeyedSubtree(
                       key: ValueKey('memory_card_content_${item.id}'),
-                      child: denseFeedLayout
-                          ? MemoryCardDenseContent(item: item)
-                          : MemoryCardContent(item: item, compact: compact),
+                      child: MemoryCardContent(item: item, compact: compact),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          if (denseFeedLayout)
-            MemoryCardDenseActionRail(
-              key: ValueKey('memory_card_actions_${item.id}'),
-              item: item,
-              onToggleDone: onToggleDone,
-              onArchive: onArchive,
-              onRestore: onRestore,
-            )
-          else
-            MemoryCardActionRail(
-              key: ValueKey('memory_card_actions_${item.id}'),
-              item: item,
-              compact: compact,
-              onToggleDone: onToggleDone,
-              onArchive: onArchive,
-              onRestore: onRestore,
-            ),
+          MemoryCardActionRail(
+            key: ValueKey('memory_card_actions_${item.id}'),
+            item: item,
+            compact: compact,
+            onToggleDone: onToggleDone,
+            onArchive: onArchive,
+            onRestore: onRestore,
+          ),
         ],
       ),
     );
   }
 
-  double _height(BuildContext context) {
-    if (denseFeedLayout) {
-      return denseFeedCardHeight(context) + (showDate ? 8 : 0);
-    }
-    return compact ? 108 : 118;
-  }
+  double get _height => compact ? 108 : 118;
 }

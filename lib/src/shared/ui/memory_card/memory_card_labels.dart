@@ -6,6 +6,11 @@ import 'package:intl/intl.dart';
 /// Подписи карточки записи. Собраны здесь, потому что плотная и обычная
 /// карточки показывают одно и то же и расходиться им нельзя.
 
+/// Как называется вид записи на карточке: запись без даты — записка.
+String memoryKindLabel(BuildContext context, MemoryItem item) => item.isUndated
+    ? AppStrings.of(context).noteCard
+    : item.type.label(Localizations.localeOf(context).languageCode);
+
 /// Подпись завершённой записи, или null, если запись ещё не завершена.
 String? memoryDoneLabel(BuildContext context, MemoryItem item) {
   if (!item.isDone) return null;
@@ -23,6 +28,13 @@ String memoryCreatedLabel(MemoryItem item) {
   ).format(created);
 }
 
+/// День записи и её время, если оно есть.
+String memoryDayAndTimeLabel(MemoryItem item) {
+  final day = DateFormat('dd.MM').format(item.memoryDate);
+  final time = item.timeMinutes;
+  return time == null ? day : '$day ${formatMinutesOfDay(time)}';
+}
+
 /// Сумма платежа в рублях, без копеек.
 String memoryAmountLabel(int amountMinor) {
   final roubles = NumberFormat.decimalPattern('ru').format(amountMinor ~/ 100);
@@ -37,15 +49,3 @@ String memoryAgeLabel(BuildContext context, MemoryItem item) {
       : '$years years';
 }
 
-/// Высота плотной карточки ленты.
-///
-/// До полуторного масштаба текста карточка растёт мягко, дальше — заметно:
-/// иначе крупный шрифт не помещается в две строки.
-double denseFeedCardHeight(BuildContext context) {
-  final scale = MediaQuery.textScalerOf(context).scale(1);
-  if (scale <= 1.3) {
-    return 76 + ((scale - 1).clamp(0.0, 0.3) * 40);
-  }
-  final largeTextProgress = ((scale - 1.3) / 0.7).clamp(0.0, 1.0);
-  return 88 + largeTextProgress * 64;
-}

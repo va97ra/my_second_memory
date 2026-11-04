@@ -1,21 +1,27 @@
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class FinanceEntryCard extends StatelessWidget {
+import '../../state/finance_controller.dart';
+
+/// Карточка операции: получает идентификатор и читает её сама.
+class FinanceEntryCard extends ConsumerWidget {
   const FinanceEntryCard({
-    required this.entry,
+    required this.entryId,
     required this.onEdit,
     required this.onDelete,
     super.key,
   });
 
-  final FinanceEntry entry;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final String entryId;
+  final ValueChanged<FinanceEntry> onEdit;
+  final ValueChanged<FinanceEntry> onDelete;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entry = ref.watch(financeEntryByIdProvider(entryId));
+    if (entry == null) return const SizedBox.shrink();
     final strings = AppStrings.of(context);
     final isIncome = entry.kind == FinanceEntryKind.income;
     final color = isIncome ? const Color(0xFF168653) : const Color(0xFFD32020);
@@ -24,7 +30,7 @@ class FinanceEntryCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onEdit,
+        onTap: () => onEdit(entry),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
           child: Column(
@@ -43,7 +49,7 @@ class FinanceEntryCard extends StatelessWidget {
                   IconButton(
                     key: ValueKey('finance_delete_${entry.id}'),
                     tooltip: strings.delete,
-                    onPressed: onDelete,
+                    onPressed: () => onDelete(entry),
                     icon: const Icon(Icons.delete_outline_rounded, size: 20),
                     visualDensity: VisualDensity.compact,
                   ),

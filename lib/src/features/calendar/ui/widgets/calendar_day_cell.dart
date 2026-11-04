@@ -8,6 +8,7 @@ import '../../state/production_preferences.dart';
 import 'calendar_cell_border_painter.dart';
 import 'calendar_day_cell_body.dart';
 import 'calendar_day_cell_surface.dart';
+import 'calendar_day_press_effect.dart';
 
 /// Ячейка дня в сетке месяца: её фон, рамка и содержимое.
 class CalendarDayCell extends ConsumerWidget {
@@ -16,7 +17,6 @@ class CalendarDayCell extends ConsumerWidget {
     required this.date,
     required this.locale,
     required this.isInVisibleMonth,
-    required this.isSelected,
     required this.isToday,
     required this.items,
     required this.shiftSchedules,
@@ -28,7 +28,6 @@ class CalendarDayCell extends ConsumerWidget {
   final DateTime date;
   final String locale;
   final bool isInVisibleMonth;
-  final bool isSelected;
   final bool isToday;
   final List<MemoryItem> items;
   final List<ShiftSchedule> shiftSchedules;
@@ -75,11 +74,8 @@ class CalendarDayCell extends ConsumerWidget {
                 : readableInkOn(Color(shiftSchedules.first.colorValue));
     // У экранного стекла своя тонкая кромка. Дополнительная рамка нужна
     // только бумажным плиткам блокнота.
-    final usesGradientBorder = screen == null &&
-        isInVisibleMonth &&
-        !isSelected &&
-        items.isEmpty &&
-        !isToday;
+    final usesGradientBorder =
+        screen == null && isInVisibleMonth && items.isEmpty && !isToday;
 
     // Нажатие рисуется поверх плитки, а не под ней: `InkWell` снаружи
     // заливки отдаёт свою волну ближайшему материалу выше — материалу
@@ -87,14 +83,13 @@ class CalendarDayCell extends ConsumerWidget {
     final pressable = NotebookPressable(
       onTap: onTap,
       playClick: false,
-      pressedOffset: 0,
+      pulse: false,
       borderRadius: BorderRadius.circular(cornerRadius),
       child: CalendarDayCellBody(
         productionDay: productionDay,
         date: date,
         locale: locale,
         isInVisibleMonth: isInVisibleMonth,
-        isSelected: isSelected,
         isToday: isToday,
         items: items,
         shiftSchedules: shiftSchedules,
@@ -122,29 +117,30 @@ class CalendarDayCell extends ConsumerWidget {
               child: pressable,
             ),
           );
-    return CustomPaint(
-      foregroundPainter: usesGradientBorder
-          ? CalendarCellBorderPainter(
-              borderStart: palette.borderStart,
-              borderEnd: palette.borderEnd,
-              cornerRadius: cornerRadius,
-            )
-          : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        // Обрезает праздничную ленту по скруглению ячейки: она лежит
-        // вплотную к нижнему краю и без этого вылезла бы за углы.
-        clipBehavior: Clip.antiAlias,
-        decoration: CalendarDayCellSurface(
-          dayOff: highlight && (productionDay?.isDayOff ?? false),
-          shortened: highlight && productionDay == ProductionDay.shortened,
-          isInVisibleMonth: isInVisibleMonth,
-          isSelected: isSelected,
-          isToday: isToday,
-          hasItems: items.isNotEmpty,
-          screen: screen,
-        ).decoration(context, colors, palette),
-        child: contents,
+    return CalendarDayPressEffect(
+      child: CustomPaint(
+        foregroundPainter: usesGradientBorder
+            ? CalendarCellBorderPainter(
+                borderStart: palette.borderStart,
+                borderEnd: palette.borderEnd,
+                cornerRadius: cornerRadius,
+              )
+            : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          // Обрезает праздничную ленту по скруглению ячейки: она лежит
+          // вплотную к нижнему краю и без этого вылезла бы за углы.
+          clipBehavior: Clip.antiAlias,
+          decoration: CalendarDayCellSurface(
+            dayOff: highlight && (productionDay?.isDayOff ?? false),
+            shortened: highlight && productionDay == ProductionDay.shortened,
+            isInVisibleMonth: isInVisibleMonth,
+            isToday: isToday,
+            hasItems: items.isNotEmpty,
+            screen: screen,
+          ).decoration(context, colors, palette),
+          child: contents,
+        ),
       ),
     );
   }

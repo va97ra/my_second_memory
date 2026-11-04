@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +13,7 @@ import '../../../shared/state/notification_providers.dart';
 import '../../recurrence/recurrence.dart';
 import '../state/memory_attachment_service.dart';
 import '../state/memory_editor_controller.dart';
+import '../state/memory_item_commands.dart';
 import '../state/memory_items_controller.dart';
 import 'memory_attachment_actions.dart';
 import 'widgets/birth_year_dialog.dart';
@@ -178,13 +178,11 @@ class MemoryEditorActions {
 
     controller.applyForm((form) {
       final memoryDate = DateTime(picked.year, picked.month, picked.day);
-      // Напоминание привязано ко дню записи: переехала запись — переезжает и
-      // оно, а если новое время уже прошло, напоминать не о чем.
-      var remindAt = form.remindAt;
-      if (form.remindAt != null && form.timeMinutes != null) {
-        final next = _dateTimeFor(memoryDate, form.timeMinutes!);
-        remindAt = next.isAfter(DateTime.now()) ? next : null;
-      }
+      final remindAt = reminderAfterMove(
+        form.remindAt,
+        form.timeMinutes,
+        memoryDate,
+      );
       return form.copyWith(
         memoryDate: memoryDate,
         remindAt: remindAt,
@@ -241,51 +239,14 @@ class MemoryEditorActions {
   }
 
   Future<void> confirmDelete(MemoryItem item) async {
-    final scope = item.seriesId == null
-        ? MemoryDeleteScope.one
-        : await askDeleteScope(context);
+    final scope = await askMemoryDelete(context, item);
     if (scope == null || !context.mounted) return;
 
-    final strings = AppStrings.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(strings.deleteRecordQuestion),
-        content: Text(item.title),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(strings.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(strings.delete),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-
     controller.discardPendingSave();
-    await _delete(item, scope);
+    await deleteMemory(ref, item, scope);
     if (context.mounted) {
       await goBack(skipSave: true);
     }
-  }
-
-  Future<void> _delete(MemoryItem item, MemoryDeleteScope scope) async {
-    final series = ref.read(recurrenceSeriesControllerProvider.notifier);
-    final seriesId = item.seriesId;
-    if (scope == MemoryDeleteScope.series && seriesId != null) {
-      return series.deleteSeries(seriesId);
-    }
-    if (scope == MemoryDeleteScope.future && seriesId != null) {
-      return series.deleteFromDate(seriesId, item.memoryDate, occurrence: item);
-    }
-    if (seriesId != null) {
-      return series.deleteOccurrence(item);
-    }
-    return ref.read(memoryItemsControllerProvider.notifier).delete(item.id);
   }
 
   Future<void> goBack({bool skipSave = false}) async {

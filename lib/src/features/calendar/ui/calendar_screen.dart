@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../navigation/page_turn_navigation.dart';
 import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
-import '../state/calendar_month_data.dart';
+import '../../shift_schedules/shift_schedules.dart';
 import 'widgets/calendar_header.dart';
 import 'widgets/calendar_loading_view.dart';
 import 'widgets/calendar_month_pages.dart';
@@ -24,7 +24,6 @@ class CalendarScreen extends ConsumerStatefulWidget {
 class _CalendarScreenState extends ConsumerState<CalendarScreen>
     with SingleTickerProviderStateMixin {
   late DateTime _visibleMonth;
-  late DateTime _selectedDate;
   late final AnimationController _pageController;
   DateTime? _outgoingMonth;
   Axis _transitionAxis = Axis.horizontal;
@@ -35,7 +34,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     super.initState();
     final now = DateTime.now();
     _visibleMonth = DateTime(now.year, now.month);
-    _selectedDate = DateTime(now.year, now.month, now.day);
     _pageController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 320),
@@ -52,7 +50,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
     final loadState = ref.watch(memoryItemsLoadProvider);
-    final monthData = ref.watch(calendarMonthDataProvider(_visibleMonth));
+    final schedules = ref.watch(shiftSchedulesControllerProvider);
     ref.watch(recurrenceLoadProvider);
 
     if (loadState.isLoading || loadState.hasError) {
@@ -69,7 +67,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         // прокручивается.
         final needsScroll = isLandscape && constraints.maxHeight < 680;
         final panel = _panel(locale, scrolls: needsScroll);
-        final header = _header(locale, monthData.shiftSchedules);
+        final header = _header(locale, schedules);
 
         return WarmGradientBackground(
           child: needsScroll
@@ -108,7 +106,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         locale: locale,
         visibleMonth: _visibleMonth,
         outgoingMonth: _outgoingMonth,
-        selectedDate: _selectedDate,
         animation: _pageController,
         axis: _transitionAxis,
         direction: _transitionDirection,
@@ -131,18 +128,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
 
   void _goToToday() {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final targetMonth = DateTime(today.year, today.month);
-    if (targetMonth == _visibleMonth) {
-      setState(() => _selectedDate = today);
-      return;
-    }
+    final targetMonth = DateTime(now.year, now.month);
+    if (targetMonth == _visibleMonth) return;
 
     _startTransition(
       targetMonth,
       axis: Axis.horizontal,
       direction: targetMonth.isAfter(_visibleMonth) ? 1 : -1,
-      selectedDate: today,
     );
   }
 
@@ -150,7 +142,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     DateTime targetMonth, {
     required Axis axis,
     required int direction,
-    DateTime? selectedDate,
   }) {
     if (_pageController.isAnimating || targetMonth == _visibleMonth) return;
 
@@ -160,7 +151,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
       _visibleMonth = targetMonth;
       _transitionAxis = axis;
       _transitionDirection = direction;
-      if (selectedDate != null) _selectedDate = selectedDate;
     });
 
     _pageController.forward(from: 0).whenComplete(() {
@@ -171,27 +161,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   }
 
   Future<void> _openDay(DateTime date) async {
-    final selected = DateTime(date.year, date.month, date.day);
+    final day = DateTime(date.year, date.month, date.day);
     final location =
-        '/calendar/day?date=${DateFormat('yyyy-MM-dd').format(selected)}';
+        '/calendar/day?date=${DateFormat('yyyy-MM-dd').format(day)}';
+    final month = DateTime(day.year, day.month);
 
-    // На Windows день открывается поверх календаря, поэтому выбранная дата
+    // Плитка успевает вернуться на место: переворот снимает страницу в картинку,
+    // и нажатый день остался бы на снимке сжатым.
+    await Future<void>.delayed(PressPulse.duration);
+    if (!mounted) return;
+
+    // На Windows день открывается поверх календаря, поэтому месяц
     // переносится уже после возвращения.
     if (!kIsWeb && Theme.of(context).platform == TargetPlatform.windows) {
       await context.pageTurnPush(location);
-      if (mounted) _selectDay(selected);
+      if (mounted && _visibleMonth != month) {
+        setState(() => _visibleMonth = month);
+      }
       return;
     }
-    _selectDay(selected);
+    if (_visibleMonth != month) setState(() => _visibleMonth = month);
     await context.pageTurnGo(location);
-  }
-
-  void _selectDay(DateTime day) {
-    final month = DateTime(day.year, day.month);
-    if (_selectedDate == day && _visibleMonth == month) return;
-    setState(() {
-      _selectedDate = day;
-      _visibleMonth = month;
-    });
   }
 }

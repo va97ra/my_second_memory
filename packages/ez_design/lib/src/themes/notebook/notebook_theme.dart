@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../components/press_pulse.dart';
 import '../surface_palette.dart';
 import '../app_theme.dart';
 import 'notebook_assets.dart';
@@ -262,7 +263,7 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
     ),
   );
 
-  return base.copyWith(
+  return withPressPulse(base.copyWith(
     colorScheme: scheme,
     progressIndicatorTheme: quietProgressTheme(scheme),
     // Бумага, а не стол: `canvasColor` — это фон выпадающих списков, и на
@@ -404,5 +405,5 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
       shadowColor: const Color(0x88000000),
       elevation: 12,
     ),
-  );
+  ));
 }

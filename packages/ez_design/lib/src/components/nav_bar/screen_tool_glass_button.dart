@@ -49,7 +49,6 @@ class _ScreenToolGlassButtonState extends State<ScreenToolGlassButton> {
         child: NotebookPressable(
           onTap: widget.onTap,
           playClick: false,
-          pressedOffset: 0,
           onHighlightChanged: (pressed) {
             if (mounted) setState(() => _pressed = pressed);
           },

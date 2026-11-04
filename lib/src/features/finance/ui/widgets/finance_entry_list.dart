@@ -78,9 +78,9 @@ class FinanceEntryList extends StatelessWidget {
       children: [
         for (var index = 0; index < entries.length; index++) ...[
           FinanceEntryCard(
-            entry: entries[index],
-            onEdit: () => onEdit(entries[index]),
-            onDelete: () => onDelete(entries[index]),
+            entryId: entries[index].id,
+            onEdit: onEdit,
+            onDelete: onDelete,
           ),
           if (index != entries.length - 1) const SizedBox(height: 8),
         ],

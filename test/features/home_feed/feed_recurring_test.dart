@@ -121,7 +121,7 @@ void main() {
           widget.key is ValueKey<String> &&
           (widget.key! as ValueKey<String>)
               .value
-              .startsWith('memory_card_done_'),
+              .startsWith('memory_sticker_done_'),
     );
     await tester.tap(done);
     await tester.pumpAndSettle();

@@ -20,7 +20,6 @@ Color calendarTodayColor(BuildContext context) =>
 class CalendarDayCellSurface {
   const CalendarDayCellSurface({
     required this.isInVisibleMonth,
-    required this.isSelected,
     required this.isToday,
     required this.hasItems,
     this.screen,
@@ -29,7 +28,6 @@ class CalendarDayCellSurface {
   });
 
   final bool isInVisibleMonth;
-  final bool isSelected;
   final bool isToday;
   final bool hasItems;
   final bool dayOff;
@@ -47,31 +45,20 @@ class CalendarDayCellSurface {
   ) {
     return BoxDecoration(
       // Сегодня отмечено рамкой и кружком под числом, бумага у него обычная:
-      // подмес цвета давал мутное пятно. В день открытия сегодня он же и
-      // выбранный день, поэтому заливка выбора ему не положена.
-      gradient: isSelected && !isToday
+      // подмес цвета давал мутное пятно.
+      gradient: isInVisibleMonth
           ? screen == null
-              ? palette.accentGradient
-              : _glass(Color.alphaBlend(
-                  colors.primary
-                      .withValues(alpha: screen!.isDark ? 0.24 : 0.14),
-                  _paper(colors, palette),
-                ))
-          : isInVisibleMonth
-              ? screen == null
-                  ? palette.surfaceGradient(base: _paper(colors, palette))
-                  : _glass(_paper(colors, palette))
-              : null,
+              ? palette.surfaceGradient(base: _paper(colors, palette))
+              : _glass(_paper(colors, palette))
+          : null,
       borderRadius: BorderRadius.circular(CalendarDayCell.cornerRadius),
       border: Border.all(
         color: _ringsToday
             ? calendarTodayColor(context)
-            : isSelected
-                ? colors.onSurface
-                : hasItems && isInVisibleMonth
-                    ? colors.outline
-                    : Colors.transparent,
-        width: _ringsToday ? 2.6 : (isSelected ? 2 : 1),
+            : hasItems && isInVisibleMonth
+                ? colors.outline
+                : Colors.transparent,
+        width: _ringsToday ? 2.6 : 1,
       ),
       boxShadow: _shadow(context, colors),
     );
@@ -92,20 +79,11 @@ class CalendarDayCellSurface {
         ),
       ];
     }
-    if (screen != null && isInVisibleMonth && !isSelected) {
+    if (screen != null && isInVisibleMonth) {
       // Пластина лежит на заднике, а не врезана в него: под ней тень в свою
       // же толщину.
       return [
         ...GlassSurface.shadow(screen),
-      ];
-    }
-    if (isSelected) {
-      return [
-        BoxShadow(
-          color: colors.onSurface.withValues(alpha: 0.16),
-          blurRadius: 14,
-          offset: const Offset(0, 7),
-        ),
       ];
     }
     if (NotebookVisuals.maybeOf(context) == null) return null;

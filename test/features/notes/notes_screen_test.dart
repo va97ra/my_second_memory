@@ -46,7 +46,7 @@ void main() {
     return repository;
   }
 
-  Finder card(String id) => find.byKey(ValueKey('note_card_$id'));
+  Finder card(String id) => find.byKey(ValueKey('memory_sticker_$id'));
 
   for (final (width, columns) in [
     (320.0, 3),
@@ -83,30 +83,39 @@ void main() {
     await open(tester, const Size(360, 800));
 
     final cardRect = tester.getRect(card('n1'));
-    final strip = tester.getRect(find.byKey(const ValueKey('note_card_strip_n1')));
+    final strip = tester.getRect(find.byKey(const ValueKey('memory_sticker_strip_n1')));
     expect(strip.top, closeTo(cardRect.top, 1));
     expect(strip.width, closeTo(cardRect.width, 2));
-    expect(tester.widget<Material>(card('n1')).shape, isNot(isA<TornPaperShapeBorder>()));
+    expect(
+      find.descendant(
+        of: card('n1'),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Material && widget.shape is TornPaperShapeBorder,
+        ),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('полоса подписывает вид и дату, квадратик отмечает выполненной',
       (tester) async {
     await open(tester, const Size(360, 800));
 
-    final strip = find.byKey(const ValueKey('note_card_strip_n1'));
+    final strip = find.byKey(const ValueKey('memory_sticker_strip_n1'));
     final label = find.descendant(of: strip, matching: find.byType(Text));
-    expect(tester.widget<Text>(label.first).data, startsWith('Заметка '));
+    expect(tester.widget<Text>(label.first).data, startsWith('Записка '));
     expect(find.descendant(of: strip, matching: find.text('Выполнено')),
         findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('note_card_done_n1')));
+    await tester.tap(find.byKey(const ValueKey('memory_sticker_done_n1')));
     await tester.pumpAndSettle();
     expect(find.descendant(of: strip, matching: find.text('Выполнено')),
         findsOneWidget);
     // Нажатие на квадратик не открывает редактор.
     expect(find.byKey(const ValueKey('record_editor_text')), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('note_card_done_n1')));
+    await tester.tap(find.byKey(const ValueKey('memory_sticker_done_n1')));
     await tester.pumpAndSettle();
     expect(find.descendant(of: strip, matching: find.text('Выполнено')),
         findsNothing);
@@ -117,7 +126,7 @@ void main() {
     await open(tester, const Size(360, 800));
     expect(find.byKey(const ValueKey('notes_done_divider')), findsNothing);
 
-    await tester.tap(find.byKey(const ValueKey('note_card_done_n1')));
+    await tester.tap(find.byKey(const ValueKey('memory_sticker_done_n1')));
     await tester.pumpAndSettle();
 
     final divider = tester.getRect(
@@ -193,7 +202,7 @@ void main() {
 
     await tester.longPress(card('n1'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('note_card_archive_n1')));
+    await tester.tap(find.byKey(const ValueKey('sticker_archive_n1')));
     await tester.pumpAndSettle();
 
     expect(card('n1'), findsNothing);

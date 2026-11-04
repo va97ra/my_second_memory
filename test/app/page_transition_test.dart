@@ -287,7 +287,7 @@ void main() {
     // День живой — шкала тикает, — поэтому время качается отрезком, а не
     // до полной тишины. Переворот листа укладывается в 300 мс.
     Future<void> turnPage() async {
-      for (var frame = 0; frame < 15; frame++) {
+      for (var frame = 0; frame < 30; frame++) {
         await tester.pump(const Duration(milliseconds: 20));
       }
     }

@@ -8,8 +8,7 @@ class FeedViewState {
   const FeedViewState({
     required this.anchorDate,
     required this.filter,
-    this.searching = false,
-    this.searchQuery = '',
+    this.search = const MemorySearchBar(),
   });
 
   factory FeedViewState.initial() {
@@ -23,15 +22,12 @@ class FeedViewState {
   final DateTime anchorDate;
   final FeedFilter filter;
 
-  /// Открыт ли поиск. Ищет он по всем датам.
-  final bool searching;
+  /// Строка поиска. Ищет она по всем датам.
+  final MemorySearchBar search;
 
-  /// Что ищут. Живёт только при открытом поиске.
-  final String searchQuery;
-
-  /// Ищет ли лента прямо сейчас: поиск открыт и в строке есть слово. Пустая
-  /// строка ничего не ищет, и под ней обычная страница дня.
-  bool get hasQuery => searching && !MemorySearch(searchQuery).isEmpty;
+  bool get searching => search.isOpen;
+  String get searchQuery => search.query;
+  bool get hasQuery => search.hasQuery;
 
   /// Фильтр раскрыл ленту на все даты: всё, кроме «Дня» и повторов.
   bool get filterSpansAllDates => !filter.isPeriodBound;
@@ -60,14 +56,12 @@ class FeedViewState {
   FeedViewState copyWith({
     DateTime? anchorDate,
     FeedFilter? filter,
-    bool? searching,
-    String? searchQuery,
+    MemorySearchBar? search,
   }) {
     return FeedViewState(
       anchorDate: anchorDate ?? this.anchorDate,
       filter: filter ?? this.filter,
-      searching: searching ?? this.searching,
-      searchQuery: searchQuery ?? this.searchQuery,
+      search: search ?? this.search,
     );
   }
 }
@@ -80,15 +74,10 @@ class FeedViewController extends StateNotifier<FeedViewState> {
   FeedFilter get _filterForOneDay =>
       state.filterSpansAllDates ? FeedFilter.day : state.filter;
 
-  /// Открывает и закрывает поиск. Каждый вход начинается с пустой строки:
-  /// прошлый запрос, всплывший сам, выглядел бы как пропавшие записи.
-  void toggleSearch() =>
-      state = state.copyWith(searching: !state.searching, searchQuery: '');
+  void toggleSearch() => state = state.copyWith(search: state.search.toggled());
 
-  void search(String query) {
-    if (!state.searching || query == state.searchQuery) return;
-    state = state.copyWith(searchQuery: query);
-  }
+  void search(String query) =>
+      state = state.copyWith(search: state.search.withQuery(query));
 
   void selectFilter(FeedFilter filter) {
     if (filter == state.filter) return;
@@ -131,8 +120,7 @@ class FeedViewController extends StateNotifier<FeedViewState> {
     state = state.copyWith(
       anchorDate: day,
       filter: filter,
-      searching: false,
-      searchQuery: '',
+      search: const MemorySearchBar(),
     );
   }
 }
