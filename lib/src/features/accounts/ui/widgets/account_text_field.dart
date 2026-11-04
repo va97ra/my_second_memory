@@ -42,8 +42,8 @@ class AccountTextField extends StatelessWidget {
           alignLabelWithHint: (maxLines ?? 1) > 1,
           prefixIcon: Icon(icon),
           suffixIcon: suffixIcon,
-          filled: true,
-          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          // Поле лежит на листе и не закрывает бумагу.
+          filled: false,
         ),
       ),
     );

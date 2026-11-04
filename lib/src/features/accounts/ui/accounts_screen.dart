@@ -3,11 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
+import '../../../navigation/page_turn_navigation.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import 'package:ez_domain/ez_domain.dart';
 import '../state/accounts_controller.dart';
-import 'widgets/account_card.dart';
-import 'widgets/account_editor.dart';
+import 'widgets/account_grid.dart';
 
 class AccountsScreen extends ConsumerWidget {
   const AccountsScreen({super.key});
@@ -28,18 +27,13 @@ class AccountsScreen extends ConsumerWidget {
               trailing: IconButton(
                 key: const ValueKey('accounts_add'),
                 tooltip: strings.addAccount,
-                onPressed: () => _showAccountEditor(context, ref),
+                onPressed: () => context.pageTurnPush('/accounts/new'),
                 icon: const Icon(Icons.add_rounded, size: 22),
                 style: notebookIconButtonStyle(),
               ),
             ),
-            SliverList.builder(
-              itemCount: accounts.length,
-              itemBuilder: (context, index) => AccountCard(
-                accountId: accounts[index].id,
-                onEdit: (account) => _showAccountEditor(context, ref, account),
-                onDelete: (account) => _delete(context, ref, account),
-              ),
+            AccountGrid(
+              accountIds: [for (final account in accounts) account.id],
             ),
             const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
           ],
@@ -47,48 +41,4 @@ class AccountsScreen extends ConsumerWidget {
       ),
     );
   }
-
-  /// Пароль может не храниться больше нигде, а удаление разъезжается по всем
-  /// устройствам. Поэтому корзина спрашивает — тем же диалогом, что и операции.
-  Future<void> _delete(
-    BuildContext context,
-    WidgetRef ref,
-    AccountItem account,
-  ) async {
-    final strings = AppStrings.of(context);
-    final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(strings.deleteAccountQuestion),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(strings.cancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(strings.delete),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-    if (!confirmed) return;
-    await ref.read(accountsControllerProvider.notifier).delete(account.id);
-  }
-
-  Future<void> _showAccountEditor(
-    BuildContext context,
-    WidgetRef ref, [
-    AccountItem? account,
-  ]) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      useSafeArea: true,
-      builder: (context) => AccountEditor(account: account, ref: ref),
-    );
-  }
 }
-

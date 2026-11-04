@@ -1,7 +1,9 @@
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
-import 'account_copy_button.dart';
+import 'account_field_icons.dart';
+import 'account_info_line.dart';
+import 'account_row_button.dart';
 
 /// Пароль аккаунта: скрыт точками, показывается по кнопке и копируется.
 ///
@@ -22,43 +24,19 @@ class _AccountPasswordRowState extends State<AccountPasswordRow> {
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    final colors = Theme.of(context).colorScheme;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(left: 12),
-        child: Row(
-          children: [
-            Icon(Icons.lock_rounded, size: 18, color: colors.onSurfaceVariant),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                _visible ? widget.password : '•' * widget.password.length,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            IconButton(
-              tooltip: strings.password,
-              onPressed: () => setState(() => _visible = !_visible),
-              icon: Icon(
-                _visible
-                    ? Icons.visibility_off_rounded
-                    : Icons.visibility_rounded,
-              ),
-            ),
-            AccountCopyButton(
-              text: widget.password,
-              tooltip: strings.copyPassword,
-              copiedMessage: strings.passwordCopied,
-            ),
-          ],
-        ),
+    return AccountInfoLine(
+      icon: AccountFieldIcons.password,
+      text: widget.password,
+      shownText: _visible ? null : '•' * widget.password.length,
+      copyTooltip: strings.copyPassword,
+      copiedMessage: strings.passwordCopied,
+      action: AccountRowButton(
+        icon: _visible
+            ? Icons.visibility_off_rounded
+            : Icons.visibility_rounded,
+        tooltip: strings.password,
+        onPressed: () => setState(() => _visible = !_visible),
       ),
     );
   }

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../navigation/page_turn_navigation.dart';
 import '../../../../shared/ui/memory_card/memory_card_attachment_icons.dart';
 import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
+import '../../../../shared/ui/memory_card/sticker_paper.dart';
 import '../../../../shared/ui/styled_text_span.dart';
 import '../../state/memory_item_commands.dart';
 import '../../state/memory_item_selectors.dart';
@@ -15,7 +16,6 @@ import 'memory_sticker_done_box.dart';
 import 'memory_sticker_menu.dart';
 import 'memory_sticker_strip.dart';
 import 'sticker_edge_scroll.dart';
-import 'sticker_paper.dart';
 
 export 'memory_sticker_strip.dart' show StickerStamp;
 

@@ -184,6 +184,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/accounts/new',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          interceptBack: false,
+          child: const AccountEditorScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/accounts/item/:id',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          interceptBack: false,
+          child: AccountEditorScreen(accountId: state.pathParameters['id']),
+        ),
+      ),
+      GoRoute(
         path: '/memory/note/new',
         pageBuilder: (context, state) => pageTurnPage(
           context: context,

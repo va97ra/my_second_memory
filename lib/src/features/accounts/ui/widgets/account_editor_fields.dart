@@ -1,6 +1,7 @@
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
+import 'account_field_icons.dart';
 import 'account_text_field.dart';
 
 /// Поля аккаунта: сервис, вход, почта, пароль, сайт и заметка.
@@ -35,26 +36,26 @@ class AccountEditorFields extends StatelessWidget {
         AccountTextField(
           controller: service,
           label: strings.serviceName,
-          icon: Icons.apps_rounded,
+          icon: AccountFieldIcons.service,
           textInputAction: TextInputAction.next,
         ),
         AccountTextField(
           controller: login,
           label: strings.login,
-          icon: Icons.person_rounded,
+          icon: AccountFieldIcons.login,
           textInputAction: TextInputAction.next,
         ),
         AccountTextField(
           controller: email,
           label: strings.email,
-          icon: Icons.alternate_email_rounded,
+          icon: AccountFieldIcons.email,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
         ),
         AccountTextField(
           controller: password,
           label: strings.password,
-          icon: Icons.lock_rounded,
+          icon: AccountFieldIcons.password,
           obscureText: !showPassword,
           textInputAction: TextInputAction.next,
           suffixIcon: IconButton(
@@ -70,14 +71,14 @@ class AccountEditorFields extends StatelessWidget {
         AccountTextField(
           controller: website,
           label: strings.website,
-          icon: Icons.language_rounded,
+          icon: AccountFieldIcons.website,
           keyboardType: TextInputType.url,
           textInputAction: TextInputAction.next,
         ),
         AccountTextField(
           controller: note,
           label: strings.note,
-          icon: Icons.sticky_note_2_rounded,
+          icon: AccountFieldIcons.note,
           minLines: 4,
           maxLines: 6,
           keyboardType: TextInputType.multiline,

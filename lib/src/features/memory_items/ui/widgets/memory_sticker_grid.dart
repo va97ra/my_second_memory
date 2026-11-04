@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../shared/ui/memory_card/sticker_paper.dart';
 import 'memory_sticker.dart';
 
 /// Сколько карточек в ряду: на телефоне три, на широком экране ряд длиннее, чтобы
@@ -19,9 +20,6 @@ class MemoryStickerGrid extends StatelessWidget {
     this.canCarry = false,
   });
 
-  static const _gap = 8.0;
-  static const _edge = 12.0;
-
   final List<String> itemIds;
   final int columns;
   final StickerStamp stamp;
@@ -31,12 +29,15 @@ class MemoryStickerGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: _edge, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: StickerPaper.gridEdge,
+        vertical: 4,
+      ),
       sliver: SliverGrid.builder(
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
-          mainAxisSpacing: _gap,
-          crossAxisSpacing: _gap,
+          mainAxisSpacing: StickerPaper.gridGap,
+          crossAxisSpacing: StickerPaper.gridGap,
         ),
         itemCount: itemIds.length,
         itemBuilder: (context, index) => MemorySticker(

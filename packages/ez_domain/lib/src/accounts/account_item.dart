@@ -9,6 +9,7 @@ class AccountItem {
     this.email = '',
     this.website = '',
     this.note = '',
+    this.tintHue,
   });
 
   final String id;
@@ -18,6 +19,9 @@ class AccountItem {
   final String email;
   final String website;
   final String note;
+
+  /// Оттенок карточки, 0–359 по цветовому кругу. Пусто — бумага без краски.
+  final int? tintHue;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -28,6 +32,8 @@ class AccountItem {
     String? email,
     String? website,
     String? note,
+    int? tintHue,
+    bool clearTintHue = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -39,6 +45,7 @@ class AccountItem {
       email: email ?? this.email,
       website: website ?? this.website,
       note: note ?? this.note,
+      tintHue: clearTintHue ? null : tintHue ?? this.tintHue,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -53,6 +60,7 @@ class AccountItem {
       'email': email,
       'website': website,
       'note': note,
+      if (tintHue != null) 'tintHue': tintHue,
       'createdAt': createdAt.toUtc().toIso8601String(),
       'updatedAt': updatedAt.toUtc().toIso8601String(),
     };
@@ -67,6 +75,7 @@ class AccountItem {
       email: json['email'] as String? ?? '',
       website: json['website'] as String? ?? '',
       note: json['note'] as String? ?? '',
+      tintHue: json['tintHue'] as int?,
       createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
       updatedAt: DateTime.parse(json['updatedAt'] as String).toLocal(),
     );

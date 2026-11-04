@@ -1,11 +1,14 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
-/// Значок сервиса: первая буква названия на цветном кружке.
+/// Значок сервиса: первая буква названия на цветном квадратике.
 class ServiceAvatar extends StatelessWidget {
-  const ServiceAvatar({super.key, required this.name});
+  const ServiceAvatar({super.key, required this.name, required this.color});
+
+  static const _size = 24.0;
 
   final String name;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -15,18 +18,16 @@ class ServiceAvatar extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppPalette.muted),
+        color: color,
+        borderRadius: BorderRadius.circular(6),
       ),
-      child: SizedBox(
-        width: 38,
-        height: 38,
+      child: SizedBox.square(
+        dimension: _size,
         child: Center(
           child: Text(
             letter,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: readableInkOn(color),
                   fontWeight: FontWeight.w900,
                 ),
           ),

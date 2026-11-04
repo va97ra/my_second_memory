@@ -4,114 +4,214 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../navigation/page_turn_navigation.dart';
+import '../../../../shared/ui/memory_card/sticker_paper.dart';
+import '../../../../shared/ui/memory_card/sticker_strip.dart';
 import '../../state/accounts_controller.dart';
+import 'account_field_icons.dart';
 import 'account_info_line.dart';
-import 'account_note_box.dart';
 import 'account_password_row.dart';
+import 'account_row_button.dart';
+import 'account_tint.dart';
+import 'account_tint_strip.dart';
 import 'service_avatar.dart';
 
-/// Карточка аккаунта: сервис, входы, скрытый пароль и заметка.
+/// Карточка аккаунта на той же бумаге, что и записки: сервис и строки с кнопками
+/// копирования. Нажатие на карточку открывает редактор, на букву — выбор цвета.
 ///
 /// Получает идентификатор и читает аккаунт сама, из общего хранилища.
-class AccountCard extends ConsumerWidget {
-  const AccountCard({
-    super.key,
-    required this.accountId,
-    required this.onEdit,
-    required this.onDelete,
-  });
+class AccountCard extends ConsumerStatefulWidget {
+  const AccountCard({super.key, required this.accountId});
+
+  /// Заголовок и пять полей, какое бы их число ни было заполнено: ряды сетки ровные.
+  static const _lines = 6;
+  static const _bodyInset = 3.0;
+
+  static double heightOf(BuildContext context) =>
+      StickerPaper.stripHeight +
+      _bodyInset * 2 +
+      AccountInfoLine.heightOf(context) * _lines;
 
   final String accountId;
-  final ValueChanged<AccountItem> onEdit;
-  final ValueChanged<AccountItem> onDelete;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final account = ref.watch(accountByIdProvider(accountId));
-    if (account == null) return const SizedBox.shrink();
-    final colors = Theme.of(context).colorScheme;
-    final strings = AppStrings.of(context);
+  ConsumerState<AccountCard> createState() => _AccountCardState();
+}
 
-    final radius = BorderRadius.circular(8);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: radius,
-              border: Border.all(color: colors.outlineVariant),
-              boxShadow:
-                  notebookSurfaceShadow(context, NotebookSurfaceDepth.card),
+class _AccountCardState extends ConsumerState<AccountCard> {
+  bool _picking = false;
+  int? _pickedHue;
+
+  void _togglePicker(AccountItem account) {
+    setState(() {
+      _picking = !_picking;
+      _pickedHue = account.tintHue;
+    });
+  }
+
+  Future<void> _savePicked(AccountItem account) async {
+    final hue = _pickedHue;
+    setState(() => _picking = false);
+    if (hue == account.tintHue) return;
+    await ref.read(accountsControllerProvider.notifier).update(
+          hue == null
+              ? account.copyWith(clearTintHue: true)
+              : account.copyWith(tintHue: hue),
+        );
+  }
+
+  Future<void> _open(AccountItem account) async {
+    // Карточка успевает вернуться на место: переворот снимает страницу со снимка.
+    await Future<void>.delayed(PressPulse.duration);
+    if (!mounted) return;
+    await context.pageTurnPush(
+      '/accounts/item/${Uri.encodeComponent(account.id)}',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final account = ref.watch(accountByIdProvider(widget.accountId));
+    if (account == null) return const SizedBox.shrink();
+    final hue = _picking ? _pickedHue : account.tintHue;
+    final accent = accountTintAccent(hue);
+
+    return PressPulse(
+      child: StickerPaper(
+        accent: accent,
+        tint: accountTintSurface(hue),
+        strip: StickerStrip(
+          accent: accent,
+          label: AppStrings.of(context).account,
+        ),
+        child: NotebookPressable(
+          key: ValueKey('account_card_${account.id}'),
+          onTap: () => _open(account),
+          borderRadius: BorderRadius.zero,
+          pulse: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: AccountCard._bodyInset,
             ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _header(context, account),
-              // Пустое поле не занимает строку: у аккаунта их шесть, и
-              // заполняют обычно два-три.
-              if (account.login.isNotEmpty)
-                AccountInfoLine(
-                  icon: Icons.person_rounded,
-                  text: account.login,
-                  copyTooltip: strings.copyLogin,
-                  copiedMessage: strings.loginCopied,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Header(
+                  account: account,
+                  accent: accent,
+                  picker: _picking
+                      ? AccountTintStrip(
+                          hue: _pickedHue,
+                          onChanged: (value) =>
+                              setState(() => _pickedHue = value),
+                          onDone: () => _savePicked(account),
+                        )
+                      : null,
+                  onAvatarTap: () => _togglePicker(account),
                 ),
-              if (account.email.isNotEmpty)
-                AccountInfoLine(
-                  icon: Icons.alternate_email_rounded,
-                  text: account.email,
-                  copyTooltip: strings.copyEmail,
-                  copiedMessage: strings.emailCopied,
-                ),
-              const SizedBox(height: 8),
-              AccountPasswordRow(password: account.password),
-              if (account.website.isNotEmpty)
-                AccountInfoLine(
-                  icon: Icons.language_rounded,
-                  text: account.website,
-                  copyTooltip: strings.copyWebsite,
-                  copiedMessage: strings.websiteCopied,
-                ),
-              if (account.note.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                AccountNoteBox(text: account.note),
+                ..._lines(context, account),
               ],
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _header(BuildContext context, AccountItem account) {
+  /// Пустое поле не занимает строку: заполняют обычно два-три из пяти.
+  List<Widget> _lines(BuildContext context, AccountItem account) {
     final strings = AppStrings.of(context);
+    return [
+      if (account.login.isNotEmpty)
+        AccountInfoLine(
+          icon: AccountFieldIcons.login,
+          text: account.login,
+          copyTooltip: strings.copyLogin,
+          copiedMessage: strings.loginCopied,
+        ),
+      if (account.email.isNotEmpty)
+        AccountInfoLine(
+          icon: AccountFieldIcons.email,
+          text: account.email,
+          copyTooltip: strings.copyEmail,
+          copiedMessage: strings.emailCopied,
+        ),
+      if (account.password.isNotEmpty)
+        AccountPasswordRow(password: account.password),
+      if (account.website.isNotEmpty)
+        AccountInfoLine(
+          icon: AccountFieldIcons.website,
+          text: account.website,
+          copyTooltip: strings.copyWebsite,
+          copiedMessage: strings.websiteCopied,
+        ),
+      if (account.note.isNotEmpty)
+        AccountInfoLine(
+          icon: AccountFieldIcons.note,
+          text: account.note,
+          copyTooltip: strings.copyNote,
+          copiedMessage: strings.noteCopied,
+        ),
+    ];
+  }
+}
 
-    return Row(
-      children: [
-        ServiceAvatar(name: account.serviceName),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            account.serviceName,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.w900),
+/// Верх карточки: буква сервиса, рядом название или полоска выбора цвета.
+class _Header extends StatelessWidget {
+  const _Header({
+    required this.account,
+    required this.accent,
+    required this.picker,
+    required this.onAvatarTap,
+  });
+
+  final AccountItem account;
+  final Color accent;
+  final Widget? picker;
+  final VoidCallback onAvatarTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SizedBox(
+      height: AccountInfoLine.heightOf(context),
+      child: Row(
+        children: [
+          Tooltip(
+            message: AppStrings.of(context).accountColor,
+            child: NotebookPressable(
+              key: ValueKey('account_color_${account.id}'),
+              onTap: onAvatarTap,
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                width: AccountRowButton.width,
+                height: double.infinity,
+                child: Center(
+                  child: ServiceAvatar(
+                    name: account.serviceName,
+                    color: accent,
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        IconButton(
-          tooltip: strings.editAccount,
-          onPressed: () => onEdit(account),
-          icon: const Icon(Icons.edit_rounded),
-        ),
-        IconButton(
-          tooltip: strings.delete,
-          onPressed: () => onDelete(account),
-          icon: const Icon(Icons.delete_rounded),
-        ),
-      ],
+          const SizedBox(width: 2),
+          Expanded(
+            child: picker ??
+                Text(
+                  account.serviceName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
     );
   }
 }

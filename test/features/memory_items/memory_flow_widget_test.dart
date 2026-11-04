@@ -47,6 +47,23 @@ void main() {
     );
     expect(noteField.minLines, 4);
     expect(noteField.maxLines, 6);
+
+    // Записанный аккаунт виден карточкой, нажатие открывает его на своём адресе.
+    await tester.enterText(find.widgetWithText(TextField, 'Сервис'), 'Почта');
+    await tester.tap(find.byKey(const ValueKey('account_save')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('account_save')), findsNothing);
+
+    await tester.tap(find.text('Почта'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('account_delete')), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Почта'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('account_delete')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Удалить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Почта'), findsNothing);
   });
 
   testWidgets('editor keeps record field large with long text and images',

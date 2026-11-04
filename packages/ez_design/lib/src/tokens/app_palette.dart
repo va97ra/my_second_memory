@@ -21,6 +21,7 @@ abstract final class AppPalette {
 
   // Смысл: экран спрашивает, что это значит, а не какого оно цвета.
   static const accent = magenta;
+  static const account = indigo;
   static const weekend = magenta;
   static const shortenedDay = amber;
 

@@ -4,4 +4,5 @@
 library;
 
 export 'state/accounts_controller.dart';
+export 'ui/account_editor_screen.dart';
 export 'ui/accounts_screen.dart';

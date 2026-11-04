@@ -91,6 +91,8 @@
 /calendar/day        День календаря
 /calendar/holidays   Праздники дня
 /accounts            Аккаунты
+/accounts/new        Новый аккаунт
+/accounts/item/:id   Редактор аккаунта
 /settings            Настройки
 /memory/new          Новая календарная запись
 /memory/note/new     Новая записка без даты

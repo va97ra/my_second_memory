@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'account_row_button.dart';
+
 /// Кнопка копирования поля аккаунта. Одна на все поля карточки.
 class AccountCopyButton extends StatelessWidget {
   const AccountCopyButton({
@@ -10,20 +12,16 @@ class AccountCopyButton extends StatelessWidget {
     required this.copiedMessage,
   });
 
-  static const size = 40.0;
-
   final String text;
   final String tooltip;
   final String copiedMessage;
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    return AccountRowButton(
+      icon: Icons.content_copy_rounded,
       tooltip: tooltip,
       onPressed: () => _copy(context),
-      constraints: const BoxConstraints.tightFor(width: size, height: size),
-      padding: EdgeInsets.zero,
-      icon: const Icon(Icons.content_copy_rounded, size: 18),
     );
   }
 

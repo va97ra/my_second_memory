@@ -230,7 +230,7 @@ class AppStrings {
   String get accountsPageHint => isRu
       ? 'Логины и пароли хранятся зашифрованными и открываются только после '
           'разблокировки приложения. Нажатие на карточку открывает её для '
-          'правки.'
+          'правки, на букву в углу — полоску с цветом карточки.'
       : 'Logins and passwords are stored encrypted and open only after the '
           'app is unlocked. Tap a card to edit it.';
 
@@ -301,6 +301,8 @@ class AppStrings {
       : 'Tap a date to open the day or the month name for working-day totals. '
           'Swipe sideways for months, vertically for years; a coloured cap is a shift, an underlined date is a day off, * is a shortened day.';
   String get accounts => isRu ? 'Аккаунты' : 'Accounts';
+  String get account => isRu ? 'Аккаунт' : 'Account';
+  String get accountColor => isRu ? 'Цвет карточки' : 'Card color';
   String get addAccount => isRu ? 'Добавить аккаунт' : 'Add account';
   String get deleteAccountQuestion =>
       isRu ? 'Удалить этот аккаунт?' : 'Delete this account?';
