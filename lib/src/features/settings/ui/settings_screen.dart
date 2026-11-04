@@ -9,7 +9,6 @@ import '../../../shared/ui/screen_chrome.dart';
 import 'widgets/app_settings_section.dart';
 import 'widgets/data_settings_section.dart';
 import 'widgets/feedback_request_card.dart';
-import 'widgets/jarvis_settings_section.dart';
 import 'widgets/settings_section.dart';
 import 'widgets/settings_tile.dart';
 import './widgets/settings_chevron.dart';
@@ -37,7 +36,6 @@ class SettingsScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   const AppSettingsSection(),
-                  const JarvisSettingsSection(),
                   SettingsSection(
                     title: isRu ? 'Безопасность' : 'Security',
                     children: [

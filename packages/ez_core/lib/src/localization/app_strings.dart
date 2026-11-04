@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:ez_domain/ez_domain.dart' show russianPlural;
+import 'russian_plural.dart';
 
 class AppStrings {
   AppStrings(this.locale);
@@ -36,169 +36,23 @@ class AppStrings {
   String get activeRecords => isRu ? 'Активные' : 'Active';
   String get completedRecords => isRu ? 'Выполненные' : 'Done';
   String get today => isRu ? 'Сегодня' : 'Today';
-  String get tomorrow => isRu ? 'Завтра' : 'Tomorrow';
+  String get yesterday => isRu ? 'Вчера' : 'Yesterday';
+  String recordsCount(int count) {
+    if (!isRu) return count == 1 ? '1 record' : '$count records';
+    return '$count ${russianPlural(count, 'запись', 'записи', 'записей')}';
+  }
 
   String get previousMonth => isRu ? 'Предыдущий месяц' : 'Previous month';
   String get nextMonth => isRu ? 'Следующий месяц' : 'Next month';
+  String get dayBeforeYesterdaySection =>
+      isRu ? 'Это было позавчера' : 'This was two days ago';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
   String get emptySlot => isRu ? 'Место свободно' : 'Free slot';
   String get emptySlotHint => isRu
       ? 'Инструмент, который здесь стоял, убран. Место в панели осталось под следующий.'
       : 'The tool that lived here is gone. The slot is kept for the next one.';
+  String get toolSlotOne => isRu ? 'Слот 1' : 'Slot 1';
   String get toolSlotTwo => isRu ? 'Слот 2' : 'Slot 2';
-  String get jarvis => isRu ? 'Джарвис' : 'Jarvis';
-  String get jarvisGreeting =>
-      isRu ? 'Слушаю, сэр. Чем могу помочь?' : 'At your service.';
-
-  /// Джарвис понимает только русский: примеры — на нём при любом языке.
-  String get jarvisInputHint => isRu ? 'Скажите или напишите' : 'Say or type';
-  String get jarvisSend => isRu ? 'Отправить' : 'Send';
-  String get jarvisListen => isRu ? 'Говорить' : 'Talk';
-  String get jarvisStopListening => isRu ? 'Хватит слушать' : 'Stop listening';
-  String get jarvisListening => isRu ? 'Слушаю…' : 'Listening…';
-  String get jarvisUndo => isRu ? 'Отменить' : 'Undo';
-  String get jarvisClear => isRu ? 'Очистить разговор' : 'Clear conversation';
-  String get jarvisClearQuestion => isRu
-      ? 'Очистить разговор? Записи в календаре останутся.'
-      : 'Clear the conversation? Calendar records stay.';
-  String get jarvisClearConfirm => isRu ? 'Очистить' : 'Clear';
-  String get jarvisShow => isRu ? 'Показать' : 'Show';
-  String get jarvisMorning => isRu ? 'Утром, в 9' : 'Morning, 9';
-  String get jarvisAfternoon => isRu ? 'Днём, в 13' : 'Afternoon, 1 pm';
-  String get jarvisEvening => isRu ? 'Вечером, в 19' : 'Evening, 7 pm';
-  String get jarvisAllDay => isRu ? 'Весь день' : 'All day';
-  String get jarvisNoDate => isRu ? 'Без даты' : 'No date';
-  String get jarvisCancelAnswer => isRu ? 'Не надо' : 'Never mind';
-  String get formatBold => isRu ? 'Жирный' : 'Bold';
-  String get formatItalic => isRu ? 'Курсив' : 'Italic';
-  String get formatUnderline => isRu ? 'Подчёркнутый' : 'Underline';
-  String get formatStrike => isRu ? 'Зачёркнутый' : 'Strikethrough';
-  String get formatColor => isRu ? 'Цвет' : 'Colour';
-  String get formatSize => isRu ? 'Размер' : 'Size';
-  String get formatFont => isRu ? 'Шрифт' : 'Font';
-  String get formatClear => isRu ? 'Убрать оформление' : 'Clear formatting';
-  String get formatDefault => isRu ? 'Как у записи' : 'Default';
-  String get formatHue => isRu ? 'Оттенок' : 'Hue';
-  String get formatSaturation => isRu ? 'Насыщенность' : 'Saturation';
-  String get formatSmall => isRu ? 'Мелкий' : 'Small';
-  String get formatNormal => isRu ? 'Обычный' : 'Normal';
-  String get formatLarge => isRu ? 'Крупный' : 'Large';
-  String get formatHuge => isRu ? 'Заголовок' : 'Heading';
-  String get jarvisQuarterHour => isRu ? '15 минут' : '15 min';
-  String get jarvisHalfHour => isRu ? 'Полчаса' : 'Half an hour';
-  String get jarvisHour => isRu ? 'Час' : 'An hour';
-  String get jarvisNowhere => isRu ? 'Никуда' : 'Nowhere';
-  String get jarvisNothing => isRu ? 'Ничего' : 'Nothing';
-  String get jarvisUrgent => isRu ? 'Срочно' : 'Urgent';
-  String get jarvisNotUrgent => isRu ? 'Не срочно' : 'Not urgent';
-  String get jarvisSkip => isRu ? 'Не важно' : 'Skip';
-  String get jarvisDetailedCards =>
-      isRu ? 'Подробная карточка дела' : 'Detailed task card';
-  String get jarvisDetailedCardsHint => isRu
-      ? 'Спрашивать, сколько займёт, куда ехать, что сделать и срочно ли'
-      : 'Ask how long it takes, where to go, what to do and how urgent';
-  String get jarvisBrain => isRu ? 'Нейросеть GigaChat' : 'GigaChat brain';
-  String get jarvisWakeWord =>
-      isRu ? 'Отзываться на «Джарвис»' : 'Answer to «Jarvis»';
-  String get jarvisWakeWordHint => isRu
-      ? 'Пока приложение открыто, микрофон ждёт имя'
-      : 'While the app is open, the microphone waits for the name';
-
-  /// Остаток пакета GigaChat под заголовком Джарвиса.
-  /// Остаток — точным числом: пакет большой, а ответ тратит тысячи, и
-  /// округлённые «250 млн» не менялись неделями — шкала казалась заглушкой.
-  String gigaChatLeft(int tokens, {int spentThisMonth = 0}) {
-    final left = isRu
-        ? 'GigaChat: осталось ${_tokens(tokens)}'
-        : 'GigaChat: ${_tokens(tokens)} left';
-    if (spentThisMonth <= 0) return left;
-    return isRu
-        ? '$left · за месяц ${_digits(spentThisMonth)}'
-        : '$left · ${_digits(spentThisMonth)} this month';
-  }
-
-  /// Остатка Сбер не сообщил — сколько ушло за месяц.
-  String gigaChatSpent(int tokens) => isRu
-      ? 'GigaChat: за месяц ${_tokens(tokens)}'
-      : 'GigaChat: ${_tokens(tokens)} this month';
-
-  /// «249 987 432 токена», «12 токенов».
-  String _tokens(int count) => isRu
-      ? '${_digits(count)} ${russianPlural(count, 'токен', 'токена', 'токенов')}'
-      : '${_digits(count)} tokens';
-
-  /// Разряды через неразрывный пробел: число не рвётся на строки.
-  String _digits(int count) {
-    final digits = count.toString();
-    final buffer = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(' ');
-      buffer.write(digits[i]);
-    }
-    return buffer.toString();
-  }
-
-  String get jarvisFacts =>
-      isRu ? 'Что Джарвис помнит' : 'What Jarvis remembers';
-  String jarvisFactsCount(int count) => isRu
-      ? (count == 0
-          ? 'Пока ничего. Скажите ему: «запомни, что …»'
-          : '$count ${russianPlural(count, 'запись', 'записи', 'записей')} — '
-              'только на этом телефоне')
-      : (count == 0 ? 'Nothing yet. Say “remember that …”' : '$count notes');
-  String get jarvisFactsEmpty => isRu
-      ? 'Скажите Джарвису «запомни, что я живу в Казани» — и он будет это знать.'
-      : 'Tell Jarvis “remember that I live in Kazan” and he will know it.';
-  String get jarvisFactForget => isRu ? 'Забыть' : 'Forget';
-  String get jarvisBankNotices => isRu
-      ? 'Записывать покупки из уведомлений банков'
-      : 'Record purchases from bank notifications';
-  String get jarvisBankNoticesHint => isRu
-      ? 'Джарвис сам запишет расход или доход, с «Отменить»'
-      : 'Jarvis records the expense or income himself, with Undo';
-  String get jarvisBankNoAccess => isRu
-      ? 'Нужен доступ к уведомлениям — нажмите. Если телефон пишет '
-          '«Ограниченная настройка»: О приложении → ⋮ → «Разрешить '
-          'ограниченные настройки», потом снова сюда'
-      : 'Notification access needed — tap. If the phone says “Restricted '
-          'setting”: App info → ⋮ → “Allow restricted settings”, then '
-          'come back here';
-  String get jarvisSpeakReminders =>
-      isRu ? 'Говорить напоминания вслух' : 'Speak reminders aloud';
-  String get jarvisSpeakRemindersHint => isRu
-      ? 'Голосом Джарвиса; молчит в беззвучном режиме и во время звонка'
-      : 'In Jarvis’s voice; silent in silent mode and during calls';
-  String get jarvisMorningBriefing =>
-      isRu ? 'Утром — дела на день' : 'Morning: today’s tasks';
-  String get jarvisEveningBriefing =>
-      isRu ? 'Вечером — дела на завтра' : 'Evening: tomorrow’s tasks';
-  String jarvisBriefingAt(String time) => isRu ? 'В $time' : 'At $time';
-  String get jarvisBriefingOff => isRu ? 'Выключено' : 'Off';
-  String get jarvisBrainOn => isRu
-      ? 'Подключена: Джарвис понимает свободную речь'
-      : 'Connected: Jarvis understands free speech';
-  String get jarvisBrainOff => isRu
-      ? 'Не подключена: Джарвис понимает только команды'
-      : 'Not connected: Jarvis understands commands only';
-  String get jarvisBrainHowTo => isRu
-      ? 'Ключ выдаёт Сбер: developers.sber.ru → GigaChat API → «Получить '
-          'ключ». Он хранится только на этом устройстве.'
-      : 'Sber issues the key: developers.sber.ru → GigaChat API → «Get key». '
-          'It is stored on this device only.';
-  String get jarvisBrainKey => isRu ? 'Ключ авторизации' : 'Authorization key';
-  String get jarvisBrainUnreadable =>
-      isRu ? 'Ключ не прочитался' : 'The key could not be read';
-  String get jarvisBrainPaste => isRu ? 'Вставить' : 'Paste';
-  String get jarvisBrainNotKey =>
-      isRu ? 'Не похоже на ключ GigaChat' : 'Not a GigaChat key';
-  String get jarvisBrainSave => isRu ? 'Сохранить' : 'Save';
-  String get jarvisBrainSaved => isRu
-      ? 'Ключ сохранён на этом устройстве.'
-      : 'The key is stored on this device.';
-  String get jarvisBrainCheck => isRu ? 'Проверить связь' : 'Check connection';
-  String get jarvisBrainRemove => isRu ? 'Удалить ключ' : 'Remove key';
-  String get jarvisBrainWorks =>
-      isRu ? 'GigaChat на связи.' : 'GigaChat answers.';
   String get calculator => isRu ? 'Калькулятор' : 'Calculator';
   String get calculatorStandard => isRu ? 'Обычный' : 'Standard';
   String get calculatorScientific => isRu ? 'Инженерный' : 'Scientific';
@@ -215,6 +69,8 @@ class AppStrings {
       };
   String get finance => isRu ? 'Финансы' : 'Finances';
   String get converter => isRu ? 'Конвертер' : 'Converter';
+  String get engineering => isRu ? 'Инженерка' : 'Engineering';
+  String get plumbing => isRu ? 'Сантехника' : 'Plumbing';
   String get savedCalculations =>
       isRu ? 'Сохранённые расчёты' : 'Saved calculations';
   String get saveCalculation => isRu ? 'Сохранить расчёт' : 'Save calculation';
@@ -229,6 +85,7 @@ class AppStrings {
   String get scope => isRu ? 'Область применения' : 'Scope';
   String get invalidNumber =>
       isRu ? 'Введите корректное число' : 'Enter a valid number';
+  String get example => isRu ? 'Пример' : 'Example';
 
   // Величины конвертера: по одному слову на величину, и это слово живёт
   // здесь, а не в таблице единиц.
@@ -339,14 +196,6 @@ class AppStrings {
   /// Всплывающая подпись у кнопки подсказки — одна на все страницы.
   String get pageHintTooltip =>
       isRu ? 'Что здесь можно' : 'What you can do here';
-
-  String get jarvisPageHint => isRu
-      ? 'Скажите или напишите, что сделать: «завтра в 10 врач», «что у меня '
-          'завтра», «открой финансы». Любое действие Джарвиса возвращается '
-          'кнопкой «Отменить» под его ответом.'
-      : 'Say or type what to do, in Russian: «завтра в 10 врач» books a '
-          'doctor tomorrow at ten. Every action Jarvis takes can be undone '
-          'with the button under his reply.';
 
   String get feedPageHint => isRu
       ? 'Записи собраны по дням выбранного периода. Стрелки листают период, '
@@ -465,6 +314,8 @@ class AppStrings {
   String get addRecord => isRu ? 'Добавить запись' : 'Add record';
   String get notes => isRu ? 'Записки' : 'Notes';
   String get noteCard => isRu ? 'Записка' : 'Note';
+  String get people => isRu ? 'Люди' : 'People';
+  String get projects => isRu ? 'Проекты' : 'Projects';
   String get memoryArchive => isRu ? 'Архив памяти' : 'Memory archive';
   String get backup => isRu ? 'Резервная копия' : 'Backup';
   String get backupSubtitle =>
@@ -614,10 +465,21 @@ class AppStrings {
   String get settings => isRu ? 'Настройки' : 'Settings';
   String get title => isRu ? 'Название' : 'Title';
   String get recordType => isRu ? 'Тип записи' : 'Record type';
-  String get recordRoute => isRu ? 'Маршрут' : 'Route';
-  String get recordRouteNoMaps => isRu
-      ? 'Карт на телефоне не нашёл: поставьте «Яндекс Карты» или Google Maps.'
-      : 'No maps app found on this phone.';
+  String get formatBold => isRu ? 'Жирный' : 'Bold';
+  String get formatItalic => isRu ? 'Курсив' : 'Italic';
+  String get formatUnderline => isRu ? 'Подчёркнутый' : 'Underline';
+  String get formatStrike => isRu ? 'Зачёркнутый' : 'Strikethrough';
+  String get formatColor => isRu ? 'Цвет' : 'Colour';
+  String get formatSize => isRu ? 'Размер' : 'Size';
+  String get formatFont => isRu ? 'Шрифт' : 'Font';
+  String get formatClear => isRu ? 'Убрать оформление' : 'Clear formatting';
+  String get formatDefault => isRu ? 'Как у записи' : 'Default';
+  String get formatHue => isRu ? 'Оттенок' : 'Hue';
+  String get formatSaturation => isRu ? 'Насыщенность' : 'Saturation';
+  String get formatSmall => isRu ? 'Мелкий' : 'Small';
+  String get formatNormal => isRu ? 'Обычный' : 'Normal';
+  String get formatLarge => isRu ? 'Крупный' : 'Large';
+  String get formatHuge => isRu ? 'Заголовок' : 'Heading';
   String get description => isRu ? 'Запись' : 'Record';
   String get date => isRu ? 'Дата' : 'Date';
   String get time => isRu ? 'Время' : 'Time';
@@ -662,6 +524,7 @@ class AppStrings {
   String get saving => isRu ? 'Сохраняю' : 'Saving';
   String get saveFailed => isRu ? 'Ошибка сохранения' : 'Save failed';
   String get loadFailed => isRu ? 'Не удалось загрузить данные' : 'Load failed';
+  String get dayRecords => isRu ? 'Записи дня' : 'Day records';
   String get photo => isRu ? 'Фото' : 'Photo';
   String get voiceMessage => isRu ? 'Голосовое сообщение' : 'Voice message';
   String get recordingNow => isRu ? 'Идёт запись' : 'Recording';
@@ -674,6 +537,7 @@ class AppStrings {
   String get startDate => isRu ? 'Дата начала' : 'Start date';
   String get workDays => isRu ? 'Рабочих дней' : 'Work days';
   String get restDays => isRu ? 'Выходных дней' : 'Rest days';
+  String get customSchedule => isRu ? 'Свой' : 'Custom';
   String get manualSchedule => isRu ? 'Настроить вручную' : 'Set manually';
   String get mainSettings => isRu ? 'Основное' : 'Main';
   String get scheduleSettings => isRu ? 'График' : 'Schedule';
@@ -721,6 +585,7 @@ class AppStrings {
       isRu ? 'Графиков пока нет' : 'No schedules yet';
   String get deleteShiftScheduleQuestion =>
       isRu ? 'Удалить этот график?' : 'Delete this schedule?';
+  String get workingToday => isRu ? 'Рабочий день' : 'Workday';
   String get language => isRu ? 'Язык' : 'Language';
   String get appearance => isRu ? 'Оформление' : 'Appearance';
   String get unlock => isRu ? 'Открыть' : 'Unlock';
@@ -754,6 +619,7 @@ class AppStrings {
   String get wrongPin => isRu ? 'Неверный PIN' : 'Wrong PIN';
   String get biometricsUnavailable =>
       isRu ? 'Биометрия недоступна' : 'Biometrics unavailable';
+  String get biometricsOk => isRu ? 'Биометрия подтверждена' : 'Biometrics ok';
   String get secureStorageStartFailed => isRu
       ? 'Не удалось запустить защищённое хранилище'
       : 'Could not start secure storage';

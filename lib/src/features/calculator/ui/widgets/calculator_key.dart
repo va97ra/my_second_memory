@@ -21,7 +21,6 @@ class CalculatorKey extends StatefulWidget {
     required this.onPressed,
     this.icon,
     this.selected = false,
-    this.lit = false,
     this.role = CalculatorKeyRole.plain,
     super.key,
   });
@@ -34,9 +33,6 @@ class CalculatorKey extends StatefulWidget {
   final IconData? icon;
   final VoidCallback onPressed;
   final bool selected;
-
-  /// Клавишу нажимает Джарвис — она промята, как под пальцем.
-  final bool lit;
   final CalculatorKeyRole role;
 
   @override
@@ -73,7 +69,7 @@ class _CalculatorKeyState extends State<CalculatorKey> {
       child: CalculatorKeySurface(
         baseColor: baseColor,
         glassOpacity: _glassOpacity,
-        pressed: _pressed || widget.lit,
+        pressed: _pressed,
         onPressed: widget.onPressed,
         onHighlightChanged: (value) => setState(() => _pressed = value),
         child: LayoutBuilder(

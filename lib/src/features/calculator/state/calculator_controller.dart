@@ -1,10 +1,6 @@
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Клавиша, которую сейчас нажимает Джарвис: она проминается так же, как
-/// под пальцем, и видно, что он набирает. Null — никто не нажимает.
-final calculatorLitKeyProvider = StateProvider<String?>((ref) => null);
-
 final calculatorControllerProvider =
     StateNotifierProvider<CalculatorController, CalculatorState>((ref) {
   return CalculatorController();
@@ -68,28 +64,14 @@ class CalculatorController extends StateNotifier<CalculatorState> {
   void toggleHyperbolic() =>
       state = state.copyWith(hyperbolic: !state.hyperbolic);
 
-  void cycleAngleUnit() => setAngleUnit(CalculatorAngleUnit
-      .values[(state.angleUnit.index + 1) % CalculatorAngleUnit.values.length]);
-
-  void setAngleUnit(CalculatorAngleUnit unit) {
+  void cycleAngleUnit() {
+    final next = CalculatorAngleUnit.values[
+        (state.angleUnit.index + 1) % CalculatorAngleUnit.values.length];
     state = state.copyWith(
-      angleUnit: unit,
-      evaluation: _engine.evaluate(state.expression, angleUnit: unit),
+      angleUnit: next,
+      evaluation: _engine.evaluate(state.expression, angleUnit: next),
     );
   }
-
-  /// Нажать клавишу, не глядя на курсор, — так нажимает Джарвис. Знак
-  /// дописывается в конец, а клавиши вроде `x²` и `C` меняют всё выражение
-  /// по тем же правилам, что и с экрана.
-  void press(String key) => updateExpression(
-      wholeExpressionKey(key, state.expression) ?? '${state.expression}$key');
-
-  /// Всё выражение — в функцию: `sqrt(…)`; пустое имя — в скобки.
-  void wrap(String function) =>
-      updateExpression(wrapExpression(function, state.expression));
-
-  /// Калькулятор как был — «отмени» Джарвису.
-  void restore(CalculatorState previous) => state = previous;
 
   void commit() {
     if (state.evaluation.status == CalculatorEvaluationStatus.incomplete) {

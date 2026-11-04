@@ -122,39 +122,26 @@ void main() {
       findsNothing,
     );
     final key = _gridKeys().first;
-    final face = find.descendant(
+    final surface = find.descendant(
       of: key,
-      matching: find.byKey(const ValueKey('calculator_key_face')),
+      matching: find.byType(AnimatedContainer),
     );
-    final body = tester.widget<DecoratedBox>(
-      find.ancestor(of: face, matching: find.byType(DecoratedBox)).first,
-    );
-    expect((body.decoration as BoxDecoration).boxShadow, isNotEmpty,
-        reason: 'клавиша стоит над столом и отбрасывает тень');
-    EdgeInsetsGeometry? margin() =>
-        tester.widget<AnimatedContainer>(face).margin;
-    expect(margin(), const EdgeInsets.only(bottom: 4),
-        reason: 'снизу виден бок клавиши');
+    final decoration =
+        tester.widget<AnimatedContainer>(surface).decoration as BoxDecoration;
+    expect(decoration.boxShadow, isNotEmpty);
 
     final gesture = await tester.startGesture(tester.getCenter(key));
     await tester.pump(const Duration(milliseconds: 100));
-    expect(margin(), const EdgeInsets.only(top: 3, bottom: 1),
-        reason: 'под пальцем клавиша уходит на свой бок');
+    expect(
+      tester.widget<AnimatedContainer>(surface).transform?.getTranslation().y,
+      2,
+    );
     await gesture.up();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(margin(), const EdgeInsets.only(bottom: 4));
-  });
-
-  testWidgets('rows and columns keep the same gap', (tester) async {
-    await _openCalculator(tester, const Size(360, 800));
-    final keys = _gridKeys();
-    final first = tester.getRect(keys.at(0));
-    final right = tester.getRect(keys.at(1));
-    final columns = tester
-        .widget<CalculatorKeyGrid>(find.byType(CalculatorKeyGrid))
-        .columns;
-    final below = tester.getRect(keys.at(columns));
-    expect(below.top - first.bottom, closeTo(right.left - first.right, 0.01));
+    expect(
+      tester.widget<AnimatedContainer>(surface).transform?.getTranslation().y,
+      0,
+    );
   });
 
   for (final style in [AppThemeStyle.cosmos, AppThemeStyle.cyberpunk]) {

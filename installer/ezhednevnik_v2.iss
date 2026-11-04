@@ -1,7 +1,7 @@
 #ifndef AppVersion
   ; Совпадает с готовящейся версией в pubspec.yaml. Значение
   ; можно передать снаружи: ISCC /DAppVersion=1.2.0
-  #define AppVersion "1.2.0"
+  #define AppVersion "1.1.3"
 #endif
 
 #define AppName "Ежедневник V2"

@@ -14,7 +14,6 @@ import '../features/calculator/calculator.dart';
 import '../features/finance/finance.dart';
 import '../features/converter/converter.dart';
 import '../features/tool_slots/tool_slots.dart';
-import 'calendar_locations.dart';
 import 'page_turn_transition.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -112,6 +111,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/tools/slot-one',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          animateRoute: false,
+          child: const EmptyToolScreen(),
+        ),
+      ),
+      GoRoute(
         path: '/tools/slot-two',
         pageBuilder: (context, state) => pageTurnPage(
           context: context,
@@ -144,7 +152,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/memory/new',
         pageBuilder: (context, state) {
-          final date = dateInLocation(state.uri) ?? DateTime.now();
+          final rawDate = state.uri.queryParameters['date'];
+          final date = rawDate == null
+              ? DateTime.now()
+              : DateTime.tryParse(rawDate) ?? DateTime.now();
           final query = state.uri.queryParameters;
           return pageTurnPage(
             context: context,
@@ -180,7 +191,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/calendar/day',
         pageBuilder: (context, state) {
-          final date = dateInLocation(state.uri) ?? DateTime.now();
+          final rawDate = state.uri.queryParameters['date'];
+          final date = rawDate == null
+              ? DateTime.now()
+              : DateTime.tryParse(rawDate) ?? DateTime.now();
           return pageTurnPage(
             context: context,
             state: state,
@@ -194,11 +208,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/calendar/holidays',
         pageBuilder: (context, state) {
-          final date = dateInLocation(state.uri) ?? DateTime.now();
+          final rawDate = state.uri.queryParameters['date'];
+          final date = rawDate == null
+              ? DateTime.now()
+              : DateTime.tryParse(rawDate) ?? DateTime.now();
           return pageTurnPage(
             context: context,
             state: state,
-            backFallback: calendarDayLocation(date),
+            backFallback: _calendarDayLocation(date),
             child: HolidayDetailScreen(
               date: DateTime(date.year, date.month, date.day),
             ),
@@ -244,3 +261,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+String _calendarDayLocation(DateTime date) {
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '/calendar/day?date=${date.year}-$month-$day';
+}

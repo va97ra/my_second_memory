@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:ez_design/ez_design.dart';
-import 'package:ez_domain/ez_domain.dart';
 
 final appThemeControllerProvider =
     StateNotifierProvider<AppThemeController, AppThemeStyle>(
@@ -51,10 +50,3 @@ class AppThemeController extends StateNotifier<AppThemeStyle> {
     await preferences.setString(storageKey, style.name);
   }
 }
-
-/// Тема, названная голосом: «включи тёмную тему».
-AppThemeStyle appThemeStyleOf(JarvisTheme theme) => switch (theme) {
-      JarvisTheme.light => AppThemeStyle.notebookLight,
-      JarvisTheme.dark => AppThemeStyle.notebookDark,
-      JarvisTheme.cosmos => AppThemeStyle.cosmos,
-    };

@@ -19,10 +19,6 @@ abstract final class ReminderSource {
   static const memory = 'memory_reminder';
   static const recurrence = 'recurrence_reminder';
 
-  /// Утренние и вечерние сводки Джарвиса — не записи, но согласуются так же:
-  /// своим источником, не трогая чужих.
-  static const briefing = 'jarvis_briefing';
-
   /// Источник, к которому относится запись.
   ///
   /// К повторам относится только спроецированное вхождение. Сама запись,
@@ -49,15 +45,4 @@ DateTime reminderMomentOn(DateTime memoryDate, int minutes) => DateTime(
 bool canRemindAt(DateTime memoryDate, int? minutes, {DateTime? now}) {
   if (minutes == null) return false;
   return reminderMomentOn(memoryDate, minutes).isAfter(now ?? DateTime.now());
-}
-
-/// Напоминание новой записи со временем: в момент её начала.
-///
-/// Время ставят затем, чтобы дело не пропустить, — молчаливая запись эту
-/// задачу не решает. Прошедший момент не наступит, поэтому для него
-/// напоминания нет.
-DateTime? defaultReminderAt(DateTime memoryDate, int? minutes, {DateTime? now}) {
-  if (minutes == null) return null;
-  final moment = reminderMomentOn(memoryDate, minutes);
-  return moment.isAfter(now ?? DateTime.now()) ? moment : null;
 }

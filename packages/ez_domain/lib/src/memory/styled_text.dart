@@ -99,7 +99,7 @@ class StyledRun {
 /// Вид хранения: невидимый знак [marker] в начале, дальше текст, а
 /// оформленные куски — `<f a="bi" c="E53935" z="large" n="lora">…</f>`;
 /// `&`, `<`, `>` внутри экранируются. Чистый текст — для поиска,
-/// уведомлений, Джарвиса и названия записи — [plainOf].
+/// уведомлений и названия записи — [plainOf].
 @immutable
 class StyledText {
   StyledText(this.plain, List<TextMark> marks)

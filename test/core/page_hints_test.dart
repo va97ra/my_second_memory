@@ -21,7 +21,6 @@ void main() {
         s.calculatorPageHint,
         s.financePageHint,
         s.converterPageHint,
-        s.jarvisPageHint,
       ];
 
   test('every page hint is at most two sentences in both languages', () {

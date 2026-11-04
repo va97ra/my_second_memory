@@ -122,7 +122,7 @@ void main() {
 
     // Порядок кнопок задан списком пунктов, а не разбором индексов внутри
     // панели: каждая кнопка на своём месте и ни одна не особенная.
-    const order = ['calendar', 'feed', 'add_note', 'accounts', 'jarvis'];
+    const order = ['calendar', 'feed', 'add_note', 'accounts', 'settings'];
     for (final id in order) {
       expect(find.byKey(ValueKey('bottom_$id')), findsOneWidget);
     }
@@ -135,13 +135,11 @@ void main() {
       order.indexOf('feed'),
     );
 
-    // Настройки — вкладка оболочки, но кнопка у неё наверху: открытые, они
-    // подсвечиваются там, а нижняя панель не подсвечивает ничего.
-    await tester.tap(find.byKey(const ValueKey('top_settings')));
-    await tester.pumpAndSettle();
-    expect(tester.widget<AppNavBar>(find.byType(AppNavBar)).selectedIndex,
-        isNull);
-    expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex, 3);
+    await openTab(tester, 'settings');
+    expect(
+      tester.widget<AppNavBar>(find.byType(AppNavBar)).selectedIndex,
+      order.indexOf('settings'),
+    );
   });
 
   testWidgets('panel buttons press without a material ink layer',
@@ -300,13 +298,12 @@ void main() {
     expect(find.byKey(const ValueKey('top_calculator')), findsOneWidget);
     expect(find.byKey(const ValueKey('top_finance')), findsOneWidget);
     expect(find.byKey(const ValueKey('top_converter')), findsOneWidget);
-    // Первое свободное место заняли настройки, а Джарвис — внизу. Второе
-    // место снято с панели: пустая кнопка занимала ширину на каждом экране.
-    expect(find.byKey(const ValueKey('top_settings')), findsOneWidget);
-    expect(find.byKey(const ValueKey('bottom_jarvis')), findsOneWidget);
+    // Два свободных места сняты с панели: пустая кнопка занимала ширину на
+    // каждом экране. Маршруты и экран остались, кнопок больше нет.
+    expect(find.byKey(const ValueKey('top_slot_one')), findsNothing);
     expect(find.byKey(const ValueKey('top_slot_two')), findsNothing);
     final tools = tester.widget<AppToolBar>(find.byType(AppToolBar)).items;
-    expect(tools, hasLength(4));
+    expect(tools, hasLength(3));
     expect(find.byType(AppNavigationItems), findsNWidgets(2));
     expect(tester.widget<AppToolBar>(find.byType(AppToolBar)).selectedIndex,
         isNull);
@@ -423,7 +420,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.savedItems.any((item) => item.isUndated), isTrue);
-    for (final id in ['calendar', 'feed', 'add_note', 'accounts', 'jarvis']) {
+    for (final id in ['calendar', 'feed', 'add_note', 'accounts', 'settings']) {
       expect(
         find.byKey(ValueKey('bottom_$id')),
         findsOneWidget,
@@ -461,7 +458,7 @@ void main() {
     expectEditorTitle(tester, 'Записка');
     // Записку заводят с панели, поэтому панель остаётся под рукой: уйти с
     // экрана можно тем же способом, каким на него пришли.
-    for (final id in ['calendar', 'feed', 'add_note', 'accounts', 'jarvis']) {
+    for (final id in ['calendar', 'feed', 'add_note', 'accounts', 'settings']) {
       expect(find.byKey(ValueKey('bottom_$id')), findsOneWidget);
     }
     expect(

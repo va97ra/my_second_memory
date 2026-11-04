@@ -12,11 +12,6 @@
 /// сломал бы сборку под веб самим фактом импорта.
 library;
 
-export 'src/assistant/gigachat_client.dart';
-export 'src/assistant/gigachat_key_store.dart';
-export 'src/assistant/online_fetch.dart';
-export 'src/assistant/reference_sources.dart';
-export 'src/assistant/weather_source.dart';
 export 'src/calendar/production_calendar_source.dart';
 export 'src/calendar/production_calendar_repository.dart';
 
@@ -37,7 +32,6 @@ export 'src/memory/encrypted_memory_repository.dart';
 export 'src/memory/local_memory_repository.dart';
 export 'src/memory/memory_repository.dart';
 export 'src/notifications/notification_service.dart';
-export 'src/notifications/spoken_reminders.dart';
 export 'src/recurrence/encrypted_recurrence_exception_repository.dart';
 export 'src/recurrence/encrypted_recurrence_repository.dart';
 export 'src/recurrence/local_recurrence_exception_repository.dart';

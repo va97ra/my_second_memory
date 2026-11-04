@@ -46,10 +46,21 @@ class MemoryEditorForm {
       // уже выбрано — переспрашивать его в редакторе незачем.
       timeMinutes: timeMinutes,
       endMinutes: endMinutes,
-      // Рамку на шкале ставят затем, чтобы дело не пропустить: напоминание
-      // встаёт на её начало, своей форы у рамки нет.
-      remindAt: defaultReminderAt(date, timeMinutes),
+      remindAt: _defaultReminderFor(date, timeMinutes),
     );
+  }
+
+  /// Напоминание на начало дела, выбранного рамкой.
+  ///
+  /// Рамку на шкале ставят затем, чтобы дело не пропустить, — молчаливая
+  /// запись эту задачу не решает. Момент ровно тот же, что и у напоминаний,
+  /// заведённых вручную: своей форы у рамки нет, пока в листе нельзя выбрать
+  /// «за сколько». Прошедшее время пропускаем: рамка на вчерашнем дне иначе
+  /// упиралась бы в требование будущего.
+  static DateTime? _defaultReminderFor(DateTime date, int? timeMinutes) {
+    if (timeMinutes == null) return null;
+    final moment = _reminderBefore(date, timeMinutes, Duration.zero);
+    return moment.isAfter(DateTime.now()) ? moment : null;
   }
 
   /// Форма существующей записи.
@@ -125,19 +136,21 @@ class MemoryEditorForm {
         form = form.copyWith(
           recurrenceFrequency: RecurrenceFrequency.yearly,
           timeMinutes: timeMinutes ?? _defaultTimeMinutes,
-          remindAt: reminderMomentOn(
+          remindAt: _reminderBefore(
             form.memoryDate,
             timeMinutes ?? _defaultTimeMinutes,
-          ).subtract(const Duration(days: 1)),
+            const Duration(days: 1),
+          ),
         );
       case MemoryType.payment:
         form = form.copyWith(
           recurrenceFrequency: RecurrenceFrequency.monthly,
           timeMinutes: timeMinutes ?? _defaultTimeMinutes,
-          remindAt: reminderMomentOn(
+          remindAt: _reminderBefore(
             form.memoryDate,
             timeMinutes ?? _defaultTimeMinutes,
-          ).subtract(const Duration(days: 3)),
+            const Duration(days: 3),
+          ),
         );
       default:
         break;
@@ -293,5 +306,19 @@ class MemoryEditorForm {
       if (category.name == item.paymentCategory) return category;
     }
     return PaymentCategory.other;
+  }
+
+  static DateTime _reminderBefore(
+    DateTime date,
+    int timeMinutes,
+    Duration lead,
+  ) {
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      timeMinutes ~/ 60,
+      timeMinutes % 60,
+    ).subtract(lead);
   }
 }

@@ -74,8 +74,8 @@ class MemoryItem {
   final bool isGeneratedOccurrence;
   final bool isUndated;
 
-  /// Текст записи без оформления — для поиска, уведомлений, Джарвиса и
-  /// названия. Сам [body] может хранить оформление ([StyledText]).
+  /// Текст записи без оформления — для поиска, уведомлений и названия.
+  /// Сам [body] может хранить оформление ([StyledText]).
   String get plainBody => StyledText.plainOf(body);
 
   bool get isArchived => status == MemoryStatus.archived;
