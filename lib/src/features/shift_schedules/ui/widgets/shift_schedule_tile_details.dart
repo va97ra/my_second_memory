@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
@@ -56,7 +57,7 @@ class ShiftScheduleTileDetails extends StatelessWidget {
           const SizedBox(height: 3),
           ShiftScheduleSummaryLine(
             icon: Icons.beach_access_rounded,
-            color: const Color(0xFF9A2442),
+            color: AppPalette.vacationCloth,
             text: _vacationSummary(strings, vacation),
             textKey: const ValueKey('shift_schedule_vacation_summary'),
           ),

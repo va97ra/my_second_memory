@@ -81,11 +81,11 @@ class MemoryCardPaper extends StatelessWidget {
   /// Цвет тени листка в этой теме.
   static Color shadowColor(BuildContext context) {
     if (NotebookVisuals.maybeOf(context) != null) {
-      return const Color(0xFF3B1D0E).withValues(alpha: 0.45);
+      return AppPalette.black.withValues(alpha: 0.6);
     }
     return Theme.of(context).brightness == Brightness.dark
         ? Colors.black.withValues(alpha: 0.68)
-        : const Color(0xFF536575).withValues(alpha: 0.34);
+        : AppPalette.black.withValues(alpha: 0.3);
   }
 
   /// Фон листка: зерно бумаги, одно во всех темах.

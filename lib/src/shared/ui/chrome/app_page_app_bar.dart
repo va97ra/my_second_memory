@@ -41,8 +41,7 @@ class AppPageAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return AppBar(
       toolbarHeight: toolbarHeight,
-      leadingWidth:
-          notebookHeaderSlot * (showHint ? 2 : 1) + headerEdgeInset,
+      leadingWidth: notebookHeaderSlot * (showHint ? 2 : 1) + headerEdgeInset,
       titleSpacing: 4,
       centerTitle: true,
       backgroundColor: Colors.transparent,

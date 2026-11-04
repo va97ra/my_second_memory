@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 /// Рамка ячейки дня.
 class CalendarCellBorderPainter extends CustomPainter {
   const CalendarCellBorderPainter({

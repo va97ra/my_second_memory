@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../themes/screen/screen_theme_colors.dart';
-import '../../themes/screen/screen_visuals.dart';
 import '../notebook_pressable.dart';
 import 'nav_bar_item.dart';
 
@@ -66,8 +64,6 @@ class _NavigationItemButton extends StatelessWidget {
         const IconThemeData(size: 22);
     final labelStyle = navigationTheme.labelTextStyle?.resolve(states) ??
         theme.textTheme.labelSmall;
-    final underlined = ScreenVisuals.maybeOf(context)?.colors.navIndicator ==
-        ScreenNavIndicator.underline;
     return Semantics(
       button: true,
       selected: selected,
@@ -78,51 +74,73 @@ class _NavigationItemButton extends StatelessWidget {
           onTap: onTap,
           playClick: false,
           borderRadius: BorderRadius.circular(14),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                width: compact ? 48 : 56,
-                height: compact ? 28 : 32,
-                decoration: BoxDecoration(
-                  color: selected && !underlined
-                      ? navigationTheme.indicatorColor
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
+          child: compact
+              ? _inlineItem(navigationTheme, iconTheme, labelStyle)
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      width: 56,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? navigationTheme.indicatorColor
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        item.icon,
+                        size: iconTheme.size,
+                        color: iconTheme.color,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 20,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child:
+                              Text(item.label, maxLines: 1, style: labelStyle),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  item.icon,
-                  size: compact ? 20 : iconTheme.size,
-                  color: iconTheme.color,
-                ),
+        ),
+      ),
+    );
+  }
+
+  /// Кнопка верхней панели: значок и подпись одной строкой на плашке.
+  Widget _inlineItem(
+    NavigationBarThemeData navigationTheme,
+    IconThemeData iconTheme,
+    TextStyle? labelStyle,
+  ) {
+    return Center(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        height: 34,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: selected ? navigationTheme.indicatorColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(item.icon, size: 18, color: iconTheme.color),
+            const SizedBox(width: 6),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(item.label, maxLines: 1, style: labelStyle),
               ),
-              SizedBox(
-                height: compact ? 16 : 20,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(item.label, maxLines: 1, style: labelStyle),
-                  ),
-                ),
-              ),
-              // Полоса под подписью вместо подложки под значком: примета темы,
-              // а не второй способ отметить одно и то же — тема выбирает одно
-              // из двух.
-              if (underlined)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  margin: const EdgeInsets.only(top: 3),
-                  height: 2.5,
-                  width: selected ? 26 : 0,
-                  decoration: BoxDecoration(
-                    color: labelStyle?.color,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

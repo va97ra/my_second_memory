@@ -124,7 +124,6 @@ class AppSettingsSection extends ConsumerWidget {
       await NotebookAssets.preloadCurrent(
         dark: brightnessOf(selected) == Brightness.dark,
       );
-      await preloadScreenBackdrop(selected);
     } catch (_) {
       // Без картинок бумаги тема останется плоским цветом.
     }

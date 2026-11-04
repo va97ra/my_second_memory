@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
+import 'app_palette.dart';
+
 const calendarWeekNumberWidth = 24.0;
 const calendarGridSpacing = 2.0;
 
-/// Day backgrounds remain quieter than shift caps and event ribbons.
-Color productionDaySurface(Color base,
-    {required bool dayOff, required bool shortened}) {
-  final tint = shortened ? const Color(0xFFE5A51A) : const Color(0xFFFF2F4B);
-  return dayOff || shortened
-      ? Color.alphaBlend(tint.withValues(alpha: 0.55), base)
-      : base;
+/// Заливка дня: выходные и сокращённые дни отмечены чистым цветом.
+Color productionDaySurface(
+  Color base, {
+  required bool dayOff,
+  required bool shortened,
+}) {
+  if (shortened) return AppPalette.shortenedDay;
+  return dayOff ? AppPalette.weekend : base;
 }

@@ -44,11 +44,7 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
   Widget build(BuildContext context) {
     final blocks = layOutDayTimeline(widget.items);
 
-    // Шкала лежит на своей пластине стекла. Без неё часовые линии и подписи
-    // времени рисуются прямо на заднике: на ровном фоне их видно, а на
-    // городской улице они пропадают в вывесках.
-    final screen = ScreenVisuals.maybeOf(context)?.colors;
-    final scale = NotebookPaperFill(
+    return NotebookPaperFill(
       child: SingleChildScrollView(
         controller: _scroll,
         child: SizedBox(
@@ -93,20 +89,6 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
           ),
         ),
       ),
-    );
-
-    if (screen == null) return scale;
-    final radius = BorderRadius.circular(8);
-    return DecoratedBox(
-      decoration: GlassSurface.decoration(
-        screen,
-        radius: radius,
-        // Плотнее обычного стекла. Шкала — разметка: по ней ищут час, и
-        // читаться она должна на любом заднике. Сквозь редкое стекло вывески
-        // города проступают ровно там, где идут часовые линии.
-        opacity: screen.isDark ? 0.74 : 0.62,
-      ),
-      child: ClipRRect(borderRadius: radius, child: scale),
     );
   }
 }

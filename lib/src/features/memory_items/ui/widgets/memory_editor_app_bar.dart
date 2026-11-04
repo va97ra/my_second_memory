@@ -90,7 +90,7 @@ class MemoryEditorAppBar extends StatelessWidget
                       ? colors.error
                       : isSaving
                           ? colors.onSurface
-                          : const Color(0xFF168653),
+                          : AppPalette.success,
                   fontWeight: FontWeight.w700,
                 ),
           ),

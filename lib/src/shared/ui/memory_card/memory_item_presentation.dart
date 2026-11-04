@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 import 'package:ez_domain/ez_domain.dart';
@@ -22,28 +23,28 @@ IconData memoryTypeIcon(MemoryType type) => switch (type) {
     };
 
 Color memoryTypeColor(MemoryType type) => switch (type) {
-      MemoryType.task => const Color(0xFF20B26B),
-      MemoryType.note => const Color(0xFF2F7DD1),
-      MemoryType.voiceNote => const Color(0xFFD9467B),
-      MemoryType.event => const Color(0xFF7A5AF8),
-      MemoryType.person => const Color(0xFF0FA3B1),
-      MemoryType.habit => const Color(0xFF109B78),
-      MemoryType.goal => const Color(0xFFF26B38),
-      MemoryType.project => const Color(0xFF4D63D2),
-      MemoryType.purchase => const Color(0xFFD69A00),
+      MemoryType.task => AppPalette.cyan,
+      MemoryType.note => AppPalette.amber,
+      MemoryType.voiceNote => AppPalette.magenta,
+      MemoryType.event => AppPalette.violet,
+      MemoryType.person => AppPalette.turquoise,
+      MemoryType.habit => AppPalette.turquoise,
+      MemoryType.goal => AppPalette.orange,
+      MemoryType.project => AppPalette.indigo,
+      MemoryType.purchase => AppPalette.magenta,
       // Крафтовая папка. Серым документ быть не может: серый означает
       // «выполнено» — см. [memoryDoneColor].
-      MemoryType.document => const Color(0xFF8B5A2B),
-      MemoryType.place => const Color(0xFFE04444),
-      MemoryType.birthday => const Color(0xFFE03E8C),
-      MemoryType.payment => const Color(0xFF008C85),
+      MemoryType.document => AppPalette.amberDeep,
+      MemoryType.place => AppPalette.danger,
+      MemoryType.birthday => AppPalette.magentaLight,
+      MemoryType.payment => AppPalette.turquoise,
     };
 
 /// Цвет выполненной записи, один для всех видов.
 ///
 /// Сделанное уходит в серый, и цветными на странице остаются только дела,
 /// которые ещё ждут: среди десятка записей дня сразу видно, что осталось.
-const memoryDoneColor = Color(0xFF6B7280);
+const memoryDoneColor = AppPalette.done;
 
 /// Цвет, которым помечена запись: цвет её вида, пока она не выполнена.
 Color memoryAccentColor(MemoryItem item) =>

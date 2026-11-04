@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../surface_palette.dart';
 import '../surface_textures.dart';
-import '../screen/screen_visuals.dart';
 import 'notebook_leather_surface.dart';
 import 'notebook_visuals.dart';
 
@@ -36,10 +35,6 @@ class NotebookPaperFill extends StatelessWidget {
         child: child,
       );
     }
-    // Экранная тема свой фон уже нарисовала — `ScreenBackdrop` под всем
-    // приложением. Второй раз его класть нельзя: кадр внутри страницы
-    // обрезался бы по её краям и не совпал бы с тем, что под панелями.
-    if (ScreenVisuals.maybeOf(context) != null) return child;
     final palette = AppSurfacePalette.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -184,11 +179,26 @@ class NotebookPaperLinesPainter extends CustomPainter {
     required this.color,
     required this.top,
     required this.lineHeight,
-  });
+    this.scroll,
+  }) : super(repaint: scroll);
 
   final Color color;
   final double top;
   final double lineHeight;
+
+  /// Прокрутка текста на этом листе: линейка едет вместе с текстом, как на
+  /// настоящей бумаге, и строки остаются на своих линиях.
+  final ScrollController? scroll;
+
+  /// Где сейчас первая линейка на видимой части листа.
+  double get firstLine {
+    final position = scroll;
+    final offset =
+        position != null && position.hasClients ? position.offset : 0.0;
+    var y = top - offset;
+    if (y < 0) y += ((-y / lineHeight).floor() + 1) * lineHeight;
+    return y;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -196,7 +206,7 @@ class NotebookPaperLinesPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 1;
-    for (double y = top; y < size.height; y += lineHeight) {
+    for (double y = firstLine; y < size.height; y += lineHeight) {
       canvas.drawLine(
           Offset.zero.translate(0, y), Offset(size.width, y), paint);
     }
@@ -206,7 +216,8 @@ class NotebookPaperLinesPainter extends CustomPainter {
   bool shouldRepaint(covariant NotebookPaperLinesPainter oldDelegate) {
     return oldDelegate.color != color ||
         oldDelegate.top != top ||
-        oldDelegate.lineHeight != lineHeight;
+        oldDelegate.lineHeight != lineHeight ||
+        oldDelegate.scroll != scroll;
   }
 }
 
@@ -239,14 +250,15 @@ List<BoxShadow> notebookSurfaceShadow(
   ];
 }
 
-/// What a surface is made of: a sheet of the notebook, or its cover.
-enum NotebookSurfaceMaterial { paper, leather }
+/// Карточка лежит на коже страницы и выделяется на ней дважды: кожа светлее
+/// (уровень «карточка» из темы) и поры мельче, чем на фоне.
+/// Во сколько раз поры карточки мельче снимка кожи.
+const double _cardGrainScale = 4;
 
 class NotebookCardSurface extends StatelessWidget {
   const NotebookCardSurface({
     required this.child,
     this.depth = NotebookSurfaceDepth.card,
-    this.material = NotebookSurfaceMaterial.paper,
     this.showLines = false,
     this.lineTop = 24,
     this.lineHeight = 24,
@@ -258,7 +270,6 @@ class NotebookCardSurface extends StatelessWidget {
 
   final Widget child;
   final NotebookSurfaceDepth depth;
-  final NotebookSurfaceMaterial material;
   final bool showLines;
   final double lineTop;
   final double lineHeight;
@@ -305,43 +316,33 @@ class NotebookCardSurface extends StatelessWidget {
         ),
       );
     }
-    final surfaceColor = color ?? notebook.paper;
-    final lined = CustomPaint(
-      painter: showLines
-          ? NotebookPaperLinesPainter(
-              color: notebook.line,
-              top: lineTop,
-              lineHeight: lineHeight,
-            )
-          : null,
-      child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
-    );
-
+    final surfaceColor = color ?? Theme.of(context).colorScheme.surface;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: surfaceColor,
-        // Paper grain is laid on directly; leather comes through the same
-        // surface the navigation panel wears, so the two materials match.
-        image: material == NotebookSurfaceMaterial.paper
-            ? DecorationImage(
-                image: AssetImage(notebook.paperAsset),
-                fit: BoxFit.cover,
-                opacity: 0.52,
-              )
-            : null,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: borderColor ?? const Color(0xFFB97742)),
+        border: Border.all(
+          color: borderColor ?? Theme.of(context).colorScheme.outlineVariant,
+        ),
         boxShadow: notebookSurfaceShadow(context, depth),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: material == NotebookSurfaceMaterial.paper
-            ? lined
-            : NotebookLeatherSurface(
-                color: surfaceColor,
-                lightweight: true,
-                child: lined,
-              ),
+        child: NotebookLeatherSurface(
+          color: surfaceColor,
+          lightweight: true,
+          grainScale: _cardGrainScale,
+          child: CustomPaint(
+            painter: showLines
+                ? NotebookPaperLinesPainter(
+                    color: notebook.line,
+                    top: lineTop,
+                    lineHeight: lineHeight,
+                  )
+                : null,
+            child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
+          ),
+        ),
       ),
     );
   }

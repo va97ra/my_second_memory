@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 import 'calculator_key_surface.dart';
@@ -12,8 +11,9 @@ import 'calculator_key_surface.dart';
 /// Служебные клавиши, наоборот, тише цифр: акцент на клавиатуре держат только
 /// действия и «равно» — так устроены и айфоновский, и гугловский, и виндовый
 /// калькуляторы. Ряд памяти был закрашен как действия и перетягивал взгляд
-/// сильнее самих действий.
-enum CalculatorKeyRole { service, plain, operation, result }
+/// сильнее самих действий. Поэтому у него своя тихая краска: цвет акцента
+/// не тот и не в полную силу.
+enum CalculatorKeyRole { service, memory, plain, operation, result }
 
 class CalculatorKey extends StatefulWidget {
   const CalculatorKey({
@@ -54,7 +54,21 @@ class _CalculatorKeyState extends State<CalculatorKey> {
                 colors.onPrimaryContainer,
               ),
             CalculatorKeyRole.plain => (
-                colors.surfaceContainerHighest,
+                // На серебре клавиша цвета фона с ним сливается, на чёрной коже нет.
+                colors.brightness == Brightness.light
+                    ? Color.lerp(
+                        colors.surfaceContainerHighest,
+                        colors.onSurface,
+                        0.14,
+                      )!
+                    : colors.surfaceContainerHighest,
+                colors.onSurface,
+              ),
+            CalculatorKeyRole.memory => (
+                Color.alphaBlend(
+                  colors.tertiary.withValues(alpha: 0.28),
+                  colors.surfaceContainerHighest,
+                ),
                 colors.onSurface,
               ),
             CalculatorKeyRole.service => (
@@ -68,7 +82,6 @@ class _CalculatorKeyState extends State<CalculatorKey> {
       label: widget.label,
       child: CalculatorKeySurface(
         baseColor: baseColor,
-        glassOpacity: _glassOpacity,
         pressed: _pressed,
         onPressed: widget.onPressed,
         onHighlightChanged: (value) => setState(() => _pressed = value),
@@ -86,14 +99,6 @@ class _CalculatorKeyState extends State<CalculatorKey> {
                           fontWeight: FontWeight.w700,
                           fontSize: _labelSize(constraints),
                           color: inkColor,
-                          shadows: ScreenVisuals.maybeOf(context) == null
-                              ? null
-                              : [
-                                  Shadow(
-                                    color: Colors.white.withValues(alpha: 0.32),
-                                    offset: const Offset(0, 0.7),
-                                  ),
-                                ],
                         ),
                         child: Text(widget.label, maxLines: 1),
                       )
@@ -109,15 +114,6 @@ class _CalculatorKeyState extends State<CalculatorKey> {
       ),
     );
   }
-
-  double get _glassOpacity => widget.selected
-      ? 0.58
-      : switch (widget.role) {
-          CalculatorKeyRole.service => 0.20,
-          CalculatorKeyRole.plain => 0.28,
-          CalculatorKeyRole.operation => 0.52,
-          CalculatorKeyRole.result => 0.70,
-        };
 
   /// Знак живёт по размеру клавиши, а не по общему размеру текста: на
   /// клавиатуре во весь экран цифра шрифта абзаца выглядит потерянной. Длинным

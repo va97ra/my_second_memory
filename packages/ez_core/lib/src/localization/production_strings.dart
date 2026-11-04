@@ -65,6 +65,15 @@ extension ProductionStrings on AppStrings {
   String get productionUnknown => isRu
       ? 'Данные за этот год недоступны.'
       : 'Data for this year is unavailable.';
+  /// Короткая подпись для водяного знака на закрашенной плитке дня. Рабочему
+  /// дню она не нужна: он не закрашен.
+  String? productionDayStamp(String kind) => switch (kind) {
+        'weekend' || 'transferredDayOff' => isRu ? 'Выходной' : 'Day off',
+        'dayOff' => isRu ? 'Нерабочий' : 'Day off',
+        'holiday' => isRu ? 'Праздник' : 'Holiday',
+        'shortened' => isRu ? 'Сокращённый' : 'Short day',
+        _ => null,
+      };
   String productionDayLabel(String? kind) => switch (kind) {
         'working' => isRu ? 'Рабочий день' : 'Working day',
         'weekend' => isRu ? 'Выходной' : 'Weekend',

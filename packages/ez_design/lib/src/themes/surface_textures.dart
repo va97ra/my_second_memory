@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../tokens/app_textures.dart';
+
 abstract final class LightThemeAssets {
-  static const wood = 'assets/textures/light_wood.webp';
-  static const paper = 'assets/textures/light_paper.webp';
-  static const leather = 'assets/textures/light_leather.webp';
+  static const wood = AppTextures.lightWood;
+  static const paper = AppTextures.lightPaper;
+  static const leather = AppTextures.lightLeather;
 
   static Future<void> preload() async {
     await Future.wait([
@@ -17,9 +19,9 @@ abstract final class LightThemeAssets {
 }
 
 abstract final class DarkThemeAssets {
-  static const wood = 'assets/textures/dark_wood.webp';
-  static const paper = 'assets/textures/dark_paper.webp';
-  static const leather = 'assets/textures/dark_leather.webp';
+  static const wood = AppTextures.blackLeather;
+  static const paper = AppTextures.blackLeather;
+  static const leather = AppTextures.blackLeather;
 
   static Future<void> preload() async {
     await Future.wait([

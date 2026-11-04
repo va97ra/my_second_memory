@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
@@ -29,7 +30,7 @@ class TimeReminderSoundRow extends StatelessWidget {
       children: [
         ReminderSheetTile(
           icon: Icons.music_note_rounded,
-          accentColor: const Color(0xFF7C3AED),
+          accentColor: AppPalette.violet,
           title: strings.chooseSound,
           value: soundName ?? strings.systemAlarmSound,
           onTap: busy ? null : onSelect,

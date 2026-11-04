@@ -1,6 +1,5 @@
 import 'package:ezhednevnik_v2/src/features/converter/converter.dart';
 import 'package:ezhednevnik_v2/src/features/converter/state/converter_controller.dart';
-import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -102,37 +101,4 @@ void main() {
     expect(save.onPressed, isNull);
   });
 
-  for (final colors in [cosmosColors, cyberpunkColors]) {
-    testWidgets('${colors.backdrop} makes only save action glass',
-        (tester) async {
-      await openConverter(tester, theme: buildScreenTheme(colors));
-
-      expect(
-        find.byKey(const ValueKey('converter_save_glass')),
-        findsOneWidget,
-      );
-      expect(find.byType(ScreenGlassButton), findsOneWidget);
-
-      final save = find.byKey(const ValueKey('converter_save'));
-      final scaleFinder = find.descendant(
-        of: save,
-        matching: find.byType(AnimatedScale),
-      );
-      final lampFinder = find.descendant(
-        of: save,
-        matching: find.byKey(const ValueKey('converter_save_lamp')),
-      );
-      final gesture = await tester.startGesture(tester.getCenter(save));
-      await tester.pump();
-
-      expect(tester.widget<AnimatedScale>(scaleFinder).scale, 0.965);
-      expect(tester.widget<AnimatedOpacity>(lampFinder).opacity, 1);
-
-      await gesture.cancel();
-      await tester.pumpAndSettle();
-      expect(tester.widget<AnimatedScale>(scaleFinder).scale, 1);
-      expect(tester.widget<AnimatedOpacity>(lampFinder).opacity, 0);
-      expect(tester.takeException(), isNull);
-    });
-  }
 }

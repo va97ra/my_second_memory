@@ -1,3 +1,4 @@
+import '../tokens/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../themes/notebook/notebook_visuals.dart';
@@ -41,10 +42,10 @@ class NotebookActionButton extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: enabled
                 ? [visuals.primaryTop, visuals.primaryBottom]
-                : const [Color(0xFFD2B59C), Color(0xFFAF917A)],
+                : const [AppPalette.silverRaised, AppPalette.silverDeep],
           ),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFFFB495), width: 1.2),
+          border: Border.all(color: AppPalette.magentaLight, width: 1.2),
           boxShadow: !enabled
               ? const []
               : [
@@ -53,7 +54,7 @@ class NotebookActionButton extends StatelessWidget {
                     offset: const Offset(0, 6),
                   ),
                   const BoxShadow(
-                    color: Color(0x55000000),
+                    color: AppPalette.shadowSoft,
                     blurRadius: 7,
                     offset: Offset(0, 8),
                   ),

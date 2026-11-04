@@ -62,7 +62,7 @@ void main() {
     expect(image.assetName, LightThemeAssets.wood);
   });
 
-  testWidgets('notebook app background is a ruled paper sheet', (tester) async {
+  testWidgets('notebook app background is the page leather', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildNotebookTheme(),
@@ -79,7 +79,7 @@ void main() {
         .whereType<NotebookPaperLinesPainter>()
         .single;
 
-    expect(image.assetName, NotebookAssets.paper);
+    expect(image.assetName, NotebookAssets.lightPage);
     expect(
         lines.color,
         NotebookVisuals.maybeOf(

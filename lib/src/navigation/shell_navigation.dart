@@ -50,7 +50,8 @@ class ShellNavigation {
   /// [panel] — пункт, с которого инструмент открыли: панель под ним остаётся
   /// прежней.
   void selectTool(AppDestination destination, {required String panel}) {
-    if (coordinator.isBusy || destination.id == activeToolId) return;
+    if (coordinator.isBusy) return;
+    if (destination.id == activeToolId) return _closeTool();
     final location = '${destination.location}?panel=$panel';
     if (activeToolId != null) {
       // Верхние инструменты — вкладки одного места, а не следующие страницы.
@@ -61,6 +62,20 @@ class ShellNavigation {
       return;
     }
     _turnTo(() => router.push<void>(location));
+  }
+
+  /// Второе нажатие на открытый инструмент возвращает туда, откуда его открыли.
+  void _closeTool() {
+    if (!router.canPop()) return;
+    final page = frame.currentState;
+    if (page == null) {
+      router.pop();
+      return;
+    }
+    page.beginTurn(
+      direction: PageTurnDirection.backward,
+      switchContent: router.pop,
+    );
   }
 
   void _turnTo(VoidCallback go) {

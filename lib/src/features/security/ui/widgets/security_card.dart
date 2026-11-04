@@ -15,8 +15,7 @@ class SecurityCard extends StatelessWidget {
     // остаётся бумажной панелью со своей тенью.
     final radius = BorderRadius.circular(8);
     return DecoratedBox(
-      decoration: GlassSurface.maybeOf(context, radius: radius) ??
-          BoxDecoration(
+      decoration: BoxDecoration(
             color: colors.surface.withValues(alpha: 0.92),
             borderRadius: radius,
             border: Border.all(color: colors.outlineVariant),

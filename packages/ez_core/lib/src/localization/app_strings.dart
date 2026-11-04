@@ -68,6 +68,8 @@ class AppStrings {
         _ => isRu ? 'Ошибка в выражении' : 'Invalid expression',
       };
   String get finance => isRu ? 'Финансы' : 'Finances';
+  String get financeEmptyMonth =>
+      isRu ? 'За этот месяц записей нет' : 'No entries this month';
   String get converter => isRu ? 'Конвертер' : 'Converter';
   String get engineering => isRu ? 'Инженерка' : 'Engineering';
   String get plumbing => isRu ? 'Сантехника' : 'Plumbing';

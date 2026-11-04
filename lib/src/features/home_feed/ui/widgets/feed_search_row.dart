@@ -49,14 +49,6 @@ class _FeedSearchRowState extends State<FeedSearchRow> {
 
     return Row(
       children: [
-        SizedBox(
-          width: notebookHeaderSlot,
-          child: Icon(
-            Icons.search_rounded,
-            size: 22,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
         Expanded(
           child: TextField(
             key: const ValueKey('feed_search_field'),

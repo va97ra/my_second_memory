@@ -38,7 +38,7 @@ void main() {
                 title: title,
                 backLocation: '/calendar',
                 hint: hintText,
-                trailing: const Icon(Icons.filter_list_rounded),
+                trailing: const [Icon(Icons.filter_list_rounded)],
               ),
             ),
           ),

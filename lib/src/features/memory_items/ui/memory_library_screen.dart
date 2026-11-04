@@ -45,11 +45,13 @@ class _MemoryLibraryScreenState extends ConsumerState<MemoryLibraryScreen> {
             hint: strings.archivePageHint,
             // Фильтр стоит там же, где в ленте: видов записей больше десятка,
             // в ряд кнопок они не помещаются.
-            trailing: MemoryFilterButton(
-              filters: [FeedFilter.all, ...FeedFilter.byMemoryType],
-              selected: _filter,
-              onSelected: (filter) => setState(() => _filter = filter),
-            ),
+            trailing: [
+              MemoryFilterButton(
+                filters: [FeedFilter.all, ...FeedFilter.byMemoryType],
+                selected: _filter,
+                onSelected: (filter) => setState(() => _filter = filter),
+              ),
+            ],
           ),
           Expanded(
             child: ListView.builder(

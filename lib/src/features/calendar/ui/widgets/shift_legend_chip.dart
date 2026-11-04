@@ -19,7 +19,7 @@ class ShiftLegendChip extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -28,31 +28,32 @@ class ShiftLegendChip extends StatelessWidget {
                 color: color,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const SizedBox(width: 12, height: 12),
+              child: const SizedBox(width: 8, height: 8),
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 4),
             Text(
               schedule.organizationName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: colors.onSurface,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w800,
                     height: 1,
                   ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
             DecoratedBox(
               decoration: BoxDecoration(
                 color: colors.surface,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
                 child: Text(
                   '${schedule.workDays}/${schedule.restDays}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: colors.onSurfaceVariant,
+                        fontSize: 9,
                         fontWeight: FontWeight.w800,
                         height: 1,
                       ),

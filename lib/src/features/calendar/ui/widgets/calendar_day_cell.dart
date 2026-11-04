@@ -1,3 +1,4 @@
+import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
@@ -45,37 +46,48 @@ class CalendarDayCell extends ConsumerWidget {
         ref.watch(productionCalendarProvider(date.year)).calendar.day(date);
     final highlight =
         ref.watch(productionPreferencesProvider.select((s) => s.highlight));
+    final todayColor = calendarTodayColor(context);
     return NotebookPaperIsland(
-        child:
-            Builder(builder: (context) => _buildCell(context, day, highlight)));
+      child: Builder(
+        builder: (context) => _buildCell(context, day, highlight, todayColor),
+      ),
+    );
+  }
+
+  /// Выходной и сокращённый день залиты чистым цветом: чернила выбираются по нему.
+  Color _inkOnPaper(
+    ColorScheme colors,
+    ProductionDay? productionDay,
+    bool highlight,
+  ) {
+    if (!highlight) return colors.onSurface;
+    if (productionDay == ProductionDay.shortened) {
+      return readableInkOn(AppPalette.shortenedDay);
+    }
+    return productionDay?.isDayOff ?? false
+        ? readableInkOn(AppPalette.weekend)
+        : colors.onSurface;
   }
 
   Widget _buildCell(
-      BuildContext context, ProductionDay? productionDay, bool highlight) {
+    BuildContext context,
+    ProductionDay? productionDay,
+    bool highlight,
+    Color todayColor,
+  ) {
     final colors = Theme.of(context).colorScheme;
     final palette = AppSurfacePalette.of(context);
-    final screen = ScreenVisuals.maybeOf(context)?.colors;
-    // На тёмной теме сегодня получает шапку, только если её не заняла смена.
-    final todayCap = isToday &&
-            isInVisibleMonth &&
-            shiftSchedules.isEmpty &&
-            (screen?.isDark ?? false)
-        ? calendarTodayColor(context)
-        : null;
     // Число, будильник и отметка архива стоят на шапке графика, а цвет ей
     // задаёт человек: чернила выбираются по её светлоте, иначе на светлом
     // графике белое число пропадает.
     final foreground = !isInVisibleMonth
         ? colors.onSurface.withValues(alpha: 0.38)
-        : todayCap != null
-            ? readableInkOn(todayCap)
-            : shiftSchedules.isEmpty
-                ? colors.onSurface
-                : readableInkOn(Color(shiftSchedules.first.colorValue));
+        : shiftSchedules.isEmpty
+            ? _inkOnPaper(colors, productionDay, highlight)
+            : readableInkOn(Color(shiftSchedules.first.colorValue));
     // У экранного стекла своя тонкая кромка. Дополнительная рамка нужна
     // только бумажным плиткам блокнота.
-    final usesGradientBorder =
-        screen == null && isInVisibleMonth && items.isEmpty && !isToday;
+    final usesGradientBorder = isInVisibleMonth && items.isEmpty && !isToday;
 
     // Нажатие рисуется поверх плитки, а не под ней: `InkWell` снаружи
     // заливки отдаёт свою волну ближайшему материалу выше — материалу
@@ -96,27 +108,12 @@ class CalendarDayCell extends ConsumerWidget {
         holidays: holidays,
         hasAlarm: hasAlarm,
         foreground: foreground,
-        todayCap: todayCap,
-        todayColor: calendarTodayColor(context),
+        todayColor: todayColor,
+        stamp: highlight && isInVisibleMonth && productionDay != null
+            ? AppStrings.of(context).productionDayStamp(productionDay.name)
+            : null,
       ),
     );
-    // Цветные отражения не обязательны для преломления: у «Космоса» стекло
-    // нейтральное, но освещённые кромки прямой пластины тоже видны.
-    final contents = screen == null
-        ? pressable
-        : ClipRRect(
-            borderRadius: BorderRadius.circular(cornerRadius),
-            child: CustomPaint(
-              key: const ValueKey('calendar_day_glass_lens'),
-              foregroundPainter: ScreenGlassSurfacePainter(
-                colors: screen,
-                pressed: false,
-                profile: ScreenGlassProfile.plate,
-                radius: cornerRadius,
-              ),
-              child: pressable,
-            ),
-          );
     return CalendarDayPressEffect(
       child: CustomPaint(
         foregroundPainter: usesGradientBorder
@@ -137,9 +134,9 @@ class CalendarDayCell extends ConsumerWidget {
             isInVisibleMonth: isInVisibleMonth,
             isToday: isToday,
             hasItems: items.isNotEmpty,
-            screen: screen,
+            todayColor: todayColor,
           ).decoration(context, colors, palette),
-          child: contents,
+          child: pressable,
         ),
       ),
     );

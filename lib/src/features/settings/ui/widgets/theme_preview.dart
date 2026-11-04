@@ -2,7 +2,6 @@ import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 import 'theme_preview_notebook.dart';
-import 'theme_preview_screen.dart';
 
 /// Образец темы: как она выглядит, и подпись под ним.
 ///
@@ -25,8 +24,6 @@ class ThemePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenColors = screenColorsOf(style);
-
     return NotebookPressable(
       onTap: onTap,
       child: AnimatedContainer(
@@ -47,11 +44,9 @@ class ThemePreview extends StatelessWidget {
               aspectRatio: 0.82,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
-                child: screenColors == null
-                    ? ThemePreviewNotebook(
-                        dark: style == AppThemeStyle.notebookDark,
-                      )
-                    : ThemePreviewScreen(colors: screenColors),
+                child: ThemePreviewNotebook(
+                  dark: style == AppThemeStyle.notebookDark,
+                ),
               ),
             ),
             const SizedBox(height: 7),

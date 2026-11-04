@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
@@ -36,9 +37,9 @@ class ShiftVacationPeriodTile extends StatelessWidget {
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              color: const Color(0xFF891C37),
+              color: AppPalette.vacationCloth,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFD6A84B)),
+              border: Border.all(color: AppPalette.vacationThread),
             ),
             child: const SizedBox(
               width: 36,
@@ -46,7 +47,7 @@ class ShiftVacationPeriodTile extends StatelessWidget {
               child: Icon(
                 Icons.beach_access_rounded,
                 size: 20,
-                color: Color(0xFFFFE5A3),
+                color: AppPalette.vacationText,
               ),
             ),
           ),

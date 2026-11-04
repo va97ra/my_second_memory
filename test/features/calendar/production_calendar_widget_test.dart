@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/calendar_day_cell.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/calendar_day_stamp.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/day_number.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/production_calendar_dialog.dart';
 import '../../support/widget_test_harness.dart';
@@ -36,12 +37,7 @@ void main() {
           await tester.binding.setSurfaceSize(Size(width, 720));
           await tester.pumpWidget(testProviderScope(
               child: MaterialApp(
-            theme: theme.isNotebook
-                ? buildNotebookTheme(
-                    brightness: theme == AppThemeStyle.notebookDark
-                        ? Brightness.dark
-                        : Brightness.light)
-                : buildScreenTheme(screenColorsOf(theme)!),
+            theme: buildNotebookTheme(brightness: brightnessOf(theme)),
             locale: const Locale('ru'),
             supportedLocales: const [Locale('ru')],
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
@@ -100,6 +96,12 @@ void main() {
               find.byWidgetPredicate((w) => w is DayNumber && w.day == 9));
           expect(holiday.isDayOff, isTrue);
           expect(find.byIcon(Icons.alarm_rounded), findsNWidgets(7));
+          expect(
+            tester
+                .widgetList<CalendarDayStamp>(find.byType(CalendarDayStamp))
+                .map((stamp) => stamp.label),
+            ['Сокращённый', 'Праздник', 'Выходной'],
+          );
           final number =
               find.byWidgetPredicate((w) => w is DayNumber && w.day == 8);
           final cell =

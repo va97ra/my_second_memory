@@ -1,16 +1,13 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../shared/ui/page_hint_button.dart';
+import '../../../../shared/ui/chrome/main_page_header.dart';
 import '../../state/finance_currencies.dart';
 
-/// Шапка финансов: валюта, месяц и конвертер.
-///
-/// Ряд, а не `Wrap`: с переносом пятая кнопка уезжала на свою строку и висела
-/// там одна посреди пустоты. Здесь валюта прижата влево, конвертер вправо, а
-/// месяц занимает всё между ними и по центру — на узком экране и при крупном
-/// шрифте сжимается название месяца, а строка остаётся одна.
+/// Шапка финансов: стрелки месяца по краям, посередине месяц и валюта, рядом с
+/// правой стрелкой конвертер.
 class FinanceMonthHeader extends StatelessWidget {
   const FinanceMonthHeader({
     required this.currency,
@@ -31,13 +28,44 @@ class FinanceMonthHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).toString();
-    return LayoutBuilder(
-      builder: (context, constraints) => Row(
-        children: [
-          PageHintButton(hint: strings.financePageHint),
-          DropdownButton<String>(
+    return MainPageHeader(
+      cardKey: const ValueKey('finance_header_card'),
+      hint: strings.financePageHint,
+      leading: [
+        _arrow(
+          const ValueKey('finance_previous_month'),
+          Icons.chevron_left_rounded,
+          () => onMonthDelta(-1),
+        ),
+      ],
+      trailing: [
+        IconButton(
+          key: const ValueKey('finance_converter'),
+          tooltip: strings.currencyConverter,
+          onPressed: onConverter,
+          icon: const Icon(Icons.currency_exchange_rounded, size: 20),
+          style: notebookIconButtonStyle(),
+        ),
+        _arrow(
+          const ValueKey('finance_next_month'),
+          Icons.chevron_right_rounded,
+          () => onMonthDelta(1),
+        ),
+      ],
+      center: NotebookHeaderTitle(
+        title: Text(DateFormat.yMMM(locale).format(month), maxLines: 1),
+        details: Center(
+          child: DropdownButton<String>(
             key: const ValueKey('finance_currency'),
             value: currency,
+            isDense: true,
+            iconSize: 16,
+            underline: const SizedBox.shrink(),
+            style: DefaultTextStyle.of(context).style.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
             items: [
               for (final code in financeCurrencyCodes)
                 DropdownMenuItem(value: code, child: Text(code)),
@@ -46,70 +74,15 @@ class FinanceMonthHeader extends StatelessWidget {
               if (value != null) onCurrency(value);
             },
           ),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _arrow(Icons.chevron_left_rounded, () => onMonthDelta(-1)),
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      DateFormat.yMMM(locale).format(month),
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                ),
-                _arrow(Icons.chevron_right_rounded, () => onMonthDelta(1)),
-              ],
-            ),
-          ),
-          _converterButton(context, strings, constraints.maxWidth),
-        ],
+        ),
       ),
     );
   }
 
-  /// Стрелки месяца ужаты: место в строке нужнее подписи у конвертера, а
-  /// область нажатия остаётся в сорок логических пикселей.
-  Widget _arrow(IconData icon, VoidCallback onPressed) => IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon),
-        iconSize: 20,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints.tightFor(width: 40, height: 40),
-        visualDensity: VisualDensity.compact,
-      );
-
-  /// Одна иконка «что это такое?» не объясняет, поэтому там, где строка
-  /// вмещает подпись, кнопка её показывает. Где не вмещает — остаётся значок
-  /// с подсказкой по долгому нажатию: подпись съела бы название месяца.
-  ///
-  /// Решает не ширина сама по себе, а ширина относительно размера шрифта:
-  /// при двойном масштабе те же 360 логических пикселей вмещают вдвое меньше
-  /// букв, и подпись там уже лишняя.
-  Widget _converterButton(
-    BuildContext context,
-    AppStrings strings,
-    double width,
-  ) {
-    const key = ValueKey('finance_converter');
-    const icon = Icon(Icons.currency_exchange_rounded, size: 20);
-    final roomForWords = width / MediaQuery.textScalerOf(context).scale(1);
-    if (roomForWords < 320) {
-      return IconButton(
+  Widget _arrow(Key key, IconData icon, VoidCallback onPressed) => IconButton(
         key: key,
-        tooltip: strings.currencyConverter,
-        onPressed: onConverter,
-        icon: icon,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 24),
+        style: notebookIconButtonStyle(),
       );
-    }
-    return TextButton.icon(
-      key: key,
-      onPressed: onConverter,
-      icon: icon,
-      label: Text(strings.exchangeRate),
-    );
-  }
 }

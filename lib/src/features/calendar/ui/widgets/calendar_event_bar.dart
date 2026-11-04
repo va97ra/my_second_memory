@@ -7,7 +7,8 @@ import 'outlined_calendar_text.dart';
 
 /// Полоска записи в ячейке дня.
 class CalendarEventBar extends StatelessWidget {
-  const CalendarEventBar({super.key, 
+  const CalendarEventBar({
+    super.key,
     required this.item,
     required this.locale,
     required this.isMuted,

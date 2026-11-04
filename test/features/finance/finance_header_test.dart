@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:ezhednevnik_v2/src/features/finance/ui/widgets/finance_month_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -14,7 +15,8 @@ void main() {
   // стоят на одной высоте, то есть шапка осталась одной строкой.
   for (final width in [320.0, 360.0, 411.0, 600.0, 840.0]) {
     for (final scale in [1.0, 1.3, 2.0]) {
-      testWidgets('the finance header stays one row at ${width}px and ${scale}x',
+      testWidgets(
+          'the finance header keeps its size at ${width}px and ${scale}x',
           (tester) async {
         addTearDown(() => tester.binding.setSurfaceSize(null));
         addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
@@ -22,24 +24,18 @@ void main() {
         await tester.binding.setSurfaceSize(Size(width, 900));
         await _pump(tester);
 
-        final currency = tester.getCenter(
-          find.byKey(const ValueKey('finance_currency')),
-        );
-        final converter = tester.getCenter(
-          find.byKey(const ValueKey('finance_converter')),
-        );
-
         expect(tester.takeException(), isNull);
-        expect(
-          converter.dy,
-          moreOrLessEquals(currency.dy, epsilon: 1),
-          reason: 'валюта и конвертер разъехались по строкам',
+        final card = tester.getRect(
+          find.byKey(const ValueKey('finance_header_card')),
         );
-        expect(
-          converter.dx,
-          greaterThan(currency.dx),
-          reason: 'конвертер должен стоять справа от валюты',
-        );
+        expect(card.height, moreOrLessEquals(notebookHeaderHeight, epsilon: 2));
+        for (final key in ['finance_currency', 'finance_converter']) {
+          expect(
+            card.contains(tester.getCenter(find.byKey(ValueKey(key)))),
+            isTrue,
+            reason: key,
+          );
+        }
       });
     }
   }

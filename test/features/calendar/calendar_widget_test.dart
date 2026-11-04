@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/day_timeline.dart';
 import 'package:intl/intl.dart';
 import 'package:ezhednevnik_v2/src/app/app.dart';
-import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:ez_design/ez_design.dart';
@@ -13,59 +12,6 @@ import '../../support/widget_test_harness.dart';
 
 void main() {
   useTestEnvironment();
-
-  for (final style in [AppThemeStyle.cosmos, AppThemeStyle.cyberpunk]) {
-    testWidgets('${style.name} day cells keep their intended glass profile', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(360, 800));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-
-      await tester.pumpWidget(
-        testProviderScope(
-          overrides: [
-            securityServiceProvider
-                .overrideWithValue(UnlockedSecurityService()),
-            memoryRepositoryProvider.overrideWithValue(EmptyMemoryRepository()),
-            shiftScheduleRepositoryProvider.overrideWithValue(
-              FakeShiftScheduleRepository(),
-            ),
-            appThemeControllerProvider.overrideWith(
-              (ref) => AppThemeController(
-                initialStyle: style,
-                loadOnStart: false,
-              ),
-            ),
-          ],
-          child: const EzhednevnikV2App(),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await openTab(tester, 'calendar');
-
-      final todayKey = DateFormat('yyyy-MM-dd').format(today);
-      final todayCell = find.byKey(ValueKey('calendar_day_$todayKey'));
-      final lens = find.descendant(
-        of: todayCell,
-        matching: find.byKey(const ValueKey('calendar_day_glass_lens')),
-      );
-      expect(lens, findsOneWidget);
-      final painter = tester.widget<CustomPaint>(lens).foregroundPainter;
-      expect(painter, isA<ScreenGlassSurfacePainter>());
-      expect(
-        (painter! as ScreenGlassSurfacePainter).profile,
-        ScreenGlassProfile.plate,
-      );
-      if (style == AppThemeStyle.cosmos) {
-        expect(cosmosColors.tile, const Color(0x4DFFFFFF));
-      } else {
-        expect(cyberpunkColors.tile.a, inInclusiveRange(0.5, 0.6));
-      }
-      expect(tester.takeException(), isNull);
-    });
-  }
 
   for (final scale in [1.0, 1.3, 2.0]) {
     testWidgets('calendar header holds its bands at ${scale}x text',
@@ -233,7 +179,7 @@ void main() {
     );
     expect(
       (eventBar.decoration as BoxDecoration).color,
-      const Color(0xFF7A5AF8),
+      AppPalette.violet,
     );
     final eventDecoration = eventBar.decoration as BoxDecoration;
     expect(eventDecoration.borderRadius, BorderRadius.zero);
@@ -328,7 +274,7 @@ void main() {
       find.byKey(const ValueKey('memory_save_status')),
     );
     expect(savedStatus.data, 'Сохранено');
-    expect(savedStatus.style?.color, const Color(0xFF168653));
+    expect(savedStatus.style?.color, AppPalette.success);
     expect(
       repository.savedItems.any(
         (item) =>

@@ -53,63 +53,59 @@ class RecordEditor extends StatelessWidget {
 
         return KeyedSubtree(
           key: const ValueKey('record_editor_panel'),
-          child: NotebookPageSurface(
-            showLines: false,
-            child: DecoratedBox(
-              decoration: recordEditorPaper(context),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  14,
-                  10,
-                  12,
-                  layout.bottomPadding,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (imagePaths.isNotEmpty) ...[
-                      RecordEditorImages(
-                        paths: imagePaths,
-                        height: layout.imageHeight,
-                        maxWidth: layout.imageMaxWidth,
-                        onRemove: onRemoveImage,
-                      ),
-                      gap,
-                    ],
-                    if (voiceNotes.isNotEmpty) ...[
-                      for (final note in voiceNotes) ...[
-                        _voice(context, note),
-                        gap,
-                      ],
-                    ],
-                    if (isRecording) ...[
-                      RecordingPill(text: AppStrings.of(context).recordingNow),
-                      gap,
-                    ],
-                    Expanded(
-                      child: RecordEditorField(
-                        controller: controller,
-                        onChanged: onChanged,
-                      ),
+          child: WritingPaper(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                14,
+                10,
+                12,
+                layout.bottomPadding,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (imagePaths.isNotEmpty) ...[
+                    RecordEditorImages(
+                      paths: imagePaths,
+                      height: layout.imageHeight,
+                      maxWidth: layout.imageMaxWidth,
+                      onRemove: onRemoveImage,
                     ),
                     gap,
-                    // Выделили текст — вместо действий записи панель
-                    // оформления: она нужна, пока есть что оформлять.
-                    ListenableBuilder(
-                      listenable: controller,
-                      builder: (context, _) => controller.hasSelection
-                          ? TextFormatPanel(controller: controller)
-                          : RecordEditorActions(
-                              recurrenceFrequency: recurrenceFrequency,
-                              isRecording: isRecording,
-                              buttonSize: layout.buttonSize,
-                              onRecurrenceTap: onRecurrenceTap,
-                              onPickImage: onPickImage,
-                              onVoicePressed: onVoicePressed,
-                            ),
-                    ),
                   ],
-                ),
+                  if (voiceNotes.isNotEmpty) ...[
+                    for (final note in voiceNotes) ...[
+                      _voice(context, note),
+                      gap,
+                    ],
+                  ],
+                  if (isRecording) ...[
+                    RecordingPill(text: AppStrings.of(context).recordingNow),
+                    gap,
+                  ],
+                  Expanded(
+                    child: RecordEditorField(
+                      controller: controller,
+                      onChanged: onChanged,
+                    ),
+                  ),
+                  gap,
+                  // Выделили текст — вместо действий записи панель
+                  // оформления: она нужна, пока есть что оформлять.
+                  ListenableBuilder(
+                    listenable: controller,
+                    builder: (context, _) => controller.hasSelection
+                        ? TextFormatPanel(controller: controller)
+                        : RecordEditorActions(
+                            recurrenceFrequency: recurrenceFrequency,
+                            isRecording: isRecording,
+                            buttonSize: layout.buttonSize,
+                            onRecurrenceTap: onRecurrenceTap,
+                            onPickImage: onPickImage,
+                            onVoicePressed: onVoicePressed,
+                          ),
+                  ),
+                ],
               ),
             ),
           ),

@@ -1,4 +1,3 @@
-import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Physical surface of one calculator key.
@@ -9,7 +8,6 @@ import 'package:flutter/material.dart';
 class CalculatorKeySurface extends StatelessWidget {
   const CalculatorKeySurface({
     required this.baseColor,
-    required this.glassOpacity,
     required this.pressed,
     required this.onPressed,
     required this.onHighlightChanged,
@@ -18,7 +16,6 @@ class CalculatorKeySurface extends StatelessWidget {
   });
 
   final Color baseColor;
-  final double glassOpacity;
   final bool pressed;
   final VoidCallback onPressed;
   final ValueChanged<bool> onHighlightChanged;
@@ -28,11 +25,6 @@ class CalculatorKeySurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screen = ScreenVisuals.maybeOf(context)?.colors;
-    return screen == null ? _notebookSurface() : _glassSurface();
-  }
-
-  Widget _notebookSurface() {
     final topColor = Color.alphaBlend(
       Colors.white.withValues(alpha: 0.10),
       baseColor,
@@ -50,26 +42,14 @@ class CalculatorKeySurface extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: pressed ? 0.18 : 0.38),
-            blurRadius: pressed ? 2 : 5,
-            offset: Offset(0, pressed ? 1 : 4),
+            // Тень меньше зазора между клавишами: иначе она заливает его.
+            blurRadius: pressed ? 1 : 3,
+            offset: Offset(0, pressed ? 1 : 2),
           ),
         ],
         borderRadius: _radius,
       ),
       child: _ink(child),
-    );
-  }
-
-  Widget _glassSurface() {
-    return ScreenGlassButton(
-      key: const ValueKey('calculator_key_glass'),
-      opacity: glassOpacity,
-      tint: baseColor,
-      onPressed: onPressed,
-      onHighlightChanged: onHighlightChanged,
-      painterKey: const ValueKey('calculator_key_lens'),
-      lampKey: const ValueKey('calculator_key_lamp'),
-      child: child,
     );
   }
 

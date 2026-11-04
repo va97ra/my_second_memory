@@ -2,35 +2,32 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../tokens/app_textures.dart';
+
 abstract final class NotebookAssets {
-  static const wood = 'assets/textures/notebook_wood.webp';
+  /// Светлая тема — серебристая кожа и под страницей, и на панелях.
+  static const lightPage = AppTextures.silverLeather;
+  static const lightLeather = AppTextures.silverLeather;
 
-  /// Grain amplified from light_paper.webp: the original varies by three
-  /// luminance levels out of 255, which is below what the eye picks up once it
-  /// is laid down at half opacity on cream.
-  static const paper = 'assets/textures/notebook_paper_grain.webp';
-  static const leather = 'assets/textures/notebook_leather_contrast.png';
+  /// Зерно бумаги: карточки и дни в обеих темах.
+  static const paper = AppTextures.paperGrain;
 
-  /// The same notebook under a different light.
-  static const darkPaper = 'assets/textures/dark_paper.webp';
-  static const darkLeather = 'assets/textures/dark_leather.webp';
-  static const darkWood = 'assets/textures/dark_wood.webp';
+  /// Тёмная тема — чёрная кожа и под страницей, и на панелях.
+  static const darkPaper = AppTextures.blackLeather;
+  static const darkLeather = AppTextures.blackLeather;
 
   /// Decodes only the two textures required to paint the first visible frame.
   static Future<void> preloadCurrent({required bool dark}) async {
     await Future.wait([
-      _load(AssetImage(dark ? darkPaper : paper)),
-      _load(AssetImage(dark ? darkLeather : leather)),
+      _load(AssetImage(dark ? darkLeather : lightLeather)),
+      _load(const AssetImage(paper)),
     ]).timeout(const Duration(seconds: 2));
   }
 
   /// Warms theme-picker and alternate-theme textures after the first frame.
   static Future<void> preloadDeferred({required bool currentIsDark}) async {
     await Future.wait([
-      _load(const AssetImage(wood)),
-      _load(const AssetImage(darkWood)),
-      _load(AssetImage(currentIsDark ? paper : darkPaper)),
-      _load(AssetImage(currentIsDark ? leather : darkLeather)),
+      _load(AssetImage(currentIsDark ? lightLeather : darkLeather)),
     ]).timeout(const Duration(seconds: 2));
   }
 

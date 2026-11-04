@@ -36,9 +36,7 @@ class AccountCard extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: DecoratedBox(
-        // В экранных темах карточка — пластина стекла, как всё остальное.
-        decoration: GlassSurface.maybeOf(context, radius: radius) ??
-            BoxDecoration(
+        decoration: BoxDecoration(
               color: colors.surface,
               borderRadius: radius,
               border: Border.all(color: colors.outlineVariant),

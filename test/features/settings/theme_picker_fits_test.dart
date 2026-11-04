@@ -41,14 +41,11 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(SingleChildScrollView), findsWidgets);
-        // Последняя тема доступна: до неё можно долистать.
-        await tester.scrollUntilVisible(find.text('Космос'), 120);
-        expect(find.text('Космос'), findsOneWidget);
-        expect(find.text('Киберпанк'), findsNothing);
+        expect(find.text('Тёмная'), findsWidgets);
+        expect(find.text('Космос'), findsNothing);
         expect(AppThemeStyle.available, [
           AppThemeStyle.notebookLight,
           AppThemeStyle.notebookDark,
-          AppThemeStyle.cosmos
         ]);
         expect(tester.takeException(), isNull);
       });

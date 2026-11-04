@@ -1,7 +1,7 @@
+import 'package:ez_design/ez_design.dart';
 import 'dart:math' as math;
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
-
 
 /// Лента отпуска через ячейку дня.
 class VacationRibbon extends StatelessWidget {
@@ -37,7 +37,7 @@ class VacationRibbon extends StatelessWidget {
                     fit: StackFit.expand,
                     children: [
                       Image.asset(
-                        'assets/textures/vacation_ribbon.webp',
+                        AppTextures.vacationRibbon,
                         fit: BoxFit.fill,
                         filterQuality: FilterQuality.medium,
                       ),
@@ -51,14 +51,14 @@ class VacationRibbon extends StatelessWidget {
                               maxLines: 1,
                               style: const TextStyle(
                                 fontFamily: 'Manrope',
-                                color: Color(0xFFFFF2C7),
+                                color: AppPalette.vacationText,
                                 fontSize: 6.5,
                                 fontWeight: FontWeight.w900,
                                 height: 1,
                                 letterSpacing: 0.35,
                                 shadows: [
                                   Shadow(
-                                    color: Color(0xCC3A0713),
+                                    color: AppPalette.vacationTextShadow,
                                     blurRadius: 1,
                                     offset: Offset(0, 0.5),
                                   ),

@@ -19,8 +19,8 @@ class FinanceSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final values = [
-      (strings.income, summary.income.toString(), const Color(0xFF168653)),
-      (strings.expenses, summary.expense.toString(), const Color(0xFFD32020)),
+      (strings.income, summary.income.toString(), AppPalette.success),
+      (strings.expenses, summary.expense.toString(), AppPalette.danger),
       (
         strings.balance,
         summary.balance.toString(),
@@ -51,19 +51,9 @@ class FinanceSummaryCard extends StatelessWidget {
         ],
       ),
     );
-    final screen = ScreenVisuals.maybeOf(context)?.colors;
-    if (screen == null) {
-      return Card(
-        key: const ValueKey('finance_summary_card'),
-        margin: EdgeInsets.zero,
-        child: content,
-      );
-    }
-    return ScreenGlassSurface(
+    return Card(
       key: const ValueKey('finance_summary_card'),
-      colors: screen,
-      opacity: screen.isDark ? 0.36 : 0.22,
-      painterKey: const ValueKey('finance_summary_glass'),
+      margin: EdgeInsets.zero,
       child: content,
     );
   }

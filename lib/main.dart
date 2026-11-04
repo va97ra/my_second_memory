@@ -53,10 +53,6 @@ Future<void> main(List<String> arguments) async {
   } catch (_) {
     // The notebook falls back to flat colour when a texture cannot load.
   }
-  // Задник экранной темы декодируется до первого кадра: иначе первый кадр
-  // рисуется одним переходом, а следующий — уже с картинкой, и запуск
-  // выглядит морганием фона.
-  await preloadScreenBackdrop(initialStyle);
   runApp(
     ProviderScope(
       overrides: [

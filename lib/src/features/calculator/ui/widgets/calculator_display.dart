@@ -1,5 +1,4 @@
 import 'package:ez_core/ez_core.dart';
-import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,7 +23,6 @@ class CalculatorDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final result = _result(strings);
-    final screen = ScreenVisuals.maybeOf(context)?.colors;
     final content = Padding(
       padding: const EdgeInsets.all(4),
       child: Column(
@@ -57,15 +55,6 @@ class CalculatorDisplay extends StatelessWidget {
               children: [
                 IconButton(
                   tooltip: strings.calculatorCopyResult,
-                  style: screen == null
-                      ? null
-                      : IconButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: screen.ink,
-                          side: BorderSide(
-                            color: screen.glint.withValues(alpha: 0.56),
-                          ),
-                        ),
                   onPressed: evaluation.value == null
                       ? null
                       : () => Clipboard.setData(ClipboardData(text: result)),
@@ -75,7 +64,6 @@ class CalculatorDisplay extends StatelessWidget {
                 Expanded(
                   child: CalculatorResultPanel(
                     result: result,
-                    screen: screen,
                   ),
                 ),
               ],
@@ -84,18 +72,9 @@ class CalculatorDisplay extends StatelessWidget {
         ],
       ),
     );
-    if (screen == null) {
-      return Card(
-        key: const ValueKey('calculator_display'),
-        margin: EdgeInsets.zero,
-        child: content,
-      );
-    }
-    return ScreenGlassSurface(
+    return Card(
       key: const ValueKey('calculator_display'),
-      colors: screen,
-      opacity: screen.isDark ? 0.38 : 0.22,
-      painterKey: const ValueKey('calculator_display_glass'),
+      margin: EdgeInsets.zero,
       child: content,
     );
   }

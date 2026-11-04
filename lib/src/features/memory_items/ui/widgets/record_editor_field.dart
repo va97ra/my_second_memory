@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// Само поле записи: текст по линейке блокнота.
 ///
 /// Линейку рисует тема; там, где её нет, поле остаётся обычным, залитым.
-class RecordEditorField extends StatelessWidget {
+class RecordEditorField extends StatefulWidget {
   const RecordEditorField({
     super.key,
     required this.controller,
@@ -14,6 +14,19 @@ class RecordEditorField extends StatelessWidget {
 
   final TextEditingController controller;
   final VoidCallback onChanged;
+
+  @override
+  State<RecordEditorField> createState() => _RecordEditorFieldState();
+}
+
+class _RecordEditorFieldState extends State<RecordEditorField> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,15 +50,17 @@ class RecordEditorField extends StatelessWidget {
       painter: plain
           ? null
           : NotebookPaperLinesPainter(
-              color: notebook?.line ?? textures!.lineColor,
+              color: AppPalette.writingLine,
               // Первая линейка подчёркивает первую строку текста, а плавающая
               // подпись поля стоит над ней.
               top: lineHeight + 10,
               lineHeight: lineHeight,
+              scroll: _scroll,
             ),
       child: TextFormField(
         key: const ValueKey('record_editor_text'),
-        controller: controller,
+        controller: widget.controller,
+        scrollController: _scroll,
         expands: true,
         maxLines: null,
         minLines: null,
@@ -67,7 +82,7 @@ class RecordEditorField extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
           filled: plain,
         ),
-        onChanged: (_) => onChanged(),
+        onChanged: (_) => widget.onChanged(),
       ),
     );
   }

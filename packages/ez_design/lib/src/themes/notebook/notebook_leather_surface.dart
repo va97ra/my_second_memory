@@ -1,3 +1,4 @@
+import '../../tokens/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../surface_palette.dart';
@@ -9,12 +10,17 @@ class NotebookLeatherSurface extends StatelessWidget {
     required this.color,
     required this.child,
     this.lightweight = false,
+    this.grainScale,
     super.key,
   });
 
   final Color color;
   final Widget child;
   final bool lightweight;
+
+  /// Мельче ли поры, чем на снимке кожи: кожа кладётся плиткой и не зависит от
+  /// размера поверхности. Без него снимок растянут на всю поверхность.
+  final double? grainScale;
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +60,12 @@ class NotebookLeatherSurface extends StatelessWidget {
           image: AssetImage(
             notebook == null ? textures!.accentAsset : notebook.leatherAsset,
           ),
-          fit: BoxFit.cover,
-          filterQuality: FilterQuality.low,
+          fit: grainScale == null ? BoxFit.cover : BoxFit.none,
+          repeat:
+              grainScale == null ? ImageRepeat.noRepeat : ImageRepeat.repeat,
+          scale: grainScale ?? 1,
+          filterQuality:
+              grainScale == null ? FilterQuality.low : FilterQuality.medium,
           opacity: notebook == null ? textures!.accentOpacity : 1,
           colorFilter: ColorFilter.mode(
             color.withValues(
@@ -103,9 +113,9 @@ class NotebookLeatherSurface extends StatelessWidget {
 Color notebookLeatherForeground(Color color) {
   final tintedLeather = Color.alphaBlend(
     color.withValues(alpha: 0.55),
-    const Color(0xFFF3EFE6),
+    AppPalette.paper,
   );
   return ThemeData.estimateBrightnessForColor(tintedLeather) == Brightness.dark
       ? Colors.white
-      : const Color(0xFF24160E);
+      : AppPalette.paperInk;
 }

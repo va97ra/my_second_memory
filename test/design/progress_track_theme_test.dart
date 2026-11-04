@@ -18,8 +18,6 @@ void main() {
   final themes = {
     'light notebook': buildNotebookTheme(brightness: Brightness.light),
     'dark notebook': buildNotebookTheme(brightness: Brightness.dark),
-    'cosmos': buildScreenTheme(cosmosColors),
-    'cyberpunk': buildScreenTheme(cyberpunkColors),
   };
 
   // Пустая полоса — желобок, едва отличимый от листа. Экранные темы держат в

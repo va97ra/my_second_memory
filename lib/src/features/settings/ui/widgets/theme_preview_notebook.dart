@@ -13,11 +13,11 @@ class ThemePreviewNotebook extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = dark
-        ? const [Color(0xFF1C1512), Color(0xFF3A332C)]
-        : const [Color(0xFFC98D57), Color(0xFFFFF0CD)];
-    final ink = dark ? const Color(0xFFEDE6DA) : const Color(0xFF201712);
+        ? const [AppPalette.black, AppPalette.blackRaised]
+        : const [AppPalette.silverDeep, AppPalette.silverPale];
+    final ink = dark ? AppPalette.onBlack : AppPalette.paperInk;
     final panelTexture =
-        dark ? NotebookAssets.darkPaper : NotebookAssets.paper;
+        dark ? NotebookAssets.darkPaper : NotebookAssets.lightPage;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -27,7 +27,7 @@ class ThemePreviewNotebook extends StatelessWidget {
           colors: colors,
         ),
         image: DecorationImage(
-          image: AssetImage(dark ? NotebookAssets.darkWood : NotebookAssets.wood),
+          image: AssetImage(dark ? NotebookAssets.darkLeather : NotebookAssets.lightLeather),
           fit: BoxFit.cover,
           opacity: dark ? 0.9 : 0.75,
         ),

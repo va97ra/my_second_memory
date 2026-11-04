@@ -12,35 +12,33 @@ class HolidayBar extends StatelessWidget {
 
   /// Золотая нить по верхнему краю — она отделяет ленту от бумаги и от
   /// цветной заливки смены под ней.
-  static const _thread = Color(0xFFF7CE5B);
+  static const _thread = AppPalette.holidayThread;
+
+  /// Сколько лента занимает снизу: нить, поля и значок.
+  static const extent = 14.0;
 
   @override
   Widget build(BuildContext context) {
-    // В экранных темах лента ровного цвета темы: золотая нить и переливы —
-    // приметы тиснёной ленты на бумаге, на тёмном стекле им неоткуда взяться.
-    final holiday = ScreenVisuals.maybeOf(context)?.colors.holiday;
     final bar = DecoratedBox(
-      decoration: holiday != null
-          ? BoxDecoration(color: holiday)
-          : const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFFAF1B12),
-                  Color(0xFFE0670C),
-                  Color(0xFFAF1B12),
-                ],
-              ),
-              border: Border(top: BorderSide(color: _thread, width: 0.8)),
-            ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppPalette.violetDeep,
+            AppPalette.violet,
+            AppPalette.violetDeep,
+          ],
+        ),
+        border: Border(top: BorderSide(color: _thread, width: 0.8)),
+      ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(3, 2, 3, 2.5),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.celebration_rounded,
               size: 8,
-              color: holiday == null ? _thread : Colors.white,
+              color: _thread,
             ),
             const SizedBox(width: 2.5),
             Flexible(

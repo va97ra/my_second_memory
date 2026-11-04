@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -90,7 +91,7 @@ class _InlineTimeFieldState extends State<InlineTimeField> {
         padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
         child: Row(
           children: [
-            const Icon(Icons.schedule_rounded, color: Color(0xFF218CFF)),
+            const Icon(Icons.schedule_rounded, color: AppPalette.indigo),
             const SizedBox(width: 10),
             Expanded(child: Text(widget.label)),
             if (widget.readOnly)

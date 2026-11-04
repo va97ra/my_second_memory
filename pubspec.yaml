@@ -74,19 +74,13 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/textures/notebook_wood.webp
-    - assets/textures/notebook_paper.webp
     - assets/textures/notebook_paper_grain.webp
-    - assets/textures/notebook_leather_contrast.png
-    - assets/textures/dark_wood.webp
-    - assets/textures/dark_paper.webp
-    - assets/textures/dark_leather.webp
+    - assets/textures/black_leather.webp
+    - assets/textures/silver_leather.webp
     - assets/textures/light_wood.webp
     - assets/textures/light_paper.webp
     - assets/textures/light_leather.webp
     - assets/textures/vacation_ribbon.webp
-    - assets/textures/cosmos_backdrop.webp
-    - assets/textures/cyberpunk_city_street.webp
     - windows/runner/resources/app_icon.ico
   fonts:
     - family: Manrope

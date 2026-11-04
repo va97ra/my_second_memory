@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../state/calendar_month_data.dart';
 import 'calendar_day_cell_layout.dart';
 import 'calendar_day_header_row.dart';
+import 'calendar_day_stamp.dart';
 import 'calendar_event_bar.dart';
 import 'holiday_bar.dart';
 import 'shift_marks.dart';
@@ -24,8 +25,8 @@ class CalendarDayCellBody extends StatelessWidget {
     required this.holidays,
     required this.hasAlarm,
     required this.foreground,
-    this.todayCap,
     required this.todayColor,
+    this.stamp,
     this.productionDay,
   });
 
@@ -40,12 +41,11 @@ class CalendarDayCellBody extends StatelessWidget {
   final bool hasAlarm;
   final Color foreground;
 
-  /// Цвет шапки сегодняшнего дня или null, если шапки не будет: в блокноте
-  /// сегодня отмечен заливкой, а в дне со сменой шапку уже занял график.
-  final Color? todayCap;
-
   /// Цвет кружка под сегодняшним числом.
   final Color todayColor;
+
+  /// Водяной знак дня, если плитка закрашена.
+  final String? stamp;
 
   @override
   Widget build(BuildContext context) {
@@ -62,13 +62,16 @@ class CalendarDayCellBody extends StatelessWidget {
 
         return Stack(
           children: [
-            if (todayCap case final cap?)
+            if (stamp case final label?)
+              // Только на свободном цвете: между шапкой с числом и лентой
+              // праздника. Шапка отступает и без смены, чтобы слово стояло
+              // одинаково на всех плитках.
               Positioned(
-                top: 0,
                 left: 0,
                 right: 0,
-                height: ShiftMarks.headerHeight,
-                child: ColoredBox(color: cap),
+                top: ShiftMarks.headerHeight,
+                bottom: layout.showsHoliday ? HolidayBar.extent : 0,
+                child: CalendarDayStamp(label: label),
               ),
             if (hasShift)
               Positioned.fill(

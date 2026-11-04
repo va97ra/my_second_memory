@@ -58,15 +58,15 @@ void main() {
     final standardHeight = tester.getSize(_gridKeys().first).height;
     expect(
       tester.getSize(_gridKeys().first).width,
-      closeTo(68, 0.1),
+      closeTo(70, 0.1),
     );
-    expect(standardHeight, greaterThan(68));
+    expect(standardHeight, greaterThan(70));
     expect(find.byType(SingleChildScrollView), findsNothing);
 
     await _selectScientific(tester);
     expect(
       tester.getSize(_gridKeys().first).width,
-      closeTo(52.8, 0.1),
+      closeTo(54.4, 0.1),
     );
     expect(tester.getSize(_gridKeys().first).height, lessThan(standardHeight));
   });
@@ -144,65 +144,6 @@ void main() {
     );
   });
 
-  for (final style in [AppThemeStyle.cosmos, AppThemeStyle.cyberpunk]) {
-    testWidgets('${style.name} uses concave glass keys in both layouts',
-        (tester) async {
-      await _openCalculator(tester, const Size(360, 800), style: style);
-
-      expect(
-        find.byKey(const ValueKey('calculator_display_glass')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('calculator_result_glass')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('calculator_mode_glass_button')),
-        findsNWidgets(2),
-      );
-
-      final standardKeys = _gridKeys();
-      expect(
-        find.descendant(
-          of: standardKeys,
-          matching: find.byKey(const ValueKey('calculator_key_glass')),
-        ),
-        findsNWidgets(24),
-      );
-      final firstKey = standardKeys.first;
-      final lens = find.descendant(
-        of: firstKey,
-        matching: find.byKey(const ValueKey('calculator_key_lens')),
-      );
-      expect(
-        tester.widget<CustomPaint>(lens).foregroundPainter,
-        isNotNull,
-      );
-
-      final lamp = find.descendant(
-        of: firstKey,
-        matching: find.byKey(const ValueKey('calculator_key_lamp')),
-      );
-      expect(tester.widget<AnimatedOpacity>(lamp).opacity, 0);
-      final gesture = await tester.startGesture(tester.getCenter(firstKey));
-      await tester.pump(const Duration(milliseconds: 50));
-      expect(tester.widget<AnimatedOpacity>(lamp).opacity, 1);
-      await gesture.up();
-      await tester.pump(const Duration(milliseconds: 130));
-      expect(tester.widget<AnimatedOpacity>(lamp).opacity, 0);
-
-      await _selectScientific(tester);
-      expect(
-        find.descendant(
-          of: _gridKeys(),
-          matching: find.byKey(const ValueKey('calculator_key_glass')),
-        ),
-        findsNWidgets(40),
-      );
-    });
-  }
-
   testWidgets('only actions and equals carry the accent', (tester) async {
     await _openCalculator(tester, const Size(360, 800));
 
@@ -212,7 +153,7 @@ void main() {
         .role;
 
     for (final command in ['MC', 'MR', 'M+', 'M-', 'MS']) {
-      expect(roleOf(command), CalculatorKeyRole.service);
+      expect(roleOf(command), CalculatorKeyRole.memory);
     }
     for (final action in ['÷', '×', '−', '+']) {
       expect(roleOf(action), CalculatorKeyRole.operation);

@@ -27,8 +27,7 @@ class SettingsSection extends StatelessWidget {
         // В экранных темах карточка раздела — пластина стекла, как панели и
         // плитки дней; в блокнотных остаётся бумажной со своей тенью.
         DecoratedBox(
-          decoration: GlassSurface.maybeOf(context, radius: radius) ??
-              BoxDecoration(
+          decoration: BoxDecoration(
                 color: colors.surface,
                 borderRadius: radius,
                 border: Border.all(color: colors.outlineVariant),

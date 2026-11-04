@@ -28,27 +28,26 @@ class FinanceScreen extends ConsumerWidget {
         key: const ValueKey('finance_scroll'),
         slivers: [
           SliverToBoxAdapter(
+            child: FinanceMonthHeader(
+              currency: currency,
+              month: month,
+              onCurrency: (value) =>
+                  ref.read(financeCurrencyProvider.notifier).select(value),
+              onMonthDelta: (delta) => _changeMonth(ref, month, delta),
+              onConverter: () => showCurrencyConverterSheet(
+                context,
+                ledgerCurrency: currency,
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  padding: const EdgeInsets.fromLTRB(12, 2, 12, 12),
                   child: Column(
                     children: [
-                      FinanceMonthHeader(
-                        currency: currency,
-                        month: month,
-                        onCurrency: (value) => ref
-                            .read(financeCurrencyProvider.notifier)
-                            .select(value),
-                        onMonthDelta: (delta) =>
-                            _changeMonth(ref, month, delta),
-                        onConverter: () => showCurrencyConverterSheet(
-                          context,
-                          ledgerCurrency: currency,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
                       FinanceSummaryCard(
                         summary: ledger.summary,
                         currencyCode: currency,
@@ -75,7 +74,21 @@ class FinanceScreen extends ConsumerWidget {
             ),
           ),
           if (ledger.entries.isEmpty)
-            const SliverToBoxAdapter(child: SizedBox.shrink())
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    AppStrings.of(context).financeEmptyMonth,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ),
+              ),
+            )
           else
             FinanceEntryList(
               days: ledger.days,

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../themes/notebook/notebook_visuals.dart';
-import '../themes/screen/screen_visuals.dart';
 import 'press_pulse.dart';
 
 /// Нажатие без волны: клавиша мягко сжимается и на миг притеняется.
@@ -55,13 +53,7 @@ class _NotebookPressableState extends State<NotebookPressable> {
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onTap != null;
-    // На тёмном стекле чёрное притенение не видно: нажатие там подсвечивают,
-    // а не гасят.
-    final dark = NotebookVisuals.maybeOf(context) == null &&
-        (ScreenVisuals.maybeOf(context)?.colors.isDark ?? false);
-    final pressedTint = dark
-        ? Colors.white.withValues(alpha: 0.1)
-        : Colors.black.withValues(alpha: 0.08);
+    final pressedTint = Colors.black.withValues(alpha: 0.08);
     return Semantics(
       button: true,
       enabled: enabled,

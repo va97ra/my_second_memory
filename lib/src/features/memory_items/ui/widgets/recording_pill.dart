@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Отметка идущей записи голоса.
@@ -22,13 +23,13 @@ class RecordingPill extends StatelessWidget {
             const Icon(
               Icons.fiber_manual_record_rounded,
               size: 12,
-              color: Color(0xFFDC2626),
+              color: AppPalette.danger,
             ),
             const SizedBox(width: 6),
             Text(
               text,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: const Color(0xFF991B1B),
+                    color: AppPalette.dangerDeep,
                     fontWeight: FontWeight.w800,
                   ),
             ),

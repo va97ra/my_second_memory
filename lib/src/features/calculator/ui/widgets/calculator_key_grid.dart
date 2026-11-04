@@ -10,6 +10,10 @@ import 'calculator_key.dart';
 /// высоту лучше отдать полям, чем строке цифр.
 const double _maxKeyAspect = 1.25;
 
+/// Расстояние между клавишами. Одно по вертикали и горизонтали, а также до
+/// края экрана и до табло.
+const double calculatorKeyGap = 8;
+
 class CalculatorKeyGrid extends StatelessWidget {
   const CalculatorKeyGrid({
     required this.layout,
@@ -31,11 +35,15 @@ class CalculatorKeyGrid extends StatelessWidget {
     final rowCount = layout.keys.length ~/ columns;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final keyWidth = (constraints.maxWidth - 8 * (columns - 1)) / columns;
-        final rowHeight = (constraints.maxHeight - 2 * (rowCount - 1)) / rowCount;
+        final keyWidth =
+            (constraints.maxWidth - calculatorKeyGap * (columns - 1)) / columns;
+        final rowHeight =
+            (constraints.maxHeight - calculatorKeyGap * (rowCount - 1)) /
+                rowCount;
         final height = rowHeight <= keyWidth * _maxKeyAspect
             ? constraints.maxHeight
-            : keyWidth * _maxKeyAspect * rowCount + 2 * (rowCount - 1);
+            : keyWidth * _maxKeyAspect * rowCount +
+                calculatorKeyGap * (rowCount - 1);
         return Center(
           child: SizedBox(
             height: height,
@@ -46,7 +54,8 @@ class CalculatorKeyGrid extends StatelessWidget {
                     child: Row(
                       children: [
                         for (var column = 0; column < columns; column++) ...[
-                          if (column > 0) const SizedBox(width: 8),
+                          if (column > 0)
+                            const SizedBox(width: calculatorKeyGap),
                           Expanded(
                             child: _key(layout.keys[row * columns + column]),
                           ),
@@ -54,7 +63,8 @@ class CalculatorKeyGrid extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (row < rowCount - 1) const SizedBox(height: 2),
+                  if (row < rowCount - 1)
+                    const SizedBox(height: calculatorKeyGap),
                 ],
               ],
             ),

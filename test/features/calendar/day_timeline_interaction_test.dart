@@ -19,7 +19,7 @@ void main() {
         (int, int)? created;
         await tester.pumpWidget(ProviderScope(
             child: MaterialApp(
-          theme: buildScreenTheme(cosmosColors),
+          theme: buildNotebookTheme(),
           home: MediaQuery(
               data: MediaQueryData(textScaler: TextScaler.linear(scale)),
               child: Scaffold(
@@ -71,7 +71,7 @@ void main() {
     await tester.pumpWidget(testProviderScope(
       overrides: [memoryRepositoryProvider.overrideWithValue(repository)],
       child: MaterialApp(
-          theme: buildScreenTheme(cosmosColors),
+          theme: buildNotebookTheme(),
           home: Scaffold(
             body: Consumer(
                 builder: (context, ref, _) => DayTimeline(

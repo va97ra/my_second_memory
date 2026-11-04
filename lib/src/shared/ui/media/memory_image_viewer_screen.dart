@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 import 'memory_image_preview.dart';
@@ -12,7 +13,7 @@ class MemoryImageViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       key: const ValueKey('memory_image_viewer'),
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: AppPalette.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,

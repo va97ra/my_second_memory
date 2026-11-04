@@ -67,7 +67,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
             const SizedBox(height: 10),
             BackupActionButton(
               icon: Icons.restore_page_rounded,
-              color: const Color(0xFF16A34A),
+              color: AppPalette.success,
               title: strings.importBackup,
               onPressed: _isBusy ? null : _import,
             ),

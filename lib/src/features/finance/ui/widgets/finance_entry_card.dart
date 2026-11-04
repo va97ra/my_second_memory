@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,7 @@ class FinanceEntryCard extends ConsumerWidget {
     if (entry == null) return const SizedBox.shrink();
     final strings = AppStrings.of(context);
     final isIncome = entry.kind == FinanceEntryKind.income;
-    final color = isIncome ? const Color(0xFF168653) : const Color(0xFFD32020);
+    final color = isIncome ? AppPalette.success : AppPalette.danger;
     return Card(
       key: ValueKey('finance_entry_${entry.id}'),
       margin: EdgeInsets.zero,

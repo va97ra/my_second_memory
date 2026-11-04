@@ -24,7 +24,7 @@ class MainSliverAppBar extends StatelessWidget {
         title: title,
         backLocation: backLocation,
         hint: hint,
-        trailing: trailing,
+        trailing: [if (trailing case final button?) button],
       ),
     );
   }

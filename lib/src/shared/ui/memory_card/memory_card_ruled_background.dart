@@ -17,8 +17,9 @@ class MemoryCardRuledBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lineColor = NotebookVisuals.maybeOf(context)?.line ??
-        AppSurfaceTextures.maybeOf(context)?.lineColor;
+    final lineColor = NotebookVisuals.maybeOf(context) != null
+        ? AppPalette.writingLine
+        : AppSurfaceTextures.maybeOf(context)?.lineColor;
     if (lineColor == null) return child;
 
     return CustomPaint(

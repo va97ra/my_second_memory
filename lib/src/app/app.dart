@@ -135,13 +135,8 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     }
     final themeStyle = ref.watch(appThemeControllerProvider);
     final contentFont = ref.watch(appContentFontControllerProvider);
-    // Тема-экран собирается из своих значений, блокнотная — из яркости.
-    // Новая экранная тема добавляется в `screenColorsOf`, и сюда не заходит.
-    final screenColors = screenColorsOf(themeStyle);
     final brightness = brightnessOf(themeStyle);
-    final baseTheme = screenColors == null
-        ? buildNotebookTheme(brightness: brightness)
-        : buildScreenTheme(screenColors);
+    final baseTheme = buildNotebookTheme(brightness: brightness);
     final selectedTheme = baseTheme.copyWith(
       extensions: [
         ...baseTheme.extensions.values,
@@ -149,12 +144,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
       ],
     );
 
-    // Задник экранной темы лежит выше `MaterialApp`: он не принадлежит ни
-    // странице, ни оболочке и не пересобирается при переходах между ними.
-    // Ниже него только окно.
-    return ScreenBackdrop(
-      colors: screenColors,
-      child: MaterialApp.router(
+    return MaterialApp.router(
         debugShowCheckedModeBanner: false,
         onGenerateTitle: (context) => AppStrings.of(context).appTitle,
         theme: selectedTheme,
@@ -195,7 +185,6 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
             ),
           );
         },
-      ),
-    );
+      );
   }
 }

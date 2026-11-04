@@ -51,9 +51,8 @@ class DayNumber extends StatelessWidget {
 
     if (!isToday) return content;
 
-    final diameter =
-        MediaQuery.textScalerOf(context).scale(todayFontSize) +
-            todayCircleExtra;
+    final diameter = MediaQuery.textScalerOf(context).scale(todayFontSize) +
+        todayCircleExtra;
     return Container(
       key: const ValueKey('calendar_today_circle'),
       width: diameter,

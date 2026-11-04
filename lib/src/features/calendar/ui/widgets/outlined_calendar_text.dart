@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 /// Текст с обводкой: читается поверх любой заливки ячейки.
 class OutlinedCalendarText extends StatelessWidget {
   const OutlinedCalendarText({super.key, required this.text});

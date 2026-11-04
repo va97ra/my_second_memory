@@ -46,7 +46,6 @@ void main() {
     expect(find.text('Начальный остаток'), findsNothing);
     expect(find.text('Freelance'), findsNothing);
     expect(find.byKey(const ValueKey('finance_summary_glass')), findsNothing);
-    expect(find.byType(ScreenGlassButton), findsNothing);
 
     final summary = find.byKey(const ValueKey('finance_summary_card'));
     final incomeButton = find.byKey(const ValueKey('finance_add_income'));
@@ -168,49 +167,6 @@ void main() {
     expect(surface.color, theme.colorScheme.surface);
     expect(option.style?.color, theme.colorScheme.onSurface);
   });
-
-  for (final style in [AppThemeStyle.cosmos, AppThemeStyle.cyberpunk]) {
-    testWidgets('${style.name} gives finance summary and actions thick glass',
-        (tester) async {
-      await _openFinance(
-        tester,
-        const Size(360, 800),
-        _FinanceRepository([]),
-        style: style,
-      );
-
-      expect(
-        find.byKey(const ValueKey('finance_summary_glass')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('finance_action_glass')),
-        findsNWidgets(2),
-      );
-      expect(find.byType(ScreenGlassButton), findsNWidgets(2));
-
-      final income = find.byKey(const ValueKey('finance_add_income'));
-      final scaleFinder = find.descendant(
-        of: income,
-        matching: find.byType(AnimatedScale),
-      );
-      final lampFinder = find.descendant(
-        of: income,
-        matching: find.byKey(const ValueKey('finance_action_lamp_Доход')),
-      );
-      final gesture = await tester.startGesture(tester.getCenter(income));
-      await tester.pump();
-
-      expect(tester.widget<AnimatedScale>(scaleFinder).scale, 0.965);
-      expect(tester.widget<AnimatedOpacity>(lampFinder).opacity, 1);
-
-      await gesture.cancel();
-      await tester.pumpAndSettle();
-      expect(tester.widget<AnimatedScale>(scaleFinder).scale, 1);
-      expect(tester.widget<AnimatedOpacity>(lampFinder).opacity, 0);
-      expect(tester.takeException(), isNull);
-    });
-  }
 
   for (final width in [320.0, 360.0, 600.0, 840.0]) {
     for (final scale in [1.0, 1.3, 2.0]) {

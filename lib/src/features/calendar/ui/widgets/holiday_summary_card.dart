@@ -41,7 +41,7 @@ class HolidaySummaryCard extends StatelessWidget {
                 children: [
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD97706).withValues(alpha: 0.16),
+                      color: AppPalette.amberDeep.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const SizedBox(
@@ -49,7 +49,7 @@ class HolidaySummaryCard extends StatelessWidget {
                       height: 38,
                       child: Icon(
                         Icons.celebration_rounded,
-                        color: Color(0xFFD97706),
+                        color: AppPalette.amberDeep,
                       ),
                     ),
                   ),

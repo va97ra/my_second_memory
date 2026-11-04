@@ -20,13 +20,13 @@ const double dayTimelineCascadeIndent = 18;
 const int _minutesInDay = 24 * 60;
 
 /// Минуты от полуночи → отступ сверху.
-double dayTimelineOffsetOf(int minutes) =>
-    minutes / 60 * dayTimelineHourHeight;
+double dayTimelineOffsetOf(int minutes) => minutes / 60 * dayTimelineHourHeight;
 
 /// Отступ сверху → минуты, прижатые к шагу шкалы.
 int dayTimelineMinutesAt(double offset) {
   final raw = offset / dayTimelineHourHeight * 60;
-  final snapped = (raw / dayTimelineStepMinutes).round() * dayTimelineStepMinutes;
+  final snapped =
+      (raw / dayTimelineStepMinutes).round() * dayTimelineStepMinutes;
   return snapped.clamp(0, _minutesInDay);
 }
 
@@ -100,6 +100,5 @@ String formatDayTimelineHour(int hour) =>
 String formatDayTimelineRange(int start, int end) =>
     '${_hhmm(start)} – ${_hhmm(end)}';
 
-String _hhmm(int minutes) =>
-    '${(minutes ~/ 60).toString().padLeft(2, '0')}:'
+String _hhmm(int minutes) => '${(minutes ~/ 60).toString().padLeft(2, '0')}:'
     '${(minutes % 60).toString().padLeft(2, '0')}';

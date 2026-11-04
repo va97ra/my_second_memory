@@ -4,13 +4,10 @@ import 'package:flutter/material.dart';
 import 'calendar_day_cell.dart';
 
 /// Цвет отметки сегодняшнего дня: рамка ячейки и кружок под числом.
-///
-/// Зелёный нарочно: красный в сетке заняли выходные, синий — шапки графиков
-/// и записи, и отметка этих цветов с ними сливалась.
-const calendarTodayGreen = Color(0xFF00A152);
-
 Color calendarTodayColor(BuildContext context) =>
-    ScreenVisuals.maybeOf(context)?.colors.today ?? calendarTodayGreen;
+    Theme.of(context).brightness == Brightness.dark
+        ? AppPalette.today
+        : AppPalette.todayOnLight;
 
 /// Бумага ячейки дня: заливка, рамка и тень.
 ///
@@ -22,7 +19,7 @@ class CalendarDayCellSurface {
     required this.isInVisibleMonth,
     required this.isToday,
     required this.hasItems,
-    this.screen,
+    required this.todayColor,
     this.dayOff = false,
     this.shortened = false,
   });
@@ -30,11 +27,12 @@ class CalendarDayCellSurface {
   final bool isInVisibleMonth;
   final bool isToday;
   final bool hasItems;
+
+  /// Цвет отметки сегодня. Приходит снаружи: ячейка лежит на листке светлой темы,
+  /// и своя тема ей не подскажет, на какой странице она лежит.
+  final Color todayColor;
   final bool dayOff;
   final bool shortened;
-
-  /// Значения экранной темы или null в блокноте.
-  final ScreenThemeColors? screen;
 
   bool get _ringsToday => isToday && isInVisibleMonth;
 
@@ -47,14 +45,12 @@ class CalendarDayCellSurface {
       // Сегодня отмечено рамкой и кружком под числом, бумага у него обычная:
       // подмес цвета давал мутное пятно.
       gradient: isInVisibleMonth
-          ? screen == null
-              ? palette.surfaceGradient(base: _paper(colors, palette))
-              : _glass(_paper(colors, palette))
+          ? palette.surfaceGradient(base: _paper(colors, palette))
           : null,
       borderRadius: BorderRadius.circular(CalendarDayCell.cornerRadius),
       border: Border.all(
         color: _ringsToday
-            ? calendarTodayColor(context)
+            ? todayColor
             : hasItems && isInVisibleMonth
                 ? colors.outline
                 : Colors.transparent,
@@ -64,26 +60,13 @@ class CalendarDayCellSurface {
     );
   }
 
-  /// Плитка дня — та же пластина стекла, что и панели: одно стекло на всё
-  /// приложение, чтобы сетка и панели не расходились между собой.
-  LinearGradient _glass(Color tile) =>
-      GlassSurface.gradient(screen!, tile, clearPlate: true);
-
   List<BoxShadow>? _shadow(BuildContext context, ColorScheme colors) {
-    final screen = this.screen;
     if (_ringsToday) {
       return [
         BoxShadow(
-          color: calendarTodayColor(context).withValues(alpha: 0.6),
+          color: todayColor.withValues(alpha: 0.6),
           blurRadius: 9,
         ),
-      ];
-    }
-    if (screen != null && isInVisibleMonth) {
-      // Пластина лежит на заднике, а не врезана в него: под ней тень в свою
-      // же толщину.
-      return [
-        ...GlassSurface.shadow(screen),
       ];
     }
     if (NotebookVisuals.maybeOf(context) == null) return null;

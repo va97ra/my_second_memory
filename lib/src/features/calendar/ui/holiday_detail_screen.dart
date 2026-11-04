@@ -58,7 +58,7 @@ class HolidayDetailScreen extends ConsumerWidget {
                         children: [
                           const Icon(
                             Icons.celebration_rounded,
-                            color: Color(0xFFD97706),
+                            color: AppPalette.amberDeep,
                           ),
                           const SizedBox(width: 9),
                           Expanded(

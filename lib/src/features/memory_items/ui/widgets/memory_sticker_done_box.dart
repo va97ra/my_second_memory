@@ -16,7 +16,7 @@ class MemoryStickerDoneBox extends StatelessWidget {
   static const boxSize = 20.0;
   static const _touchSize = 44.0;
   static const _edgeInset = 6.0;
-  static const _active = Color(0xFF12A150);
+  static const _active = AppPalette.success;
 
   final bool isDone;
   final VoidCallback onToggle;

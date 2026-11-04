@@ -49,7 +49,7 @@ class MemoryCardActionRail extends StatelessWidget {
                 style: notebookIconButtonStyle(
                   foregroundColor: item.isDone
                       ? memoryDoneColor
-                      : const Color(0xFF94A3B8),
+                      : AppPalette.muted,
                   shrinkTapTarget: true,
                 ),
               ),
@@ -67,7 +67,7 @@ class MemoryCardActionRail extends StatelessWidget {
                   size: 22,
                 ),
                 style: notebookIconButtonStyle(
-                  foregroundColor: const Color(0xFFB45309),
+                  foregroundColor: AppPalette.amberDeep,
                   shrinkTapTarget: true,
                 ),
               ),
@@ -83,7 +83,7 @@ class MemoryCardActionRail extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: item.isArchived
-                              ? const Color(0xFF92400E)
+                              ? AppPalette.amberDeep
                               : memoryDoneColor,
                           fontSize: 8,
                           fontWeight: FontWeight.w900,
