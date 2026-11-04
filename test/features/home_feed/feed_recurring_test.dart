@@ -44,6 +44,8 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('feed_filter')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Каждый месяц').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Каждый месяц').last);
     await tester.pumpAndSettle();
     expect(find.text('Ежемесячный информер'), findsOneWidget);
@@ -51,6 +53,8 @@ void main() {
     expect(find.text('Фокус сегодня'), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('feed_filter')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Каждый год').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Каждый год').last);
     await tester.pumpAndSettle();

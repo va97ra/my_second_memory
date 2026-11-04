@@ -16,6 +16,7 @@ class FeedHeader extends StatelessWidget {
     required this.title,
     required this.periodLabel,
     required this.filter,
+    required this.filters,
     required this.onGoToToday,
     required this.onFilterSelected,
     required this.onPickDate,
@@ -41,6 +42,9 @@ class FeedHeader extends StatelessWidget {
   final String title;
   final String? periodLabel;
   final FeedFilter filter;
+
+  /// Какие фильтры предлагает эта страница.
+  final List<FeedFilter> filters;
 
   final VoidCallback? onGoToToday;
   final ValueChanged<FeedFilter> onFilterSelected;
@@ -103,14 +107,7 @@ class FeedHeader extends StatelessWidget {
               MemoryFilterButton(
                 selected: filter,
                 onSelected: onFilterSelected,
-                // Записки не повторяются: у страницы без периода фильтров
-                // повторов нет.
-                filters: [
-                  for (final filter in FeedFilter.values)
-                    if (periodLabel != null ||
-                        filter.recurringFrequency == null)
-                      filter,
-                ],
+                filters: filters,
               ),
             ],
           ),

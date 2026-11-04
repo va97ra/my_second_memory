@@ -45,9 +45,10 @@ class FeedPage extends ConsumerWidget {
           onToggleSearch: feed.toggleSearch,
           searchQuery: view.searchQuery,
           onSearch: feed.search,
-          title: strings.dayFeed,
+          title: view.filterSpansAllDates ? strings.feed : strings.dayFeed,
           periodLabel: feedPeriodLabel(context, view),
           filter: view.filter,
+          filters: FeedFilter.values,
           onGoToToday: onGoToToday,
           onFilterSelected: onFilterSelected,
           onPickDate: dated ? onPickDate : null,
@@ -56,7 +57,7 @@ class FeedPage extends ConsumerWidget {
         ),
         Expanded(
           child: FeedBody(
-            hasQuery: view.hasQuery,
+            allDates: view.allDates,
             filter: view.filter,
             layout: layout,
             loadState: loadState,

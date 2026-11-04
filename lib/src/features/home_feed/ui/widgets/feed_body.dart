@@ -12,14 +12,14 @@ import 'memory_sliver_list.dart';
 class FeedBody extends StatelessWidget {
   const FeedBody({
     super.key,
-    required this.hasQuery,
+    required this.allDates,
     required this.filter,
     required this.layout,
     required this.loadState,
   });
 
-  /// Есть ли в строке поиска запрос.
-  final bool hasQuery;
+  /// Показаны ли записи всех дат, а не одной страницы.
+  final bool allDates;
   final FeedFilter filter;
   final FeedLayout layout;
   final AsyncValue<void> loadState;
@@ -32,8 +32,6 @@ class FeedBody extends StatelessWidget {
     if (loadState.hasError) {
       return Center(child: Text(AppStrings.of(context).loadFailed));
     }
-    // Запрос раскрывает ленту на все даты, и дни разделяются подписями.
-    final allDates = hasQuery;
 
     return KeyedSubtree(
       key: ValueKey(
@@ -46,9 +44,9 @@ class FeedBody extends StatelessWidget {
         // закрывает список.
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: [
-          // Пустая лента молчит, а пустой поиск — нет: иначе не понять,
+          // Пустой день молчит, а пустой список всех дат — нет: иначе не понять,
           // ничего не нашлось или список ещё не появился.
-          if (hasQuery && layout.groups.isEmpty)
+          if (allDates && layout.itemIds.isEmpty)
             SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
@@ -66,6 +64,17 @@ class FeedBody extends StatelessWidget {
             MemorySliverList(
               itemIds: group.itemIds,
               showDate: filter.recurringFrequency == RecurrenceFrequency.yearly,
+            ),
+          ],
+          if (layout.doneItemIds.isNotEmpty) ...[
+            SliverToBoxAdapter(
+              child: FeedGroupDivider(
+                label: AppStrings.of(context).completedRecords,
+              ),
+            ),
+            MemorySliverList(
+              itemIds: layout.doneItemIds,
+              showDate: allDates || filter.recurringFrequency != null,
             ),
           ],
           const SliverPadding(padding: EdgeInsets.only(bottom: 24)),

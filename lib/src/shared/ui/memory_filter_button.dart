@@ -63,6 +63,7 @@ class MemoryFilterButton extends StatelessWidget {
     if (type != null) return type.label(locale);
 
     return switch (filter) {
+      FeedFilter.day => strings.oneDay,
       FeedFilter.all => strings.allRecords,
       FeedFilter.active => strings.activeRecords,
       FeedFilter.done => strings.completedRecords,
@@ -79,6 +80,7 @@ class MemoryFilterButton extends StatelessWidget {
     if (type != null) return memoryTypeIcon(type);
 
     return switch (filter) {
+      FeedFilter.day => Icons.today_rounded,
       FeedFilter.all => Icons.view_agenda_rounded,
       FeedFilter.active => Icons.radio_button_unchecked_rounded,
       FeedFilter.done => Icons.task_alt_rounded,

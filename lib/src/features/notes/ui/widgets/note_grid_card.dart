@@ -10,15 +10,17 @@ import '../../../../shared/ui/memory_card/memory_card_paper.dart';
 import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
 import '../../../../shared/ui/styled_text_span.dart';
 import '../../../memory_items/memory_items.dart';
+import 'note_card_done_box.dart';
+import 'note_card_strip.dart';
 
-/// Карточка записки: ровный квадрат с полосой вида сверху.
+/// Карточка записки: ровный квадрат с полосой вида сверху и квадратиком
+/// выполнения в углу.
 ///
 /// Нажатие открывает редактор, долгое нажатие — меню записки. Подписка идёт
 /// по идентификатору: правка одной записки перестраивает одну карточку.
 class NoteGridCard extends ConsumerWidget {
   const NoteGridCard({super.key, required this.itemId});
 
-  static const _stripHeight = 6.0;
   static const _radius = BorderRadius.all(Radius.circular(8));
 
   final String itemId;
@@ -51,15 +53,28 @@ class NoteGridCard extends ConsumerWidget {
             pressedOffset: 0,
             child: Ink(
               decoration: MemoryCardPaper.surface(_radius),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  ColoredBox(
-                    key: ValueKey('note_card_strip_$itemId'),
-                    color: accent,
-                    child: const SizedBox(height: _stripHeight),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      NoteCardStrip(
+                        key: ValueKey('note_card_strip_$itemId'),
+                        item: item,
+                      ),
+                      Expanded(child: _NoteCardContent(item: item)),
+                    ],
                   ),
-                  Expanded(child: _NoteCardContent(item: item)),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: NoteCardDoneBox(
+                      key: ValueKey('note_card_done_$itemId'),
+                      isDone: item.isDone,
+                      onToggle: () => toggleMemoryDone(ref, item),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -81,15 +96,6 @@ class NoteGridCard extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              key: ValueKey('note_card_done_$itemId'),
-              leading: const Icon(Icons.check_circle_rounded),
-              title: Text(item.isDone ? strings.markActive : strings.markDone),
-              onTap: () {
-                Navigator.of(sheet).pop();
-                toggleMemoryDone(ref, item);
-              },
-            ),
             ListTile(
               key: ValueKey('note_card_archive_$itemId'),
               leading: const Icon(Icons.archive_rounded),
@@ -148,11 +154,19 @@ class _NoteCardContent extends StatelessWidget {
               ),
             ),
           ),
-          if (hasAudio || item.imagePaths.isNotEmpty)
-            MemoryCardAttachmentIcons(
-              imageCount: item.imagePaths.length,
-              hasAudio: hasAudio,
-            ),
+          // Ряд вложений и место под квадратик выполнения в углу.
+          SizedBox(
+            height: NoteCardDoneBox.boxSize,
+            child: hasAudio || item.imagePaths.isNotEmpty
+                ? Align(
+                    alignment: Alignment.centerLeft,
+                    child: MemoryCardAttachmentIcons(
+                      imageCount: item.imagePaths.length,
+                      hasAudio: hasAudio,
+                    ),
+                  )
+                : null,
+          ),
         ],
       ),
     );

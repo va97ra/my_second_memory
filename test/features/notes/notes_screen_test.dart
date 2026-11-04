@@ -89,6 +89,49 @@ void main() {
     expect(tester.widget<Material>(card('n1')).shape, isNot(isA<TornPaperShapeBorder>()));
   });
 
+  testWidgets('полоса подписывает вид и дату, квадратик отмечает выполненной',
+      (tester) async {
+    await open(tester, const Size(360, 800));
+
+    final strip = find.byKey(const ValueKey('note_card_strip_n1'));
+    final label = find.descendant(of: strip, matching: find.byType(Text));
+    expect(tester.widget<Text>(label.first).data, startsWith('Заметка '));
+    expect(find.descendant(of: strip, matching: find.text('Выполнено')),
+        findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('note_card_done_n1')));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: strip, matching: find.text('Выполнено')),
+        findsOneWidget);
+    // Нажатие на квадратик не открывает редактор.
+    expect(find.byKey(const ValueKey('record_editor_text')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('note_card_done_n1')));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: strip, matching: find.text('Выполнено')),
+        findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('выполненная записка уходит вниз, под полосу', (tester) async {
+    await open(tester, const Size(360, 800));
+    expect(find.byKey(const ValueKey('notes_done_divider')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('note_card_done_n1')));
+    await tester.pumpAndSettle();
+
+    final divider = tester.getRect(
+      find.byKey(const ValueKey('notes_done_divider')),
+    );
+    expect(
+      tester.getRect(card('n1')).top,
+      greaterThanOrEqualTo(divider.bottom),
+    );
+    expect(tester.getRect(card('n2')).bottom, lessThan(divider.top));
+    expect(find.text('Выполненные'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('карточка открывает редактор той же записи', (tester) async {
     await open(tester, const Size(360, 800));
 
@@ -155,6 +198,21 @@ void main() {
 
     expect(card('n1'), findsNothing);
     expect(card('n2'), findsOneWidget);
+  });
+
+  testWidgets('в фильтре только виды, которые есть среди записок',
+      (tester) async {
+    await open(tester, const Size(360, 800));
+
+    await tester.tap(find.byKey(const ValueKey('feed_filter')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Все записи'), findsOneWidget);
+    expect(find.text('Выполненные'), findsOneWidget);
+    expect(find.text('Заметка'), findsOneWidget);
+    expect(find.text('День рождения'), findsNothing);
+    expect(find.text('Платёж'), findsNothing);
+    expect(find.text('Каждый год'), findsNothing);
   });
 
   testWidgets('в ленте записок нет', (tester) async {

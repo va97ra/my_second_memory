@@ -4,11 +4,52 @@ import 'package:ezhednevnik_v2/src/features/home_feed/state/feed_providers.dart'
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('«Все записи» и фильтры по виду показывают все даты', () {
+    final day = FeedViewState(
+      anchorDate: DateTime(2026, 8, 22),
+      filter: FeedFilter.day,
+    );
+    expect(day.allDates, isFalse);
+    for (final filter in [
+      FeedFilter.all,
+      FeedFilter.done,
+      FeedFilter.task,
+    ]) {
+      final state = day.copyWith(filter: filter);
+      expect(state.allDates, isTrue);
+      expect(FeedPeriodQuery.fromState(state).start, isNull);
+    }
+    expect(day.copyWith(filter: FeedFilter.recurringMonthly).allDates, isFalse);
+  });
+
+  test('со всех дат «сегодня» и выбор дня возвращают на страницу дня', () {
+    final controller = FeedViewController(
+      initialState: FeedViewState(
+        anchorDate: DateTime(2026, 8, 22),
+        filter: FeedFilter.all,
+      ),
+    );
+    final now = DateTime.now();
+    expect(controller.state.showsPeriodOf(now), isFalse);
+
+    controller.movePeriod(1);
+    expect(controller.state.anchorDate, DateTime(2026, 8, 22));
+
+    controller.goToToday();
+    expect(controller.state.filter, FeedFilter.day);
+    expect(controller.state.showsPeriodOf(now), isTrue);
+
+    controller.selectFilter(FeedFilter.all);
+    controller.selectDate(DateTime(2026, 12, 5));
+    expect(controller.state.filter, FeedFilter.day);
+    expect(controller.state.anchorDate, DateTime(2026, 12, 5));
+  });
+
   test('day feed shows exactly the anchored day', () {
     final query = FeedPeriodQuery.fromState(
       FeedViewState(
         anchorDate: DateTime(2028, 2, 20),
-        filter: FeedFilter.all,
+        filter: FeedFilter.day,
       ),
     );
 
@@ -40,7 +81,7 @@ void main() {
     final controller = FeedViewController(
       initialState: FeedViewState(
         anchorDate: DateTime(2028, 1, 31),
-        filter: FeedFilter.all,
+        filter: FeedFilter.day,
       ),
     );
 
@@ -73,7 +114,7 @@ void main() {
     final controller = FeedViewController(
       initialState: FeedViewState(
         anchorDate: DateTime(2026, 10, 1),
-        filter: FeedFilter.all,
+        filter: FeedFilter.day,
       ),
     );
 
@@ -94,7 +135,7 @@ void main() {
     final controller = FeedViewController(
       initialState: FeedViewState(
         anchorDate: DateTime(2026, 10, 1),
-        filter: FeedFilter.all,
+        filter: FeedFilter.day,
         searching: true,
         searchQuery: 'счётчик',
       ),

@@ -33,6 +33,7 @@ class NotesScreen extends ConsumerWidget {
           title: strings.notes,
           periodLabel: null,
           filter: view.filter,
+          filters: ref.watch(notesFiltersProvider),
           onGoToToday: null,
           onFilterSelected: controller.selectFilter,
           onPickDate: null,
@@ -49,7 +50,7 @@ class NotesScreen extends ConsumerWidget {
                 Center(child: Text(strings.loadFailed))
               else
                 NotesGrid(
-                  itemIds: ref.watch(notesIdsProvider),
+                  notes: ref.watch(notesIdsProvider),
                   hasQuery: view.hasQuery,
                 ),
               Positioned(

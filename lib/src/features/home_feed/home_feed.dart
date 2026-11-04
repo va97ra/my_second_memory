@@ -4,5 +4,6 @@
 library;
 
 export 'ui/home_feed_screen.dart';
+export 'ui/widgets/feed_group_divider.dart';
 export 'ui/widgets/feed_header.dart';
 export 'ui/widgets/feed_page_shell.dart';

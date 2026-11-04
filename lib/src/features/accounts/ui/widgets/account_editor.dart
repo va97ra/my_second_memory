@@ -58,21 +58,22 @@ class _AccountEditorState extends State<AccountEditor> {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
 
-    // Высота листа считается от свободного места, а не от всего экрана:
-    // с поднятой клавиатурой доля в 0.86 не помещалась и лист вылезал на
-    // несколько пикселей.
+    // Высота листа постоянная: он стоит у нижнего края, клавиатура ложится
+    // поверх него, и место под неё отводит отступ ниже. Отступ не анимируется:
+    // система сама двигает клавиатуру по кадрам, и вторая анимация от неё
+    // отставала, а лист дёргался.
     final media = MediaQuery.of(context);
-    final room =
-        media.size.height - media.viewInsets.bottom - media.padding.top;
     return SizedBox(
-      height: math.min(media.size.height * 0.86, room),
-      child: AnimatedPadding(
-        duration: const Duration(milliseconds: 180),
+      height: math.min(
+        media.size.height * 0.92,
+        media.size.height - media.padding.top,
+      ),
+      child: Padding(
         padding: EdgeInsets.fromLTRB(
           16,
           0,
           16,
-          14 + MediaQuery.viewInsetsOf(context).bottom,
+          14 + media.viewInsets.bottom,
         ),
         child: Column(
           children: [
@@ -84,8 +85,6 @@ class _AccountEditorState extends State<AccountEditor> {
             const SizedBox(height: 14),
             Expanded(
               child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
                 child: AccountEditorFields(
                   service: _service,
                   login: _login,

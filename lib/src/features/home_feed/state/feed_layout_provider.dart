@@ -49,13 +49,21 @@ class FeedPeriodQuery {
 
 @immutable
 class FeedLayout {
-  const FeedLayout({required this.query, required this.groups});
+  const FeedLayout({
+    required this.query,
+    required this.groups,
+    this.doneItemIds = const [],
+  });
 
   final FeedPeriodQuery query;
   final List<FeedGroupLayout> groups;
 
+  /// Выполненные записи: идут одним списком под полосой, ниже всех групп.
+  final List<String> doneItemIds;
+
   List<String> get itemIds => [
         for (final group in groups) ...group.itemIds,
+        ...doneItemIds,
       ];
 }
 
@@ -76,7 +84,9 @@ final feedLayoutProvider = Provider<FeedLayout>((ref) {
   final end = query.end;
   final source = <MemoryItem>[];
   if (state.allDates) {
-    source.addAll(ref.watch(memoryItemsControllerProvider));
+    source
+      ..addAll(ref.watch(memoryItemsControllerProvider))
+      ..addAll(ref.watch(nextRecurrenceItemsProvider));
   } else {
     final itemsByDate = ref.watch(memoryItemsByDateProvider);
     for (var day = start!;
@@ -99,9 +109,12 @@ final feedLayoutProvider = Provider<FeedLayout>((ref) {
     byId[item.id] = item;
   }
 
-  final items = byId.values.toList()..sort(_compareDatedItems);
+  final items = splitDoneItems(
+    byId.values.toList()..sort(_compareDatedItems),
+    state.filter,
+  );
   final grouped = <DateTime, List<String>>{};
-  for (final item in items) {
+  for (final item in items.active) {
     final period = !state.allDates &&
             state.filter.recurringFrequency == RecurrenceFrequency.yearly
         ? DateTime(item.memoryDate.year, item.memoryDate.month)
@@ -115,6 +128,7 @@ final feedLayoutProvider = Provider<FeedLayout>((ref) {
       for (final entry in grouped.entries)
         FeedGroupLayout(period: entry.key, itemIds: entry.value),
     ],
+    doneItemIds: [for (final item in items.done) item.id],
   );
 });
 

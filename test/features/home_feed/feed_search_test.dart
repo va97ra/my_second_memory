@@ -69,7 +69,7 @@ void main() {
     // Архивное не находится: архив скрывает запись из ленты.
     await tester.enterText(field, 'замена');
     await tester.pumpAndSettle();
-    expect(c.read(feedLayoutProvider).itemIds, ['meter', 'socket']);
+    expect(c.read(feedLayoutProvider).itemIds, ['socket', 'meter']);
 
     await tester.enterText(field, 'гагарина');
     await tester.pumpAndSettle();

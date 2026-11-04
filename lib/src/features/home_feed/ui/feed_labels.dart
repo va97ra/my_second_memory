@@ -1,3 +1,4 @@
+import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +12,7 @@ import '../state/feed_providers.dart';
 
 /// Период, лежащий на странице. У записок периода нет.
 String feedPeriodLabel(BuildContext context, FeedViewState view) {
+  if (view.allDates) return AppStrings.of(context).allDates;
   final locale = Localizations.localeOf(context).languageCode;
   final formatted = switch (view.filter.recurringFrequency) {
     null => DateFormat.yMMMMEEEEd(locale).format(view.anchorDate),

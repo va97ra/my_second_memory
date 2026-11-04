@@ -105,6 +105,29 @@ final recurrenceItemsForRangeProvider =
       );
 });
 
+/// Ближайшее вхождение каждого повтора, по одному на серию. Вхождений у
+/// повтора бесконечно много: в списке всех дат он лежит одной строкой.
+/// Самый редкий повтор случается раз в год, поэтому смотрим на год вперёд.
+final nextRecurrenceItemsProvider = Provider<List<MemoryItem>>((ref) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final items = ref.watch(
+    recurrenceItemsForRangeProvider(
+      RecurrenceRange(today, DateTime(today.year + 1, today.month, today.day)),
+    ),
+  );
+  final nearest = <String, MemoryItem>{};
+  for (final item in items) {
+    final series = item.seriesId;
+    if (series == null) continue;
+    final known = nearest[series];
+    if (known == null || item.memoryDate.isBefore(known.memoryDate)) {
+      nearest[series] = item;
+    }
+  }
+  return nearest.values.toList(growable: false);
+});
+
 final recurrenceItemByIdProvider =
     Provider.family<MemoryItem?, String>((ref, id) {
   return ref.watch(recurrenceProjectionServiceProvider).itemById(

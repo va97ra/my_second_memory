@@ -31,6 +31,8 @@ class AppStrings {
   String get nextPeriod => isRu ? 'Следующий период' : 'Next period';
   String get backToToday => isRu ? 'Вернуться к сегодня' : 'Back to today';
   String get allRecords => isRu ? 'Все записи' : 'All records';
+  String get oneDay => isRu ? 'День' : 'Day';
+  String get allDates => isRu ? 'Все даты' : 'All dates';
   String get activeRecords => isRu ? 'Активные' : 'Active';
   String get completedRecords => isRu ? 'Выполненные' : 'Done';
   String get today => isRu ? 'Сегодня' : 'Today';
@@ -196,11 +198,10 @@ class AppStrings {
       isRu ? 'Что здесь можно' : 'What you can do here';
 
   String get feedPageHint => isRu
-      ? 'Записи собраны по дням выбранного периода. Стрелки листают период, '
-          'лупа ищет записи, а фильтр оставляет только нужные.'
-      : 'Records are grouped by day within the chosen period. The arrows move '
-          'between periods, the magnifier finds records, and the filter '
-          'narrows the list.';
+      ? 'Лента открывается на одном дне, стрелки листают дни. «Все записи» в '
+          'фильтре показывают все даты, лупа ищет записи.'
+      : 'The feed opens on one day and the arrows move between days. All '
+          'records in the filter covers all dates, the magnifier finds records.';
 
   String get dayPageHint => isRu
       ? 'Нажмите свободное время на шкале: встанет рамка, её тянут за кружки '
@@ -308,16 +309,24 @@ class AppStrings {
   String get note => isRu ? 'Заметка' : 'Note';
   String get copyPassword => isRu ? 'Скопировать пароль' : 'Copy password';
   String get passwordCopied => isRu ? 'Пароль скопирован' : 'Password copied';
+  String get copyLogin => isRu ? 'Скопировать логин' : 'Copy login';
+  String get loginCopied => isRu ? 'Логин скопирован' : 'Login copied';
+  String get copyEmail => isRu ? 'Скопировать почту' : 'Copy email';
+  String get emailCopied => isRu ? 'Почта скопирована' : 'Email copied';
+  String get copyWebsite => isRu ? 'Скопировать сайт' : 'Copy website';
+  String get websiteCopied => isRu ? 'Сайт скопирован' : 'Website copied';
+  String get copyNote => isRu ? 'Скопировать заметку' : 'Copy note';
+  String get noteCopied => isRu ? 'Заметка скопирована' : 'Note copied';
   String get add => isRu ? 'Добавить' : 'Add';
   String get addRecord => isRu ? 'Добавить запись' : 'Add record';
   String get notes => isRu ? 'Записки' : 'Notes';
   String get noteCard => isRu ? 'Записка' : 'Note';
   String get newNote => isRu ? 'Новая записка' : 'New note';
   String get notesPageHint => isRu
-      ? 'Записки без даты. Плюс внизу заводит новую, нажатие открывает её, '
-          'долгое нажатие — меню: отметить или убрать в архив.'
-      : 'Notes without a date. The plus adds one, a tap opens it, a long '
-          'press shows its menu.';
+      ? 'Плюс внизу заводит новую записку, нажатие открывает её. Квадратик в '
+          'углу отмечает выполненной, долгое нажатие убирает в архив.'
+      : 'The plus adds a note and a tap opens it. The box in the corner marks '
+          'it done, a long press moves it to the archive.';
   String get people => isRu ? 'Люди' : 'People';
   String get projects => isRu ? 'Проекты' : 'Projects';
   String get memoryArchive => isRu ? 'Архив памяти' : 'Memory archive';

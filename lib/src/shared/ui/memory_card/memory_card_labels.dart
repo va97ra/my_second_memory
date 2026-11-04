@@ -15,6 +15,14 @@ String? memoryDoneLabel(BuildContext context, MemoryItem item) {
       : 'Paid';
 }
 
+/// Когда запись создана: день и месяц, а у прошлых лет ещё и год.
+String memoryCreatedLabel(MemoryItem item) {
+  final created = item.createdAt;
+  return DateFormat(
+    created.year == DateTime.now().year ? 'dd.MM' : 'dd.MM.yy',
+  ).format(created);
+}
+
 /// Сумма платежа в рублях, без копеек.
 String memoryAmountLabel(int amountMinor) {
   final roubles = NumberFormat.decimalPattern('ru').format(amountMinor ~/ 100);

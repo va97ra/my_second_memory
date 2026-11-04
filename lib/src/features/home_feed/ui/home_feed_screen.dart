@@ -54,7 +54,7 @@ class _HomeFeedScreenState extends ConsumerState<HomeFeedScreen> {
     // Страницу листают пальцем, а не только стрелками.
     return PageSwipeArea(
       key: const ValueKey('feed_period_swipe_area'),
-      onHorizontalSwipe: view.searching ? null : _movePeriod,
+      onHorizontalSwipe: view.searching || view.allDates ? null : _movePeriod,
       child: sheet,
     );
   }

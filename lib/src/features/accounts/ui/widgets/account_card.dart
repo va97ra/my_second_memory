@@ -2,28 +2,35 @@ import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../state/accounts_controller.dart';
 import 'account_info_line.dart';
 import 'account_note_box.dart';
 import 'account_password_row.dart';
 import 'service_avatar.dart';
 
 /// Карточка аккаунта: сервис, входы, скрытый пароль и заметка.
-class AccountCard extends StatelessWidget {
+///
+/// Получает идентификатор и читает аккаунт сама, из общего хранилища.
+class AccountCard extends ConsumerWidget {
   const AccountCard({
     super.key,
-    required this.account,
+    required this.accountId,
     required this.onEdit,
     required this.onDelete,
   });
 
-  final AccountItem account;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final String accountId;
+  final ValueChanged<AccountItem> onEdit;
+  final ValueChanged<AccountItem> onDelete;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final account = ref.watch(accountByIdProvider(accountId));
+    if (account == null) return const SizedBox.shrink();
     final colors = Theme.of(context).colorScheme;
+    final strings = AppStrings.of(context);
 
     final radius = BorderRadius.circular(8);
     return Padding(
@@ -43,18 +50,22 @@ class AccountCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _header(context),
+              _header(context, account),
               // Пустое поле не занимает строку: у аккаунта их шесть, и
               // заполняют обычно два-три.
               if (account.login.isNotEmpty)
                 AccountInfoLine(
                   icon: Icons.person_rounded,
                   text: account.login,
+                  copyTooltip: strings.copyLogin,
+                  copiedMessage: strings.loginCopied,
                 ),
               if (account.email.isNotEmpty)
                 AccountInfoLine(
                   icon: Icons.alternate_email_rounded,
                   text: account.email,
+                  copyTooltip: strings.copyEmail,
+                  copiedMessage: strings.emailCopied,
                 ),
               const SizedBox(height: 8),
               AccountPasswordRow(password: account.password),
@@ -62,6 +73,8 @@ class AccountCard extends StatelessWidget {
                 AccountInfoLine(
                   icon: Icons.language_rounded,
                   text: account.website,
+                  copyTooltip: strings.copyWebsite,
+                  copiedMessage: strings.websiteCopied,
                 ),
               if (account.note.isNotEmpty) ...[
                 const SizedBox(height: 10),
@@ -74,7 +87,7 @@ class AccountCard extends StatelessWidget {
     );
   }
 
-  Widget _header(BuildContext context) {
+  Widget _header(BuildContext context, AccountItem account) {
     final strings = AppStrings.of(context);
 
     return Row(
@@ -92,12 +105,12 @@ class AccountCard extends StatelessWidget {
         ),
         IconButton(
           tooltip: strings.editAccount,
-          onPressed: onEdit,
+          onPressed: () => onEdit(account),
           icon: const Icon(Icons.edit_rounded),
         ),
         IconButton(
           tooltip: strings.delete,
-          onPressed: onDelete,
+          onPressed: () => onDelete(account),
           icon: const Icon(Icons.delete_rounded),
         ),
       ],

@@ -1,7 +1,8 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+import 'account_copy_button.dart';
 
 /// Пароль аккаунта: скрыт точками, показывается по кнопке и копируется.
 ///
@@ -55,22 +56,14 @@ class _AccountPasswordRowState extends State<AccountPasswordRow> {
                     : Icons.visibility_rounded,
               ),
             ),
-            IconButton(
+            AccountCopyButton(
+              text: widget.password,
               tooltip: strings.copyPassword,
-              onPressed: _copy,
-              icon: const Icon(Icons.content_copy_rounded, size: 20),
+              copiedMessage: strings.passwordCopied,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _copy() async {
-    await Clipboard.setData(ClipboardData(text: widget.password));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppStrings.of(context).passwordCopied)),
     );
   }
 }

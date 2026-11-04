@@ -32,6 +32,18 @@ final accountsControllerProvider =
   );
 });
 
+/// Один аккаунт по идентификатору: правка другого его карточку не трогает.
+final accountByIdProvider = Provider.family<AccountItem?, String>((ref, id) {
+  return ref.watch(
+    accountsControllerProvider.select((accounts) {
+      for (final account in accounts) {
+        if (account.id == id) return account;
+      }
+      return null;
+    }),
+  );
+});
+
 class AccountsController extends StateNotifier<List<AccountItem>> {
   AccountsController(this._repository, [this._sync]) : super(const []) {
     _loadFuture = _load();

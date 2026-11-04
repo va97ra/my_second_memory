@@ -154,7 +154,6 @@ class NotebookPageSurface extends StatelessWidget {
           opacity: 0.62,
         ),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFB97742)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x55000000),

@@ -3,6 +3,8 @@ import '../recurrence/recurrence_series.dart';
 import '../memory/memory_type.dart';
 
 enum FeedFilter {
+  /// Записи одного открытого дня. С него лента и открывается.
+  day,
   all,
   active,
   done,
@@ -30,6 +32,10 @@ enum FeedFilter {
         FeedFilter.recurringYearly => RecurrenceFrequency.yearly,
         _ => null,
       };
+
+  /// Привязан ли фильтр к периоду на странице. Все остальные фильтры
+  /// показывают записи всех дат: «Все записи» значит все, а не все за день.
+  bool get isPeriodBound => this == day || recurringFrequency != null;
 
   /// Вид записи, который отбирает фильтр, или null, если фильтр отбирает не по
   /// виду. Отсюда берут и подпись, и значок: список видов один на всех.
@@ -65,7 +71,7 @@ RecurrenceFrequency? recurrenceFrequencyOf(MemoryItem item) {
 
 bool matchesFeedFilter(MemoryItem item, FeedFilter filter) {
   return switch (filter) {
-    FeedFilter.all => true,
+    FeedFilter.day || FeedFilter.all => true,
     FeedFilter.active => !item.isDone,
     FeedFilter.done => item.isDone,
     FeedFilter.recurringMonthly || FeedFilter.recurringYearly =>
@@ -74,6 +80,24 @@ bool matchesFeedFilter(MemoryItem item, FeedFilter filter) {
     // фильтром стоит, знает сам фильтр.
     _ => item.type == filter.memoryType,
   };
+}
+
+/// Делит записи на те, что в работе, и выполненные: выполненные уходят вниз,
+/// под полосу. Порядок внутри каждой части не меняется. В фильтре выполненных
+/// делить нечего, они все идут обычным списком.
+({List<MemoryItem> active, List<MemoryItem> done}) splitDoneItems(
+  Iterable<MemoryItem> items,
+  FeedFilter filter,
+) {
+  if (filter == FeedFilter.done) {
+    return (active: items.toList(growable: false), done: const []);
+  }
+  final active = <MemoryItem>[];
+  final done = <MemoryItem>[];
+  for (final item in items) {
+    (item.isDone ? done : active).add(item);
+  }
+  return (active: active, done: done);
 }
 
 bool isSameDay(DateTime left, DateTime right) {

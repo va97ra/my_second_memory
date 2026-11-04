@@ -35,7 +35,6 @@ class NotebookFeedBook extends StatelessWidget {
                 notebook.paper,
               ),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0x557A4A22)),
             ),
           ),
         ),
@@ -49,7 +48,6 @@ class NotebookFeedBook extends StatelessWidget {
             decoration: BoxDecoration(
               color: notebook.paper,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0x667A4A22)),
             ),
           ),
         ),

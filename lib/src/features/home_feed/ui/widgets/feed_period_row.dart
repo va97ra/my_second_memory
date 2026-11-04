@@ -24,13 +24,18 @@ class FeedPeriodRow extends StatelessWidget {
 
     return Row(
       children: [
-        IconButton(
-          key: const ValueKey('feed_previous_period'),
-          tooltip: strings.previousPeriod,
-          onPressed: onPrevious,
-          icon: const Icon(Icons.chevron_left_rounded, size: 24),
-          style: notebookIconButtonStyle(),
-        ),
+        // Листать нечего — стрелки нет, а не нажимается впустую. Место за ней
+        // остаётся: подпись стоит посередине.
+        if (onPrevious == null)
+          const SizedBox.square(dimension: notebookIconButtonSize)
+        else
+          IconButton(
+            key: const ValueKey('feed_previous_period'),
+            tooltip: strings.previousPeriod,
+            onPressed: onPrevious,
+            icon: const Icon(Icons.chevron_left_rounded, size: 24),
+            style: notebookIconButtonStyle(),
+          ),
         Expanded(
           // Свой прозрачный материал: без него волна нажатия уходит
           // материалу `Scaffold` и рисуется поверх задника.
@@ -56,13 +61,16 @@ class FeedPeriodRow extends StatelessWidget {
             ),
           ),
         ),
-        IconButton(
-          key: const ValueKey('feed_next_period'),
-          tooltip: strings.nextPeriod,
-          onPressed: onNext,
-          icon: const Icon(Icons.chevron_right_rounded, size: 24),
-          style: notebookIconButtonStyle(),
-        ),
+        if (onNext == null)
+          const SizedBox.square(dimension: notebookIconButtonSize)
+        else
+          IconButton(
+            key: const ValueKey('feed_next_period'),
+            tooltip: strings.nextPeriod,
+            onPressed: onNext,
+            icon: const Icon(Icons.chevron_right_rounded, size: 24),
+            style: notebookIconButtonStyle(),
+          ),
       ],
     );
   }

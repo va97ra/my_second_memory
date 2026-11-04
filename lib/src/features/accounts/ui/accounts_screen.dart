@@ -35,14 +35,11 @@ class AccountsScreen extends ConsumerWidget {
             ),
             SliverList.builder(
               itemCount: accounts.length,
-              itemBuilder: (context, index) {
-                final account = accounts[index];
-                return AccountCard(
-                  account: account,
-                  onEdit: () => _showAccountEditor(context, ref, account),
-                  onDelete: () => _delete(context, ref, account),
-                );
-              },
+              itemBuilder: (context, index) => AccountCard(
+                accountId: accounts[index].id,
+                onEdit: (account) => _showAccountEditor(context, ref, account),
+                onDelete: (account) => _delete(context, ref, account),
+              ),
             ),
             const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
           ],
