@@ -27,6 +27,8 @@ void main() {
       tester.getCenter(find.byKey(const ValueKey('tile'))),
     );
     await tester.pump();
+    // Сжатие начинается после короткой паузы: так видно, не листают ли.
+    await tester.pump(const Duration(milliseconds: 60));
     await tester.pump(const Duration(milliseconds: 60));
     expect(scale(tester), lessThan(1));
 

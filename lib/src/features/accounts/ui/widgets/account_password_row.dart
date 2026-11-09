@@ -5,7 +5,7 @@ import 'account_field_icons.dart';
 import 'account_info_line.dart';
 import 'account_row_button.dart';
 
-/// Пароль аккаунта: скрыт точками, показывается по кнопке и копируется.
+/// Пароль на карточке аккаунта: скрыт точками, показывается по кнопке.
 ///
 /// Точек ровно столько, сколько знаков в пароле: по ним видно, что пароль
 /// сохранён и какой он длины.
@@ -27,14 +27,10 @@ class _AccountPasswordRowState extends State<AccountPasswordRow> {
 
     return AccountInfoLine(
       icon: AccountFieldIcons.password,
-      text: widget.password,
-      shownText: _visible ? null : '•' * widget.password.length,
-      copyTooltip: strings.copyPassword,
-      copiedMessage: strings.passwordCopied,
+      text: _visible ? widget.password : '•' * widget.password.length,
       action: AccountRowButton(
-        icon: _visible
-            ? Icons.visibility_off_rounded
-            : Icons.visibility_rounded,
+        icon:
+            _visible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
         tooltip: strings.password,
         onPressed: () => setState(() => _visible = !_visible),
       ),

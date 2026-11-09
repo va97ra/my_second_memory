@@ -6,11 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../state/feed_layout_provider.dart';
 import '../../../memory_items/memory_items.dart';
 import '../feed_labels.dart';
-import 'feed_group_divider.dart';
 import 'feed_day_drop_target.dart';
+import 'feed_day_rail.dart';
+import 'feed_group_divider.dart';
 
-/// Содержимое страницы ленты: группы записей выбранного периода.
-class FeedBody extends StatelessWidget {
+/// Содержимое страницы ленты: группы записей выбранного периода и шкала дней,
+/// которая появляется, пока карточку несут.
+class FeedBody extends StatefulWidget {
   const FeedBody({
     super.key,
     required this.allDates,
@@ -26,25 +28,48 @@ class FeedBody extends StatelessWidget {
   final AsyncValue<void> loadState;
 
   @override
+  State<FeedBody> createState() => _FeedBodyState();
+}
+
+class _FeedBodyState extends State<FeedBody> {
+  final _carry = StickerCarry();
+
+  bool get allDates => widget.allDates;
+  FeedFilter get filter => widget.filter;
+  FeedLayout get layout => widget.layout;
+
+  @override
+  void dispose() {
+    _carry.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (loadState.isLoading) {
+    if (widget.loadState.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (loadState.hasError) {
+    if (widget.loadState.hasError) {
       return Center(child: Text(AppStrings.of(context).loadFailed));
     }
 
-    return KeyedSubtree(
-      key: ValueKey(
-        'feed_content_${filter.name}_${allDates}_'
-        '${layout.query.anchorDate.toIso8601String()}',
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) => _scroll(
-          context,
-          memoryStickerColumns(constraints.maxWidth),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        KeyedSubtree(
+          key: ValueKey(
+            'feed_content_${filter.name}_${allDates}_'
+            '${layout.query.anchorDate.toIso8601String()}',
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) => _scroll(
+              context,
+              memoryStickerColumns(constraints.maxWidth),
+            ),
+          ),
         ),
-      ),
+        Positioned.fill(child: FeedDayRail(carry: _carry)),
+      ],
     );
   }
 
@@ -78,7 +103,7 @@ class FeedBody extends StatelessWidget {
             MemoryStickerGrid(
               itemIds: group.itemIds,
               columns: columns,
-              canCarry: true,
+              carry: _carry,
               stamp: filter.recurringFrequency == null
                   ? StickerStamp.time
                   : StickerStamp.dayAndTime,
@@ -93,7 +118,7 @@ class FeedBody extends StatelessWidget {
             MemoryStickerGrid(
               itemIds: layout.doneItemIds,
               columns: columns,
-              canCarry: true,
+              carry: _carry,
               stamp: allDates || filter.recurringFrequency != null
                   ? StickerStamp.dayAndTime
                   : StickerStamp.time,

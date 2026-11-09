@@ -1,6 +1,8 @@
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/app/app.dart';
 import 'package:ezhednevnik_v2/src/features/home_feed/state/feed_layout_provider.dart';
+import 'package:ezhednevnik_v2/src/features/home_feed/ui/widgets/feed_day_rail_bubble.dart';
+import 'package:ezhednevnik_v2/src/features/home_feed/ui/widgets/feed_day_scale.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 import 'package:ezhednevnik_v2/src/features/security/security.dart';
 import 'package:flutter/material.dart';
@@ -137,5 +139,157 @@ void main() {
 
     await carry(tester, sticker('timed'), tester.getCenter(sticker('a')));
     expect(c.read(feedLayoutProvider).itemIds, ['timed', 'b', 'a']);
+  });
+
+  testWidgets('список едет у края и после того, как листок ушёл за экран',
+      (tester) async {
+    await open(tester, [
+      for (var i = 0; i < 120; i++)
+        item('i$i', DateTime(today.year, today.month, today.day + i)),
+    ]);
+    await showAllDates(tester);
+    final scroll = find.byKey(const ValueKey('feed_dated_scroll'));
+    double pixels() => tester
+        .state<ScrollableState>(
+          find.descendant(of: scroll, matching: find.byType(Scrollable)).first,
+        )
+        .position
+        .pixels;
+
+    final gesture = await tester.startGesture(tester.getCenter(sticker('i0')));
+    await tester.pump(const Duration(milliseconds: 500));
+    await gesture.moveTo(Offset(40, tester.getBottomLeft(scroll).dy - 10));
+    await tester.pump();
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(sticker('i0'), findsNothing);
+
+    final before = pixels();
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(pixels(), greaterThan(before));
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  const rail = ValueKey('feed_day_rail');
+  const cell = 36.0;
+  const railX = 340.0;
+
+  /// Приподнимает листок и чуть сдвигает: отсюда шкала отсчитывает дни.
+  Future<(TestGesture, double)> lift(WidgetTester tester, Finder from) async {
+    final start = tester.getCenter(from);
+    final gesture = await tester.startGesture(start);
+    await tester.pump(const Duration(milliseconds: 500));
+    await gesture.moveBy(const Offset(0, 1));
+    await tester.pump();
+    return (gesture, start.dy + 1);
+  }
+
+  DateTime dateOf(ProviderContainer c, String id) => c
+      .read(memoryItemsControllerProvider)
+      .firstWhere((record) => record.id == id)
+      .memoryDate;
+
+  testWidgets('приподнятый листок шкалу не открывает', (tester) async {
+    await open(tester, [item('a', today)]);
+
+    final gesture = await tester.startGesture(tester.getCenter(sticker('a')));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byKey(rail), findsNothing);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('sticker_move_a')), findsOneWidget);
+  });
+
+  for (final allDates in [true, false]) {
+    testWidgets(
+        'на шкале запись едет на день, которого в ленте нет '
+        '(все записи: $allDates)', (tester) async {
+      final c = await open(tester, [item('a', today)]);
+      if (allDates) await showAllDates(tester);
+
+      final (gesture, y) = await lift(tester, sticker('a'));
+      await gesture.moveTo(Offset(railX, y));
+      await tester.pumpAndSettle();
+      expect(find.byKey(rail), findsOneWidget);
+      expect(find.byType(FeedDayRailBubble), findsOneWidget);
+
+      await gesture.moveBy(const Offset(0, cell * 2));
+      await tester.pump();
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(dateOf(c, 'a'), DateTime(today.year, today.month, today.day + 2));
+      expect(find.byType(FeedDayRailBubble), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('выше по шкале — раньше, на своём дне ничего не меняется',
+      (tester) async {
+    final c = await open(tester, [item('a', today)]);
+    await showAllDates(tester);
+
+    var (gesture, y) = await lift(tester, sticker('a'));
+    await gesture.moveTo(Offset(railX, y));
+    await tester.pumpAndSettle();
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(dateOf(c, 'a'), today);
+
+    (gesture, y) = await lift(tester, sticker('a'));
+    await gesture.moveTo(Offset(railX, y));
+    await tester.pumpAndSettle();
+    await gesture.moveBy(const Offset(0, -cell));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(dateOf(c, 'a'), DateTime(today.year, today.month, today.day - 1));
+  });
+
+  testWidgets('у края шкала едет дальше видимых дней', (tester) async {
+    final c = await open(tester, [item('a', today)]);
+    await showAllDates(tester);
+
+    final (gesture, y) = await lift(tester, sticker('a'));
+    await gesture.moveTo(Offset(railX, y));
+    await tester.pumpAndSettle();
+    await gesture
+        .moveTo(Offset(railX, tester.getBottomRight(find.byKey(rail)).dy - 4));
+    await tester.pump();
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    final visibleDays = (800 - y) / cell;
+    expect(
+      dateOf(c, 'a').difference(today).inDays,
+      greaterThan(visibleDays.ceil() + 5),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  test('шкала считает дни через границу месяца', () {
+    final scale = FeedDayScale(
+      ownDay: DateTime(2026, 10, 31),
+      ownY: 100,
+      cellExtent: 36,
+    );
+    expect(scale.indexAt(100), 0);
+    expect(scale.indexAt(136), 1);
+    expect(scale.indexAt(64), -1);
+    expect(scale.dayOf(1), DateTime(2026, 11, 1));
+    expect(scale.dayOf(-31), DateTime(2026, 9, 30));
+    scale.shift = 72;
+    expect(scale.indexAt(100), 2);
+    expect(scale.centerOf(2), 100);
   });
 }

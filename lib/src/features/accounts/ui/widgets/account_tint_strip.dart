@@ -57,39 +57,42 @@ class AccountTintStrip extends StatelessWidget {
           final width = constraints.maxWidth;
           void pick(Offset at) => onChanged(_hueAt(at.dx / width));
 
-          return GestureDetector(
-            key: const ValueKey('account_tint_strip'),
-            behavior: HitTestBehavior.opaque,
-            onTapDown: (details) => pick(details.localPosition),
-            onTapUp: (_) => onDone(),
-            onHorizontalDragStart: (details) => pick(details.localPosition),
-            onHorizontalDragUpdate: (details) => pick(details.localPosition),
-            onHorizontalDragEnd: (_) => onDone(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: _gradient,
-                  borderRadius: radius,
-                  border: Border.all(color: AppPalette.muted),
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      left: (_shareOf(hue) * width - _markerWidth / 2)
-                          .clamp(0, width - _markerWidth),
-                      top: 0,
-                      bottom: 0,
-                      width: _markerWidth,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: AppPalette.paper,
-                          borderRadius: BorderRadius.circular(2),
-                          border: Border.all(color: AppPalette.paperInk),
+          // Своё сжатие: палец на полоске, и карточка под ней стоять должна.
+          return PressPulse(
+            child: GestureDetector(
+              key: const ValueKey('account_tint_strip'),
+              behavior: HitTestBehavior.opaque,
+              onTapDown: (details) => pick(details.localPosition),
+              onTapUp: (_) => onDone(),
+              onHorizontalDragStart: (details) => pick(details.localPosition),
+              onHorizontalDragUpdate: (details) => pick(details.localPosition),
+              onHorizontalDragEnd: (_) => onDone(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: _gradient,
+                    borderRadius: radius,
+                    border: Border.all(color: AppPalette.muted),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: (_shareOf(hue) * width - _markerWidth / 2)
+                            .clamp(0, width - _markerWidth),
+                        top: 0,
+                        bottom: 0,
+                        width: _markerWidth,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppPalette.paper,
+                            borderRadius: BorderRadius.circular(2),
+                            border: Border.all(color: AppPalette.paperInk),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

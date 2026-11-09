@@ -1,10 +1,13 @@
 import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
+import 'account_copy_button.dart';
+import 'account_field_button.dart';
 import 'account_field_icons.dart';
 import 'account_text_field.dart';
 
 /// Поля аккаунта: сервис, вход, почта, пароль, сайт и заметка.
+/// Всё, кроме названия сервиса, копируется кнопкой в самом поле.
 class AccountEditorFields extends StatelessWidget {
   const AccountEditorFields({
     super.key,
@@ -44,6 +47,11 @@ class AccountEditorFields extends StatelessWidget {
           label: strings.login,
           icon: AccountFieldIcons.login,
           textInputAction: TextInputAction.next,
+          suffixIcon: AccountCopyButton(
+            controller: login,
+            tooltip: strings.copyLogin,
+            copiedMessage: strings.loginCopied,
+          ),
         ),
         AccountTextField(
           controller: email,
@@ -51,6 +59,11 @@ class AccountEditorFields extends StatelessWidget {
           icon: AccountFieldIcons.email,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
+          suffixIcon: AccountCopyButton(
+            controller: email,
+            tooltip: strings.copyEmail,
+            copiedMessage: strings.emailCopied,
+          ),
         ),
         AccountTextField(
           controller: password,
@@ -58,14 +71,22 @@ class AccountEditorFields extends StatelessWidget {
           icon: AccountFieldIcons.password,
           obscureText: !showPassword,
           textInputAction: TextInputAction.next,
-          suffixIcon: IconButton(
-            tooltip: strings.password,
-            onPressed: onTogglePassword,
-            icon: Icon(
-              showPassword
-                  ? Icons.visibility_off_rounded
-                  : Icons.visibility_rounded,
-            ),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AccountFieldButton(
+                icon: showPassword
+                    ? Icons.visibility_off_rounded
+                    : Icons.visibility_rounded,
+                tooltip: strings.password,
+                onPressed: onTogglePassword,
+              ),
+              AccountCopyButton(
+                controller: password,
+                tooltip: strings.copyPassword,
+                copiedMessage: strings.passwordCopied,
+              ),
+            ],
           ),
         ),
         AccountTextField(
@@ -74,6 +95,11 @@ class AccountEditorFields extends StatelessWidget {
           icon: AccountFieldIcons.website,
           keyboardType: TextInputType.url,
           textInputAction: TextInputAction.next,
+          suffixIcon: AccountCopyButton(
+            controller: website,
+            tooltip: strings.copyWebsite,
+            copiedMessage: strings.websiteCopied,
+          ),
         ),
         AccountTextField(
           controller: note,
@@ -83,6 +109,11 @@ class AccountEditorFields extends StatelessWidget {
           maxLines: 6,
           keyboardType: TextInputType.multiline,
           textInputAction: TextInputAction.newline,
+          suffixIcon: AccountCopyButton(
+            controller: note,
+            tooltip: strings.copyNote,
+            copiedMessage: strings.noteCopied,
+          ),
         ),
       ],
     );

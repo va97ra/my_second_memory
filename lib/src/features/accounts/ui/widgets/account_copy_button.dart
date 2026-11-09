@@ -1,35 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'account_row_button.dart';
+import 'account_field_button.dart';
 
-/// Кнопка копирования поля аккаунта. Одна на все поля карточки.
+/// Кнопка копирования в поле открытого аккаунта. Копирует то, что в поле написано
+/// сейчас; у пустого поля её нет.
 class AccountCopyButton extends StatelessWidget {
   const AccountCopyButton({
     super.key,
-    required this.text,
+    required this.controller,
     required this.tooltip,
     required this.copiedMessage,
   });
 
-  final String text;
+  final TextEditingController controller;
   final String tooltip;
   final String copiedMessage;
 
   @override
   Widget build(BuildContext context) {
-    return AccountRowButton(
-      icon: Icons.content_copy_rounded,
-      tooltip: tooltip,
-      onPressed: () => _copy(context),
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) => value.text.isEmpty
+          ? const SizedBox.shrink()
+          : AccountFieldButton(
+              icon: Icons.content_copy_rounded,
+              tooltip: tooltip,
+              onPressed: () => _copy(context, value.text),
+            ),
     );
   }
 
-  Future<void> _copy(BuildContext context) async {
+  Future<void> _copy(BuildContext context, String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(copiedMessage)),
-    );
+    // Копируют подряд несколько полей: подтверждения не должны стоять в очереди.
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(copiedMessage)));
   }
 }

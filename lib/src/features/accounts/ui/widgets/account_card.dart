@@ -16,8 +16,8 @@ import 'account_tint.dart';
 import 'account_tint_strip.dart';
 import 'service_avatar.dart';
 
-/// Карточка аккаунта на той же бумаге, что и записки: сервис и строки с кнопками
-/// копирования. Нажатие на карточку открывает редактор, на букву — выбор цвета.
+/// Карточка аккаунта на той же бумаге, что и записки: сервис и его поля.
+/// Нажатие на карточку открывает её целиком, на букву — выбор цвета.
 ///
 /// Получает идентификатор и читает аккаунт сама, из общего хранилища.
 class AccountCard extends ConsumerStatefulWidget {
@@ -109,7 +109,7 @@ class _AccountCardState extends ConsumerState<AccountCard> {
                       : null,
                   onAvatarTap: () => _togglePicker(account),
                 ),
-                ..._lines(context, account),
+                ..._lines(account),
               ],
             ),
           ),
@@ -119,41 +119,21 @@ class _AccountCardState extends ConsumerState<AccountCard> {
   }
 
   /// Пустое поле не занимает строку: заполняют обычно два-три из пяти.
-  List<Widget> _lines(BuildContext context, AccountItem account) {
-    final strings = AppStrings.of(context);
-    return [
-      if (account.login.isNotEmpty)
-        AccountInfoLine(
-          icon: AccountFieldIcons.login,
-          text: account.login,
-          copyTooltip: strings.copyLogin,
-          copiedMessage: strings.loginCopied,
-        ),
-      if (account.email.isNotEmpty)
-        AccountInfoLine(
-          icon: AccountFieldIcons.email,
-          text: account.email,
-          copyTooltip: strings.copyEmail,
-          copiedMessage: strings.emailCopied,
-        ),
-      if (account.password.isNotEmpty)
-        AccountPasswordRow(password: account.password),
-      if (account.website.isNotEmpty)
-        AccountInfoLine(
-          icon: AccountFieldIcons.website,
-          text: account.website,
-          copyTooltip: strings.copyWebsite,
-          copiedMessage: strings.websiteCopied,
-        ),
-      if (account.note.isNotEmpty)
-        AccountInfoLine(
-          icon: AccountFieldIcons.note,
-          text: account.note,
-          copyTooltip: strings.copyNote,
-          copiedMessage: strings.noteCopied,
-        ),
-    ];
-  }
+  List<Widget> _lines(AccountItem account) => [
+        if (account.login.isNotEmpty)
+          AccountInfoLine(icon: AccountFieldIcons.login, text: account.login),
+        if (account.email.isNotEmpty)
+          AccountInfoLine(icon: AccountFieldIcons.email, text: account.email),
+        if (account.password.isNotEmpty)
+          AccountPasswordRow(password: account.password),
+        if (account.website.isNotEmpty)
+          AccountInfoLine(
+            icon: AccountFieldIcons.website,
+            text: account.website,
+          ),
+        if (account.note.isNotEmpty)
+          AccountInfoLine(icon: AccountFieldIcons.note, text: account.note),
+      ];
 }
 
 /// Верх карточки: буква сервиса, рядом название или полоска выбора цвета.

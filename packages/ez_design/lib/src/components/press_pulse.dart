@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -30,6 +31,20 @@ class _PressPulseState extends State<PressPulse>
   /// Палец ушёл дальше этого — значит, листают, а не нажимают.
   static const _swipeSlop = 18.0;
 
+  /// Столько палец лежит, прежде чем вещь начнёт сжиматься: за это время видно,
+  /// листают её или нажимают. Тап не теряется, отпускание проигрывает сжатие само.
+  static const _holdOff = Duration(milliseconds: 40);
+
+  /// Касание, которое уже досталось какой-то вещи. О пальце сообщают от самой
+  /// глубокой вещи к внешней, поэтому кнопка на листе забирает нажатие себе, а
+  /// лист под ней стоит.
+  static int? _claimedPointer;
+
+  /// Касание, за которым следит эта вещь. Снято — значит, листают, и отпускание
+  /// пальца к ней уже не относится.
+  int? _pointer;
+  Timer? _holdOffTimer;
+
   late final AnimationController _press = AnimationController(
     vsync: this,
     duration: PressPulse.duration * 0.5,
@@ -51,18 +66,48 @@ class _PressPulseState extends State<PressPulse>
 
   @override
   void dispose() {
+    _holdOffTimer?.cancel();
     _press.dispose();
     super.dispose();
   }
 
   // Палец может подняться, когда виджета уже нет: листок унесли, и на его месте
   // другое дерево. Сообщение о пальце приходит всё равно.
-  void _down() {
-    if (!mounted) return;
+  void _prepare() {
     final side = context.size?.longestSide ?? 0;
     _depth = side <= 0 ? _maxDepth : math.min(_maxDepth, _pixels / side);
     _held = true;
+  }
+
+  void _down() {
+    if (!mounted) return;
+    _prepare();
     _press.forward();
+  }
+
+  void _pointerDown(PointerDownEvent event) {
+    if (!mounted || _claimedPointer == event.pointer) return;
+    _claimedPointer = event.pointer;
+    _pointer = event.pointer;
+    _downAt = event.position;
+    _prepare();
+    _holdOffTimer = Timer(_holdOff, () => _press.forward());
+  }
+
+  void _pointerMove(PointerMoveEvent event) {
+    if (event.pointer != _pointer) return;
+    if ((event.position - _downAt).distance > _swipeSlop) _cancel();
+  }
+
+  void _pointerUp(PointerUpEvent event) {
+    if (event.pointer != _pointer) return;
+    _pointer = null;
+    _holdOffTimer?.cancel();
+    _release();
+  }
+
+  void _pointerCancel(PointerCancelEvent event) {
+    if (event.pointer == _pointer) _cancel();
   }
 
   Future<void> _release() async {
@@ -77,6 +122,8 @@ class _PressPulseState extends State<PressPulse>
   }
 
   void _cancel() {
+    _pointer = null;
+    _holdOffTimer?.cancel();
     if (!mounted) return;
     _held = false;
     _press.reverse();
@@ -95,15 +142,10 @@ class _PressPulseState extends State<PressPulse>
     );
     if (widget.pressed != null) return scaled;
     return Listener(
-      onPointerDown: (event) {
-        _downAt = event.position;
-        _down();
-      },
-      onPointerMove: (event) {
-        if (_held && (event.position - _downAt).distance > _swipeSlop) _cancel();
-      },
-      onPointerUp: (_) => _release(),
-      onPointerCancel: (_) => _cancel(),
+      onPointerDown: _pointerDown,
+      onPointerMove: _pointerMove,
+      onPointerUp: _pointerUp,
+      onPointerCancel: _pointerCancel,
       child: scaled,
     );
   }

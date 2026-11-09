@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/memory_card/sticker_paper.dart';
 import 'memory_sticker.dart';
+import 'sticker_carry.dart';
 
 /// Сколько карточек в ряду: на телефоне три, на широком экране ряд длиннее, чтобы
 /// карточки не вырастали во весь лист.
@@ -17,14 +18,14 @@ class MemoryStickerGrid extends StatelessWidget {
     required this.columns,
     required this.stamp,
     this.openQuery = '',
-    this.canCarry = false,
+    this.carry,
   });
 
   final List<String> itemIds;
   final int columns;
   final StickerStamp stamp;
   final String openQuery;
-  final bool canCarry;
+  final StickerCarry? carry;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +45,7 @@ class MemoryStickerGrid extends StatelessWidget {
           itemId: itemIds[index],
           stamp: stamp,
           openQuery: openQuery,
-          canCarry: canCarry,
+          carry: carry,
         ),
       ),
     );

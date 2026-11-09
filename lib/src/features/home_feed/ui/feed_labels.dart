@@ -28,15 +28,19 @@ String feedPeriodLabel(BuildContext context, FeedViewState view) {
 /// Подпись разделителя внутри раскрытого периода.
 String feedGroupLabel(BuildContext context, FeedFilter filter, DateTime period,
     {bool allDates = false}) {
+  if (allDates) return feedFullDayLabel(context, period);
   final locale = Localizations.localeOf(context).languageCode;
-  if (allDates) {
-    return _capitalize(DateFormat.yMMMMEEEEd(locale).format(period));
-  }
   final value = filter.recurringFrequency == RecurrenceFrequency.yearly
       ? DateFormat.MMMM(locale).format(period)
       : DateFormat(locale == 'ru' ? 'd MMMM, EEEE' : 'EEEE, MMMM d', locale)
           .format(period);
   return _capitalize(value);
+}
+
+/// День полностью, с годом: среди всех дат год бывает и не текущий.
+String feedFullDayLabel(BuildContext context, DateTime day) {
+  final locale = Localizations.localeOf(context).languageCode;
+  return _capitalize(DateFormat.yMMMMEEEEd(locale).format(day));
 }
 
 String _capitalize(String value) {

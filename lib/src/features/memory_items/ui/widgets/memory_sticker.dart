@@ -15,6 +15,7 @@ import '../../state/memory_item_selectors.dart';
 import 'memory_sticker_done_box.dart';
 import 'memory_sticker_menu.dart';
 import 'memory_sticker_strip.dart';
+import 'sticker_carry.dart';
 import 'sticker_edge_scroll.dart';
 
 export 'memory_sticker_strip.dart' show StickerStamp;
@@ -31,7 +32,7 @@ class MemorySticker extends ConsumerStatefulWidget {
     required this.itemId,
     required this.stamp,
     this.openQuery = '',
-    this.canCarry = false,
+    this.carry,
   });
 
   final String itemId;
@@ -40,23 +41,38 @@ class MemorySticker extends ConsumerStatefulWidget {
   /// Что дописать к адресу редактора: откуда открыли.
   final String openQuery;
 
-  /// Можно ли нести карточку. У записок дат нет, нести их некуда.
-  final bool canCarry;
+  /// Куда сообщать, что карточку несут. Нет — нести нельзя: у записок дат нет,
+  /// нести их некуда.
+  final StickerCarry? carry;
 
   @override
   ConsumerState<MemorySticker> createState() => _MemoryStickerState();
 }
 
-class _MemoryStickerState extends ConsumerState<MemorySticker> {
-  /// Палец сдвинулся меньше — значит, карточку не несли, а только приподняли.
-  static const _carrySlop = 12.0;
-
+class _MemoryStickerState extends ConsumerState<MemorySticker>
+    with AutomaticKeepAliveClientMixin {
   final _edgeScroll = StickerEdgeScroll();
   Offset _liftedAt = Offset.zero;
+  bool _carrying = false;
+
+  /// Несомую карточку список не выгружает, даже когда она уехала за экран: без
+  /// неё перенос оборвался бы, Draggable сообщает только смонтированному виджету.
+  @override
+  bool get wantKeepAlive => _carrying;
+
+  void _setCarrying(bool value) {
+    _carrying = value;
+    updateKeepAlive();
+  }
 
   @override
   void dispose() {
     _edgeScroll.stop();
+    final carry = widget.carry;
+    if (_carrying && carry != null) {
+      // Запись исчезла, пока её несли. Пока дерево разбирается, сообщать нельзя.
+      WidgetsBinding.instance.addPostFrameCallback((_) => carry.end());
+    }
     super.dispose();
   }
 
@@ -71,6 +87,7 @@ class _MemoryStickerState extends ConsumerState<MemorySticker> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final item = ref.watch(memoryItemByIdProvider(widget.itemId));
     if (item == null) return const SizedBox.shrink();
 
@@ -81,7 +98,8 @@ class _MemoryStickerState extends ConsumerState<MemorySticker> {
       onOpen: () => _open(item),
       onToggleDone: () => toggleMemoryDone(ref, item),
     );
-    if (!widget.canCarry) {
+    final carry = widget.carry;
+    if (carry == null) {
       return GestureDetector(
         onLongPress: () => showMemoryStickerMenu(context, ref, item),
         child: sticker,
@@ -101,23 +119,39 @@ class _MemoryStickerState extends ConsumerState<MemorySticker> {
             item,
             sticker,
             constraints.biggest,
+            carry,
           ),
         ),
       ),
     );
   }
 
-  Widget _carried(MemoryItem item, Widget sticker, Size size) {
+  Widget _carried(
+    MemoryItem item,
+    Widget sticker,
+    Size size,
+    StickerCarry carry,
+  ) {
     return LongPressDraggable<String>(
       data: item.id,
       delay: const Duration(milliseconds: 350),
       feedback: SizedBox.fromSize(
         size: size,
-        child: Transform.scale(
-          scale: 1.06,
-          child: Material(
-            type: MaterialType.transparency,
-            child: _StickerFace(item: item, stamp: widget.stamp, lifted: true),
+        // Над шкалой карточка бледнеет: за ней день, который выбирают.
+        child: ValueListenableBuilder<bool>(
+          valueListenable: carry.overRail,
+          builder: (context, overRail, face) => AnimatedOpacity(
+            opacity: overRail ? 0.3 : 1,
+            duration: const Duration(milliseconds: 120),
+            child: face,
+          ),
+          child: Transform.scale(
+            scale: 1.06,
+            child: Material(
+              type: MaterialType.transparency,
+              child:
+                  _StickerFace(item: item, stamp: widget.stamp, lifted: true),
+            ),
           ),
         ),
       ),
@@ -125,13 +159,23 @@ class _MemoryStickerState extends ConsumerState<MemorySticker> {
       onDragStarted: () {
         final box = context.findRenderObject();
         if (box is RenderBox) _liftedAt = box.localToGlobal(Offset.zero);
+        _setCarrying(true);
+        carry.begin(item.memoryDate);
       },
-      onDragUpdate: (details) =>
-          _edgeScroll.update(context, details.globalPosition),
+      onDragUpdate: (details) {
+        carry.move(details.globalPosition);
+        if (carry.overRail.value) {
+          _edgeScroll.stop();
+        } else {
+          _edgeScroll.update(context, details.globalPosition);
+        }
+      },
       onDragEnd: (details) {
         _edgeScroll.stop();
+        _setCarrying(false);
+        carry.end();
         if (!details.wasAccepted &&
-            (details.offset - _liftedAt).distance < _carrySlop &&
+            (details.offset - _liftedAt).distance < StickerCarry.slop &&
             mounted) {
           showMemoryStickerMenu(context, ref, item);
         }

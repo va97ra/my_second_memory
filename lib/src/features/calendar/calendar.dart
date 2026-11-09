@@ -9,3 +9,4 @@ export 'ui/calendar_day_screen.dart';
 export 'ui/calendar_screen.dart';
 export 'ui/production_preferences_screen.dart';
 export 'ui/holiday_detail_screen.dart';
+export 'ui/widgets/calendar_day_cell_surface.dart' show calendarTodayColor;
