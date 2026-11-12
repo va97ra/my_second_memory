@@ -1,6 +1,7 @@
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 final exchangeRateRepositoryProvider = Provider<ExchangeRateRepository>((ref) {
   return ExchangeRateRepository(source: CbrExchangeRateSource());

@@ -2,6 +2,7 @@ import 'package:ez_core/ez_core.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:ez_data/ez_data.dart';
 import '../../security/security.dart';

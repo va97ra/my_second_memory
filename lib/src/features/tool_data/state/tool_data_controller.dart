@@ -1,6 +1,7 @@
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../app/local_storage_scope_provider.dart';
 import '../../security/security.dart';
@@ -44,7 +45,7 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
   /// То, что лежит сейчас. Пока загрузка не кончилась — пусто, а не null:
   /// инструменты обязаны открываться и без сохранённых расчётов.
   ToolDataSnapshot get snapshot =>
-      state.valueOrNull ?? const ToolDataSnapshot();
+      state.value ?? const ToolDataSnapshot();
 
   Future<void> _load() async {
     state = await AsyncValue.guard(_repository.load);

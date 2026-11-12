@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:ez_data/ez_data.dart';
 import '../../../app/local_storage_scope_provider.dart';

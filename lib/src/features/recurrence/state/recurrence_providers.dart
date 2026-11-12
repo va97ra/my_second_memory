@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:ez_domain/ez_domain.dart';
 import '../../calendar/state/calendar_today_provider.dart';

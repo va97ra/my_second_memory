@@ -1,6 +1,7 @@
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_item_selectors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

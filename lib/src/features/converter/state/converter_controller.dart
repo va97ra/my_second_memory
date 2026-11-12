@@ -1,6 +1,6 @@
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_domain/ez_domain.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 final converterControllerProvider =
     StateNotifierProvider<ConverterController, ConverterState>(
