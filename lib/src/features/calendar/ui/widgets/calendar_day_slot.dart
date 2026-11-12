@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../state/calendar_month_data.dart';
+import '../../state/calendar_today_provider.dart';
 import 'calendar_day_cell.dart';
 
 /// Место дня в сетке. Подписано только на данные своего дня: правка записи
@@ -36,7 +37,9 @@ class CalendarDaySlot extends ConsumerWidget {
       date: day,
       locale: locale,
       isInVisibleMonth: isInVisibleMonth,
-      isToday: isSameDay(day, DateTime.now()),
+      // Сегодня берётся у часов календаря: после полуночи отметка переезжает
+      // сама, не дожидаясь перерисовки месяца.
+      isToday: isSameDay(day, ref.watch(calendarTodayProvider)),
       items: data.items,
       shiftSchedules: data.shifts,
       holidays: data.holidays,

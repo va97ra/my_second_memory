@@ -147,26 +147,34 @@ final undatedNotesProvider = Provider<List<MemoryItem>>((ref) {
   );
 });
 
+/// Записи календаря за промежуток дат, включая оба конца: сохранённые и
+/// вхождения повторов. Одно место, где они сводятся: и месяц, и год берут их
+/// отсюда.
+final calendarItemsForRangeProvider =
+    Provider.family<List<MemoryItem>, RecurrenceRange>((ref, range) {
+  final itemsByDate = ref.watch(memoryItemsByDateProvider);
+  final persisted = <MemoryItem>[];
+  for (var day = range.start;
+      !day.isAfter(range.end);
+      day = day.add(const Duration(days: 1))) {
+    persisted.addAll(itemsByDate[dateKey(day)] ?? const []);
+  }
+  final projected = ref.watch(recurrenceItemsForRangeProvider(range));
+  return [...persisted, ...projected];
+});
+
+/// Записи страницы месяца: шесть недель от понедельника первой.
 final visibleCalendarItemsProvider =
     Provider.family<List<MemoryItem>, DateTime>((ref, month) {
   final firstOfMonth = DateTime(month.year, month.month);
   final gridStart = firstOfMonth.subtract(
     Duration(days: firstOfMonth.weekday - DateTime.monday),
   );
-  final gridEnd = gridStart.add(const Duration(days: 42));
-  final itemsByDate = ref.watch(memoryItemsByDateProvider);
-  final persisted = <MemoryItem>[];
-  for (var day = gridStart;
-      day.isBefore(gridEnd);
-      day = day.add(const Duration(days: 1))) {
-    persisted.addAll(itemsByDate[dateKey(day)] ?? const []);
-  }
-  final projected = ref.watch(
-    recurrenceItemsForRangeProvider(
-      RecurrenceRange(gridStart, gridEnd.subtract(const Duration(days: 1))),
+  return ref.watch(
+    calendarItemsForRangeProvider(
+      RecurrenceRange(gridStart, gridStart.add(const Duration(days: 41))),
     ),
   );
-  return [...persisted, ...projected];
 });
 
 /// Сколько месяцев осталось в сроке подписки у этого вхождения.

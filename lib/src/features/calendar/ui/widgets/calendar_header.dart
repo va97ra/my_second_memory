@@ -9,11 +9,12 @@ import 'calendar_shift_legend.dart';
 import 'production_calendar_dialog.dart';
 
 /// Шапка календаря: стрелки по краям, посередине месяц и графики смен, которые
-/// его красят.
+/// его красят. На годовом виде посередине год, а стрелки листают годы.
 class CalendarHeader extends StatelessWidget {
   const CalendarHeader({
     super.key,
     required this.visibleMonth,
+    required this.showsYear,
     required this.locale,
     required this.schedules,
     required this.onToday,
@@ -21,6 +22,7 @@ class CalendarHeader extends StatelessWidget {
   });
 
   final DateTime visibleMonth;
+  final bool showsYear;
   final String locale;
   final List<ShiftSchedule> schedules;
   final VoidCallback onToday;
@@ -40,7 +42,7 @@ class CalendarHeader extends StatelessWidget {
       leading: [
         IconButton(
           key: const ValueKey('calendar_previous_month'),
-          tooltip: strings.previousMonth,
+          tooltip: showsYear ? strings.previousYear : strings.previousMonth,
           onPressed: () => onChangeMonth(-1),
           icon: const Icon(Icons.chevron_left_rounded, size: 24),
           style: notebookIconButtonStyle(),
@@ -56,7 +58,7 @@ class CalendarHeader extends StatelessWidget {
         ),
         IconButton(
           key: const ValueKey('calendar_next_month'),
-          tooltip: strings.nextMonth,
+          tooltip: showsYear ? strings.nextYear : strings.nextMonth,
           onPressed: () => onChangeMonth(1),
           icon: const Icon(Icons.chevron_right_rounded, size: 24),
           style: notebookIconButtonStyle(),
@@ -70,7 +72,13 @@ class CalendarHeader extends StatelessWidget {
             onTap: () => ProductionCalendarDialog.show(context, visibleMonth),
             borderRadius: BorderRadius.circular(4),
             child: Center(
-              child: CalendarMonthLabel(month: visibleMonth, locale: locale),
+              child: showsYear
+                  ? Text(
+                      '${visibleMonth.year}',
+                      key: const ValueKey('calendar_year_label'),
+                      maxLines: 1,
+                    )
+                  : CalendarMonthLabel(month: visibleMonth, locale: locale),
             ),
           ),
         ),

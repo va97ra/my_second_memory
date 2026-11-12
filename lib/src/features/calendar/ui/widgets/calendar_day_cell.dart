@@ -54,21 +54,6 @@ class CalendarDayCell extends ConsumerWidget {
     );
   }
 
-  /// Выходной и сокращённый день залиты чистым цветом: чернила выбираются по нему.
-  Color _inkOnPaper(
-    ColorScheme colors,
-    ProductionDay? productionDay,
-    bool highlight,
-  ) {
-    if (!highlight) return colors.onSurface;
-    if (productionDay == ProductionDay.shortened) {
-      return readableInkOn(AppPalette.shortenedDay);
-    }
-    return productionDay?.isDayOff ?? false
-        ? readableInkOn(AppPalette.weekend)
-        : colors.onSurface;
-  }
-
   Widget _buildCell(
     BuildContext context,
     ProductionDay? productionDay,
@@ -77,14 +62,13 @@ class CalendarDayCell extends ConsumerWidget {
   ) {
     final colors = Theme.of(context).colorScheme;
     final palette = AppSurfacePalette.of(context);
-    // Число, будильник и отметка архива стоят на шапке графика, а цвет ей
-    // задаёт человек: чернила выбираются по её светлоте, иначе на светлом
-    // графике белое число пропадает.
-    final foreground = !isInVisibleMonth
-        ? colors.onSurface.withValues(alpha: 0.38)
-        : shiftSchedules.isEmpty
-            ? _inkOnPaper(colors, productionDay, highlight)
-            : readableInkOn(Color(shiftSchedules.first.colorValue));
+    final foreground = calendarDayInk(
+      colors,
+      isInVisibleMonth: isInVisibleMonth,
+      shifts: shiftSchedules,
+      productionDay: productionDay,
+      highlight: highlight,
+    );
     // Рамка нужна только пустым плиткам видимого месяца: у остальных край
     // задаёт заливка.
     final usesGradientBorder = isInVisibleMonth && items.isEmpty && !isToday;

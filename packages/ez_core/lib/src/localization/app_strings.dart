@@ -39,6 +39,8 @@ class AppStrings {
 
   String get previousMonth => isRu ? 'Предыдущий месяц' : 'Previous month';
   String get nextMonth => isRu ? 'Следующий месяц' : 'Next month';
+  String get previousYear => isRu ? 'Предыдущий год' : 'Previous year';
+  String get nextYear => isRu ? 'Следующий год' : 'Next year';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
   String get emptySlot => isRu ? 'Место свободно' : 'Free slot';
   String get emptySlotHint => isRu
@@ -289,9 +291,11 @@ class AppStrings {
 
   String get calendarPageHint => isRu
       ? 'Нажмите число для открытия дня, название месяца — для производственного календаря. '
-          'Листайте вбок по месяцам, вверх и вниз по годам; цветная шапка — смена, розовый фон — выходной, янтарный и * — сокращённый день.'
+          'Листайте вбок по месяцам, вверх и вниз по годам, сведите два пальца — откроется весь год; '
+          'цветная шапка — смена, розовый фон — выходной, янтарный и * — сокращённый день.'
       : 'Tap a date to open the day or the month name for working-day totals. '
-          'Swipe sideways for months, vertically for years; a coloured cap is a shift, an underlined date is a day off, * is a shortened day.';
+          'Swipe sideways for months, vertically for years, pinch for the whole year; '
+          'a coloured cap is a shift, an underlined date is a day off, * is a shortened day.';
   String get accounts => isRu ? 'Аккаунты' : 'Accounts';
   String get account => isRu ? 'Аккаунт' : 'Account';
   String get accountColor => isRu ? 'Цвет карточки' : 'Card color';

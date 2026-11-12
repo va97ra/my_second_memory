@@ -9,11 +9,17 @@ import '../../../navigation/page_turn_navigation.dart';
 import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
 import '../../shift_schedules/shift_schedules.dart';
+import '../state/calendar_view.dart';
+import 'calendar_page_turning.dart';
+import 'calendar_zoom_handling.dart';
 import 'widgets/calendar_header.dart';
 import 'widgets/calendar_loading_view.dart';
 import 'widgets/calendar_month_pages.dart';
+import 'widgets/calendar_year_geometry.dart';
+import 'widgets/calendar_zoom_transition.dart';
 
-/// Календарь месяца: страница, которую листают стрелками и пальцем.
+/// Календарь: страница месяца, которую листают стрелками и пальцем, а щипком
+/// сводят к году.
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
 
@@ -22,27 +28,14 @@ class CalendarScreen extends ConsumerStatefulWidget {
 }
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen>
-    with SingleTickerProviderStateMixin {
-  late DateTime _visibleMonth;
-  late final AnimationController _pageController;
-  DateTime? _outgoingMonth;
-  Axis _transitionAxis = Axis.horizontal;
-  int _transitionDirection = 1;
-
+    with TickerProviderStateMixin, CalendarPageTurning, CalendarZoomHandling {
   @override
-  void initState() {
-    super.initState();
-    final now = DateTime.now();
-    _visibleMonth = DateTime(now.year, now.month);
-    _pageController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 320),
-    );
-  }
+  CalendarView view = CalendarView(month: DateTime.now());
 
   @override
   void dispose() {
-    _pageController.dispose();
+    disposePageTurn();
+    disposeZoom();
     super.dispose();
   }
 
@@ -64,7 +57,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
       builder: (context, constraints) {
         final isLandscape = constraints.maxWidth > constraints.maxHeight;
         // В низком ландшафте страница не помещается целиком, поэтому экран
-        // прокручивается.
+        // прокручивается — и с месяцем, и с годом: раскладка не меняется
+        // посреди щипка.
         final needsScroll = isLandscape && constraints.maxHeight < 680;
         final panel = _panel(locale, scrolls: needsScroll);
         final header = _header(locale, schedules);
@@ -89,82 +83,60 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
 
   Widget _header(String locale, List<ShiftSchedule> schedules) =>
       CalendarHeader(
-        visibleMonth: _visibleMonth,
+        visibleMonth: view.month,
+        showsYear: view.showsYear,
         locale: locale,
         schedules: schedules,
-        onToday: _goToToday,
-        onChangeMonth: _changeMonth,
+        onToday: view.showsYear ? openTodayMonth : goToToday,
+        onChangeMonth: changeMonth,
       );
 
   Widget _panel(String locale, {required bool scrolls}) {
-    return PageSwipeArea(
-      key: const ValueKey('calendar_month_swipe_area'),
-      onHorizontalSwipe: _changeMonth,
-      // В прокручиваемом ландшафте вертикальный жест принадлежит прокрутке.
-      onVerticalSwipe: scrolls ? null : _changeYear,
-      child: CalendarMonthPages(
-        locale: locale,
-        visibleMonth: _visibleMonth,
-        outgoingMonth: _outgoingMonth,
-        animation: _pageController,
-        axis: _transitionAxis,
-        direction: _transitionDirection,
-        onSelectDate: _openDay,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final geometry = CalendarYearGeometry(constraints.biggest);
+        final zooming = zoomMonth;
+        return PageSwipeArea(
+          key: const ValueKey('calendar_month_swipe_area'),
+          onHorizontalSwipe: changeMonth,
+          // В прокручиваемом ландшафте вертикальный жест принадлежит прокрутке.
+          onVerticalSwipe: scrolls ? null : changeYear,
+          onPinchUpdate: (scale) => pinchUpdate(scale, geometry),
+          onPinchEnd: pinchEnd,
+          child: zooming == null
+              ? _pages(locale, view.month, showsYear: view.showsYear)
+              : CalendarZoomTransition(
+                  zoom: zoom,
+                  month: zooming.month,
+                  monthPage: _pages(locale, zooming, showsYear: false),
+                  yearPage: _pages(locale, view.month, showsYear: true),
+                ),
+        );
+      },
     );
   }
 
-  void _changeMonth(int offset) => _startTransition(
-        DateTime(_visibleMonth.year, _visibleMonth.month + offset),
-        axis: Axis.horizontal,
-        direction: offset.sign,
-      );
-
-  void _changeYear(int offset) => _startTransition(
-        DateTime(_visibleMonth.year + offset, _visibleMonth.month),
-        axis: Axis.vertical,
-        direction: offset.sign,
-      );
-
-  void _goToToday() {
-    final now = DateTime.now();
-    final targetMonth = DateTime(now.year, now.month);
-    if (targetMonth == _visibleMonth) return;
-
-    _startTransition(
-      targetMonth,
-      axis: Axis.horizontal,
-      direction: targetMonth.isAfter(_visibleMonth) ? 1 : -1,
+  /// Страница месяца или года. Уходящая страница есть только у листания:
+  /// у перехода масштаба свои две страницы.
+  Widget _pages(String locale, DateTime month, {required bool showsYear}) {
+    return CalendarMonthPages(
+      locale: locale,
+      visibleMonth: month,
+      outgoingMonth: isZooming ? null : outgoingMonth,
+      animation: pageTurn,
+      axis: turnAxis,
+      direction: turnDirection,
+      showsYear: showsYear,
+      onSelectDate: _openDay,
+      onOpenMonth: openMonth,
     );
-  }
-
-  void _startTransition(
-    DateTime targetMonth, {
-    required Axis axis,
-    required int direction,
-  }) {
-    if (_pageController.isAnimating || targetMonth == _visibleMonth) return;
-
-    final outgoingMonth = _visibleMonth;
-    setState(() {
-      _outgoingMonth = outgoingMonth;
-      _visibleMonth = targetMonth;
-      _transitionAxis = axis;
-      _transitionDirection = direction;
-    });
-
-    _pageController.forward(from: 0).whenComplete(() {
-      if (!mounted || _outgoingMonth != outgoingMonth) return;
-      setState(() => _outgoingMonth = null);
-      _pageController.value = 0;
-    });
   }
 
   Future<void> _openDay(DateTime date) async {
     final day = DateTime(date.year, date.month, date.day);
     final location =
         '/calendar/day?date=${DateFormat('yyyy-MM-dd').format(day)}';
-    final month = DateTime(day.year, day.month);
+    final month = CalendarView(month: day);
 
     // Плитка успевает вернуться на место: переворот снимает страницу в картинку,
     // и нажатый день остался бы на снимке сжатым.
@@ -175,12 +147,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     // переносится уже после возвращения.
     if (!kIsWeb && Theme.of(context).platform == TargetPlatform.windows) {
       await context.pageTurnPush(location);
-      if (mounted && _visibleMonth != month) {
-        setState(() => _visibleMonth = month);
-      }
+      if (mounted && view != month) setState(() => view = month);
       return;
     }
-    if (_visibleMonth != month) setState(() => _visibleMonth = month);
+    if (view != month) setState(() => view = month);
     await context.pageTurnGo(location);
   }
 }

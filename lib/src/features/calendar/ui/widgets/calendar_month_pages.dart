@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'calendar_page_transition.dart';
 import 'calendar_panel.dart';
+import 'calendar_year_grid.dart';
 
-/// Страницы календаря: та, что на экране, и та, что уезжает с неё.
+/// Страницы календаря: та, что на экране, и та, что уезжает с неё. На годовом
+/// виде страница — год, и листаются годы.
 ///
 /// Каждая страница читает свой месяц сама, поэтому уходящая держит свои дни до
 /// конца перехода и не мигает данными нового месяца.
@@ -17,6 +19,8 @@ class CalendarMonthPages extends StatelessWidget {
     required this.axis,
     required this.direction,
     required this.onSelectDate,
+    required this.onOpenMonth,
+    this.showsYear = false,
   });
 
   final String locale;
@@ -26,6 +30,8 @@ class CalendarMonthPages extends StatelessWidget {
   final Axis axis;
   final int direction;
   final ValueChanged<DateTime> onSelectDate;
+  final bool showsYear;
+  final ValueChanged<DateTime> onOpenMonth;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +55,13 @@ class CalendarMonthPages extends StatelessWidget {
   }
 
   Widget _panel(DateTime month) {
+    if (showsYear) {
+      return CalendarYearGrid(
+        year: month.year,
+        locale: locale,
+        onOpenMonth: onOpenMonth,
+      );
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
       child: CalendarPanel(
