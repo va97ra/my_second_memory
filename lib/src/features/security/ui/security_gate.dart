@@ -117,6 +117,7 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
         busy: _gate.pinUnlockBusy,
         error: _errorText(context),
         onUnlock: _unlockWithPin,
+        locked: _gate.retryAfter != null,
         onBiometrics: session.biometricsEnabled
             ? () => _switchTo(pinFallback: false)
             : null,
@@ -167,6 +168,8 @@ class _SecurityGateState extends ConsumerState<SecurityGate> {
     return switch (_gate.problem) {
       null => null,
       SecurityGateProblem.wrongPin => strings.wrongPin,
+      SecurityGateProblem.pinLocked =>
+        strings.pinLockedFor(_gate.retryAfter ?? Duration.zero),
       SecurityGateProblem.biometricsUnavailable =>
         strings.biometricsUnavailable,
     };

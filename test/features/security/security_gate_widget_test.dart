@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/app/app.dart';
 import 'package:ez_data/ez_data.dart';
@@ -10,6 +11,10 @@ import '../../support/widget_test_harness.dart';
 
 void main() {
   useTestEnvironment();
+
+  // Подделки ниже переопределяют только то, что проверяют; счёт неверных PIN
+  // идёт в настоящее хранилище — пустое.
+  setUp(() => FlutterSecureStorage.setMockInitialValues({}));
 
   testWidgets('first launch requires pin setup', (tester) async {
     await tester.pumpWidget(

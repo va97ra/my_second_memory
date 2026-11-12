@@ -1,11 +1,10 @@
-import 'dart:typed_data';
-
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/files/save_user_file.dart';
 import '../state/backup_file_rules.dart';
 import '../state/backup_providers.dart';
 import 'widgets/backup_password_dialog.dart';
@@ -42,52 +41,28 @@ class BackupActions {
           ? await _service.createEncryptedBackupZip(password)
           : null;
 
-      final saved = temporaryPath == null
-          ? await BackupFileSaver.saveToDownloads(
-              fileName: fileName,
-              bytes: bytes!,
-            )
-          : await BackupFileSaver.saveFileToDownloads(
-              fileName: fileName,
-              sourcePath: temporaryPath,
-            );
-      if (saved != null) {
-        _show(strings.backupSavedToDownloads);
-        return;
+      final saved = await saveUserFile(
+        fileName: fileName,
+        type: const XTypeGroup(
+          label: 'ZIP',
+          extensions: ['zip'],
+          mimeTypes: ['application/zip'],
+        ),
+        bytes: bytes,
+        sourcePath: temporaryPath,
+      );
+      switch (saved) {
+        case SavedTo.downloads:
+          _show(strings.backupSavedToDownloads);
+        case SavedTo.chosenPlace:
+          _show(strings.backupCreated);
+        case SavedTo.nowhere:
+          break;
       }
-      // Папки «Загрузки» может не быть — тогда место выбирают руками.
-      await _saveWhereAsked(fileName, temporaryPath, bytes);
     } on Object {
       _show(strings.backupCreateFailed);
     } finally {
       await _deleteTemporary(temporaryPath);
-    }
-  }
-
-  Future<void> _saveWhereAsked(
-    String fileName,
-    String? temporaryPath,
-    Uint8List? bytes,
-  ) async {
-    final location = await getSaveLocation(
-      acceptedTypeGroups: const [
-        XTypeGroup(label: 'ZIP', extensions: ['zip']),
-      ],
-      suggestedName: fileName,
-    );
-    if (location == null) return;
-
-    if (temporaryPath != null) {
-      await XFile(temporaryPath).saveTo(location.path);
-    } else {
-      await XFile.fromData(
-        bytes!,
-        mimeType: 'application/zip',
-        name: location.path.split(RegExp(r'[\\/]')).last,
-      ).saveTo(location.path);
-    }
-    if (context.mounted) {
-      _show(AppStrings.of(context).backupCreated);
     }
   }
 

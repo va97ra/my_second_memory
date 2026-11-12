@@ -9,6 +9,7 @@ class SecurityPrimaryButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.enabled = true,
   });
 
   final bool busy;
@@ -16,12 +17,15 @@ class SecurityPrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
 
+  /// Выключена, но без колеса: работы нет, нажимать просто рано.
+  final bool enabled;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: FilledButton.icon(
-        onPressed: busy ? null : onPressed,
+        onPressed: busy || !enabled ? null : onPressed,
         icon: busy
             ? const SizedBox.square(
                 dimension: 18,

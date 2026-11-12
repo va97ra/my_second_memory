@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../navigation/page_turn_navigation.dart';
 import '../../../sync/sync.dart';
+import '../error_journal_action.dart';
 import 'settings_chevron.dart';
 import 'settings_section.dart';
 import 'settings_tile.dart';
@@ -46,6 +47,13 @@ class DataSettingsSection extends ConsumerWidget {
           title: strings.memoryArchive,
           trailing: const SettingsChevron(),
           onTap: () => context.pageTurnGo('/memory'),
+        ),
+        SettingsTile(
+          icon: Icons.bug_report_rounded,
+          color: AppPalette.amber,
+          title: strings.errorJournal,
+          subtitle: strings.errorJournalSubtitle,
+          onTap: () => saveErrorJournal(context, ref),
         ),
       ],
     );

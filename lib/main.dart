@@ -11,13 +11,15 @@ import 'package:ez_data/ez_data.dart';
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'src/features/sync/sync.dart';
+import 'src/shared/state/error_journal_provider.dart';
 import 'src/platform/windows/windows_desktop.dart';
 import 'src/app/theme/app_content_font_controller.dart';
 import 'src/app/theme/app_theme_controller.dart';
 
 Future<void> main(List<String> arguments) async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
-  _recordUnhandledErrors(binding);
+  final journal = ErrorJournal();
+  _recordUnhandledErrors(binding, journal);
   // Каталог вложений читается один раз здесь: превью записи достаёт путь
   // синхронно, в самом build.
   await MediaStorage.initialize();
@@ -58,6 +60,7 @@ Future<void> main(List<String> arguments) async {
     ProviderScope(
       overrides: [
         syncBackendConfigProvider.overrideWithValue(syncConfig),
+        errorJournalProvider.overrideWithValue(journal),
         syncMutationObserverProvider.overrideWith(
           (ref) => ref.watch(appSyncMutationObserverProvider),
         ),
@@ -90,10 +93,9 @@ Future<void> main(List<String> arguments) async {
 }
 
 /// Необработанная ошибка раньше пропадала без следа. Теперь она, кроме
-/// консоли, ложится в местный журнал (`ErrorJournal`): его можно достать с
-/// телефона и понять, что случилось.
-void _recordUnhandledErrors(WidgetsBinding binding) {
-  final journal = ErrorJournal();
+/// консоли, ложится в местный журнал (`ErrorJournal`): его сохраняют файлом
+/// из настроек («Журнал ошибок») и понимают, что случилось.
+void _recordUnhandledErrors(WidgetsBinding binding, ErrorJournal journal) {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     unawaited(journal.record(details.exception, details.stack));

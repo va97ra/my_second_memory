@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'security_provider.dart';
 
 /// Что помешало открыть замок.
-enum SecurityGateProblem { wrongPin, biometricsUnavailable }
+enum SecurityGateProblem { wrongPin, pinLocked, biometricsUnavailable }
 
 /// Состояние замка приложения: чем сейчас занят и что не получилось.
 ///
@@ -23,12 +25,18 @@ class SecurityGateController extends ChangeNotifier {
   SecurityGateProblem? problem;
   String? startupError;
 
+  /// Сколько ещё ждать до следующей попытки PIN после череды ошибок; `null` —
+  /// пробовать можно. Отсчитывается здесь же, раз в секунду.
+  Duration? retryAfter;
+  Timer? _retryTimer;
+
   bool _biometricAttempted = false;
   bool _disposed = false;
 
   @override
   void dispose() {
     _disposed = true;
+    _retryTimer?.cancel();
     super.dispose();
   }
 
@@ -56,6 +64,9 @@ class SecurityGateController extends ChangeNotifier {
     _notify();
     try {
       await _session.load().timeout(const Duration(seconds: 8));
+      // Ожидание, начатое до перезапуска, продолжается: его видно сразу.
+      // Без PIN ждать нечего.
+      if (_session.hasPin) await _refreshRetryDelay();
     } on Object catch (error) {
       startupError = error.toString();
     } finally {
@@ -97,7 +108,7 @@ class SecurityGateController extends ChangeNotifier {
   }
 
   Future<void> unlockWithPin(String pin) async {
-    if (pinUnlockBusy) return;
+    if (pinUnlockBusy || retryAfter != null) return;
     if (pin.isEmpty) {
       problem = SecurityGateProblem.wrongPin;
       _notify();
@@ -110,6 +121,7 @@ class SecurityGateController extends ChangeNotifier {
     try {
       final ok = await _session.unlockWithPin(pin);
       problem = ok ? null : SecurityGateProblem.wrongPin;
+      if (!ok) await _refreshRetryDelay();
     } finally {
       pinUnlockBusy = false;
       _notify();
@@ -130,6 +142,26 @@ class SecurityGateController extends ChangeNotifier {
       problem = ok ? null : SecurityGateProblem.biometricsUnavailable;
       _notify();
     }
+  }
+
+  /// Спрашивает у хранилища, ждёт ли замок, и запускает отсчёт.
+  Future<void> _refreshRetryDelay() async {
+    final delay = await _session.pinRetryDelay();
+    _retryTimer?.cancel();
+    retryAfter = delay;
+    if (delay == null) return;
+    problem = SecurityGateProblem.pinLocked;
+    _retryTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final left = (retryAfter ?? Duration.zero) - const Duration(seconds: 1);
+      if (left > Duration.zero) {
+        retryAfter = left;
+      } else {
+        timer.cancel();
+        retryAfter = null;
+        if (problem == SecurityGateProblem.pinLocked) problem = null;
+      }
+      _notify();
+    });
   }
 
   void _notify() {

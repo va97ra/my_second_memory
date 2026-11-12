@@ -626,6 +626,28 @@ class AppStrings {
   String get biometricsNeedsPin =>
       isRu ? 'Сначала включите PIN' : 'Enable PIN first';
   String get wrongPin => isRu ? 'Неверный PIN' : 'Wrong PIN';
+  String get errorJournal => isRu ? 'Журнал ошибок' : 'Error log';
+  String get errorJournalSubtitle =>
+      isRu ? 'Сохранить файлом' : 'Save as a file';
+  String get errorJournalEmpty =>
+      isRu ? 'Ошибок не было — журнал пуст' : 'No errors — the log is empty';
+  String get errorJournalSavedToDownloads => isRu
+      ? 'Журнал ошибок сохранён в Загрузки'
+      : 'Error log saved to Downloads';
+  String get errorJournalSaved =>
+      isRu ? 'Журнал ошибок сохранён' : 'Error log saved';
+  String get errorJournalSaveFailed =>
+      isRu ? 'Не удалось сохранить журнал' : 'Could not save the log';
+
+  /// Ожидание после череды неверных PIN: «0:30», «12:05».
+  String pinLockedFor(Duration wait) {
+    final seconds = (wait.inMilliseconds / 1000).ceil();
+    final clock =
+        '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}';
+    return isRu
+        ? 'Слишком много неверных PIN. Повторите через $clock'
+        : 'Too many wrong PINs. Try again in $clock';
+  }
   String get biometricsUnavailable =>
       isRu ? 'Биометрия недоступна' : 'Biometrics unavailable';
   String get secureStorageStartFailed => isRu

@@ -88,6 +88,12 @@ class SecuritySessionController extends StateNotifier<SecuritySessionState> {
     return true;
   }
 
+  /// Задан ли PIN — без него замку нечего ждать.
+  bool get hasPin => state.hasPin;
+
+  /// Сколько ещё ждать до следующей попытки PIN; `null` — пробовать можно.
+  Future<Duration?> pinRetryDelay() => _service.pinRetryDelay();
+
   Future<void> setPin(String pin) async {
     await _service.setPin(pin);
     await unlockWithPin(pin);

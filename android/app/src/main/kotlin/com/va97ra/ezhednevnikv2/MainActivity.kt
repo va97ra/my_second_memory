@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.OpenableColumns
 import android.provider.MediaStore
+import android.webkit.MimeTypeMap
 import androidx.activity.result.contract.ActivityResultContracts
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -86,15 +87,15 @@ class MainActivity : FlutterFragmentActivity() {
             flutterEngine.dartExecutor.binaryMessenger,
             "ezhednevnik_v2/downloads"
         ).setMethodCallHandler { call, result ->
-            if (call.method != "saveBackupToDownloads" &&
-                call.method != "saveBackupFileToDownloads") {
+            if (call.method != "saveBytes" && call.method != "saveFile") {
                 result.notImplemented()
                 return@setMethodCallHandler
             }
 
             try {
-                val fileName = call.argument<String>("fileName") ?: "ezhednevnik_v2_backup.zip"
-                if (call.method == "saveBackupFileToDownloads") {
+                val fileName = call.argument<String>("fileName")
+                    ?: throw IllegalArgumentException("Missing file name")
+                if (call.method == "saveFile") {
                     val sourcePath = call.argument<String>("sourcePath")
                         ?: throw IllegalArgumentException("Missing source path")
                     result.success(saveFileToDownloads(fileName, File(sourcePath)))
@@ -268,6 +269,11 @@ class MainActivity : FlutterFragmentActivity() {
         }
     }
 
+    private fun mimeTypeOf(fileName: String): String =
+        MimeTypeMap.getSingleton()
+            .getMimeTypeFromExtension(fileName.substringAfterLast('.', "").lowercase())
+            ?: "application/octet-stream"
+
     private fun saveToDownloads(fileName: String, bytes: ByteArray): String {
         return saveStreamToDownloads(fileName) { output -> output.write(bytes) }
     }
@@ -285,7 +291,8 @@ class MainActivity : FlutterFragmentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-                put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
+                // Тип — по расширению: копия ложится архивом, журнал — текстом.
+                put(MediaStore.MediaColumns.MIME_TYPE, mimeTypeOf(fileName))
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             }
             val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)

@@ -15,6 +15,7 @@ class PinUnlockCard extends StatelessWidget {
     required this.busy,
     required this.error,
     required this.onUnlock,
+    this.locked = false,
     this.onBiometrics,
   });
 
@@ -22,6 +23,9 @@ class PinUnlockCard extends StatelessWidget {
   final bool busy;
   final String? error;
   final VoidCallback onUnlock;
+
+  /// После череды неверных PIN замок ждёт: вводить пока нечего.
+  final bool locked;
 
   /// Null, когда биометрия выключена: возвращаться к ней некуда.
   final VoidCallback? onBiometrics;
@@ -40,7 +44,7 @@ class PinUnlockCard extends StatelessWidget {
         const SizedBox(height: 18),
         PinField(
           controller: controller,
-          enabled: !busy,
+          enabled: !busy && !locked,
           onSubmitted: onUnlock,
         ),
         const SizedBox(height: 14),
@@ -49,6 +53,7 @@ class PinUnlockCard extends StatelessWidget {
           icon: Icons.lock_open_rounded,
           label: strings.unlock,
           onPressed: onUnlock,
+          enabled: !locked,
         ),
         if (onBiometrics != null) ...[
           const SizedBox(height: 8),

@@ -49,8 +49,12 @@ class SecurityActions {
     final pin = await askCurrentPin(context);
     if (pin == null || pin.isEmpty) return null;
 
-    final cipher = await ref.read(securityServiceProvider).unlockWithPin(pin);
-    if (cipher == null) return strings.wrongPin;
+    final security = ref.read(securityServiceProvider);
+    final cipher = await security.unlockWithPin(pin);
+    if (cipher == null) {
+      final wait = await security.pinRetryDelay();
+      return wait == null ? strings.wrongPin : strings.pinLockedFor(wait);
+    }
 
     try {
       await ref

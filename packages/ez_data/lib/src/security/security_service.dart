@@ -5,20 +5,31 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
 import 'app_cipher.dart';
+import 'pin_attempt_limit.dart';
 
 class SecurityService {
   SecurityService({
     FlutterSecureStorage? storage,
     LocalAuthentication? localAuthentication,
-  })  : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(
-                resetOnError: false,
-                migrateOnAlgorithmChange: true,
-                migrateWithBackup: true,
+    DateTime Function()? clock,
+  }) : this._(
+          storage ??
+              const FlutterSecureStorage(
+                aOptions: AndroidOptions(
+                  resetOnError: false,
+                  migrateOnAlgorithmChange: true,
+                  migrateWithBackup: true,
+                ),
               ),
-            ),
-        _localAuthentication = localAuthentication ?? LocalAuthentication();
+          localAuthentication ?? LocalAuthentication(),
+          clock,
+        );
+
+  SecurityService._(
+    this._storage,
+    this._localAuthentication,
+    DateTime Function()? clock,
+  ) : _attempts = PinAttemptLimit(_storage, clock: clock);
 
   static const _pinKey = 'app_pin_v1';
   static const _pinHashKey = 'app_pin_hash_v2';
@@ -29,6 +40,10 @@ class SecurityService {
 
   final FlutterSecureStorage _storage;
   final LocalAuthentication _localAuthentication;
+  final PinAttemptLimit _attempts;
+
+  /// Сколько ещё ждать до следующей попытки PIN; `null` — пробовать можно.
+  Future<Duration?> pinRetryDelay() => _attempts.remaining();
 
   Future<bool> hasPin() async {
     return (await _storage.read(key: _pinHashKey)) != null ||
@@ -62,7 +77,21 @@ class SecurityService {
     return cipher != null;
   }
 
+  /// Ключ данных по PIN или `null`, если PIN неверен или после череды
+  /// ошибок ещё не прошло ожидание ([pinRetryDelay]). Пока замок ждёт, PIN
+  /// не проверяется вовсе: перебор не должен получать ответа.
   Future<AppCipher?> unlockWithPin(String pin) async {
+    if (await _attempts.remaining() != null) return null;
+    final cipher = await _checkPin(pin);
+    if (cipher == null) {
+      await _attempts.recordFailure();
+    } else {
+      await _attempts.reset();
+    }
+    return cipher;
+  }
+
+  Future<AppCipher?> _checkPin(String pin) async {
     final legacyPin = await _storage.read(key: _pinKey);
     if (legacyPin != null) {
       if (legacyPin != pin) {
@@ -90,6 +119,7 @@ class SecurityService {
   }
 
   Future<void> clearPin() async {
+    await _attempts.reset();
     await _storage.delete(key: _pinKey);
     await _storage.delete(key: _pinHashKey);
     await _storage.delete(key: _pinSaltKey);

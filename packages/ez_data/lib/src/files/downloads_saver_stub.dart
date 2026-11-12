@@ -1,11 +1,10 @@
-Future<String?> saveBackupToDownloads({
+Future<String?> saveBytesToDownloads({
   required String fileName,
   required List<int> bytes,
-}) async {
-  return null;
-}
+}) async =>
+    null;
 
-Future<String?> saveBackupFileToDownloads({
+Future<String?> saveFileToDownloads({
   required String fileName,
   required String sourcePath,
 }) async =>
