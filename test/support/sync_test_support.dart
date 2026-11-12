@@ -9,7 +9,7 @@ import 'package:ez_domain/ez_domain.dart';
 Future<SyncRunResult> sync({
   required SyncRemote remote,
   required AppCipher cipher,
-  SyncTombstoneStore tombstones = const SyncTombstoneStore(),
+  SyncTombstoneStore? tombstones,
   List<MemoryItem> memoryItems = const [],
   Future<void> Function(List<MemoryItem>)? replaceMemoryItems,
   required List<ShiftSchedule> shifts,
@@ -31,7 +31,7 @@ Future<SyncRunResult> sync({
   return AppSyncEngine(
     remote: remote,
     cipher: cipher,
-    tombstones: tombstones,
+    tombstones: tombstones ?? SyncTombstoneStore(),
     media: media,
     snapshot: snapshot,
   ).synchronize(

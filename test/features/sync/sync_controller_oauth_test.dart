@@ -50,7 +50,7 @@ void main() {
     final controller = SyncController(
       remote: remote,
       keyStore: _EmptyKeyStore(),
-      tombstones: const SyncTombstoneStore(),
+      tombstones: SyncTombstoneStore(),
       data: SyncDataSources(
         readMemoryItems: () async => <MemoryItem>[],
         replaceMemoryItems: (_) async {},
@@ -84,7 +84,7 @@ void main() {
     final controller = SyncController(
       remote: remote,
       keyStore: _ConnectedKeyStore(),
-      tombstones: const SyncTombstoneStore(),
+      tombstones: SyncTombstoneStore(),
       canAccessLocalData: () => localDataAvailable,
       data: SyncDataSources(
         readMemoryItems: () async => <MemoryItem>[],
@@ -143,7 +143,7 @@ void main() {
     final controller = SyncController(
       remote: remote,
       keyStore: _ConnectedKeyStore(),
-      tombstones: const SyncTombstoneStore(),
+      tombstones: SyncTombstoneStore(),
       canAccessLocalData: () => localDataAvailable,
       data: SyncDataSources(
         readMemoryItems: () async => <MemoryItem>[],

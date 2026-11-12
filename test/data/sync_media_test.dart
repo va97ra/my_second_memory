@@ -41,7 +41,8 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize(itemWith(images: ['image_1.jpg']).mediaReferences);
+    ).synchronize(itemWith(images: ['image_1.jpg']).mediaReferences,
+        referencesComplete: true);
 
     expect(result.mediaUploaded, 1);
     expect(result.mediaDownloaded, 0);
@@ -64,7 +65,8 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize(itemWith(audio: 'voice_2.m4a').mediaReferences);
+    ).synchronize(itemWith(audio: 'voice_2.m4a').mediaReferences,
+        referencesComplete: true);
 
     expect(result.mediaDownloaded, 1);
     expect(result.mediaUploaded, 0);
@@ -81,7 +83,8 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: atRest,
-    ).synchronize(itemWith(images: ['image_3.jpg']).mediaReferences);
+    ).synchronize(itemWith(images: ['image_3.jpg']).mediaReferences,
+        referencesComplete: true);
 
     expect(storage.atRestUsed, isTrue);
     expect(storage.files['image_3.jpg'], _bytes([6]));
@@ -100,7 +103,8 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize(itemWith(images: ['image_kept.jpg']).mediaReferences);
+    ).synchronize(itemWith(images: ['image_kept.jpg']).mediaReferences,
+        referencesComplete: true);
 
     expect(remote.storedMedia.keys, ['image_kept.jpg']);
   });
@@ -118,8 +122,10 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize(itemWith(images: ['/data/user/0/app/files/image_4.jpg.ezm'])
-        .mediaReferences);
+    ).synchronize(
+        itemWith(images: ['/data/user/0/app/files/image_4.jpg.ezm'])
+            .mediaReferences,
+        referencesComplete: true);
 
     expect(remote.storedMedia.keys, ['image_4.jpg']);
   });
@@ -134,7 +140,8 @@ void main() {
       vault: vault,
       atRest: null,
     ).synchronize(
-        itemWith(images: ['data:image/png;base64,AAAA']).mediaReferences);
+        itemWith(images: ['data:image/png;base64,AAAA']).mediaReferences,
+        referencesComplete: true);
 
     expect(result.mediaUploaded, 0);
     expect(remote.storedMedia, isEmpty);
@@ -153,7 +160,8 @@ void main() {
       vault: vault,
       atRest: null,
     ).synchronize(
-        itemWith(images: ['image_bad.jpg', 'image_good.jpg']).mediaReferences);
+        itemWith(images: ['image_bad.jpg', 'image_good.jpg']).mediaReferences,
+        referencesComplete: true);
 
     expect(result.mediaFailed, 1);
     expect(result.mediaUploaded, 1);
@@ -173,7 +181,8 @@ void main() {
       MediaSyncEngine(
               remote: remote, storage: storage, vault: vault, atRest: null)
           .synchronize(
-              itemWith(images: ['image_1.jpg', 'image_2.jpg']).mediaReferences),
+              itemWith(images: ['image_1.jpg', 'image_2.jpg']).mediaReferences,
+              referencesComplete: true),
       throwsA(isA<TimeoutException>()),
     );
     expect(remote.downloads, 1);

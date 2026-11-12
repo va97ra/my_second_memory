@@ -33,7 +33,15 @@ class MediaSyncEngine {
 
   /// [references] — все ссылки на вложения в слитых данных, см.
   /// `mediaReferencesOf`.
-  Future<SyncRunResult> synchronize(Iterable<String> references) async {
+  ///
+  /// [referencesComplete] — заведомо ли эти ссылки полны. Файл в облаке,
+  /// на который никто не ссылается, удаляется только тогда: удаление по
+  /// неполным данным стёрло бы чужой снимок навсегда, а лишний файл в облаке
+  /// подождёт следующего прогона.
+  Future<SyncRunResult> synchronize(
+    Iterable<String> references, {
+    required bool referencesComplete,
+  }) async {
     final referenced = MediaStorage.storedNames(references);
     final remoteNames = await remote.listMediaNames();
     var downloaded = 0;
@@ -81,8 +89,9 @@ class MediaSyncEngine {
     // В облаке осталось то, на что не ссылаются данные, — значит, запись
     // удалили. Ссылки здесь из уже слитых данных, то есть и чужие; удаляется
     // только по-настоящему ничьё.
-    final orphans = remoteNames.difference(referenced);
-    await remote.deleteMedia(orphans);
+    if (referencesComplete) {
+      await remote.deleteMedia(remoteNames.difference(referenced));
+    }
 
     return SyncRunResult(
       downloaded: 0,

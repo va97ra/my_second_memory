@@ -34,7 +34,7 @@ void main() {
     final controller = SyncController(
       remote: remote,
       keyStore: _KeyStore(),
-      tombstones: const SyncTombstoneStore(),
+      tombstones: SyncTombstoneStore(),
       data: SyncDataSources(
         readMemoryItems: () async => local,
         replaceMemoryItems: (items) async => local = items,

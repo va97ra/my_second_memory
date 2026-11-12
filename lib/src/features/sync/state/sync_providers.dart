@@ -26,7 +26,7 @@ final syncRemoteStoreProvider = Provider<SyncRemoteStore?>((ref) {
 
 final syncKeyStoreProvider = Provider<SyncKeyStore>((ref) => SyncKeyStore());
 final syncTombstoneStoreProvider =
-    Provider<SyncTombstoneStore>((ref) => const SyncTombstoneStore());
+    Provider<SyncTombstoneStore>((ref) => SyncTombstoneStore());
 
 final syncControllerProvider =
     StateNotifierProvider<SyncController, SyncState>((ref) {

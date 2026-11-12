@@ -30,10 +30,15 @@ class SyncKeyStore {
   }
 }
 
+/// Отметки об удалениях для синхронизации.
+///
+/// Записи в одно место идут по очереди, и очередь принадлежит этому
+/// хранилищу: в приложении оно одно (`syncTombstoneStoreProvider`), а чужой
+/// экземпляр — например, в соседнем тесте — его не держит.
 class SyncTombstoneStore {
-  const SyncTombstoneStore();
+  SyncTombstoneStore();
 
-  static final Map<String, SequentialTaskQueue> _queues = {};
+  final Map<String, SequentialTaskQueue> _queues = {};
 
   /// Владелец удалений, сделанных без входа в аккаунт. Идентификаторы
   /// пользователей Supabase — UUID, и с ними это имя не совпадёт.

@@ -247,7 +247,21 @@ class AppSyncEngine {
     final media = this.media;
     final mediaResult = media == null || cloud.mediaSettled(mediaReferences)
         ? null
-        : await media.synchronize(mediaReferences);
+        : await media.synchronize(
+            mediaReferences,
+            referencesComplete: _coversCloud(remoteEntities, {
+              SyncEntityKind.memoryItem: {
+                for (final item in memoryOutcome.merged) item.id,
+              },
+              SyncEntityKind.recurrenceSeries: {
+                for (final series in recurrenceSeriesOutcome.merged) series.id,
+              },
+              SyncEntityKind.recurrenceException: {
+                for (final exception in recurrenceExceptionsOutcome.merged)
+                  exception.id,
+              },
+            }),
+          );
     if (mediaResult != null &&
         mediaResult.mediaFailed == 0 &&
         mediaResult.mediaMissing == 0) {
@@ -263,6 +277,24 @@ class AppSyncEngine {
       financeOutcome.result,
       toolCalculationsOutcome.result,
     ]);
+  }
+
+  /// Есть ли у каждой живой облачной строки, способной держать файлы, пара
+  /// в слитых данных — то есть заведомо ли полны ссылки на вложения.
+  ///
+  /// Пары нет у строки, которую здесь удалили, а облако об этом ещё не
+  /// узнало: тогда её файлы уйдут следующим прогоном. Всё прочее — ошибка
+  /// где-то ещё, и тем более не повод удалять.
+  static bool _coversCloud(
+    List<SyncRemoteEntity> cloud,
+    Map<SyncEntityKind, Set<String>> merged,
+  ) {
+    for (final row in cloud) {
+      if (row.isDeleted) continue;
+      final ids = merged[row.kind];
+      if (ids != null && !ids.contains(row.entityId)) return false;
+    }
+    return true;
   }
 
   /// Сколько изменений уходит одним вызовом.
