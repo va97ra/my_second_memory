@@ -102,7 +102,7 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: android);
     await _plugin.initialize(
-      settings,
+      settings: settings,
       onDidReceiveNotificationResponse: _handleResponse,
       onDidReceiveBackgroundNotificationResponse:
           notificationResponseBackground,
@@ -261,15 +261,14 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     final body = item.plainBody.trim();
 
     await _plugin.zonedSchedule(
-      stableNotificationId(item.id),
-      item.title,
-      body.isEmpty || body == item.title ? 'Запланированная запись' : body,
-      timezone.TZDateTime.from(remindAt, timezone.local),
-      NotificationDetails(android: details),
+      id: stableNotificationId(item.id),
+      title: item.title,
+      body:
+          body.isEmpty || body == item.title ? 'Запланированная запись' : body,
+      scheduledDate: timezone.TZDateTime.from(remindAt, timezone.local),
+      notificationDetails: NotificationDetails(android: details),
       payload: payload,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
@@ -278,7 +277,7 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     if (!isSupported) {
       return;
     }
-    await _plugin.cancel(stableNotificationId(itemId));
+    await _plugin.cancel(id: stableNotificationId(itemId));
   }
 
   @override
@@ -304,7 +303,7 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
       ],
     );
     for (final id in plan.cancel) {
-      await _plugin.cancel(id);
+      await _plugin.cancel(id: id);
     }
 
     var scheduled = 0;
@@ -370,7 +369,7 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
       }
     }
     for (final id in pendingShiftIds.difference(desiredIds)) {
-      await _plugin.cancel(id);
+      await _plugin.cancel(id: id);
     }
   }
 
@@ -409,11 +408,13 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
       ],
     );
     await _plugin.zonedSchedule(
-      id,
-      schedule.organizationName,
-      alarmIndex == 1 ? 'Утро после суточной смены' : 'Сегодня рабочая смена',
-      timezone.TZDateTime.from(alarmAt, timezone.local),
-      NotificationDetails(android: details),
+      id: id,
+      title: schedule.organizationName,
+      body: alarmIndex == 1
+          ? 'Утро после суточной смены'
+          : 'Сегодня рабочая смена',
+      scheduledDate: timezone.TZDateTime.from(alarmAt, timezone.local),
+      notificationDetails: NotificationDetails(android: details),
       payload: jsonEncode({
         'source': 'shift_alarm',
         'scheduleId': schedule.id,
@@ -421,15 +422,13 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
         'notificationId': id,
       }),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
   Future<void> _handleResponse(NotificationResponse response) async {
     final id = response.id;
     if (id != null) {
-      await _plugin.cancel(id);
+      await _plugin.cancel(id: id);
     }
     if (response.actionId == _stopAction) {
       return;
@@ -490,6 +489,6 @@ Future<void> notificationResponseBackground(
 ) async {
   final id = response.id;
   if (id != null) {
-    await FlutterLocalNotificationsPlugin().cancel(id);
+    await FlutterLocalNotificationsPlugin().cancel(id: id);
   }
 }

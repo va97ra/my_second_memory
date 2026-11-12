@@ -39,8 +39,8 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.24
   path_provider: ^2.1.4
   path: ^1.9.0
-  flutter_local_notifications: ^17.2.2
-  timezone: ^0.9.4
+  flutter_local_notifications: ^23.0.0
+  timezone: ^0.11.0
   record: ^7.1.1
   just_audio: ^0.9.40
   # Проигрывателя для Windows у just_audio нет: он объявляет только android,

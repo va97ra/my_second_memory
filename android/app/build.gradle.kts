@@ -14,7 +14,10 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.va97ra.ezhednevnikv2"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_local_notifications 23 собирается под Android 17 (API 37) и
+    // требует того же от приложения; у Flutter по умолчанию пока 36.
+    // targetSdk от этого не меняется.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     buildFeatures {
