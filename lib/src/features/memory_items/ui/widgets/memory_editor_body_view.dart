@@ -94,8 +94,8 @@ class MemoryEditorBodyView extends StatelessWidget {
       onCategoryChanged: (category) =>
           controller.applyForm((form) => form.withPaymentCategory(category)),
       onChanged: controller.scheduleAutosave,
-      onSubscriptionTermTap: actions.pickSubscriptionTerm,
-      onBirthYearTap: actions.pickBirthYear,
+      onSubscriptionTermTap: actions.schedule.pickSubscriptionTerm,
+      onBirthYearTap: actions.schedule.pickBirthYear,
       onClearBirthYear: form.birthYear == null
           ? null
           : () => controller.applyForm(

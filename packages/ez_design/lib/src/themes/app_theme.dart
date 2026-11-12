@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../components/press_pulse.dart';
+import '../components/press_pulse_theme.dart';
 import 'surface_palette.dart';
 import 'surface_textures.dart';
 

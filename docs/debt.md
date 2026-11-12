@@ -4,7 +4,9 @@
 кода — она исчезает и отсюда; если появилась новая, её сюда дописывают в том
 же коммите, а не «потом».
 
-Проверено 12 ноября 2026.
+Проверено 12 ноября 2026; список «не разобрано» разобран в тот же день:
+`memory_editor_actions` и `press_pulse` разрезаны по второй ответственности,
+остальное перенесено сюда с причиной.
 
 ## Сверх потолка осознанно
 
@@ -17,7 +19,7 @@ packages/ez_domain/lib/src/calendar/holiday_observance_table.dart     457
 packages/ez_domain/lib/src/calendar/holiday_russian_table.dart        994
    таблицы праздников: официальные, международные дни и праздники России
 
-packages/ez_core/lib/src/localization/app_strings.dart                647
+packages/ez_core/lib/src/localization/app_strings.dart                673
    строки интерфейса
 
 packages/ez_design/lib/src/themes/app_theme.dart                      416
@@ -64,7 +66,7 @@ packages/ez_data/lib/src/notifications/notification_service.dart      495
    вынуты: когда график будит, решает shiftAlarmTimes в домене, что снять и
    что переставить у напоминаний записей — planReminders
 
-packages/ez_data/lib/src/backup/backup_service.dart                   551
+packages/ez_data/lib/src/backup/backup_service.dart                   548
    один формат архива, прочитанный в обе стороны. Выгрузка и загрузка знают
    одну и ту же раскладку файлов, и разложить их по разным классам значит
    завести две копии этого знания
@@ -78,31 +80,36 @@ lib/src/features/memory_items/ui/memory_item_detail_screen.dart       239
    только сборка редактора: состояние, сценарии и поля из него вынуты, осталось
    связать их и запустить при открытии
 
-lib/src/features/calendar/ui/calendar_screen.dart                     186
-   одна страница месяца и её перелистывание; шапка, сетка и страницы вынуты
-
-lib/src/app/app.dart                                                  190
+lib/src/app/app.dart                                                  192
    корень приложения: при запуске подключает уведомления, облако и трей Windows
-```
 
-## Сверх потолка, ещё не разобрано
-
-Найдено 12 ноября 2026 сверкой размеров (Т12 аудита). Для каждого файла
-вопрос из «Размерных потолков» ещё не задан: есть ли внутри вторая
-ответственность. Если есть — резать по ней; если нет — перенести в раздел
-выше с причиной. Часть файлов — правки интерфейса, которые на эту дату ещё
-шли.
-
-```text
-lib/src/features/memory_items/ui/memory_editor_actions.dart          283
 packages/ez_design/lib/src/components/page_turn/page_turn_geometry.dart 233
+   геометрия того же переворота, что рисует page_turn_painter: сетка листа,
+   изгиб и свет. Один рисующий объект и его геометрия — одна ответственность
+
 lib/src/features/calculator/ui/calculator_key_layouts.dart           199
-packages/ez_design/lib/src/components/press_pulse.dart               186
+   таблица раскладок клавиатуры: три сетки клавиш и подписи к ним
+
+lib/src/features/security/ui/security_gate.dart                      177
+   экран замка, а не виджет внутри экрана: по состоянию выбирает одну из
+   карточек — загрузка, сбой хранилища, первый PIN, биометрия, PIN. Карточки
+   и состояние (SecurityGateController) вынуты, осталось их связать
+
 lib/src/features/memory_items/ui/widgets/memory_sticker.dart         180
-lib/src/features/security/ui/security_gate.dart                      174
+   одна карточка записи и её перенос. Они делят одно состояние: держать ли
+   карточку в списке, пока её несут, и откуда её подняли. Лицо карточки
+   (MemoryStickerFace), меню и прокрутка у края вынуты
+
 lib/src/features/home_feed/ui/widgets/feed_day_rail.dart             172
-lib/src/features/backup/ui/backup_actions.dart                       167
+   одна шкала дней: слежение за пальцем, прокрутка у края и приём записи
+   работают с одним масштабом. Сам масштаб — FeedDayScale — вынут
+
 lib/src/features/memory_items/ui/widgets/memory_editor_menu.dart     160
+   один список пунктов меню редактора: длину даёт число пунктов
+
 lib/src/features/memory_items/ui/widgets/inline_time_field.dart      153
 lib/src/features/memory_items/ui/widgets/payment_fields.dart         151
+packages/ez_design/lib/src/components/press_pulse.dart               152
+   по одному полю или одному отклику на палец; превышение — несколько строк.
+   У press_pulse подключение к теме кнопок вынуто в press_pulse_theme
 ```

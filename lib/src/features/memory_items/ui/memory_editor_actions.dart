@@ -9,23 +9,18 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../navigation/leave_after_frame.dart' as navigation;
 import '../../../navigation/page_turn_navigation.dart';
-import '../../../shared/state/notification_providers.dart';
 import '../../recurrence/recurrence.dart';
 import '../state/memory_attachment_service.dart';
 import '../state/memory_editor_controller.dart';
 import '../state/memory_item_commands.dart';
 import '../state/memory_items_controller.dart';
 import 'memory_attachment_actions.dart';
-import 'widgets/birth_year_dialog.dart';
+import 'memory_editor_schedule_actions.dart';
 import 'widgets/delete_scope_sheet.dart';
 import 'widgets/edit_scope_sheet.dart';
 import 'widgets/memory_editor_menu.dart';
 import 'widgets/multi_date_picker_sheet.dart';
 import 'widgets/recurrence_picker_sheet.dart';
-import 'widgets/subscription_term_sheet.dart';
-import 'widgets/time_reminder_draft.dart';
-import 'widgets/time_reminder_sheet.dart';
-import '../state/memory_editor_form.dart';
 
 /// Что происходит по нажатию в редакторе записи.
 ///
@@ -47,6 +42,13 @@ class MemoryEditorActions {
   final MemoryAttachmentService attachments;
   final ImagePicker imagePicker;
 
+  /// Дата, время и сроки записи живут своим сценарием.
+  MemoryEditorScheduleActions get schedule => MemoryEditorScheduleActions(
+        context: context,
+        ref: ref,
+        controller: controller,
+      );
+
   /// Вложения записи живут своим сценарием.
   MemoryAttachmentActions get media => MemoryAttachmentActions(
         context: context,
@@ -60,17 +62,13 @@ class MemoryEditorActions {
   void runMenuAction(MemoryEditorAction action, MemoryItem? item) {
     switch (action) {
       case MemoryEditorAction.date:
-        unawaited(pickDate());
+        unawaited(schedule.pickDate());
       case MemoryEditorAction.time:
-        unawaited(openTimeAndReminder());
+        unawaited(schedule.openTimeAndReminder());
       case MemoryEditorAction.clearTime:
-        // Время уходит вместе с напоминанием: напоминать не о чем, если
-        // запись больше не привязана к часу.
-        controller.applyForm(
-          (form) => form.copyWith(clearTime: true, clearReminder: true),
-        );
+        schedule.clearTime();
       case MemoryEditorAction.reminder:
-        unawaited(openTimeAndReminder());
+        unawaited(schedule.openTimeAndReminder());
       case MemoryEditorAction.repeat:
         unawaited(openRepeatPicker());
       case MemoryEditorAction.duplicate:
@@ -80,32 +78,6 @@ class MemoryEditorActions {
       case MemoryEditorAction.delete:
         if (item != null) unawaited(confirmDelete(item));
     }
-  }
-
-  Future<void> pickBirthYear() async {
-    final year =
-        await askBirthYear(context, initial: controller.form.birthYear);
-    if (year == null || !context.mounted) return;
-    controller.applyForm((form) => form.copyWith(birthYear: year));
-  }
-
-  Future<void> pickSubscriptionTerm() async {
-    final months = await showModalBottomSheet<int>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => SubscriptionTermSheet(
-        initialMonths: controller.form.subscriptionTermMonths,
-      ),
-    );
-    if (months == null || !context.mounted) return;
-    controller.applyForm(
-      (form) => form.copyWith(
-        subscriptionTermMonths: months == 0 ? null : months,
-        clearSubscriptionTerm: months == 0,
-        subscriptionTermDirty: true,
-      ),
-    );
   }
 
   Future<void> openRepeatPicker() async {
@@ -167,77 +139,6 @@ class MemoryEditorActions {
     );
   }
 
-  Future<void> pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: controller.form.memoryDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked == null) return;
-
-    controller.applyForm((form) {
-      final memoryDate = DateTime(picked.year, picked.month, picked.day);
-      final remindAt = reminderAfterMove(
-        form.remindAt,
-        form.timeMinutes,
-        memoryDate,
-      );
-      return form.copyWith(
-        memoryDate: memoryDate,
-        remindAt: remindAt,
-        clearReminder: remindAt == null,
-      );
-    });
-  }
-
-  /// Во сколько стоит напоминание записи, часами того же дня.
-  ///
-  /// Пусто — значит напоминания нет, и лист откроется на времени самой записи.
-  static int? _reminderMinutesOf(MemoryEditorForm form) {
-    final remindAt = form.remindAt;
-    if (remindAt == null) return null;
-    return remindAt.hour * 60 + remindAt.minute;
-  }
-
-  Future<void> openTimeAndReminder() async {
-    final form = controller.form;
-    final result = await showModalBottomSheet<TimeReminderDraft>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (context) => TimeReminderSheet(
-        initialTimeMinutes: form.timeMinutes,
-        initialReminderEnabled: form.remindAt != null,
-        initialReminderMinutes: _reminderMinutesOf(form),
-        initialSoundUri: form.reminderSoundUri,
-        initialSoundName: form.reminderSoundName,
-        memoryDate: form.memoryDate,
-        scheduler: ref.read(notificationServiceProvider),
-      ),
-    );
-    if (result == null || !context.mounted) return;
-
-    controller.applyForm((form) {
-      final remindAt = result.reminderEnabled && result.timeMinutes != null
-          ? _dateTimeFor(
-              form.memoryDate,
-              result.reminderMinutes ?? result.timeMinutes!,
-            )
-          : null;
-      return form.copyWith(
-        timeMinutes: result.timeMinutes,
-        clearTime: result.timeMinutes == null,
-        remindAt: remindAt,
-        clearReminder: remindAt == null,
-        reminderSoundUri: result.soundUri,
-        reminderSoundName: result.soundName,
-        clearReminderSound: result.soundUri == null,
-      );
-    });
-  }
-
   Future<void> confirmDelete(MemoryItem item) async {
     final scope = await askMemoryDelete(context, item);
     if (scope == null || !context.mounted) return;
@@ -277,7 +178,4 @@ class MemoryEditorActions {
     controller.discardPendingSave();
     navigation.leaveAfterFrame(context);
   }
-
-  DateTime _dateTimeFor(DateTime date, int minutes) =>
-      DateTime(date.year, date.month, date.day, minutes ~/ 60, minutes % 60);
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/app_palette.dart';
 
-import '../../components/press_pulse.dart';
+import '../../components/press_pulse_theme.dart';
 import '../surface_palette.dart';
 import '../app_theme.dart';
 import 'notebook_assets.dart';
