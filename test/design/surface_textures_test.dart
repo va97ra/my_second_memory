@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  _darkCardStandsOutOnLeather();
+
   test('dark theme exposes textures without notebook behavior', () {
     final theme = buildAppTheme(brightness: Brightness.dark);
 
@@ -147,4 +149,25 @@ double _contrast(Color first, Color second) {
       ? second.computeLuminance()
       : first.computeLuminance();
   return (high + 0.05) / (low + 0.05);
+}
+
+/// Средний тон снимка чёрной кожи (`black_leather.webp`, 13 из 255): им
+/// просвечивает текстура сквозь цвет поверхности.
+const _blackLeatherMean = Color(0xFF0D0D0D);
+
+/// Цвет, которым поверхность на коже видна глазу: кожа тонируется её цветом
+/// на 55 %, как в [NotebookLeatherSurface].
+Color _seenOnLeather(Color surface) =>
+    Color.alphaBlend(surface.withValues(alpha: 0.55), _blackLeatherMean);
+
+void _darkCardStandsOutOnLeather() {
+  test('на чёрной коже карточка заметно светлее страницы и темнее диалога', () {
+    final colors = buildNotebookTheme(brightness: Brightness.dark).colorScheme;
+    final page = _seenOnLeather(AppPalette.black);
+    final card = _seenOnLeather(colors.surface);
+
+    expect(_contrast(card, page), greaterThanOrEqualTo(1.2));
+    expect(card.computeLuminance(),
+        lessThan(AppPalette.blackDialog.computeLuminance()));
+  });
 }

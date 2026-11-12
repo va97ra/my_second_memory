@@ -72,7 +72,10 @@ abstract final class AppPalette {
 
   // Уровни поверхности: фон ниже всех, на нём карточка, поверх неё диалог. Каждый
   // следующий светлее: перепад и показывает глазу, что лежит сверху.
-  static const blackCard = Color(0xFF1E1E24);
+  // Карточка на чёрной коже видна сквозь неё: кожа тонируется её цветом
+  // наполовину, и #1E1E24 глазу выходил почти как сама страница. Значение
+  // берётся с поправкой на это — видимый тон около #212121.
+  static const blackCard = Color(0xFF32323A);
   static const blackDialog = Color(0xFF2A2A32);
   static const silverCard = Color(0xFFEDEFF3);
   static const silverDialog = Color(0xFFF7F8FA);
