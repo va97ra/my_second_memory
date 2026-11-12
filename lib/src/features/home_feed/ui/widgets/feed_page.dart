@@ -58,6 +58,7 @@ class FeedPage extends ConsumerWidget {
         Expanded(
           child: FeedBody(
             allDates: view.allDates,
+            searching: view.searchQuery.trim().isNotEmpty,
             filter: view.filter,
             layout: layout,
             loadState: loadState,

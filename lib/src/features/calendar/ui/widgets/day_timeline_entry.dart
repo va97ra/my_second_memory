@@ -1,96 +1,90 @@
-import 'package:flutter/material.dart';
 import 'package:ez_domain/ez_domain.dart';
-import 'day_timeline_geometry.dart';
-import 'day_timeline_card.dart';
-import 'day_timeline_handles.dart';
+import 'package:flutter/material.dart';
 
-/// Owns the drag preview for one existing record; moving commits on release.
+import 'day_timeline_card.dart';
+import 'day_timeline_drag.dart';
+import 'day_timeline_frame.dart';
+import 'day_timeline_geometry.dart';
+
+/// Запись на шкале. Пока её тянут, двигается только картинка: в хранилище она
+/// попадает один раз, когда палец отпустили, а не на каждую минуту по дороге.
 class DayTimelineEntry extends StatefulWidget {
-  const DayTimelineEntry(
-      {super.key,
-      required this.block,
-      required this.selected,
-      required this.onSelect,
-      required this.onOpen,
-      required this.onSave});
+  const DayTimelineEntry({
+    super.key,
+    required this.block,
+    required this.selected,
+    required this.onSelect,
+    required this.onOpen,
+    required this.onSave,
+  });
+
   final DayTimelineBlock block;
   final bool selected;
   final VoidCallback onSelect;
   final VoidCallback onOpen;
   final ValueChanged<MemoryItem> onSave;
+
   @override
   State<DayTimelineEntry> createState() => _DayTimelineEntryState();
 }
 
 class _DayTimelineEntryState extends State<DayTimelineEntry> {
-  int? _movedStart;
-  int? _grabbed;
+  DayTimelineBlock? _preview;
 
-  void _carry(double travelled) {
-    if (_movedStart == null) return;
-    final block = widget.block;
-    final length = block.end - block.start;
-    final moved =
-        dayTimelineMinutesAt(block.top + travelled).clamp(0, 24 * 60 - length);
-    if (moved != _movedStart) setState(() => _movedStart = moved);
+  DayTimelineBlock get _shown => _preview ?? widget.block;
+
+  void _show(int start, int end) => setState(
+        () => _preview = widget.block.movedTo(start, end),
+      );
+
+  void _carry(int anchor, double travelled) {
+    final length = _shown.end - _shown.start;
+    final moved = dayTimelineCarriedStart(anchor, travelled, length: length);
+    _show(moved, moved + length);
   }
 
-  void _drop() {
-    final moved = _movedStart;
-    setState(() => _movedStart = null);
+  void _commit() {
+    final shown = _preview;
     final block = widget.block;
-    if (moved == null || moved == block.start) return;
-    widget.onSave(block.item.copyWith(
-        timeMinutes: moved, endMinutes: moved + block.end - block.start));
-  }
-
-  void _moveStart(double travelled) {
-    final anchor = _grabbed;
-    if (anchor == null) return;
-    final block = widget.block;
-    final moved = dayTimelineMinutesAt(dayTimelineOffsetOf(anchor) + travelled);
-    if (moved >= block.end || moved == block.start) return;
-    widget
-        .onSave(block.item.copyWith(timeMinutes: moved, endMinutes: block.end));
-  }
-
-  void _moveEnd(double travelled) {
-    final anchor = _grabbed;
-    if (anchor == null) return;
-    final block = widget.block;
-    final moved = dayTimelineMinutesAt(dayTimelineOffsetOf(anchor) + travelled);
-    if (moved <= block.start || moved == block.end) return;
-    widget.onSave(block.item.copyWith(endMinutes: moved));
+    if (shown != null &&
+        (shown.start != block.start || shown.end != block.end)) {
+      widget.onSave(
+        block.item.copyWith(timeMinutes: shown.start, endMinutes: shown.end),
+      );
+    }
+    setState(() => _preview = null);
   }
 
   @override
   Widget build(BuildContext context) {
-    final block = widget.block;
-    return Positioned(
-      top: _movedStart == null ? block.top : dayTimelineOffsetOf(_movedStart!),
-      left: dayTimelineGutterWidth + block.indent,
-      right: 8,
-      height: block.height,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onOpen,
-        onLongPressStart: (_) {
-          widget.onSelect();
-          setState(() => _movedStart = block.start);
-        },
-        onLongPressMoveUpdate: (details) =>
-            _carry(details.localOffsetFromOrigin.dy),
-        onLongPressEnd: (_) => _drop(),
-        onLongPressCancel: () => setState(() => _movedStart = null),
-        child: DayTimelineCard(
-            block: block,
-            selected: widget.selected,
-            handles: DayTimelineHandles(
-              onGrabStart: () => _grabbed = block.start,
-              onGrabEnd: () => _grabbed = block.end,
-              onDragStart: _moveStart,
-              onDragEnd: _moveEnd,
-            )),
+    final shown = _shown;
+    return DayTimelineFrame(
+      start: shown.start,
+      end: shown.end,
+      indent: widget.block.indent,
+      showFlags: widget.selected,
+      showRange: _preview != null,
+      onDragStartEdge: (anchor, travelled) => _show(
+        dayTimelineDraggedStart(anchor, travelled, end: shown.end),
+        shown.end,
+      ),
+      onDragEndEdge: (anchor, travelled) => _show(
+        shown.start,
+        dayTimelineDraggedEnd(anchor, travelled, start: shown.start),
+      ),
+      onRelease: _commit,
+      child: DayTimelineDrag(
+        minutes: shown.start,
+        // Выбранную запись тянут сразу, остальные — с удержания: иначе с них
+        // нельзя было бы начать листать шкалу.
+        immediate: widget.selected,
+        onDrag: _carry,
+        onRelease: _commit,
+        // Первое нажатие поднимает запись наверх и даёт флажки, второе открывает.
+        onTap: widget.selected ? widget.onOpen : widget.onSelect,
+        onLift: widget.onSelect,
+        onCancel: () => setState(() => _preview = null),
+        child: DayTimelineCard(block: shown, selected: widget.selected),
       ),
     );
   }

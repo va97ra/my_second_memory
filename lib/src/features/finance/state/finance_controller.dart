@@ -1,3 +1,4 @@
+import 'package:ez_core/ez_core.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +32,8 @@ final financeControllerProvider =
 });
 
 /// Одна операция по идентификатору: правка другой её карточку не трогает.
-final financeEntryByIdProvider = Provider.family<FinanceEntry?, String>((ref, id) {
+final financeEntryByIdProvider =
+    Provider.family<FinanceEntry?, String>((ref, id) {
   return ref.watch(
     financeControllerProvider.select((entries) {
       for (final entry in entries) {
@@ -68,6 +70,11 @@ class FinanceController extends StateNotifier<List<FinanceEntry>> {
 
   final FinanceRepository _repository;
   final SyncMutationObserver? _sync;
+
+  /// Записи в хранилище идут по одной и в том порядке, в каком сделаны
+  /// правки: в хранилище уходит разница, и две правки одной операции,
+  /// легшие в обратном порядке, оставили бы старую.
+  final _writes = SequentialTaskQueue();
   late final Future<void> _loadFuture;
 
   Future<void> load() => _loadFuture;
@@ -79,7 +86,7 @@ class FinanceController extends StateNotifier<List<FinanceEntry>> {
   Future<void> add(FinanceEntry entry) async {
     await _loadFuture;
     state = _sorted([...state, entry]);
-    await _repository.replaceAll(state);
+    await _writes.add(() => _repository.upsertAll([entry]));
     _sync?.financeEntriesChanged();
   }
 
@@ -89,7 +96,7 @@ class FinanceController extends StateNotifier<List<FinanceEntry>> {
       for (final current in state)
         if (current.id == entry.id) entry else current,
     ]);
-    await _repository.replaceAll(state);
+    await _writes.add(() => _repository.upsertAll([entry]));
     _sync?.financeEntriesChanged();
   }
 
@@ -100,14 +107,13 @@ class FinanceController extends StateNotifier<List<FinanceEntry>> {
       for (final entry in state)
         if (entry.id != id) entry
     ];
-    await _repository.replaceAll(state);
+    await _writes.add(() => _repository.deleteAll([id]));
     await _sync?.financeEntryDeleted(id, deletedAt);
   }
 
   Future<void> replaceAll(List<FinanceEntry> entries) async {
     await _loadFuture;
-    state = _sorted(entries);
-    await _repository.replaceAll(state);
+    await _replaceState(entries);
   }
 
   Future<void> replaceAllFromSync(
@@ -115,14 +121,31 @@ class FinanceController extends StateNotifier<List<FinanceEntry>> {
     required List<FinanceEntry> baseline,
   }) async {
     await _loadFuture;
-    state = _sorted(mergeSyncedEntities(
+    await _replaceState(mergeSyncedEntities(
       incoming: entries,
       current: state,
       baseline: baseline,
       idOf: (entry) => entry.id,
       updatedAtOf: (entry) => entry.updatedAt,
     ));
-    await _repository.replaceAll(state);
+  }
+
+  /// Подменяет журнал целиком, а в хранилище пишет только разницу. Прежнее
+  /// состояние и есть то, что там лежит: каждая правка стоит в очереди
+  /// записи вместе с собой.
+  Future<void> _replaceState(List<FinanceEntry> entries) async {
+    final stored = state;
+    state = _sorted(entries);
+    final changes = listChanges(
+      before: stored,
+      after: state,
+      idOf: (entry) => entry.id,
+      toJson: (entry) => entry.toJson(),
+    );
+    await _writes.add(() async {
+      await _repository.upsertAll(changes.upserts);
+      await _repository.deleteAll(changes.removedIds);
+    });
   }
 
   List<FinanceEntry> _sorted(List<FinanceEntry> entries) {

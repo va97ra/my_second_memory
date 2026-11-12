@@ -125,7 +125,7 @@ void main() {
     final surface = find.descendant(
       of: key,
       matching: find.byType(AnimatedContainer),
-    );
+    ).first;
     final decoration =
         tester.widget<AnimatedContainer>(surface).decoration as BoxDecoration;
     expect(decoration.boxShadow, isNotEmpty);

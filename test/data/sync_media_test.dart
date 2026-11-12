@@ -41,9 +41,7 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize([
-      itemWith(images: ['image_1.jpg'])
-    ]);
+    ).synchronize(itemWith(images: ['image_1.jpg']).mediaReferences);
 
     expect(result.mediaUploaded, 1);
     expect(result.mediaDownloaded, 0);
@@ -66,7 +64,7 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize([itemWith(audio: 'voice_2.m4a')]);
+    ).synchronize(itemWith(audio: 'voice_2.m4a').mediaReferences);
 
     expect(result.mediaDownloaded, 1);
     expect(result.mediaUploaded, 0);
@@ -83,9 +81,7 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: atRest,
-    ).synchronize([
-      itemWith(images: ['image_3.jpg'])
-    ]);
+    ).synchronize(itemWith(images: ['image_3.jpg']).mediaReferences);
 
     expect(storage.atRestUsed, isTrue);
     expect(storage.files['image_3.jpg'], _bytes([6]));
@@ -104,9 +100,7 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize([
-      itemWith(images: ['image_kept.jpg'])
-    ]);
+    ).synchronize(itemWith(images: ['image_kept.jpg']).mediaReferences);
 
     expect(remote.storedMedia.keys, ['image_kept.jpg']);
   });
@@ -124,9 +118,8 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize([
-      itemWith(images: ['/data/user/0/app/files/image_4.jpg.ezm']),
-    ]);
+    ).synchronize(itemWith(images: ['/data/user/0/app/files/image_4.jpg.ezm'])
+        .mediaReferences);
 
     expect(remote.storedMedia.keys, ['image_4.jpg']);
   });
@@ -140,9 +133,8 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize([
-      itemWith(images: ['data:image/png;base64,AAAA']),
-    ]);
+    ).synchronize(
+        itemWith(images: ['data:image/png;base64,AAAA']).mediaReferences);
 
     expect(result.mediaUploaded, 0);
     expect(remote.storedMedia, isEmpty);
@@ -160,9 +152,8 @@ void main() {
       storage: storage,
       vault: vault,
       atRest: null,
-    ).synchronize([
-      itemWith(images: ['image_bad.jpg', 'image_good.jpg']),
-    ]);
+    ).synchronize(
+        itemWith(images: ['image_bad.jpg', 'image_good.jpg']).mediaReferences);
 
     expect(result.mediaFailed, 1);
     expect(result.mediaUploaded, 1);
@@ -181,9 +172,8 @@ void main() {
     await expectLater(
       MediaSyncEngine(
               remote: remote, storage: storage, vault: vault, atRest: null)
-          .synchronize([
-        itemWith(images: ['image_1.jpg', 'image_2.jpg'])
-      ]),
+          .synchronize(
+              itemWith(images: ['image_1.jpg', 'image_2.jpg']).mediaReferences),
       throwsA(isA<TimeoutException>()),
     );
     expect(remote.downloads, 1);
@@ -202,36 +192,6 @@ class _TimedOutDownloadRemote extends SyncRemote {
 }
 
 Uint8List _bytes(List<int> values) => Uint8List.fromList(values);
-
-/// Вложения в памяти: настоящему хранилищу нужен каталог документов, которого
-/// в тесте нет.
-class FakeMediaStorage extends MediaStorage {
-  FakeMediaStorage(this.files);
-
-  final Map<String, Uint8List> files;
-  bool atRestUsed = false;
-
-  @override
-  Future<bool> exists(String reference) async =>
-      files.containsKey(MediaStorage.referenceFor(reference));
-
-  @override
-  Future<Uint8List> readPlainBytes(String reference, AppCipher? atRest) async {
-    final bytes = files[MediaStorage.referenceFor(reference)];
-    if (bytes == null) throw StateError('No file $reference');
-    return bytes;
-  }
-
-  @override
-  Future<void> writePlainBytes(
-    String reference,
-    Uint8List bytes,
-    AppCipher? atRest,
-  ) async {
-    if (atRest != null) atRestUsed = true;
-    files[MediaStorage.referenceFor(reference)] = bytes;
-  }
-}
 
 class FailingUploadRemote extends SyncRemote {
   FailingUploadRemote({required this.failFor});

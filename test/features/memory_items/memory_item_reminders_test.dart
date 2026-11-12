@@ -1,4 +1,3 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
@@ -39,8 +38,7 @@ void main() {
   // docs/behavior.md: восстановление возвращает напоминание, если оно ещё
   // впереди, и не воскрешает прошедшее.
 
-  test('restore brings back a reminder only while it is still ahead',
-      () async {
+  test('restore brings back a reminder only while it is still ahead', () async {
     final now = DateTime.now();
     final ahead = MemoryItem(
       id: 'ahead',
@@ -93,10 +91,11 @@ void main() {
       ],
     );
     final media = TrackingMediaStorage();
-    final controller = MemoryItemsController(
+    late final MemoryItemsController controller;
+    controller = MemoryItemsController(
       FakeMemoryRepository([item]),
       FakeReminderScheduler(),
-      media,
+      cleanupOver(media, items: () => controller.state),
     );
     await controller.load();
 

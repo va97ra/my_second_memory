@@ -1,4 +1,5 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 class FinanceCategoryField extends StatelessWidget {
@@ -51,7 +52,7 @@ class FinanceCategoryField extends StatelessWidget {
                     itemCount: values.length,
                     itemBuilder: (context, index) {
                       final value = values[index];
-                      return InkWell(
+                      return NotebookPressable(
                         onTap: () => onSelected(value),
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(minHeight: 48),

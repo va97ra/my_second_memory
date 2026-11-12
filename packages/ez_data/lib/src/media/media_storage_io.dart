@@ -57,6 +57,16 @@ class MediaStorage {
         : name;
   }
 
+  /// Имена файлов, на которые указывают ссылки, по одному на файл.
+  ///
+  /// Снимок, оставшийся строкой внутри записи, и адрес в сети — не файлы:
+  /// они ездят вместе с записью, и ни облаку, ни копии, ни уборке до них дела
+  /// нет.
+  static Set<String> storedNames(Iterable<String> references) => {
+        for (final reference in references)
+          if (!isExternal(reference)) referenceFor(reference),
+      };
+
   /// Ссылка, которую нельзя превратить в файл: снимок, оставшийся строкой
   /// внутри записи (веб), или адрес в сети.
   static bool isExternal(String value) =>
@@ -165,17 +175,6 @@ class MediaStorage {
       final name = referenceFor(reference);
       if (used.contains(name) || !_isOwnedName(name)) continue;
       await _deleteBothForms(name);
-    }
-  }
-
-  Future<void> cleanOrphans(Set<String> usedPaths) async {
-    final root = await initialize();
-    final used = usedPaths.map(referenceFor).toSet();
-    await for (final entity in Directory(root).list()) {
-      if (entity is! File) continue;
-      final name = referenceFor(entity.path);
-      if (used.contains(name) || !_isOwnedName(name)) continue;
-      await entity.delete();
     }
   }
 

@@ -191,10 +191,14 @@ class _MemoryRepository implements MemoryRepository {
   }
 
   @override
-  Future<void> delete(String id) async {
+  Future<void> delete(String id) => deleteAll([id]);
+
+  @override
+  Future<void> deleteAll(List<String> ids) async {
+    final removed = ids.toSet();
     items = [
       for (final item in items)
-        if (item.id != id) item
+        if (!removed.contains(item.id)) item
     ];
   }
 

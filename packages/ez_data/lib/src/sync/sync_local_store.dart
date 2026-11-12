@@ -35,6 +35,33 @@ class SyncTombstoneStore {
 
   static final Map<String, SequentialTaskQueue> _queues = {};
 
+  /// Владелец удалений, сделанных без входа в аккаунт. Идентификаторы
+  /// пользователей Supabase — UUID, и с ними это имя не совпадёт.
+  static const signedOutOwner = 'signed-out';
+
+  /// Передаёт аккаунту [userId] удаления, сделанные без входа, и забывает их.
+  ///
+  /// Без этого запись, удалённая на устройстве без аккаунта, возвращалась из
+  /// облака при следующем входе: облако считало её живой, а отметки об
+  /// удалении не было. Отметки ложатся тому аккаунту, в который вошли; если
+  /// это другой аккаунт, в его облаке появятся отметки о записях, которых там
+  /// нет, и только.
+  Future<void> adoptSignedOut(String userId) async {
+    for (final kind in SyncEntityKind.values) {
+      // Обычно список пуст: тогда очередь записи не трогается вовсе — это
+      // проверка на каждом прогоне, и стоять в очереди ради неё незачем.
+      if ((await read(signedOutOwner, kind: kind)).isEmpty) continue;
+      await _queue(signedOutOwner, kind).add(() async {
+        final pending = await read(signedOutOwner, kind: kind);
+        if (pending.isEmpty) return;
+        for (final entry in pending.entries) {
+          await markDeleted(userId, entry.key, entry.value, kind: kind);
+        }
+        await write(signedOutOwner, const {}, kind: kind);
+      });
+    }
+  }
+
   Future<Map<String, DateTime>> read(
     String userId, {
     SyncEntityKind kind = SyncEntityKind.memoryItem,

@@ -17,7 +17,7 @@ MemoryItem _item(String id, int? start, [int? end]) {
 }
 
 void main() {
-  test('dragging snaps to the quarter of an hour', () {
+  test('a tap snaps to the quarter of an hour', () {
     expect(dayTimelineMinutesAt(dayTimelineOffsetOf(9 * 60 + 37)), 9 * 60 + 30);
     expect(dayTimelineMinutesAt(dayTimelineOffsetOf(9 * 60 + 38)), 9 * 60 + 45);
   });

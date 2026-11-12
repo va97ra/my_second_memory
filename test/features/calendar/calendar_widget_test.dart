@@ -313,6 +313,9 @@ void main() {
     final todayKey = DateFormat('yyyy-MM-dd').format(today);
     await tester.tap(find.byKey(ValueKey('calendar_day_$todayKey')));
     await tester.pumpAndSettle();
+    // Первое нажатие поднимает запись на шкале, второе открывает.
+    await tester.tap(find.text('План на сегодня'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('План на сегодня'));
     await tester.pumpAndSettle();
 

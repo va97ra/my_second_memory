@@ -1,4 +1,5 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../state/production_period_provider.dart';
@@ -17,7 +18,7 @@ class ProductionMonthProgress extends ConsumerWidget {
     final progress = rows.first.progress;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: InkWell(
+      child: NotebookPressable(
           onTap: () => ProductionCalendarDialog.show(context, month),
           child: Text(
             rows.length > 1

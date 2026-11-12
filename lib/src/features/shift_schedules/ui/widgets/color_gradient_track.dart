@@ -53,31 +53,25 @@ class ColorGradientTrack extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   Positioned.fill(
-                    top: 4,
-                    bottom: 4,
+                    top: 11,
+                    bottom: 11,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: gradient,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.24),
-                        ),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ),
                   ),
                   Positioned(
-                    left: (width - 22) * value,
-                    top: 0,
+                    left: (width - 26) * value,
+                    top: 4,
                     child: Container(
-                      width: 22,
-                      height: 34,
+                      width: 26,
+                      height: 26,
                       decoration: BoxDecoration(
                         color: thumbColor,
-                        borderRadius: BorderRadius.circular(7),
-                        border: Border.all(color: Colors.white, width: 2),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
                         boxShadow: const [
                           BoxShadow(
                             color: Color(0x66000000),

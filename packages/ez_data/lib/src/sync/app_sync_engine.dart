@@ -2,6 +2,7 @@ import 'package:ez_domain/ez_domain.dart';
 import '../security/app_cipher.dart';
 import 'sync_local_store.dart';
 import 'sync_remote_store.dart';
+import 'cloud_snapshot.dart';
 import 'encrypted_entity_sync_engine.dart';
 import 'media_sync_engine.dart';
 
@@ -11,6 +12,7 @@ class AppSyncEngine {
     required this.cipher,
     required this.tombstones,
     this.media,
+    this.snapshot,
   });
 
   final SyncRemoteStore remote;
@@ -20,6 +22,10 @@ class AppSyncEngine {
   /// Вложения. Null означает, что на этой платформе файлов нет — в вебе
   /// снимок живёт строкой внутри самой записи и уезжает вместе с ней.
   final MediaSyncEngine? media;
+
+  /// Облако, прочитанное прошлыми прогонами. Без него облако читается
+  /// целиком, как при первом прогоне после запуска.
+  final CloudSnapshot? snapshot;
 
   Future<SyncRunResult> synchronize({
     required List<MemoryItem> memoryItems,
@@ -39,15 +45,8 @@ class AppSyncEngine {
     List<SavedToolCalculation> toolCalculations = const [],
     Future<void> Function(List<SavedToolCalculation>)? replaceToolCalculations,
   }) async {
-    final remoteEntities = await remote.fetchEntities();
-    // Слитый список записей нужен вложениям: по нему видно, какие файлы ещё
-    // кому-то принадлежат, а какие остались в облаке ничьими.
-    var mergedMemoryItems = memoryItems;
-    Future<void> replaceMergedMemoryItems(List<MemoryItem> items) async {
-      mergedMemoryItems = items;
-      await replaceMemoryItems(items);
-    }
-
+    final cloud = snapshot ?? CloudSnapshot();
+    final remoteEntities = await cloud.refresh(remote);
     final memoryOutcome = await EncryptedEntitySyncEngine<MemoryItem>(
       remote: remote,
       cipher: cipher,
@@ -61,7 +60,7 @@ class AppSyncEngine {
     ).merge(
       localItems: memoryItems,
       remoteEntities: remoteEntities,
-      replaceLocal: replaceMergedMemoryItems,
+      replaceLocal: replaceMemoryItems,
     );
     final shiftsEngine = EncryptedEntitySyncEngine<ShiftSchedule>(
       remote: remote,
@@ -75,24 +74,17 @@ class AppSyncEngine {
       withCanonicalUpdatedAt: (schedule, updatedAt) =>
           schedule.copyWith(updatedAt: updatedAt),
     );
-    var mergedShiftSchedules = shiftSchedules;
-    Future<void> replaceMergedShiftSchedules(
-      List<ShiftSchedule> schedules,
-    ) async {
-      mergedShiftSchedules = schedules;
-      await replaceShiftSchedules(schedules);
-    }
 
     var shiftsOutcome = await shiftsEngine.merge(
       localItems: shiftSchedules,
       remoteEntities: remoteEntities,
-      replaceLocal: replaceMergedShiftSchedules,
+      replaceLocal: replaceShiftSchedules,
     );
-    final shiftDeduplication = deduplicateShiftSchedules(mergedShiftSchedules);
+    final shiftDeduplication = deduplicateShiftSchedules(shiftsOutcome.merged);
     if (shiftDeduplication.duplicateIds.isNotEmpty) {
       final userId = remote.currentUserId!;
       var deletedAt = DateTime.now();
-      for (final schedule in mergedShiftSchedules) {
+      for (final schedule in shiftsOutcome.merged) {
         if (!deletedAt.isAfter(schedule.syncUpdatedAt)) {
           deletedAt = schedule.syncUpdatedAt.add(
             const Duration(microseconds: 1),
@@ -108,12 +100,11 @@ class AppSyncEngine {
         );
       }
 
-      mergedShiftSchedules = shiftDeduplication.schedules;
-      await replaceShiftSchedules(mergedShiftSchedules);
+      await replaceShiftSchedules(shiftDeduplication.schedules);
       final cleanupOutcome = await shiftsEngine.merge(
-        localItems: mergedShiftSchedules,
+        localItems: shiftDeduplication.schedules,
         remoteEntities: remoteEntities,
-        replaceLocal: replaceMergedShiftSchedules,
+        replaceLocal: replaceShiftSchedules,
       );
       shiftsOutcome = EntitySyncOutcome(
         result: SyncRunResult(
@@ -123,6 +114,7 @@ class AppSyncEngine {
               shiftDeduplication.duplicateIds.length,
         ),
         changesToUpload: cleanupOutcome.changesToUpload,
+        merged: cleanupOutcome.merged,
       );
     }
     final accountsOutcome = await EncryptedEntitySyncEngine<AccountItem>(
@@ -233,7 +225,7 @@ class AppSyncEngine {
       remoteEntities: remoteEntities,
       replaceLocal: replaceToolCalculations ?? (_) async {},
     );
-    await remote.applyEntities([
+    await _upload(cloud, [
       ...memoryOutcome.changesToUpload,
       ...shiftsOutcome.changesToUpload,
       ...accountsOutcome.changesToUpload,
@@ -243,8 +235,24 @@ class AppSyncEngine {
       ...toolCalculationsOutcome.changesToUpload,
     ]);
     // Вложения идут после записей: пока запись не слита, неизвестно, какие
-    // файлы ей нужны и какие в облаке уже ничьи.
-    final mediaResult = await media?.synchronize(mergedMemoryItems);
+    // файлы ей нужны и какие в облаке уже ничьи. Хозяева файлов — не только
+    // записи, но и шаблоны серий и правки дат.
+    final mediaReferences = mediaReferencesOf(
+      items: memoryOutcome.merged,
+      series: recurrenceSeriesOutcome.merged,
+      exceptions: recurrenceExceptionsOutcome.merged,
+    );
+    // Сверка листает весь бакет, поэтому идёт, только когда есть что
+    // сверять: набор ссылок изменился или прошлая сверка не довезла файлы.
+    final media = this.media;
+    final mediaResult = media == null || cloud.mediaSettled(mediaReferences)
+        ? null
+        : await media.synchronize(mediaReferences);
+    if (mediaResult != null &&
+        mediaResult.mediaFailed == 0 &&
+        mediaResult.mediaMissing == 0) {
+      cloud.settleMedia(mediaReferences);
+    }
     return _combine([
       if (mediaResult != null) mediaResult,
       memoryOutcome.result,
@@ -257,6 +265,29 @@ class AppSyncEngine {
     ]);
   }
 
+  /// Сколько изменений уходит одним вызовом.
+  static const uploadBatchSize = 200;
+
+  /// Отправляет изменения пачками, каждую своим вызовом со своим таймаутом.
+  ///
+  /// Первая заливка большого дневника одним вызовом не укладывалась в
+  /// таймаут и повторялась целиком. Пачки независимы: если оборвалась одна,
+  /// отправленные до неё уже в облаке, а остальное следующий прогон найдёт
+  /// сам — слияние видит, чего в облаке нет.
+  Future<void> _upload(
+    CloudSnapshot cloud,
+    List<SyncRemoteEntity> changes,
+  ) async {
+    for (var start = 0; start < changes.length; start += uploadBatchSize) {
+      final end = start + uploadBatchSize < changes.length
+          ? start + uploadBatchSize
+          : changes.length;
+      final batch = changes.sublist(start, end);
+      await remote.applyEntities(batch);
+      cloud.recordSent(batch);
+    }
+  }
+
   SyncRunResult _combine(List<SyncRunResult> results) {
     return SyncRunResult(
       downloaded: results.fold(0, (total, item) => total + item.downloaded),
@@ -267,6 +298,7 @@ class AppSyncEngine {
       mediaUploaded:
           results.fold(0, (total, item) => total + item.mediaUploaded),
       mediaFailed: results.fold(0, (total, item) => total + item.mediaFailed),
+      mediaMissing: results.fold(0, (total, item) => total + item.mediaMissing),
     );
   }
 }

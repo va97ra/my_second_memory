@@ -44,28 +44,53 @@ void main() {
     await tester.tap(find.text('Добавить график').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('5/2'), findsOneWidget);
+    Future<void> openCard(String key) async {
+      await tester.tap(find.byKey(ValueKey('shift_tile_$key')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> closeCard() async {
+      Navigator.of(tester.element(find.byType(BottomSheet))).pop();
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.byKey(const ValueKey('shift_color_preview')), findsOneWidget);
+
+    await openCard('alarms');
+    expect(find.text('Будильник 1'), findsOneWidget);
+    expect(find.textContaining('Будильник 2'), findsNothing);
+    await closeCard();
+
+    await openCard('pattern');
+    // Выбранный рисунок написан и на кнопке, и на самой карточке под листом.
+    expect(find.text('5/2'), findsNWidgets(2));
     expect(find.text('2/2'), findsOneWidget);
     expect(find.text('сутки/трое'), findsOneWidget);
     expect(find.text('7/7'), findsNothing);
     expect(find.text('14/14'), findsNothing);
-    expect(find.byKey(const ValueKey('shift_color_hue')), findsOneWidget);
-    expect(find.byKey(const ValueKey('shift_color_tone')), findsOneWidget);
-    expect(find.byKey(const ValueKey('shift_color_preview')), findsOneWidget);
-    expect(find.text('Будильник 1'), findsOneWidget);
-    expect(find.textContaining('Будильник 2'), findsNothing);
     await tester.tap(find.text('сутки/трое'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Будильник 2'), findsOneWidget);
     expect(find.text('Рабочих дней'), findsNothing);
+    await closeCard();
+
+    await openCard('alarms');
+    expect(find.textContaining('Будильник 2'), findsOneWidget);
+    await closeCard();
+
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Организация'),
       'Завод',
     );
+    await openCard('pattern');
     await tester.tap(find.text('2/2'));
     await tester.pumpAndSettle();
+    await closeCard();
+
+    await openCard('color');
     final hueTrack = find.byKey(const ValueKey('shift_color_hue'));
     final toneTrack = find.byKey(const ValueKey('shift_color_tone'));
+    expect(hueTrack, findsOneWidget);
+    expect(toneTrack, findsOneWidget);
     final hueRect = tester.getRect(hueTrack);
     final toneRect = tester.getRect(toneTrack);
     await tester.tapAt(Offset(
@@ -77,10 +102,9 @@ void main() {
       toneRect.center.dy,
     ));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('add_shift_vacation')),
-    );
-    await tester.pumpAndSettle();
+    await closeCard();
+
+    await openCard('vacations');
     await tester.tap(find.byKey(const ValueKey('add_shift_vacation')));
     await tester.pumpAndSettle();
     expect(find.text('Количество календарных дней'), findsOneWidget);
@@ -90,10 +114,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('shift_vacations_empty')), findsNothing);
 
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('add_shift_vacation')),
-    );
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('add_shift_vacation')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('save_shift_vacation')));
@@ -112,25 +132,14 @@ void main() {
               .value
               .startsWith('remove_shift_vacation_'),
     );
-    await tester.ensureVisible(removeVacation);
-    await tester.pumpAndSettle();
     await tester.tap(removeVacation);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('shift_vacations_empty')), findsOneWidget);
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('add_shift_vacation')),
-    );
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('add_shift_vacation')),
-    );
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('add_shift_vacation')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('save_shift_vacation')));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Сохранить'));
-    await tester.pumpAndSettle();
+    await closeCard();
     await tester.tap(find.text('Сохранить'));
     await tester.pumpAndSettle();
 

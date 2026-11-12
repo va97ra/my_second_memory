@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/styled_text_controller.dart';
 import 'text_color_picker.dart';
-import 'text_format_glyphs.dart';
+import 'color_glyph.dart';
+import 'font_glyph.dart';
+import 'format_glyph_button.dart';
+import 'size_glyph.dart';
 import 'text_format_pickers.dart';
 
 /// Панель оформления выделенного текста — снизу, пока текст выделен.

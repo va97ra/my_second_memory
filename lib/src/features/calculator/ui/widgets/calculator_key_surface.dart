@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Physical surface of one calculator key.
@@ -53,14 +54,9 @@ class CalculatorKeySurface extends StatelessWidget {
     );
   }
 
-  Widget _ink(Widget content) => Material(
-        color: Colors.transparent,
-        borderRadius: _radius,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onPressed,
-          onHighlightChanged: onHighlightChanged,
-          child: content,
-        ),
+  Widget _ink(Widget content) => NotebookPressable(
+        onTap: onPressed,
+        onHighlightChanged: onHighlightChanged,
+        child: content,
       );
 }

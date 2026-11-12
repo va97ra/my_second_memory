@@ -68,10 +68,14 @@ class SqliteMemoryRepository implements MemoryRepository {
   }
 
   @override
-  Future<void> delete(String id) async {
+  Future<void> delete(String id) => deleteAll([id]);
+
+  @override
+  Future<void> deleteAll(List<String> ids) async {
+    if (ids.isEmpty) return;
     await _migrateLegacyItemsIfNeeded();
     await (_database.delete(_database.memoryItems)
-          ..where((row) => row.id.equals(id)))
+          ..where((row) => row.id.isIn(ids)))
         .go();
   }
 

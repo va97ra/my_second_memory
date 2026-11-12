@@ -188,7 +188,7 @@ class _ConnectedRemoteStore extends _OAuthRemoteStore {
   int fetchEntitiesCalls = 0;
 
   @override
-  Future<List<SyncRemoteEntity>> fetchEntities() async {
+  Future<List<SyncRemoteEntity>> fetchEntities({int afterRevision = 0}) async {
     fetchEntitiesCalls++;
     return const [];
   }
@@ -200,7 +200,7 @@ class _BlockingConnectedRemoteStore extends _ConnectedRemoteStore {
   final secondFetchStarted = Completer<void>();
 
   @override
-  Future<List<SyncRemoteEntity>> fetchEntities() async {
+  Future<List<SyncRemoteEntity>> fetchEntities({int afterRevision = 0}) async {
     fetchEntitiesCalls++;
     if (fetchEntitiesCalls == 1) {
       firstFetchStarted.complete();
@@ -280,7 +280,8 @@ class _OAuthRemoteStore implements SyncRemoteStore {
   Future<SyncVaultProfile?> fetchVaultProfile() async => null;
 
   @override
-  Future<List<SyncRemoteEntity>> fetchEntities() async => const [];
+  Future<List<SyncRemoteEntity>> fetchEntities({int afterRevision = 0}) async =>
+      const [];
 
   @override
   Future<void> applyEntities(List<SyncRemoteEntity> entities) async {}
@@ -292,5 +293,5 @@ class _OAuthRemoteStore implements SyncRemoteStore {
   Future<void> signOut() async => _userId = null;
 
   @override
-  Stream<void> watchChanges() => const Stream.empty();
+  Stream<SyncRemoteEntity?> watchChanges() => const Stream.empty();
 }

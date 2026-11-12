@@ -5,14 +5,18 @@ import 'sync_local_store.dart';
 import 'sync_remote_store.dart';
 import 'package:ez_domain/ez_domain.dart';
 
-class EntitySyncOutcome {
+class EntitySyncOutcome<T> {
   const EntitySyncOutcome({
     required this.result,
     required this.changesToUpload,
+    required this.merged,
   });
 
   final SyncRunResult result;
   final List<SyncRemoteEntity> changesToUpload;
+
+  /// Местный список после слияния — то, что теперь лежит на устройстве.
+  final List<T> merged;
 }
 
 class EncryptedEntitySyncEngine<T> {
@@ -38,7 +42,7 @@ class EncryptedEntitySyncEngine<T> {
   final T Function(Map<String, Object?> json) fromJson;
   final T Function(T item, DateTime updatedAt)? withCanonicalUpdatedAt;
 
-  Future<EntitySyncOutcome> merge({
+  Future<EntitySyncOutcome<T>> merge({
     required List<T> localItems,
     required List<SyncRemoteEntity> remoteEntities,
     required Future<void> Function(List<T> items) replaceLocal,
@@ -109,9 +113,10 @@ class EncryptedEntitySyncEngine<T> {
         continue;
       }
 
-      final remoteItem = await _decode(remoteEntity);
+      // Расшифровывается только то, что заменит местное: время правки лежит
+      // в облаке открыто, и сравнить его можно, не трогая слепок.
       if (local == null || remoteEntity.updatedAt.isAfter(updatedAtOf(local))) {
-        localById[id] = remoteItem;
+        localById[id] = await _decode(remoteEntity);
         downloaded++;
         if (localDeletion != null) {
           deletedById.remove(id);
@@ -148,8 +153,9 @@ class EncryptedEntitySyncEngine<T> {
         kind: kind,
       );
     }
+    final merged = localById.values.toList(growable: false);
     if (downloaded > 0 || deleted > 0 || localChanged) {
-      await replaceLocal(localById.values.toList(growable: false));
+      await replaceLocal(merged);
     }
 
     return EntitySyncOutcome(
@@ -159,6 +165,7 @@ class EncryptedEntitySyncEngine<T> {
         deleted: deleted,
       ),
       changesToUpload: changesToUpload,
+      merged: merged,
     );
   }
 

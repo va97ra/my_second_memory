@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../calendar/calendar.dart' show calendarTodayColor;
 import '../../../memory_items/memory_items.dart';
 import '../feed_labels.dart';
+import 'feed_day_rail_appearing.dart';
 import 'feed_day_rail_bubble.dart';
 import 'feed_day_rail_edge.dart';
 import 'feed_day_rail_strip.dart';
@@ -138,7 +139,7 @@ class _FeedDayRailState extends ConsumerState<FeedDayRail>
           bottom: 0,
           right: 0,
           width: width,
-          child: _Appearing(
+          child: FeedDayRailAppearing(
             shown: _shown,
             child: DragTarget<String>(
               onAcceptWithDetails: _drop,
@@ -166,33 +167,6 @@ class _FeedDayRailState extends ConsumerState<FeedDayRail>
             ),
           ),
       ],
-    );
-  }
-}
-
-/// Шкала выезжает, когда карточку понесли, и не ловит палец, пока её нет.
-class _Appearing extends StatelessWidget {
-  const _Appearing({required this.shown, required this.child});
-
-  static const _duration = Duration(milliseconds: 140);
-
-  final bool shown;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      ignoring: !shown,
-      child: AnimatedOpacity(
-        opacity: shown ? 1 : 0,
-        duration: _duration,
-        child: AnimatedSlide(
-          offset: shown ? Offset.zero : const Offset(0.3, 0),
-          duration: _duration,
-          curve: Curves.easeOutCubic,
-          child: child,
-        ),
-      ),
     );
   }
 }

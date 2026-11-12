@@ -24,7 +24,7 @@ class TimedSyncRemoteStore implements SyncRemoteStore {
   @override
   Stream<void> watchAuthenticatedSession() => inner.watchAuthenticatedSession();
   @override
-  Stream<void> watchChanges() => inner.watchChanges();
+  Stream<SyncRemoteEntity?> watchChanges() => inner.watchChanges();
   @override
   Future<bool> signInWithGoogle() =>
       inner.signInWithGoogle().timeout(requestTimeout);
@@ -37,8 +37,8 @@ class TimedSyncRemoteStore implements SyncRemoteStore {
   Future<void> createVaultProfile(SyncVaultProfile profile) =>
       inner.createVaultProfile(profile).timeout(requestTimeout);
   @override
-  Future<List<SyncRemoteEntity>> fetchEntities() =>
-      inner.fetchEntities().timeout(requestTimeout);
+  Future<List<SyncRemoteEntity>> fetchEntities({int afterRevision = 0}) =>
+      inner.fetchEntities(afterRevision: afterRevision).timeout(requestTimeout);
   @override
   Future<void> applyEntities(List<SyncRemoteEntity> entities) =>
       inner.applyEntities(entities).timeout(requestTimeout);

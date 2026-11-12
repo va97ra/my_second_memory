@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_domain/ez_domain.dart';
+import '../../calendar/state/calendar_today_provider.dart';
 import '../../memory_items/memory_items.dart';
 import 'package:ez_data/ez_data.dart';
 import '../../security/security.dart';
@@ -8,6 +9,7 @@ import 'recurrence_exception_controller.dart';
 import 'recurrence_series_controller.dart';
 import '../../sync/sync.dart';
 import '../../../app/local_storage_scope_provider.dart';
+import '../../../shared/state/media_cleanup_provider.dart';
 import '../../../shared/state/notification_providers.dart';
 
 final plainRecurrenceRepositoryProvider = Provider<RecurrenceRepository>((ref) {
@@ -66,6 +68,7 @@ final recurrenceSeriesControllerProvider =
     ref.watch(memoryItemsControllerProvider.notifier),
     ref.watch(notificationServiceProvider),
     ref.watch(syncMutationObserverProvider),
+    ref.watch(mediaCleanupProvider),
   ),
 );
 
@@ -73,9 +76,14 @@ final recurrenceLoadProvider = FutureProvider<void>((ref) {
   return ref.watch(recurrenceSeriesControllerProvider.notifier).load();
 });
 
-final recurrenceProjectionServiceProvider =
-    Provider<RecurrenceProjectionService>((ref) {
-  return const RecurrenceProjectionService();
+/// Проекция повторов на текущие данные: строится один раз на их изменение,
+/// а ячейки, дни и лента берут из неё свои диапазоны.
+final recurrenceProjectionProvider = Provider<RecurrenceProjection>((ref) {
+  return RecurrenceProjection(
+    series: ref.watch(recurrenceSeriesControllerProvider),
+    exceptions: ref.watch(recurrenceExceptionControllerProvider),
+    persistedItems: ref.watch(memoryItemsControllerProvider),
+  );
 });
 
 class RecurrenceRange {
@@ -96,21 +104,19 @@ class RecurrenceRange {
 
 final recurrenceItemsForRangeProvider =
     Provider.family<List<MemoryItem>, RecurrenceRange>((ref, range) {
-  return ref.watch(recurrenceProjectionServiceProvider).itemsForRange(
-        start: range.start,
-        end: range.end,
-        series: ref.watch(recurrenceSeriesControllerProvider),
-        exceptions: ref.watch(recurrenceExceptionControllerProvider),
-        persistedItems: ref.watch(memoryItemsControllerProvider),
-      );
+  return ref
+      .watch(recurrenceProjectionProvider)
+      .itemsForRange(range.start, range.end);
 });
 
 /// Ближайшее вхождение каждого повтора, по одному на серию. Вхождений у
 /// повтора бесконечно много: в списке всех дат он лежит одной строкой.
 /// Самый редкий повтор случается раз в год, поэтому смотрим на год вперёд.
+///
+/// Считается от сегодняшнего дня и пересчитывается, когда он сменился:
+/// иначе после полуночи ближайшим оставалось вчерашнее вхождение.
 final nextRecurrenceItemsProvider = Provider<List<MemoryItem>>((ref) {
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
+  final today = ref.watch(calendarTodayProvider);
   final items = ref.watch(
     recurrenceItemsForRangeProvider(
       RecurrenceRange(today, DateTime(today.year + 1, today.month, today.day)),
@@ -130,12 +136,5 @@ final nextRecurrenceItemsProvider = Provider<List<MemoryItem>>((ref) {
 
 final recurrenceItemByIdProvider =
     Provider.family<MemoryItem?, String>((ref, id) {
-  return ref.watch(recurrenceProjectionServiceProvider).itemById(
-        id: id,
-        series: ref.watch(recurrenceSeriesControllerProvider),
-        exceptions: ref.watch(recurrenceExceptionControllerProvider),
-        persistedItems: ref.watch(memoryItemsControllerProvider),
-      );
+  return ref.watch(recurrenceProjectionProvider).itemById(id);
 });
-
-

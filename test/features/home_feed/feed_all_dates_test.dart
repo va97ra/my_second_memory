@@ -51,7 +51,7 @@ void main() {
     await tester.tap(find.text('Все записи').last);
     await tester.pumpAndSettle();
     final all = c.read(feedLayoutProvider);
-    expect(all.groups.expand((group) => group.itemIds), ['today', 'future']);
+    expect(all.groups.expand((group) => group.itemIds), ['future', 'today']);
     expect(all.doneItemIds, ['past']);
     expect(find.text('Выполненные'), findsOneWidget);
     expect(find.text('Все даты'), findsOneWidget);
@@ -110,7 +110,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(c.read(feedViewProvider).allDates, isTrue);
     final layout = c.read(feedLayoutProvider);
-    expect(layout.itemIds, ['past', 'today', 'future']);
+    expect(layout.itemIds, ['future', 'today', 'past']);
     expect(layout.groups.length, 3);
     expect(find.byType(FeedGroupDivider), findsWidgets);
     await tester.tap(button);

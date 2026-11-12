@@ -3,6 +3,7 @@ import 'package:ez_domain/ez_domain.dart';
 import '../security/encrypted_json_store.dart';
 import '../security/secure_entity_backend.dart';
 import '../security/secure_entity_codec.dart';
+import 'finance_journal_list.dart';
 import 'finance_repository.dart';
 
 class EncryptedFinanceRepository implements FinanceRepository {
@@ -57,6 +58,34 @@ class EncryptedFinanceRepository implements FinanceRepository {
       storageKey,
       [for (final entry in entries) entry.toJson()],
     );
+  }
+
+  @override
+  Future<void> upsertAll(List<FinanceEntry> entries) async {
+    if (entries.isEmpty) return;
+    if (backend case final secureBackend?) {
+      await secureBackend.upsertSecureEntities(entityKind, [
+        for (final entry in entries)
+          await _codec.encode(entry.id, entry.toJson()),
+      ]);
+      return;
+    }
+    await replaceAll(upsertedEntries(await loadAll(), entries));
+  }
+
+  @override
+  Future<void> deleteAll(List<String> ids) async {
+    if (ids.isEmpty) return;
+    if (backend case final secureBackend?) {
+      for (final id in ids) {
+        await secureBackend.deleteSecureEntity(
+          entityKind,
+          await _codec.lookupKey(id),
+        );
+      }
+      return;
+    }
+    await replaceAll(withoutEntries(await loadAll(), ids));
   }
 
   SecureEntityCodec get _codec => SecureEntityCodec(store.cipher);

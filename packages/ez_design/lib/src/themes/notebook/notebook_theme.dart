@@ -47,6 +47,7 @@ class _NotebookColors {
     required this.teal,
     required this.yellow,
     required this.paperAsset,
+    this.paperGrainScale,
     required this.leatherAsset,
   });
 
@@ -84,6 +85,7 @@ class _NotebookColors {
   final Color teal;
   final Color yellow;
   final String paperAsset;
+  final double? paperGrainScale;
   final String leatherAsset;
 }
 
@@ -166,6 +168,8 @@ const _darkColors = _NotebookColors(
   teal: AppPalette.turquoise,
   yellow: AppPalette.amber,
   paperAsset: NotebookAssets.darkPaper,
+  // Снимок кожи растянут был на весь экран, и бугорки выходили крупными.
+  paperGrainScale: 1.6,
   leatherAsset: NotebookAssets.darkLeather,
 );
 
@@ -206,6 +210,7 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
     teal: c.teal,
     yellow: c.yellow,
     paperAsset: c.paperAsset,
+    paperGrainScale: c.paperGrainScale,
     leatherAsset: c.leatherAsset,
     cardSurface: notebookCardSurface,
     cardInk: notebookCardInk,

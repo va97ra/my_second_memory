@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// День в выборе дат для дублирования: нажатие отмечает и снимает отметку.
@@ -17,7 +18,7 @@ class MultiDateCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return InkWell(
+    return NotebookPressable(
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
       child: DecoratedBox(

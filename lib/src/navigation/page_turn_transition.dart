@@ -16,8 +16,8 @@ Page<void> pageTurnPage({
   final useFastTransition = _useFastTransition(context);
   // Страницу, пришедшую во время переворота, показывает лист, а маршрут под
   // ним меняется мгновенно. Навигатор снимает заменённую страницу, только
-  // доиграв приход новой, и всё это время рисует её под новой: на стекле
-  // сквозь календарь была видна шкала ушедшего дня.
+  // доиграв приход новой, и всё это время рисует её под новой: сквозь
+  // календарь проступала бы шкала ушедшего дня.
   final turnOwnsTransition =
       PageTurnNavigationScope.maybeOf(context)?.isTurning ?? false;
   final animated = animateRoute && !turnOwnsTransition;
@@ -130,8 +130,7 @@ class PageTurnTransition extends StatelessWidget {
       // календарь, а на выходе шкала висит поверх него. Приходящая держится
       // невидимой первую половину перехода, уходящая за неё же исчезает.
       const half = 0.45;
-      final appearing =
-          ((animation.value - half) / (1 - half)).clamp(0.0, 1.0);
+      final appearing = ((animation.value - half) / (1 - half)).clamp(0.0, 1.0);
       final leaving = (1 - secondaryAnimation.value / half).clamp(0.0, 1.0);
       return Curves.easeOut.transform(appearing) * leaving;
     }

@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'shift_days_field.dart';
 import 'shift_preset_button.dart';
 
-/// Рисунок графика: готовые варианты и ручной ввод под ними.
+/// Рисунок графика: готовые варианты и свой.
 ///
-/// Ручной ввод спрятан, пока рисунок совпадает с готовым: два способа задать
+/// Поля своего рисунка спрятаны, пока выбран готовый: два способа задать
 /// одно и то же, показанные разом, сбивают с толку.
 class ShiftSchedulePatternFields extends StatelessWidget {
   const ShiftSchedulePatternFields({
@@ -40,31 +40,28 @@ class ShiftSchedulePatternFields extends StatelessWidget {
       children: [
         Row(
           children: [
-            for (var index = 0; index < shiftPresets.length; index++) ...[
-              if (index > 0) const SizedBox(width: 8),
+            for (final preset in shiftPresets) ...[
               Expanded(
                 child: ShiftPresetButton(
-                  label: shiftPresets[index].label(locale),
-                  isSelected: selectedPresetKey == shiftPresets[index].key,
-                  onTap: () => onPreset(shiftPresets[index]),
+                  label: preset.label(locale),
+                  isSelected: selectedPresetKey == preset.key,
+                  onTap: () => onPreset(preset),
                 ),
               ),
+              const SizedBox(width: 6),
             ],
+            Expanded(
+              child: ShiftPresetButton(
+                key: const ValueKey('shift_custom_pattern'),
+                label: strings.customSchedule,
+                isSelected: showManualSchedule,
+                onTap: onToggleManual,
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 4),
-        TextButton.icon(
-          onPressed: onToggleManual,
-          icon: Icon(
-            showManualSchedule ? Icons.expand_less_rounded : Icons.tune_rounded,
-          ),
-          label: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(strings.manualSchedule),
-          ),
-        ),
         if (showManualSchedule) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(

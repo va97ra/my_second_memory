@@ -4,16 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/locale/app_locale_controller.dart';
-import '../../../navigation/page_turn_navigation.dart';
+import '../../../shared/ui/memory_card/sticker_paper.dart';
 import '../../../shared/ui/screen_chrome.dart';
-import 'widgets/app_settings_section.dart';
+import 'widgets/appearance_settings_section.dart';
+import 'widgets/calendar_settings_section.dart';
 import 'widgets/data_settings_section.dart';
 import 'widgets/feedback_request_card.dart';
-import 'widgets/settings_section.dart';
-import 'widgets/settings_tile.dart';
-import './widgets/settings_chevron.dart';
 
-/// Настройки: приложение, безопасность, данные.
+/// Настройки плитками: вид, календарь, защита и данные.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -31,26 +29,27 @@ class SettingsScreen extends ConsumerWidget {
             hint: strings.settingsPageHint,
           ),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-              child: Column(
-                children: [
-                  const AppSettingsSection(),
-                  SettingsSection(
-                    title: isRu ? 'Безопасность' : 'Security',
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    StickerPaper.gridEdge,
+                    0,
+                    StickerPaper.gridEdge,
+                    20,
+                  ),
+                  child: Column(
                     children: [
-                      SettingsTile(
-                        icon: Icons.lock_rounded,
-                        title: strings.pinSecurity,
-                        trailing: const SettingsChevron(),
-                        onTap: () => context.pageTurnGo('/security'),
-                      ),
+                      const AppearanceSettingsSection(),
+                      CalendarSettingsSection(isRu: isRu),
+                      DataSettingsSection(isRu: isRu),
+                      const SizedBox(height: StickerPaper.gridGap * 2),
+                      FeedbackRequestCard(isRu: isRu),
                     ],
                   ),
-                  DataSettingsSection(isRu: isRu),
-                  const SizedBox(height: 12),
-                  FeedbackRequestCard(isRu: isRu),
-                ],
+                ),
               ),
             ),
           ),

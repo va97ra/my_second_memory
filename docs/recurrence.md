@@ -130,6 +130,26 @@ tombstone на id исключения, а id детерминирован от 
 не удаляется, и несёт флаг `survivesMemoryDeletion`, чтобы пережить удаление
 записи.
 
+## Вложения повторов
+
+У повторяющейся записи строки нет, поэтому её фото и голос живут не в
+записях, а в шаблоне серии, и у каждой правки отдельной даты — свои. Чей файл,
+решает одна функция, `mediaReferencesOf` (`ez_domain/src/recurrence/
+media_ownership.dart`): записи, шаблоны серий и правки дат. Удалённое
+вхождение (`skipped`) владельцем не считается: его запись хранится, только
+чтобы узнавать вхождение по исходной дате.
+
+Ею пользуются все, кто спрашивает «чей файл»: синхронизация вложений, обе
+резервные копии, шифрование при включении и снятии PIN и уборка файлов
+(`MediaCleanup`). Пока правило знало только о записях, вложения повторов не
+уезжали в облако и в копию, оставались открытыми при PIN, а удаление копии
+записи стирало фото, которое ещё показывала серия.
+
+Уборка удаляет только то, чем больше никто не владеет, поэтому операции
+серии отдают ей вложения серии целиком, не выбирая. Пока записи и повторы не
+загружены, уборка не удаляет ничего: в эту минуту фото серии выглядело бы
+ничьим.
+
 ## Правила при изменениях
 
 - Не материализовать вхождения и не создавать строку для повторяющейся записи.
@@ -140,20 +160,27 @@ tombstone на id исключения, а id детерминирован от 
 - Удаление в облаке делать долговечным до локальной очистки, иначе прерванная
   операция скачает живую строку обратно.
 - `historyThrough` пишется только ради старых сборок; ничего от него не читать.
+- Любой новый владелец вложений — новое поле с фото, новая сущность —
+  добавляется в `mediaReferencesOf`, и только туда.
 
 ## Где это лежит в коде
 
 ```text
 ez_domain/src/recurrence/
+  media_ownership.dart                 чьи вложения: записи, шаблоны, правки
   recurrence_series.dart               серия и её границы
   recurrence_occurrence_exception.dart отметка на исходную дату
-  recurrence_projection_service.dart   проекция и разрешение любого
-                                       представления к исходной дате
+  recurrence_projection.dart           проекция на текущие данные: строится
+                                       один раз на их изменение, отвечает
+                                       на вопросы о диапазонах и id
+  recurrence_projection_service.dart   разовый вопрос к проекции и разрешение
+                                       любого представления к исходной дате
 features/recurrence/state/
   recurrence_series_controller.dart    операции над сериями
   recurrence_exception_controller.dart операции над отметками
   recurrence_legacy_repair.dart        ремонт данных от старых сборок
-  recurrence_providers.dart            доставка в дерево виджетов
+  recurrence_providers.dart            доставка в дерево виджетов; ближайшие
+                                       вхождения считаются от calendarToday
 features/memory_items/state/
   memory_editor_saver.dart             куда уходит правка записи
 ```
@@ -183,6 +210,11 @@ test/features/recurrence/
   recurrence_series_split_test.dart         "эта и будущие"
   recurrence_clear_frequency_test.dart      снятие повтора
   encrypted_recurrence_deletion_test.dart   удаление при включённом PIN
+  recurrence_media_cleanup_test.dart        уборка вложений серии
+
+test/data/series_media_sync_test.dart     вложения серии в облаке
+test/data/series_media_backup_test.dart   вложения серии в копии
+test/data/series_media_pin_test.dart      вложения серии при PIN
 
 test/features/memory_items/archived_memory_items_test.dart  архив и восстановление
 test/features/home_feed/feed_recurring_test.dart            повторы в ленте

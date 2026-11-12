@@ -16,7 +16,8 @@ import 'src/app/theme/app_content_font_controller.dart';
 import 'src/app/theme/app_theme_controller.dart';
 
 Future<void> main(List<String> arguments) async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  _recordUnhandledErrors(binding);
   // Каталог вложений читается один раз здесь: превью записи достаёт путь
   // синхронно, в самом build.
   await MediaStorage.initialize();
@@ -86,4 +87,20 @@ Future<void> main(List<String> arguments) async {
           .catchError((_) {}),
     );
   });
+}
+
+/// Необработанная ошибка раньше пропадала без следа. Теперь она, кроме
+/// консоли, ложится в местный журнал (`ErrorJournal`): его можно достать с
+/// телефона и понять, что случилось.
+void _recordUnhandledErrors(WidgetsBinding binding) {
+  final journal = ErrorJournal();
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    unawaited(journal.record(details.exception, details.stack));
+  };
+  binding.platformDispatcher.onError = (error, stack) {
+    unawaited(journal.record(error, stack));
+    // false — ошибка идёт и обычным путём, в консоль.
+    return false;
+  };
 }

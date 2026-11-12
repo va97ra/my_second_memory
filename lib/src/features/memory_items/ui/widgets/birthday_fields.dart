@@ -1,9 +1,11 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Поля дня рождения: год рождения.
 class BirthdayFields extends StatelessWidget {
-  const BirthdayFields({super.key, 
+  const BirthdayFields({
+    super.key,
     required this.birthYear,
     required this.locale,
     required this.onTap,
@@ -23,7 +25,7 @@ class BirthdayFields extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
-      child: InkWell(
+      child: NotebookPressable(
         borderRadius: BorderRadius.circular(8),
         onTap: onTap,
         child: Container(

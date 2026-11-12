@@ -12,9 +12,15 @@ payloads, timestamps, deletion markers, and opaque entity identifiers.
    running only the newest of those is enough to catch a project up. The
    finance migration is what allows encrypted `finance_entry` rows, and the
    tools migration adds `tool_calculation` and `tool_bookmark`. A missing kind
-   is not a partial failure: uploads travel in one `apply_sync_changes` call,
-   so a single rejected row aborts the whole run and nothing synchronizes at
-   all.
+   is still a failure: uploads travel in `apply_sync_changes` calls of 200 rows
+   each, a single rejected row aborts its call and the run, and every later
+   run stops at the same row.
+
+   `202611120001_sync_ordered_revisions.sql` makes one user's revisions follow
+   commit order. Devices read the cloud incrementally by revision
+   (`docs/sync.md`); without it two devices writing at once can commit
+   revisions out of order, and a row skipped that way only arrives after the
+   app restarts.
 
    `202609090001_sync_media.sql` is different and must be applied on its own:
    it creates the private `sync-media` bucket and the four policies that keep

@@ -1,4 +1,5 @@
 import 'package:ez_domain/ez_domain.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 /// Отметка о том, что запись повторяется, и вход в настройку повтора.
@@ -23,7 +24,7 @@ class RecurrenceBadge extends StatelessWidget {
         side: BorderSide(color: colors.primary.withValues(alpha: 0.38)),
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
+      child: NotebookPressable(
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),

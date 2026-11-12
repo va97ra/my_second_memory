@@ -1,6 +1,7 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
-/// Строка будильника: что настраивается и что выбрано сейчас.
+/// Настройка включённого будильника: сдвинута под его значок.
 class ShiftAlarmActionRow extends StatelessWidget {
   const ShiftAlarmActionRow({
     super.key,
@@ -17,38 +18,44 @@ class ShiftAlarmActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
-    return InkWell(
+    return NotebookPressable(
       onTap: onTap,
       child: SizedBox(
-        height: 56,
+        height: 44,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.only(left: 38),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: colors.onSurfaceVariant),
+              Icon(icon, size: 18, color: colors.onSurfaceVariant),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-              Flexible(
-                child: Text(
                   value,
+                  textAlign: TextAlign.end,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              const SizedBox(width: 4),
-              Icon(Icons.chevron_right_rounded, color: colors.onSurfaceVariant),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: colors.onSurfaceVariant,
+              ),
             ],
           ),
         ),

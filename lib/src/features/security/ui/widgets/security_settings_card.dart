@@ -1,11 +1,11 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
+import '../../../settings/settings.dart';
 import '../../state/security_provider.dart';
-import 'security_card.dart';
-import 'security_status_row.dart';
 
-/// Карточка настроек защиты: что включено, поле нового PIN и биометрия.
+/// Настройки защиты: что включено — плитками, ниже поле нового PIN.
 class SecuritySettingsCard extends StatelessWidget {
   const SecuritySettingsCard({
     super.key,
@@ -27,92 +27,88 @@ class SecuritySettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
-    final colors = Theme.of(context).colorScheme;
+    final biometrics = session.biometricsEnabled;
 
-    return SecurityCard(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: SizedBox(
-            height: 74,
-            child: Icon(
-              Icons.verified_user_rounded,
-              color: colors.primary,
-              size: 34,
+        SettingsSection(
+          children: [
+            SettingsTile(
+              key: const ValueKey('security_pin_status'),
+              icon: Icons.lock_rounded,
+              color: AppPalette.indigo,
+              title: strings.pinStatus,
+              subtitle: session.hasPin ? strings.enabled : strings.disabled,
+              lit: session.hasPin,
+              trailing: session.hasPin
+                  ? const Icon(
+                      Icons.check_circle_rounded,
+                      size: 20,
+                      color: AppPalette.success,
+                    )
+                  : null,
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        SecurityStatusRow(
-          icon: Icons.lock_rounded,
-          title: strings.pinStatus,
-          value: session.hasPin ? strings.enabled : strings.disabled,
-          isEnabled: session.hasPin,
-        ),
-        const SizedBox(height: 8),
-        SecurityStatusRow(
-          icon: Icons.fingerprint_rounded,
-          title: strings.biometrics,
-          value: session.biometricsEnabled ? strings.enabled : strings.disabled,
-          isEnabled: session.biometricsEnabled,
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: pinController,
-          keyboardType: TextInputType.number,
-          obscureText: true,
-          maxLength: 8,
-          // Длину и так не дадут превысить, а счётчик висел бы служебной
-          // цифрой, не совпадающей с краем поля.
-          buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
-          decoration: const InputDecoration(labelText: 'PIN'),
-        ),
-        // Кнопки тянутся во всю колонку карточки: иначе каждая встаёт по
-        // ширине своей подписи и края не сходятся ни с полями, ни между собой.
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: onSavePin,
-            icon: const Icon(Icons.lock_rounded),
-            label: Text(session.hasPin ? strings.changePin : strings.enablePin),
-          ),
-        ),
-        if (session.hasPin) ...[
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onDisablePin,
-              icon: const Icon(Icons.lock_open_rounded),
-              label: Text(strings.disablePin),
+            SettingsTile(
+              key: const ValueKey('security_biometrics'),
+              icon: Icons.fingerprint_rounded,
+              color: AppPalette.turquoise,
+              title: strings.biometrics,
+              // Биометрия отпирает тот же ключ, что и PIN: без PIN отпирать нечего.
+              subtitle: session.hasPin ? null : strings.biometricsNeedsPin,
+              lit: biometrics,
+              toggled: biometrics,
+              enabled: session.hasPin,
+              trailing: SettingsToggle(value: biometrics),
+              onTap: () => onBiometricsChanged(!biometrics),
             ),
-          ),
-        ],
-        const SizedBox(height: 14),
-        SwitchListTile(
-          value: session.biometricsEnabled,
-          // Биометрия отпирает тот же ключ, что и PIN: без PIN отпирать нечего.
-          onChanged: session.hasPin ? onBiometricsChanged : null,
-          // Те же 12 и 10, что у строк состояния выше: значок и подпись
-          // обязаны стоять с ними на одной вертикали.
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-          minLeadingWidth: 24,
-          horizontalTitleGap: 10,
-          secondary: const Icon(Icons.fingerprint_rounded),
-          title: Text(strings.biometrics),
-          subtitle: Text(
-            session.hasPin
-                ? strings.biometricsSubtitle
-                : strings.biometricsNeedsPin,
+          ],
+        ),
+        const SizedBox(height: 12),
+        NotebookCardSurface(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: pinController,
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                maxLength: 8,
+                // Длину и так не дадут превысить, а счётчик висел бы служебной
+                // цифрой, не совпадающей с краем поля.
+                buildCounter: (
+                  _, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) =>
+                    null,
+                decoration: const InputDecoration(labelText: 'PIN'),
+              ),
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: onSavePin,
+                icon: const Icon(Icons.lock_rounded),
+                label: Text(
+                  session.hasPin ? strings.changePin : strings.enablePin,
+                ),
+              ),
+              if (session.hasPin) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: onDisablePin,
+                  icon: const Icon(Icons.lock_open_rounded),
+                  label: Text(strings.disablePin),
+                ),
+              ],
+              if (message case final text?) ...[
+                const SizedBox(height: 10),
+                Text(text, textAlign: TextAlign.center),
+              ],
+            ],
           ),
         ),
-        if (message != null) ...[
-          const SizedBox(height: 16),
-          Text(message!),
-        ],
       ],
     );
   }

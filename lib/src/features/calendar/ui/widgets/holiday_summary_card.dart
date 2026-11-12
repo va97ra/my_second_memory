@@ -29,8 +29,7 @@ class HolidaySummaryCard extends StatelessWidget {
         child: Material(
           color: colors.surface,
           borderRadius: BorderRadius.circular(8),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(8),
+          child: NotebookPressable(
             onTap: () => context.pageTurnPush(
               '/calendar/holidays?date=${DateFormat('yyyy-MM-dd').format(date)}',
             ),
@@ -41,7 +40,7 @@ class HolidaySummaryCard extends StatelessWidget {
                 children: [
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      color: AppPalette.amberDeep.withValues(alpha: 0.16),
+                      color: AppPalette.accent.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const SizedBox(
@@ -49,7 +48,7 @@ class HolidaySummaryCard extends StatelessWidget {
                       height: 38,
                       child: Icon(
                         Icons.celebration_rounded,
-                        color: AppPalette.amberDeep,
+                        color: AppPalette.accent,
                       ),
                     ),
                   ),

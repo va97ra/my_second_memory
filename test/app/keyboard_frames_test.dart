@@ -34,7 +34,8 @@ void main() {
           shiftScheduleRepositoryProvider.overrideWithValue(
             FakeShiftScheduleRepository(),
           ),
-          financeRepositoryProvider.overrideWithValue(_EmptyFinanceRepository()),
+          financeRepositoryProvider
+              .overrideWithValue(_EmptyFinanceRepository()),
         ],
         child: const EzhednevnikV2App(),
       ),
@@ -86,4 +87,10 @@ class _EmptyFinanceRepository implements FinanceRepository {
 
   @override
   Future<void> replaceAll(List<FinanceEntry> entries) async {}
+
+  @override
+  Future<void> upsertAll(List<FinanceEntry> entries) async {}
+
+  @override
+  Future<void> deleteAll(List<String> ids) async {}
 }

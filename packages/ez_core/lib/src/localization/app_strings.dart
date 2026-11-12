@@ -1,5 +1,4 @@
 import 'package:flutter/widgets.dart';
-import 'russian_plural.dart';
 
 class AppStrings {
   AppStrings(this.locale);
@@ -37,15 +36,9 @@ class AppStrings {
   String get completedRecords => isRu ? 'Выполненные' : 'Done';
   String get today => isRu ? 'Сегодня' : 'Today';
   String get yesterday => isRu ? 'Вчера' : 'Yesterday';
-  String recordsCount(int count) {
-    if (!isRu) return count == 1 ? '1 record' : '$count records';
-    return '$count ${russianPlural(count, 'запись', 'записи', 'записей')}';
-  }
 
   String get previousMonth => isRu ? 'Предыдущий месяц' : 'Previous month';
   String get nextMonth => isRu ? 'Следующий месяц' : 'Next month';
-  String get dayBeforeYesterdaySection =>
-      isRu ? 'Это было позавчера' : 'This was two days ago';
   String get calendar => isRu ? 'Календарь' : 'Calendar';
   String get emptySlot => isRu ? 'Место свободно' : 'Free slot';
   String get emptySlotHint => isRu
@@ -128,7 +121,6 @@ class AppStrings {
   String get swapCurrencies => isRu ? 'Поменять местами' : 'Swap';
   String get syncWithSource =>
       isRu ? 'Синхронизировать с источником' : 'Sync with the source';
-  String get exchangeRate => isRu ? 'Курс' : 'Rate';
   String ratesAsOf(String date) =>
       isRu ? 'Курс ЦБ РФ на $date' : 'Bank of Russia rate for $date';
   String get ratesNotLoaded => isRu
@@ -324,7 +316,6 @@ class AppStrings {
   String get copyNote => isRu ? 'Скопировать заметку' : 'Copy note';
   String get noteCopied => isRu ? 'Заметка скопирована' : 'Note copied';
   String get add => isRu ? 'Добавить' : 'Add';
-  String get addRecord => isRu ? 'Добавить запись' : 'Add record';
   String get notes => isRu ? 'Записки' : 'Notes';
   String get noteCard => isRu ? 'Записка' : 'Note';
   String get newNote => isRu ? 'Новая записка' : 'New note';
@@ -544,7 +535,6 @@ class AppStrings {
   String get saving => isRu ? 'Сохраняю' : 'Saving';
   String get saveFailed => isRu ? 'Ошибка сохранения' : 'Save failed';
   String get loadFailed => isRu ? 'Не удалось загрузить данные' : 'Load failed';
-  String get dayRecords => isRu ? 'Записи дня' : 'Day records';
   String get photo => isRu ? 'Фото' : 'Photo';
   String get voiceMessage => isRu ? 'Голосовое сообщение' : 'Voice message';
   String get recordingNow => isRu ? 'Идёт запись' : 'Recording';
@@ -558,8 +548,7 @@ class AppStrings {
   String get workDays => isRu ? 'Рабочих дней' : 'Work days';
   String get restDays => isRu ? 'Выходных дней' : 'Rest days';
   String get customSchedule => isRu ? 'Свой' : 'Custom';
-  String get manualSchedule => isRu ? 'Настроить вручную' : 'Set manually';
-  String get mainSettings => isRu ? 'Основное' : 'Main';
+  String get shiftAlarm => isRu ? 'Будильник' : 'Alarm';
   String get scheduleSettings => isRu ? 'График' : 'Schedule';
   String get scheduleColor => isRu ? 'Цвет' : 'Color';
   String get reminders => isRu ? 'Напоминания' : 'Reminders';
@@ -605,7 +594,6 @@ class AppStrings {
       isRu ? 'Графиков пока нет' : 'No schedules yet';
   String get deleteShiftScheduleQuestion =>
       isRu ? 'Удалить этот график?' : 'Delete this schedule?';
-  String get workingToday => isRu ? 'Рабочий день' : 'Workday';
   String get language => isRu ? 'Язык' : 'Language';
   String get appearance => isRu ? 'Оформление' : 'Appearance';
   String get unlock => isRu ? 'Открыть' : 'Unlock';
@@ -631,15 +619,11 @@ class AppStrings {
   String get disablePinWarning => isRu
       ? 'Данные будут расшифрованы и останутся доступными без PIN.'
       : 'Data will be decrypted and remain available without PIN.';
-  String get biometricsSubtitle => isRu
-      ? 'Показывать вход по биометрии на стартовом экране'
-      : 'Show biometric unlock on the startup screen';
   String get biometricsNeedsPin =>
       isRu ? 'Сначала включите PIN' : 'Enable PIN first';
   String get wrongPin => isRu ? 'Неверный PIN' : 'Wrong PIN';
   String get biometricsUnavailable =>
       isRu ? 'Биометрия недоступна' : 'Biometrics unavailable';
-  String get biometricsOk => isRu ? 'Биометрия подтверждена' : 'Biometrics ok';
   String get secureStorageStartFailed => isRu
       ? 'Не удалось запустить защищённое хранилище'
       : 'Could not start secure storage';

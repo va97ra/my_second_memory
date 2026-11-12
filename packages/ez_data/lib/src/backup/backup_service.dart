@@ -13,8 +13,10 @@ import '../recurrence/recurrence_repository.dart';
 import '../recurrence/recurrence_exception_repository.dart';
 import '../shifts/shift_schedule_repository.dart';
 import '../tools/tool_data_repository.dart';
+import 'backup_media_file.dart';
 import 'backup_media_store.dart';
 import 'streaming_backup.dart';
+import '../security/password_key.dart';
 
 class BackupService {
   const BackupService({
@@ -52,7 +54,11 @@ class BackupService {
     final financeEntries = await financeRepository?.loadAll() ?? const [];
     final toolData =
         await toolDataRepository?.load() ?? const ToolDataSnapshot();
-    final mediaFiles = await collectBackupMedia(memoryItems);
+    final mediaFiles = await collectBackupMedia(mediaReferencesOf(
+      items: memoryItems,
+      series: recurrenceSeries,
+      exceptions: recurrenceExceptions,
+    ));
 
     return const JsonEncoder.withIndent('  ').convert({
       'format': format,
@@ -89,7 +95,7 @@ class BackupService {
             'format': encryptedZipFormat,
             'version': 1,
             'kdf': 'pbkdf2-hmac-sha256',
-            'iterations': 120000,
+            'iterations': passwordKeyIterations,
             'cipher': 'aes-256-gcm',
             'salt': base64Encode(salt),
             'nonce': base64Encode(nonce),
@@ -141,8 +147,14 @@ class BackupService {
     return parseBackupJson(utf8.decode(bytes));
   }
 
+  /// Заменяет данные данными копии и проверяет, что они записались.
+  ///
+  /// Файлы копии ложатся первыми: запись не должна ссылаться на то, чего ещё
+  /// нет. Если восстановление сорвалось, возвращаются прежние данные и
+  /// уходят файлы, которых до него здесь не было.
   Future<void> restore(BackupRestoreData data) async {
     final previous = await _readCurrentData();
+    final addedMedia = await writeBackupMedia(data.media);
     try {
       await _writeData(data);
       final restored = await _readCurrentData();
@@ -150,11 +162,17 @@ class BackupService {
         throw StateError('Backup verification failed');
       }
     } on Object catch (error, stackTrace) {
+      // Preserve the original failure. The UI never reports success unless
+      // every repository was written and then read back successfully.
       try {
         await _writeData(previous);
       } on Object {
-        // Preserve the original failure. The UI never reports success unless
-        // every repository was written and then read back successfully.
+        // Reported through the original failure below.
+      }
+      try {
+        await removeBackupMedia(addedMedia);
+      } on Object {
+        // A leftover file is harmless; the original failure matters more.
       }
       Error.throwWithStackTrace(error, stackTrace);
     }
@@ -294,7 +312,7 @@ class BackupService {
   ) async {
     if (manifest['kdf'] != 'pbkdf2-hmac-sha256' ||
         manifest['cipher'] != 'aes-256-gcm' ||
-        manifest['iterations'] != 120000) {
+        manifest['iterations'] != passwordKeyIterations) {
       throw const FormatException('Unsupported backup encryption');
     }
     final payloadFile = archive.findFile('payload.bin');
@@ -344,8 +362,7 @@ class BackupService {
       for (final file in archive.files)
         if (file.isFile) file.name: file.content as List<int>,
     };
-    final restoredItems = await restoreStreamingMedia(
-      items: items,
+    final media = await readStreamingBackupMedia(
       mediaEntries: manifest['mediaEntries'] as List<dynamic>? ?? const [],
       archiveFiles: files,
       encryptionKey: encryptionKey,
@@ -381,13 +398,14 @@ class BackupService {
       Map<String, Object?>.from(manifest['toolData'] as Map? ?? const {}),
     );
     return BackupRestoreData(
-      memoryItems: restoredItems,
+      memoryItems: items,
       shiftSchedules: shifts,
       accounts: accounts,
       recurrenceSeries: recurrenceSeries,
       recurrenceExceptions: recurrenceExceptions,
       financeEntries: financeEntries,
       toolData: toolData,
+      media: media,
     );
   }
 
@@ -406,10 +424,6 @@ class BackupService {
         (decoded['memoryItems'] as List<dynamic>? ?? const []).map((entry) {
       return MemoryItem.fromJson(Map<String, Object?>.from(entry as Map));
     }).toList();
-    final restoredItems = await restoreBackupMedia(
-      memoryItems,
-      decoded['mediaFiles'] as List<dynamic>? ?? const [],
-    );
     final shiftSchedules =
         (decoded['shiftSchedules'] as List<dynamic>? ?? const []).map((entry) {
       return ShiftSchedule.fromJson(Map<String, Object?>.from(entry as Map));
@@ -440,13 +454,16 @@ class BackupService {
     );
 
     return BackupRestoreData(
-      memoryItems: restoredItems,
+      memoryItems: memoryItems,
       shiftSchedules: shiftSchedules,
       accounts: accounts,
       recurrenceSeries: recurrenceSeries,
       recurrenceExceptions: recurrenceExceptions,
       financeEntries: financeEntries,
       toolData: toolData,
+      media: readJsonBackupMedia(
+        decoded['mediaFiles'] as List<dynamic>? ?? const [],
+      ),
     );
   }
 
@@ -488,13 +505,8 @@ class BackupService {
     }
   }
 
-  Future<SecretKey> _keyFromPassword(String password, List<int> salt) {
-    return Pbkdf2(
-      macAlgorithm: Hmac.sha256(),
-      iterations: 120000,
-      bits: 256,
-    ).deriveKey(secretKey: SecretKey(utf8.encode(password)), nonce: salt);
-  }
+  Future<SecretKey> _keyFromPassword(String password, List<int> salt) async =>
+      SecretKey(await derivePasswordKey(password, salt));
 
   List<int> _randomBytes(int length) {
     final random = Random.secure();
@@ -523,6 +535,7 @@ class BackupRestoreData {
     this.recurrenceExceptions = const [],
     this.financeEntries = const [],
     this.toolData = const ToolDataSnapshot(),
+    this.media = const [],
   });
 
   final List<MemoryItem> memoryItems;
@@ -532,4 +545,7 @@ class BackupRestoreData {
   final List<RecurrenceOccurrenceException> recurrenceExceptions;
   final List<FinanceEntry> financeEntries;
   final ToolDataSnapshot toolData;
+
+  /// Вложения копии. На диск ложатся только в [BackupService.restore].
+  final List<BackupMediaFile> media;
 }

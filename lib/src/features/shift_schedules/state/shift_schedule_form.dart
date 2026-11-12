@@ -200,7 +200,8 @@ class ShiftScheduleForm {
 
   static List<ShiftVacation> _sorted(List<ShiftVacation> vacations) {
     return List.unmodifiable(
-      List.of(vacations)..sort((a, b) => a.startDate.compareTo(b.startDate)),
+      List<ShiftVacation>.of(vacations)
+        ..sort((a, b) => a.startDate.compareTo(b.startDate)),
     );
   }
 

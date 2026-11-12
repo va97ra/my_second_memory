@@ -21,8 +21,9 @@ class MediaStorage {
 
   static bool isExternal(String value) => true;
 
-  Future<String> saveImage(XFile file, AppCipher? atRest) async =>
-      file.path;
+  static Set<String> storedNames(Iterable<String> references) => const {};
+
+  Future<String> saveImage(XFile file, AppCipher? atRest) async => file.path;
 
   Future<void> protectRecording(String reference, AppCipher? atRest) async {}
 
@@ -44,8 +45,6 @@ class MediaStorage {
     required Set<String> usedPaths,
   }) async {}
 
-  Future<void> cleanOrphans(Set<String> usedPaths) async {}
-
   Future<Map<String, String>> stageEncryption(
     Iterable<String> paths,
     AppCipher cipher,
@@ -62,8 +61,7 @@ class MediaStorage {
 
   Future<void> rollbackMigration(Map<String, String> mapping) async {}
 
-  Future<String> materializeAudio(String path, AppCipher? atRest) async =>
-      path;
+  Future<String> materializeAudio(String path, AppCipher? atRest) async => path;
 
   Future<void> deleteTemporaryAudio(String path) async {}
 }

@@ -146,8 +146,10 @@ class SecurityService {
     if (!await canUseBiometrics()) {
       return false;
     }
+    // `await` обязателен: без него отказ датчика (`LockedOut` после пяти
+    // неудач) приходил бы уже за пределами `try` и ронял замок.
     try {
-      return _localAuthentication.authenticate(
+      return await _localAuthentication.authenticate(
         localizedReason: 'Подтвердите вход биометрией',
         options: const AuthenticationOptions(biometricOnly: true),
       );

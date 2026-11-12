@@ -1,14 +1,16 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../platform/windows/windows_startup_controller.dart';
 import 'settings_tile.dart';
+import 'settings_toggle.dart';
 
 /// Запуск вместе с Windows.
 ///
 /// Настройка живёт в реестре, поэтому она читается и пишется с задержкой и
-/// может не записаться вовсе: у строки есть и ожидание, и отказ.
+/// может не записаться вовсе: у плитки есть и ожидание, и отказ.
 class WindowsStartupTile extends ConsumerWidget {
   const WindowsStartupTile({super.key, required this.state});
 
@@ -17,30 +19,29 @@ class WindowsStartupTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
+    final enabled = state.valueOrNull;
 
     return SettingsTile(
+      key: const ValueKey('settings_windows_startup'),
       icon: Icons.desktop_windows_rounded,
+      color: AppPalette.indigo,
       title: strings.launchWithWindows,
       subtitle: strings.launchWithWindowsSubtitle,
+      lit: enabled ?? false,
+      toggled: enabled,
       trailing: state.when(
-        data: (enabled) => Switch(
-          value: enabled,
-          onChanged: (value) => _setEnabled(context, ref, value),
-        ),
+        data: (value) => SettingsToggle(value: value),
         loading: () => const SizedBox.square(
-          dimension: 48,
-          child: Center(
-            child: SizedBox.square(
-              dimension: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
+          dimension: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
         ),
-        error: (_, __) => IconButton(
-          tooltip: strings.retry,
-          onPressed: ref.read(windowsStartupControllerProvider.notifier).load,
-          icon: const Icon(Icons.refresh_rounded),
-        ),
+        error: (_, __) => const Icon(Icons.refresh_rounded, size: 20),
+      ),
+      onTap: state.when(
+        data: (value) => () => _setEnabled(context, ref, !value),
+        loading: () => null,
+        error: (_, __) =>
+            () => ref.read(windowsStartupControllerProvider.notifier).load(),
       ),
     );
   }

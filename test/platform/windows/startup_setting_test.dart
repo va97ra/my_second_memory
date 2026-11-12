@@ -1,6 +1,7 @@
 import 'package:ezhednevnik_v2/src/features/settings/ui/settings_screen.dart';
 import 'package:ezhednevnik_v2/src/platform/windows/windows_desktop_contract.dart';
 import 'package:ezhednevnik_v2/src/platform/windows/windows_startup_controller.dart';
+import 'package:ezhednevnik_v2/src/features/settings/ui/widgets/settings_toggle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,17 +65,17 @@ void main() {
       await tester.ensureVisible(title);
       await tester.pumpAndSettle();
 
-      final tile = find.ancestor(
-        of: title,
-        matching: find.byType(ListTile, skipOffstage: false),
+      final tile = find.byKey(
+        const ValueKey('settings_windows_startup'),
+        skipOffstage: false,
       );
       final startupSwitch = find.descendant(
         of: tile,
-        matching: find.byType(Switch, skipOffstage: false),
+        matching: find.byType(SettingsToggle, skipOffstage: false),
       );
       expect(title, findsOneWidget);
       expect(startupSwitch, findsOneWidget);
-      expect(tester.getSize(startupSwitch).height, greaterThanOrEqualTo(48));
+      expect(tester.getSize(tile).height, greaterThanOrEqualTo(48));
       expect(tester.takeException(), isNull);
     });
   }
@@ -91,25 +92,25 @@ void main() {
     );
     await tester.ensureVisible(title);
     await tester.pumpAndSettle();
-    final tile = find.ancestor(
-      of: title,
-      matching: find.byType(ListTile, skipOffstage: false),
+    final tile = find.byKey(
+      const ValueKey('settings_windows_startup'),
+      skipOffstage: false,
     );
     final startupSwitch = find.descendant(
       of: tile,
-      matching: find.byType(Switch, skipOffstage: false),
+      matching: find.byType(SettingsToggle, skipOffstage: false),
     );
 
-    await tester.tap(startupSwitch);
+    await tester.tap(tile);
     await tester.pumpAndSettle();
     expect(platform.enabled, isTrue);
-    expect(tester.widget<Switch>(startupSwitch).value, isTrue);
+    expect(tester.widget<SettingsToggle>(startupSwitch).value, isTrue);
 
     platform.failNextChange = true;
-    await tester.tap(startupSwitch);
+    await tester.tap(tile);
     await tester.pumpAndSettle();
     expect(platform.enabled, isTrue);
-    expect(tester.widget<Switch>(startupSwitch).value, isTrue);
+    expect(tester.widget<SettingsToggle>(startupSwitch).value, isTrue);
     expect(find.text('Не удалось изменить автозапуск Windows'), findsOneWidget);
   });
 

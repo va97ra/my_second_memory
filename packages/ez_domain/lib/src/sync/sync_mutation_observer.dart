@@ -1,7 +1,6 @@
 abstract interface class SyncMutationObserver {
   void memoryChanged();
   Future<void> memoryDeleted(String id, DateTime deletedAt);
-  Future<DateTime?> memoryDeletedAt(String id);
   Future<Map<String, DateTime>> memoryDeletions();
   void shiftSchedulesChanged();
   Future<void> shiftScheduleDeleted(String id, DateTime deletedAt);
@@ -25,9 +24,6 @@ class NoopSyncMutationObserver implements SyncMutationObserver {
 
   @override
   Future<void> memoryDeleted(String id, DateTime deletedAt) async {}
-
-  @override
-  Future<DateTime?> memoryDeletedAt(String id) async => null;
 
   @override
   Future<Map<String, DateTime>> memoryDeletions() async => const {};
@@ -70,8 +66,4 @@ class NoopSyncMutationObserver implements SyncMutationObserver {
 
   @override
   Future<void> toolCalculationDeleted(String id, DateTime deletedAt) async {}
-
-
-
-
 }

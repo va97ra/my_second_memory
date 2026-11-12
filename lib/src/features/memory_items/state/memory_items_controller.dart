@@ -8,8 +8,9 @@ import '../../security/security.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../../sync/sync.dart';
 import '../../../app/local_storage_scope_provider.dart';
+import '../../../shared/state/media_cleanup.dart';
+import '../../../shared/state/media_cleanup_provider.dart';
 import '../../../shared/state/notification_providers.dart';
-import 'memory_media_cleanup.dart';
 import 'memory_reminders.dart';
 
 final plainMemoryRepositoryProvider = Provider<MemoryRepository>((ref) {
@@ -36,12 +37,10 @@ final memoryItemsControllerProvider =
   return MemoryItemsController(
     ref.watch(memoryRepositoryProvider),
     ref.watch(notificationServiceProvider),
-    ref.watch(mediaStorageProvider),
+    ref.watch(mediaCleanupProvider),
     ref.watch(syncMutationObserverProvider),
   );
 });
-
-final mediaStorageProvider = Provider<MediaStorage>((ref) => MediaStorage());
 
 final memoryItemsLoadProvider = FutureProvider<void>((ref) {
   return ref.watch(memoryItemsControllerProvider.notifier).load();
@@ -51,17 +50,16 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   MemoryItemsController(
     this._repository, [
     ReminderScheduler? reminders,
-    MediaStorage? mediaStorage,
+    this._media,
     this._sync,
   ])  : _reminders = MemoryReminders(reminders),
-        _media = MemoryMediaCleanup(mediaStorage),
         super(const []) {
     _loadFuture = _load();
   }
 
   final MemoryRepository _repository;
   final MemoryReminders _reminders;
-  final MemoryMediaCleanup _media;
+  final MediaCleanup? _media;
   final SyncMutationObserver? _sync;
   late final Future<void> _loadFuture;
   final _writes = SequentialTaskQueue();
@@ -85,7 +83,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     state = _sort([...state, item]);
     await _writes.add(() => _repository.upsert(item));
     _sync?.memoryChanged();
-    if (hasFutureReminder(item)) unawaited(_reminders.schedule(item));
+    if (wantsReminder(item)) unawaited(_reminders.schedule(item));
   }
 
   Future<void> addAll(List<MemoryItem> items) async {
@@ -111,13 +109,9 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     await _writes.add(() => _repository.upsert(item));
     _sync?.memoryChanged();
     if (previous != null) {
-      await _media.afterUpdate(
-        previous: previous,
-        current: item,
-        allItems: state,
-      );
+      await _media?.afterUpdate(previous: previous, current: item);
     }
-    if (hasFutureReminder(item)) {
+    if (wantsReminder(item)) {
       unawaited(_reminders.schedule(item));
     } else if (previous?.remindAt != null) {
       unawaited(_reminders.cancel(item.id));
@@ -156,7 +150,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     if (restored != null) {
       await _writes.add(() => _repository.upsert(restored));
       _sync?.memoryChanged();
-      if (hasFutureReminder(restored)) unawaited(_reminders.schedule(restored));
+      if (wantsReminder(restored)) unawaited(_reminders.schedule(restored));
     }
   }
 
@@ -199,7 +193,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     ];
     await _writes.add(() => _repository.delete(id));
     if (removed != null) {
-      await _media.deleteUnused(mediaPathsOf(removed), allItems: state);
+      await _media?.release(removed.mediaReferences);
     }
     unawaited(_reminders.cancel(id));
   }
@@ -271,20 +265,39 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   Future<List<MemoryItem>> _withoutDeletedItems(
     Iterable<MemoryItem> items,
   ) async {
-    final accepted = <MemoryItem>[];
-    for (final item in items) {
-      final deletedAt = await _sync?.memoryDeletedAt(item.id);
-      if (deletedAt == null || item.updatedAt.isAfter(deletedAt)) {
-        accepted.add(item);
-      }
-    }
-    return accepted;
+    // Отметки читаются одним разом: каждое чтение разбирает весь список, и
+    // по разу на запись это тысячи разборов на одно слияние.
+    final deletions =
+        await _sync?.memoryDeletions() ?? const <String, DateTime>{};
+    return items.where((item) {
+      final deletedAt = deletions[item.id];
+      return deletedAt == null || item.updatedAt.isAfter(deletedAt);
+    }).toList();
   }
 
   Future<void> _persistReplacement(List<MemoryItem> items) async {
+    final stored = state;
     state = _sort(items);
-    await _writes.add(() => _repository.replaceAll(state));
+    final next = state;
+    await _writes.add(() => _persistChanges(stored, next));
     unawaited(_reminders.reconcile(state));
+  }
+
+  /// Пишет в хранилище только разницу. Каждое изменение состояния уходит в
+  /// очередь записи вместе с собой, поэтому прежнее состояние и есть то, что
+  /// лежит в хранилище к началу этой записи.
+  Future<void> _persistChanges(
+    List<MemoryItem> stored,
+    List<MemoryItem> next,
+  ) async {
+    final changes = listChanges(
+      before: stored,
+      after: next,
+      idOf: (item) => item.id,
+      toJson: (item) => item.toJson(),
+    );
+    await _repository.upsertAll(changes.upserts);
+    await _repository.deleteAll(changes.removedIds);
   }
 
   /// Removes legacy generated rows after their user edits have been migrated
@@ -306,7 +319,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
       for (final item in state)
         if (!removedIds.contains(item.id)) item,
     ]);
-    await _writes.add(() => _repository.replaceAll(state));
+    await _writes.add(() => _repository.deleteAll([...removedIds]));
     for (final id in removedIds) {
       unawaited(_reminders.cancel(id));
     }

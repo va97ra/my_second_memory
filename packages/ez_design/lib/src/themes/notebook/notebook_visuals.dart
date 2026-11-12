@@ -15,6 +15,7 @@ class NotebookVisuals extends ThemeExtension<NotebookVisuals> {
     required this.teal,
     required this.yellow,
     required this.paperAsset,
+    this.paperGrainScale,
     required this.leatherAsset,
     required this.cardSurface,
     required this.cardInk,
@@ -35,6 +36,10 @@ class NotebookVisuals extends ThemeExtension<NotebookVisuals> {
   /// Which grain this notebook wears. The dark book is the same object under
   /// different light, so it uses darker stock rather than a tinted copy.
   final String paperAsset;
+
+  /// Во сколько раз мельче рисунок страницы. Пусто — снимок растянут на всю
+  /// страницу, значение — кладётся плиткой, и зерно не зависит от размера экрана.
+  final double? paperGrainScale;
   final String leatherAsset;
 
   /// Loose paper lying on the book: memory cards and calendar day cells stay
@@ -60,6 +65,7 @@ class NotebookVisuals extends ThemeExtension<NotebookVisuals> {
     Color? teal,
     Color? yellow,
     String? paperAsset,
+    double? paperGrainScale,
     String? leatherAsset,
     Color? cardSurface,
     Color? cardInk,
@@ -77,6 +83,7 @@ class NotebookVisuals extends ThemeExtension<NotebookVisuals> {
       teal: teal ?? this.teal,
       yellow: yellow ?? this.yellow,
       paperAsset: paperAsset ?? this.paperAsset,
+      paperGrainScale: paperGrainScale ?? this.paperGrainScale,
       leatherAsset: leatherAsset ?? this.leatherAsset,
       cardSurface: cardSurface ?? this.cardSurface,
       cardInk: cardInk ?? this.cardInk,
@@ -102,6 +109,7 @@ class NotebookVisuals extends ThemeExtension<NotebookVisuals> {
       yellow: Color.lerp(yellow, other.yellow, t)!,
       // A texture cannot be blended; it swaps at the halfway point.
       paperAsset: t < 0.5 ? paperAsset : other.paperAsset,
+      paperGrainScale: t < 0.5 ? paperGrainScale : other.paperGrainScale,
       leatherAsset: t < 0.5 ? leatherAsset : other.leatherAsset,
       cardSurface: Color.lerp(cardSurface, other.cardSurface, t)!,
       cardInk: Color.lerp(cardInk, other.cardInk, t)!,

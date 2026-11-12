@@ -158,6 +158,24 @@ class _FinanceRepository implements FinanceRepository {
   Future<void> replaceAll(List<FinanceEntry> entries) async {
     this.entries = List.of(entries);
   }
+
+  @override
+  Future<void> upsertAll(List<FinanceEntry> incoming) async {
+    final byId = {
+      for (final entry in entries) entry.id: entry,
+      for (final entry in incoming) entry.id: entry,
+    };
+    entries = byId.values.toList();
+  }
+
+  @override
+  Future<void> deleteAll(List<String> ids) async {
+    final removed = ids.toSet();
+    entries = [
+      for (final entry in entries)
+        if (!removed.contains(entry.id)) entry,
+    ];
+  }
 }
 
 FinanceEntry _entry(String id, String amount, String currency, DateTime date) {

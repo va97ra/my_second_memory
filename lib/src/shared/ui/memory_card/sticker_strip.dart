@@ -1,6 +1,8 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
+import 'sticker_strip_label.dart';
+
 /// Цветная полоса квадратной карточки: мелкая подпись слева и, если есть, справа.
 class StickerStrip extends StatelessWidget {
   const StickerStrip({
@@ -31,7 +33,7 @@ class StickerStrip extends StatelessWidget {
           children: [
             Expanded(
               flex: 3,
-              child: _Fitted(
+              child: StickerStripLabel(
                 alignment: Alignment.centerLeft,
                 text: label,
                 style: style,
@@ -41,7 +43,7 @@ class StickerStrip extends StatelessWidget {
               const SizedBox(width: 3),
               Expanded(
                 flex: 2,
-                child: _Fitted(
+                child: StickerStripLabel(
                   alignment: Alignment.centerRight,
                   text: trailing,
                   style: style,
@@ -53,24 +55,4 @@ class StickerStrip extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Подпись ужимается целиком, а не обрывается многоточием.
-class _Fitted extends StatelessWidget {
-  const _Fitted({
-    required this.alignment,
-    required this.text,
-    required this.style,
-  });
-
-  final Alignment alignment;
-  final String text;
-  final TextStyle style;
-
-  @override
-  Widget build(BuildContext context) => FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: alignment,
-        child: Text(text, maxLines: 1, style: style),
-      );
 }

@@ -1,21 +1,36 @@
 import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
-/// Маленькая кнопка в строке карточки: значок мелкий, нажимается вся высота строки.
+/// Плоская кнопка со значком: в строке карточки мелкая и на всю высоту строки,
+/// в поле открытого аккаунта крупнее.
 class AccountRowButton extends StatelessWidget {
   const AccountRowButton({
     super.key,
     required this.icon,
     required this.tooltip,
     required this.onPressed,
-  });
+  })  : width = rowWidth,
+        height = double.infinity,
+        iconSize = 15;
 
-  static const width = 36.0;
-  static const _iconSize = 15.0;
+  /// Кнопка в поле открытого аккаунта.
+  const AccountRowButton.inField({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  })  : width = 44,
+        height = 48,
+        iconSize = 20;
+
+  static const rowWidth = 36.0;
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
+  final double width;
+  final double height;
+  final double iconSize;
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +41,10 @@ class AccountRowButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         child: SizedBox(
           width: width,
-          height: double.infinity,
+          height: height,
           child: Icon(
             icon,
-            size: _iconSize,
+            size: iconSize,
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),

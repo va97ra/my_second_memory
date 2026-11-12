@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/chrome/main_page_header.dart';
 import 'calendar_month_label.dart';
+import 'calendar_shift_legend.dart';
 import 'production_calendar_dialog.dart';
-import 'shift_legend_chip.dart';
 
 /// Шапка календаря: стрелки по краям, посередине месяц и графики смен, которые
 /// его красят.
@@ -65,52 +65,16 @@ class CalendarHeader extends StatelessWidget {
       center: NotebookHeaderTitle(
         title: Tooltip(
           message: strings.productionCalendar,
-          // Свой прозрачный материал: без него волна нажатия уходит материалу
-          // `Scaffold` и рисуется поверх задника.
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              key: const ValueKey('production_calendar_open'),
-              onTap: () => ProductionCalendarDialog.show(context, visibleMonth),
-              borderRadius: BorderRadius.circular(4),
-              child: Center(
-                child: CalendarMonthLabel(month: visibleMonth, locale: locale),
-              ),
+          child: NotebookPressable(
+            key: const ValueKey('production_calendar_open'),
+            onTap: () => ProductionCalendarDialog.show(context, visibleMonth),
+            borderRadius: BorderRadius.circular(4),
+            child: Center(
+              child: CalendarMonthLabel(month: visibleMonth, locale: locale),
             ),
           ),
         ),
-        details: legend.isEmpty ? null : _Legend(legend),
-      ),
-    );
-  }
-}
-
-/// Графики в одну строку: не помещаются — листаются вбок, а пока помещаются,
-/// стоят посередине.
-class _Legend extends StatelessWidget {
-  const _Legend(this.schedules);
-
-  final List<ShiftSchedule> schedules;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, box) => SingleChildScrollView(
-        key: const ValueKey('calendar_shift_legend'),
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: box.maxWidth),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (final schedule in schedules)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: ShiftLegendChip(schedule: schedule),
-                ),
-            ],
-          ),
-        ),
+        details: legend.isEmpty ? null : CalendarShiftLegend(legend),
       ),
     );
   }

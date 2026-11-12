@@ -8,6 +8,18 @@ import 'notebook_visuals.dart';
 const double notebookPageLineTop = 34;
 const double notebookPageLineHeight = 28;
 
+DecorationImage _pageTexture(NotebookVisuals notebook) {
+  final scale = notebook.paperGrainScale;
+  return DecorationImage(
+    image: AssetImage(notebook.paperAsset),
+    fit: scale == null ? BoxFit.cover : BoxFit.none,
+    repeat: scale == null ? ImageRepeat.noRepeat : ImageRepeat.repeat,
+    scale: scale ?? 1,
+    opacity: 0.62,
+    filterQuality: FilterQuality.low,
+  );
+}
+
 /// Бумага страницы без разлиновки: цвет, текстура, и больше ничего.
 ///
 /// Выделено отдельно, потому что нужно в двух местах: общий фон кладёт поверх
@@ -25,12 +37,7 @@ class NotebookPaperFill extends StatelessWidget {
       return DecoratedBox(
         decoration: BoxDecoration(
           color: notebook.paper,
-          image: DecorationImage(
-            image: AssetImage(notebook.paperAsset),
-            fit: BoxFit.cover,
-            opacity: 0.62,
-            filterQuality: FilterQuality.low,
-          ),
+          image: _pageTexture(notebook),
         ),
         child: child,
       );
@@ -143,11 +150,7 @@ class NotebookPageSurface extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: notebook.paper,
-        image: DecorationImage(
-          image: AssetImage(notebook.paperAsset),
-          fit: BoxFit.cover,
-          opacity: 0.62,
-        ),
+        image: _pageTexture(notebook),
         borderRadius: BorderRadius.circular(8),
         boxShadow: const [
           BoxShadow(

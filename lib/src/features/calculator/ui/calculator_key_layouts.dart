@@ -1,3 +1,6 @@
+import 'package:ez_core/ez_core.dart';
+import 'package:ez_domain/ez_domain.dart';
+
 import '../state/calculator_controller.dart';
 import 'widgets/calculator_key.dart';
 
@@ -156,4 +159,41 @@ CalculatorKeyRole calculatorKeyRole(String key) => switch (key) {
       '=' => CalculatorKeyRole.result,
       '÷' || '×' || '−' || '+' => CalculatorKeyRole.operation,
       _ => CalculatorKeyRole.plain,
+    };
+
+String _functionLabel(String name, CalculatorState state) {
+  final base = state.hyperbolic ? '${name}h' : name;
+  return state.second ? '$base⁻¹' : base;
+}
+
+Set<String> calculatorSelectedKeys(CalculatorState state) => {
+      if (state.second) '2nd',
+      if (state.hyperbolic) 'Hyp',
+    };
+
+/// Подписи, которые зависят от состояния или от языка. Постоянные знаки
+/// живут в самой сетке.
+///
+/// `π` больше не превращается в `e` по «2nd»: у `e` своя клавиша, и вторая
+/// подпись плодила два одинаковых знака на одной клавиатуре. По той же
+/// причине убрана отдельная клавиша `eˣ` — она повторяла `ln` при «2nd».
+Map<String, String> calculatorKeyLabels(
+  CalculatorState state,
+  AppStrings strings,
+) =>
+    {
+      'backspace': strings.calculatorBackspace,
+      if (state.scientific) ...{
+        'angle': switch (state.angleUnit) {
+          CalculatorAngleUnit.degrees => 'DEG',
+          CalculatorAngleUnit.radians => 'RAD',
+          CalculatorAngleUnit.gradians => 'GRAD',
+        },
+        'sin': _functionLabel('sin', state),
+        'cos': _functionLabel('cos', state),
+        'tan': _functionLabel('tan', state),
+        'ln': state.second ? 'eˣ' : 'ln',
+        'log': state.second ? '10ˣ' : 'log',
+        '10ˣ': state.second ? '2ˣ' : '10ˣ',
+      },
     };

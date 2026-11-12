@@ -118,10 +118,14 @@ abstract class TestMemoryRepository implements MemoryRepository {
   }
 
   @override
-  Future<void> delete(String id) async {
+  Future<void> delete(String id) => deleteAll([id]);
+
+  @override
+  Future<void> deleteAll(List<String> ids) async {
+    final removed = ids.toSet();
     await replaceAll([
       for (final item in await loadAll())
-        if (item.id != id) item,
+        if (!removed.contains(item.id)) item,
     ]);
   }
 

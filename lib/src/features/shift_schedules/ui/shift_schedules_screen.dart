@@ -4,12 +4,15 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../navigation/page_turn_navigation.dart';
+import '../../accounts/accounts.dart' show accountCardColumns;
+import '../../../shared/ui/memory_card/even_wrap.dart';
+import '../../../shared/ui/memory_card/sticker_paper.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../state/shift_schedules_controller.dart';
-import 'shift_schedule_editor_sheet.dart';
 import 'widgets/shift_schedule_tile.dart';
 
-/// Список графиков смен. Редактор открывается нижним листом поверх него.
+/// Список графиков смен. Редактор открывается своим окном.
 class ShiftSchedulesScreen extends ConsumerWidget {
   const ShiftSchedulesScreen({super.key});
 
@@ -24,13 +27,7 @@ class ShiftSchedulesScreen extends ConsumerWidget {
       appBar: AppPageAppBar(
         fallbackLocation: '/settings',
         hint: strings.shiftsPageHint,
-        title: Text(
-          strings.shiftSchedules,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.w900,
-              ),
-        ),
+        title: Text(strings.shiftSchedules),
         actions: [
           IconButton(
             key: const ValueKey('shift_schedule_add'),
@@ -40,45 +37,46 @@ class ShiftSchedulesScreen extends ConsumerWidget {
             style: notebookIconButtonStyle(),
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(
-            height: 1,
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-        ),
       ),
       body: WarmGradientBackground(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(
+            StickerPaper.gridEdge,
+            12,
+            StickerPaper.gridEdge,
+            24,
+          ),
           children: [
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Column(
-                  children: [
-                    if (schedules.isEmpty)
-                      AppEmptyState(
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: schedules.isEmpty
+                    ? AppEmptyState(
                         icon: Icons.work_history_rounded,
                         title: strings.noShiftSchedules,
                         actionLabel: strings.addShiftSchedule,
                         onAction: () => _openEditor(context),
                       )
-                    else
-                      for (final schedule in schedules)
-                        ShiftScheduleTile(
-                          scheduleId: schedule.id,
-                          locale: locale,
-                          onEdit: (edited) => _openEditor(context, edited),
-                          onToggle: () => ref
-                              .read(shiftSchedulesControllerProvider.notifier)
-                              .toggleEnabled(schedule.id),
-                          onDelete: () =>
-                              _confirmDelete(context, ref, schedule.id),
-                        ),
-                  ],
-                ),
+                    : EvenWrap(
+                        columns: accountCardColumns,
+                        itemHeight: ShiftScheduleTile.heightOf(context),
+                        children: [
+                          for (final schedule in schedules)
+                            ShiftScheduleTile(
+                              key: ValueKey(schedule.id),
+                              scheduleId: schedule.id,
+                              locale: locale,
+                              onEdit: (edited) => _openEditor(context, edited),
+                              onToggle: () => ref
+                                  .read(
+                                    shiftSchedulesControllerProvider.notifier,
+                                  )
+                                  .toggleEnabled(schedule.id),
+                              onDelete: () =>
+                                  _confirmDelete(context, ref, schedule.id),
+                            ),
+                        ],
+                      ),
               ),
             ),
           ],
@@ -88,13 +86,10 @@ class ShiftSchedulesScreen extends ConsumerWidget {
   }
 
   Future<void> _openEditor(BuildContext context, [ShiftSchedule? schedule]) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => ShiftScheduleEditorSheet(schedule: schedule),
-    );
+    final path = schedule == null
+        ? '/settings/shifts/new'
+        : '/settings/shifts/item/${Uri.encodeComponent(schedule.id)}';
+    return context.pageTurnPush(path);
   }
 
   Future<void> _confirmDelete(

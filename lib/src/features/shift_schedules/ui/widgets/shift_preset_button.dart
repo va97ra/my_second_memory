@@ -1,6 +1,7 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
-/// Кнопка готового рисунка графика: `5/2`, `2/2`, сутки через трое.
+/// Выбор рисунка графика: `5/2`, `2/2`, сутки через трое или свой.
 class ShiftPresetButton extends StatelessWidget {
   const ShiftPresetButton({
     super.key,
@@ -15,44 +16,38 @@ class ShiftPresetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        height: 44,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? colors.primary.withValues(alpha: 0.14)
-              : colors.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? colors.primary : colors.outlineVariant,
+    return Semantics(
+      selected: isSelected,
+      child: NotebookPressable(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          height: 40,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppPalette.accent
+                : colors.onSurface.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (isSelected) ...[
-              Icon(Icons.check_rounded, size: 16, color: colors.primary),
-              const SizedBox(width: 5),
-            ],
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color:
-                          isSelected ? colors.primary : colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
+          // Подпись ужимается целиком: «сутки/трое» в четверти узкого экрана.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              maxLines: 1,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isSelected
+                    ? readableInkOn(AppPalette.accent)
+                    : colors.onSurface,
+                fontWeight: FontWeight.w800,
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

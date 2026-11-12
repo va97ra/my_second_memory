@@ -4,6 +4,9 @@ import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 
+import 'background_work.dart';
+import 'password_key.dart';
+
 class AppCipher {
   AppCipher._(List<int> keyBytes) : _keyBytes = Uint8List.fromList(keyBytes);
 
@@ -15,18 +18,8 @@ class AppCipher {
   static Future<AppCipher> fromPin({
     required String pin,
     required List<int> salt,
-  }) async {
-    final pbkdf2 = Pbkdf2(
-      macAlgorithm: Hmac.sha256(),
-      iterations: 120000,
-      bits: 256,
-    );
-    final key = await pbkdf2.deriveKey(
-      secretKey: SecretKey(utf8.encode(pin)),
-      nonce: salt,
-    );
-    return AppCipher._(await key.extractBytes());
-  }
+  }) async =>
+      AppCipher._(await derivePasswordKey(pin, salt));
 
   factory AppCipher.fromKeyBytes(List<int> keyBytes) {
     return AppCipher._(keyBytes);
@@ -77,35 +70,51 @@ class AppCipher {
     return utf8.decode(clear);
   }
 
-  Future<Uint8List> encryptBytes(List<int> value) async {
-    final nonce = _randomBytes(12);
-    final box = await _algorithm.encrypt(
-      value,
-      secretKey: SecretKey(_activeKeyBytes),
-      nonce: nonce,
-    );
-    return Uint8List.fromList([
-      1,
-      ...box.nonce,
-      ...box.mac.bytes,
-      ...box.cipherText,
-    ]);
-  }
+  /// Фото и голос: мегабайты, поэтому шифруются в отдельном изоляте — на
+  /// главном потоке снимок в несколько мегабайт останавливал интерфейс на
+  /// секунду. Формат: версия `1`, nonce 12 байт, MAC 16 байт, шифротекст.
+  Future<Uint8List> encryptBytes(List<int> value) =>
+      _sealMedia(value, List<int>.of(_activeKeyBytes), _randomBytes(12));
 
-  Future<Uint8List> decryptBytes(List<int> value) async {
+  Future<Uint8List> decryptBytes(List<int> value) {
     if (value.length < 29 || value.first != 1) {
       throw const FormatException('Invalid encrypted media');
     }
-    final clear = await _algorithm.decrypt(
-      SecretBox(
-        value.sublist(29),
-        nonce: value.sublist(1, 13),
-        mac: Mac(value.sublist(13, 29)),
-      ),
-      secretKey: SecretKey(_activeKeyBytes),
-    );
-    return Uint8List.fromList(clear);
+    return _openMedia(value, List<int>.of(_activeKeyBytes));
   }
+
+  // Статические, чтобы замыкание для изолята захватывало только данные, а
+  // не сам шифр.
+  static Future<Uint8List> _sealMedia(
+    List<int> value,
+    List<int> key,
+    List<int> nonce,
+  ) =>
+      inBackground(() async {
+        final box = await AesGcm.with256bits().encrypt(
+          value,
+          secretKey: SecretKey(key),
+          nonce: nonce,
+        );
+        return Uint8List(29 + box.cipherText.length)
+          ..[0] = 1
+          ..setRange(1, 13, box.nonce)
+          ..setRange(13, 29, box.mac.bytes)
+          ..setRange(29, 29 + box.cipherText.length, box.cipherText);
+      });
+
+  static Future<Uint8List> _openMedia(List<int> value, List<int> key) =>
+      inBackground(() async {
+        final clear = await AesGcm.with256bits().decrypt(
+          SecretBox(
+            value.sublist(29),
+            nonce: value.sublist(1, 13),
+            mac: Mac(value.sublist(13, 29)),
+          ),
+          secretKey: SecretKey(key),
+        );
+        return Uint8List.fromList(clear);
+      });
 
   static List<int> randomSalt() => _randomBytes(16);
 

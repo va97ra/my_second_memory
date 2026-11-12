@@ -26,12 +26,12 @@ void main() {
       ..['updatedAt'] = '2099-08-22T17:00:00.000';
     var localItems = [local];
     addTearDown(cipher.destroy);
-    remote.storedEntities['memory_item:clock-skew'] = SyncRemoteEntity(
+    remote.seed(SyncRemoteEntity(
       kind: SyncEntityKind.memoryItem,
       entityId: local.id,
       encryptedPayload: await cipher.encryptString(jsonEncode(legacyPayload)),
       updatedAt: remoteUpdatedAt,
-    );
+    ));
 
     await sync(
       remote: remote,
@@ -67,12 +67,12 @@ void main() {
       ..['updatedAt'] = '2099-08-22T17:00:00.000';
     var localItems = <MemoryItem>[];
     addTearDown(cipher.destroy);
-    remote.storedEntities['memory_item:legacy-download'] = SyncRemoteEntity(
+    remote.seed(SyncRemoteEntity(
       kind: SyncEntityKind.memoryItem,
       entityId: 'legacy-download',
       encryptedPayload: await cipher.encryptString(jsonEncode(legacyPayload)),
       updatedAt: remoteUpdatedAt,
-    );
+    ));
 
     await sync(
       remote: remote,
@@ -109,12 +109,12 @@ void main() {
       ..['updatedAt'] = '2099-08-22T17:00:00.000';
     var localItems = <MemoryItem>[];
     addTearDown(cipher.destroy);
-    remote.storedEntities['memory_item:deleted-clock-skew'] = SyncRemoteEntity(
+    remote.seed(SyncRemoteEntity(
       kind: SyncEntityKind.memoryItem,
       entityId: 'deleted-clock-skew',
       encryptedPayload: await cipher.encryptString(jsonEncode(legacyPayload)),
       updatedAt: remoteUpdatedAt,
-    );
+    ));
     await tombstones.markDeleted(
       'user',
       'deleted-clock-skew',

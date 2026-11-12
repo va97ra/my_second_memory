@@ -2,8 +2,8 @@ import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
 import 'account_copy_button.dart';
-import 'account_field_button.dart';
 import 'account_field_icons.dart';
+import 'account_row_button.dart';
 import 'account_text_field.dart';
 
 /// Поля аккаунта: сервис, вход, почта, пароль, сайт и заметка.
@@ -74,7 +74,7 @@ class AccountEditorFields extends StatelessWidget {
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AccountFieldButton(
+              AccountRowButton.inField(
                 icon: showPassword
                     ? Icons.visibility_off_rounded
                     : Icons.visibility_rounded,

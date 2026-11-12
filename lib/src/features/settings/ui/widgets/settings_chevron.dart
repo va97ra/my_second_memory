@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Шеврон в конце строки настроек.
-///
-/// У переключателя и у рамки выбора языка краска доходит до края их коробки,
-/// а у глифа шеврона внутри его квадрата остаётся собственный отступ. На глаз
-/// он вставал левее соседей. Сдвиг возвращает видимый край на общую вертикаль
-/// и не трогает раскладку строки.
+/// Стрелка в углу плитки: нажатие откроет другой экран.
 class SettingsChevron extends StatelessWidget {
   const SettingsChevron({super.key});
 
   @override
-  Widget build(BuildContext context) => Transform.translate(
-        offset: const Offset(5, 0),
-        child: const Icon(Icons.chevron_right_rounded),
+  Widget build(BuildContext context) => Icon(
+        Icons.chevron_right_rounded,
+        size: 20,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       );
 }

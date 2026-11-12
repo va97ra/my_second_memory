@@ -11,16 +11,14 @@ class SecurityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    // В экранных темах карточка — пластина стекла на заднике; в блокнотных
-    // остаётся бумажной панелью со своей тенью.
     final radius = BorderRadius.circular(8);
     return DecoratedBox(
       decoration: BoxDecoration(
-            color: colors.surface.withValues(alpha: 0.92),
-            borderRadius: radius,
-            border: Border.all(color: colors.outlineVariant),
-            boxShadow: _shadow(context),
-          ),
+        color: colors.surface.withValues(alpha: 0.92),
+        borderRadius: radius,
+        border: Border.all(color: colors.outlineVariant),
+        boxShadow: _shadow(context),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(mainAxisSize: MainAxisSize.min, children: children),

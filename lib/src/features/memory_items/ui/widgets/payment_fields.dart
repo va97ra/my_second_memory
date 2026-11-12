@@ -1,4 +1,5 @@
 import 'package:ez_domain/ez_domain.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'subscription_term_label.dart';
 
@@ -87,7 +88,7 @@ class PaymentFields extends StatelessWidget {
               height: 1,
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
-            InkWell(
+            NotebookPressable(
               key: const ValueKey('subscription_term_picker'),
               borderRadius: const BorderRadius.vertical(
                 bottom: Radius.circular(8),

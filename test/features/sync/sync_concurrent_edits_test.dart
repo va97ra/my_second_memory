@@ -61,12 +61,12 @@ void main() {
         (SyncEntityKind.account, account('cloud').toJson()),
         (SyncEntityKind.shiftSchedule, shift('cloud').toJson()),
       ]) {
-        remote.storedEntities[entry.$1.name] = SyncRemoteEntity(
+        remote.seed(SyncRemoteEntity(
           kind: entry.$1,
           entityId: 'cloud',
           updatedAt: old,
           encryptedPayload: await cipher.encryptString(jsonEncode(entry.$2)),
-        );
+        ));
       }
       final sync = container.read(syncControllerProvider.notifier);
       await sync.load();
@@ -114,10 +114,10 @@ class _BlockingRemote extends SyncRemote {
   final started = Completer<void>();
   final release = Completer<void>();
   @override
-  Future<List<SyncRemoteEntity>> fetchEntities() async {
+  Future<List<SyncRemoteEntity>> fetchEntities({int afterRevision = 0}) async {
     if (!started.isCompleted) started.complete();
     await release.future;
-    return super.fetchEntities();
+    return super.fetchEntities(afterRevision: afterRevision);
   }
 }
 

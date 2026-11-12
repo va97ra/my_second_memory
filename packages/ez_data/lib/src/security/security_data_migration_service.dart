@@ -108,7 +108,13 @@ class SecurityDataMigrationService {
       final sourceItems =
           snapshot.memoryItems ?? await repositories.plainMemory.loadAll();
       mediaMigration = await mediaStorage.stageEncryption(
-        _mediaPaths(sourceItems),
+        mediaReferencesOf(
+          items: sourceItems,
+          series: snapshot.recurrenceSeries ??
+              await repositories.recurrence.loadAll(),
+          exceptions: snapshot.recurrenceExceptions ??
+              await repositories.recurrenceExceptions.loadAll(),
+        ),
         cipher,
       );
       // Записи не переписываются: в них лежит чистое имя вложения, а
@@ -184,9 +190,25 @@ class SecurityDataMigrationService {
     final encryptedItems = await memoryRepository.loadAll();
     final plainRecurrence = storage.recurrenceRepository;
     final plainRecurrenceExceptions = storage.recurrenceExceptionRepository;
+    final recurrenceRepository = EncryptedRecurrenceRepository(
+      store: store,
+      plainRepository: plainRecurrence,
+      backend: backend,
+    );
+    final exceptionRepository = EncryptedRecurrenceExceptionRepository(
+      store: store,
+      plainRepository: plainRecurrenceExceptions,
+      backend: backend,
+    );
+    final encryptedSeries = await recurrenceRepository.loadAll();
+    final encryptedExceptions = await exceptionRepository.loadAll();
     final mediaStorage = MediaStorage();
     final mediaMigration = await mediaStorage.stageDecryption(
-      _mediaPaths(encryptedItems),
+      mediaReferencesOf(
+        items: encryptedItems,
+        series: encryptedSeries,
+        exceptions: encryptedExceptions,
+      ),
       cipher,
     );
     try {
@@ -223,25 +245,13 @@ class SecurityDataMigrationService {
       );
       await store.remove(EncryptedAccountRepository.storageKey);
 
-      final recurrenceRepository = EncryptedRecurrenceRepository(
-        store: store,
-        plainRepository: plainRecurrence,
-        backend: backend,
-      );
-      await plainRecurrence.replaceAll(await recurrenceRepository.loadAll());
+      await plainRecurrence.replaceAll(encryptedSeries);
       await backend?.replaceSecureEntities(
         EncryptedRecurrenceRepository.entityKind,
         const [],
       );
       await store.remove(EncryptedRecurrenceRepository.storageKey);
-      final exceptionRepository = EncryptedRecurrenceExceptionRepository(
-        store: store,
-        plainRepository: plainRecurrenceExceptions,
-        backend: backend,
-      );
-      await plainRecurrenceExceptions.replaceAll(
-        await exceptionRepository.loadAll(),
-      );
+      await plainRecurrenceExceptions.replaceAll(encryptedExceptions);
       await backend?.replaceSecureEntities(
         EncryptedRecurrenceExceptionRepository.entityKind,
         const [],
@@ -303,10 +313,6 @@ bool _sameFinanceEntries(List<FinanceEntry> first, List<FinanceEntry> second) {
 
 bool _sameToolData(ToolDataSnapshot first, ToolDataSnapshot second) =>
     jsonEncode(first.toJson()) == jsonEncode(second.toJson());
-
-Set<String> _mediaPaths(List<MemoryItem> items) => {
-      for (final item in items) ...item.mediaReferences,
-    };
 
 class _EncryptedRepositories {
   _EncryptedRepositories(AppCipher cipher, LocalStorageScope storage)

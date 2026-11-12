@@ -3,11 +3,17 @@ import 'package:ez_domain/ez_domain.dart';
 /// Час шкалы дня в пикселях. От него считается всё остальное.
 const double dayTimelineHourHeight = 64;
 
-/// Шаг перетаскивания и наименьшая длительность таблички — четверть часа.
+/// Куда встаёт рамка по нажатию на пустое место: палец точнее не попадёт.
+const int dayTimelineTapStepMinutes = 15;
+
+/// Шаг, когда рамку или запись тянут: видно время, и можно попасть в минуту.
+const int dayTimelineDragStepMinutes = 1;
+
+/// Наименьшая длительность таблички.
 ///
 /// Меньше нельзя не из-за пикселей, а потому что на четверти часа подпись
 /// умещается в одну строку, а на пяти минутах уже нет.
-const int dayTimelineStepMinutes = 15;
+const int dayTimelineMinLengthMinutes = 15;
 
 /// Полоса с часами слева.
 const double dayTimelineGutterWidth = 52;
@@ -23,12 +29,44 @@ const int _minutesInDay = 24 * 60;
 double dayTimelineOffsetOf(int minutes) => minutes / 60 * dayTimelineHourHeight;
 
 /// Отступ сверху → минуты, прижатые к шагу шкалы.
-int dayTimelineMinutesAt(double offset) {
+int dayTimelineMinutesAt(
+  double offset, {
+  int step = dayTimelineTapStepMinutes,
+}) {
   final raw = offset / dayTimelineHourHeight * 60;
-  final snapped =
-      (raw / dayTimelineStepMinutes).round() * dayTimelineStepMinutes;
+  final snapped = (raw / step).round() * step;
   return snapped.clamp(0, _minutesInDay);
 }
+
+int _draggedTo(int anchor, double travelled) => dayTimelineMinutesAt(
+      dayTimelineOffsetOf(anchor) + travelled,
+      step: dayTimelineDragStepMinutes,
+    );
+
+/// Куда встанет начало, если его взяли на [anchor] и протянули на [travelled].
+int dayTimelineDraggedStart(
+  int anchor,
+  double travelled, {
+  required int end,
+}) =>
+    _draggedTo(anchor, travelled).clamp(0, end - dayTimelineMinLengthMinutes);
+
+/// Куда встанет конец. Начало рамки при этом стоит.
+int dayTimelineDraggedEnd(
+  int anchor,
+  double travelled, {
+  required int start,
+}) =>
+    _draggedTo(anchor, travelled)
+        .clamp(start + dayTimelineMinLengthMinutes, _minutesInDay);
+
+/// Куда встанет начало рамки длиной [length], которую несут целиком.
+int dayTimelineCarriedStart(
+  int anchor,
+  double travelled, {
+  required int length,
+}) =>
+    _draggedTo(anchor, travelled).clamp(0, _minutesInDay - length);
 
 /// Конец записи на шкале.
 ///
@@ -37,8 +75,8 @@ int dayTimelineMinutesAt(double offset) {
 int dayTimelineEndOf(MemoryItem item) {
   final start = item.timeMinutes;
   if (start == null) return 0;
-  final end = item.endMinutes ?? start + dayTimelineStepMinutes;
-  return end.clamp(start + dayTimelineStepMinutes, _minutesInDay);
+  final end = item.endMinutes ?? start + dayTimelineMinLengthMinutes;
+  return end.clamp(start + dayTimelineMinLengthMinutes, _minutesInDay);
 }
 
 /// Табличка на шкале: запись, её границы и глубина каскада.
@@ -60,6 +98,14 @@ class DayTimelineBlock {
   double get top => dayTimelineOffsetOf(start);
   double get height => dayTimelineOffsetOf(end) - dayTimelineOffsetOf(start);
   double get indent => depth * dayTimelineCascadeIndent;
+
+  /// Та же табличка на другом времени: пока её тянут, запись ещё не менялась.
+  DayTimelineBlock movedTo(int newStart, int newEnd) => DayTimelineBlock(
+        item: item,
+        start: newStart,
+        end: newEnd,
+        depth: depth,
+      );
 }
 
 /// Раскладывает записи дня по шкале.

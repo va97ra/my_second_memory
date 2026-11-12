@@ -30,7 +30,7 @@ class FinanceEntryCard extends ConsumerWidget {
       key: ValueKey('finance_entry_${entry.id}'),
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
+      child: NotebookPressable(
         onTap: () => onEdit(entry),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),

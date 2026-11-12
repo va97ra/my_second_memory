@@ -3,7 +3,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
 import 'sync_card.dart';
-import 'sync_error_text.dart';
+import 'sync_submit_block.dart';
 
 /// Облако подключено: когда синхронизировались в прошлый раз и что дальше.
 class SyncConnectedCard extends StatelessWidget {
@@ -37,20 +37,12 @@ class SyncConnectedCard extends StatelessWidget {
         if (email != null) Text(email!),
         const SizedBox(height: 8),
         Text(_lastSyncLabel(context, strings)),
-        if (errorText != null) ...[
-          const SizedBox(height: 12),
-          SyncErrorText(errorText!),
-        ],
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: FilledButton.icon(
-            key: const ValueKey('sync_now'),
-            onPressed: syncing ? null : onSyncNow,
-            icon: const Icon(Icons.sync_rounded),
-            label: Text(strings.syncNow),
-          ),
+        SyncSubmitBlock(
+          errorText: errorText,
+          buttonKey: const ValueKey('sync_now'),
+          onPressed: syncing ? null : onSyncNow,
+          icon: Icons.sync_rounded,
+          label: strings.syncNow,
         ),
         const SizedBox(height: 8),
         SizedBox(

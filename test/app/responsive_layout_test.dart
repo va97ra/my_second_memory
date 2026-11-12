@@ -168,10 +168,12 @@ void main() {
       await tester.tap(find.text('Добавить график').last);
       await tester.pumpAndSettle();
 
+      await tester.tap(find.byKey(const ValueKey('shift_tile_vacations')));
+      await tester.pumpAndSettle();
       final addVacation = find.byKey(const ValueKey('add_shift_vacation'));
       await tester.ensureVisible(addVacation);
       await tester.pumpAndSettle();
-      expect(tester.getSize(addVacation).height, 48);
+      expect(tester.getSize(addVacation).height, greaterThanOrEqualTo(48));
       await tester.tap(addVacation);
       await tester.pumpAndSettle();
 

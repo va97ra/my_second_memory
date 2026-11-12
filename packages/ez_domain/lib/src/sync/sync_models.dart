@@ -77,6 +77,7 @@ class SyncRunResult {
     this.mediaDownloaded = 0,
     this.mediaUploaded = 0,
     this.mediaFailed = 0,
+    this.mediaMissing = 0,
   });
 
   final int downloaded;
@@ -92,4 +93,10 @@ class SyncRunResult {
   /// прогон, но и молчать о нём нельзя: на следующем прогоне попробуем снова,
   /// а пока это видно в итоге.
   final int mediaFailed;
+
+  /// Сколько файлов, на которые ссылаются записи, нет ни здесь, ни в облаке.
+  /// Так бывает, пока другое устройство не дозалило снимок к уже приехавшей
+  /// записи, — или снимок потерян. Пока такие есть, вложения сверяются на
+  /// каждом прогоне.
+  final int mediaMissing;
 }

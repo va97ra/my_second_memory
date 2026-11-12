@@ -66,10 +66,8 @@ class MemoryItemsIndex {
 }
 
 final memoryItemsIndexProvider = Provider<MemoryItemsIndex>((ref) {
-  final occurrenceIndex = RecurrenceOccurrenceIndex(
-    series: ref.watch(recurrenceSeriesControllerProvider),
-    exceptions: ref.watch(recurrenceExceptionControllerProvider),
-  );
+  final occurrenceIndex =
+      ref.watch(recurrenceProjectionProvider).occurrenceIndex;
   return MemoryItemsIndex.build([
     for (final item in ref.watch(memoryItemsControllerProvider))
       if (!occurrenceIndex.isSkippedPersisted(item)) item,
@@ -130,7 +128,9 @@ List<MemoryItem> archivedMemoryItems({
     }
     result[item.id] = item;
   }
-  return result.values.toList(growable: false);
+  // Как в ленте: чем позже день, тем выше.
+  return result.values.toList(growable: false)
+    ..sort((a, b) => b.memoryDate.compareTo(a.memoryDate));
 }
 
 final archivedMemoryItemsProvider = Provider<List<MemoryItem>>((ref) {

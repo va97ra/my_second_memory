@@ -1,18 +1,12 @@
-import 'dart:math' as math;
-
 import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../navigation/page_turn_navigation.dart';
-import '../../../../shared/ui/memory_card/memory_card_attachment_icons.dart';
-import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
-import '../../../../shared/ui/memory_card/sticker_paper.dart';
-import '../../../../shared/ui/styled_text_span.dart';
 import '../../state/memory_item_commands.dart';
 import '../../state/memory_item_selectors.dart';
-import 'memory_sticker_done_box.dart';
+import 'memory_sticker_face.dart';
 import 'memory_sticker_menu.dart';
 import 'memory_sticker_strip.dart';
 import 'sticker_carry.dart';
@@ -91,7 +85,7 @@ class _MemoryStickerState extends ConsumerState<MemorySticker>
     final item = ref.watch(memoryItemByIdProvider(widget.itemId));
     if (item == null) return const SizedBox.shrink();
 
-    final sticker = _StickerFace(
+    final sticker = MemoryStickerFace(
       key: ValueKey('memory_sticker_${item.id}'),
       item: item,
       stamp: widget.stamp,
@@ -150,7 +144,7 @@ class _MemoryStickerState extends ConsumerState<MemorySticker>
             child: Material(
               type: MaterialType.transparency,
               child:
-                  _StickerFace(item: item, stamp: widget.stamp, lifted: true),
+                  MemoryStickerFace(item: item, stamp: widget.stamp, lifted: true),
             ),
           ),
         ),
@@ -181,149 +175,6 @@ class _MemoryStickerState extends ConsumerState<MemorySticker>
         }
       },
       child: sticker,
-    );
-  }
-}
-
-class _StickerFace extends StatelessWidget {
-  const _StickerFace({
-    super.key,
-    required this.item,
-    required this.stamp,
-    this.lifted = false,
-    this.onOpen,
-    this.onToggleDone,
-  });
-
-  final MemoryItem item;
-  final StickerStamp stamp;
-  final bool lifted;
-  final VoidCallback? onOpen;
-  final VoidCallback? onToggleDone;
-
-  @override
-  Widget build(BuildContext context) {
-    final content = _StickerContent(item: item);
-    return PressPulse(
-      child: StickerPaper(
-        accent: memoryAccentColor(item),
-        lifted: lifted,
-        strip: MemoryStickerStrip(
-          key: ValueKey('memory_sticker_strip_${item.id}'),
-          item: item,
-          stamp: stamp,
-        ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (onOpen == null)
-              content
-            else
-              NotebookPressable(
-                onTap: onOpen,
-                borderRadius: BorderRadius.zero,
-                pulse: false,
-                child: content,
-              ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: MemoryStickerDoneBox(
-                key: ValueKey('memory_sticker_done_${item.id}'),
-                isDone: item.isDone,
-                onToggle: onToggleDone ?? () {},
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StickerContent extends StatelessWidget {
-  const _StickerContent({required this.item});
-
-  final MemoryItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final typography = AppContentTypography.of(context);
-    final style = typography.apply(
-      Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: memoryTitleColor(colors, item),
-            fontWeight: FontWeight.w600,
-            height: 1.2,
-          ),
-      manropeWeight: FontWeight.w600,
-    );
-    final body = StyledText.parse(item.body.trim());
-    final title = item.title.trim();
-    // Название — обычно начало самого текста, и показывать его дважды незачем.
-    // Но бывает и своё: у дня рождения это имя, а текста может не быть вовсе.
-    final showsTitle = title.isNotEmpty &&
-        !body.plain.startsWith(title.replaceFirst(RegExp(r'\.\.\.$'), ''));
-    final hasAudio = item.voiceNotes.isNotEmpty;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: LayoutBuilder(
-              // Сколько строк влезает, столько и показываем: многоточие лучше,
-              // чем буквы, обрезанные по краю карточки.
-              builder: (context, constraints) {
-                final lines = (constraints.maxHeight /
-                        typography.measuredLineHeight(style))
-                    .floor()
-                    .clamp(1, 12);
-                final titleLines = showsTitle ? math.min(2, lines) : 0;
-                return ClipRect(
-                  child: OverflowBox(
-                    alignment: Alignment.topLeft,
-                    maxHeight: double.infinity,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (showsTitle)
-                          Text(
-                            title,
-                            maxLines: titleLines,
-                            overflow: TextOverflow.ellipsis,
-                            style: style.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                        if (body.plain.isNotEmpty && lines > titleLines)
-                          Text.rich(
-                            styledTextSpan(body, style),
-                            maxLines: lines - titleLines,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          // Ряд вложений и место под квадратик выполнения в углу.
-          SizedBox(
-            height: MemoryStickerDoneBox.boxSize,
-            child: hasAudio || item.imagePaths.isNotEmpty
-                ? Align(
-                    alignment: Alignment.centerLeft,
-                    child: MemoryCardAttachmentIcons(
-                      imageCount: item.imagePaths.length,
-                      hasAudio: hasAudio,
-                    ),
-                  )
-                : null,
-          ),
-        ],
-      ),
     );
   }
 }

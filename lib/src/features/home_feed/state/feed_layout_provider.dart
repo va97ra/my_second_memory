@@ -65,6 +65,15 @@ class FeedLayout {
         for (final group in groups) ...group.itemIds,
         ...doneItemIds,
       ];
+
+  /// С какой группы начинаются сегодня и прошлое: всё, что выше, — будущее.
+  /// Страница будущего месяца будущая вся, и её читают с начала; среди всех дат
+  /// сегодняшний день нужен, даже если записи есть только впереди.
+  int todayGroupIndex(DateTime today, {required bool allDates}) {
+    final index = groups.indexWhere((group) => !group.period.isAfter(today));
+    if (index >= 0) return index;
+    return allDates ? groups.length : 0;
+  }
 }
 
 @immutable
@@ -132,9 +141,11 @@ final feedLayoutProvider = Provider<FeedLayout>((ref) {
   );
 });
 
+/// Чем позже день, тем выше: будущее сверху. Внутри дня порядок обычный, утро
+/// выше вечера.
 int _compareDatedItems(MemoryItem left, MemoryItem right) {
   final byDate =
-      _dateOnly(left.memoryDate).compareTo(_dateOnly(right.memoryDate));
+      _dateOnly(right.memoryDate).compareTo(_dateOnly(left.memoryDate));
   if (byDate != 0) return byDate;
   final leftTime = left.timeMinutes;
   final rightTime = right.timeMinutes;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'account_field_button.dart';
+import 'account_row_button.dart';
 
 /// Кнопка копирования в поле открытого аккаунта. Копирует то, что в поле написано
 /// сейчас; у пустого поля её нет.
@@ -23,7 +23,7 @@ class AccountCopyButton extends StatelessWidget {
       valueListenable: controller,
       builder: (context, value, _) => value.text.isEmpty
           ? const SizedBox.shrink()
-          : AccountFieldButton(
+          : AccountRowButton.inField(
               icon: Icons.content_copy_rounded,
               tooltip: tooltip,
               onPressed: () => _copy(context, value.text),

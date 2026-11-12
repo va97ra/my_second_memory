@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'finance_journal_list.dart';
 import 'finance_repository.dart';
 
 class LocalFinanceRepository implements FinanceRepository {
@@ -21,6 +22,18 @@ class LocalFinanceRepository implements FinanceRepository {
       for (final item in decoded)
         FinanceEntry.fromJson(Map<String, Object?>.from(item as Map)),
     ];
+  }
+
+  @override
+  Future<void> upsertAll(List<FinanceEntry> entries) async {
+    if (entries.isEmpty) return;
+    await replaceAll(upsertedEntries(await loadAll(), entries));
+  }
+
+  @override
+  Future<void> deleteAll(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await replaceAll(withoutEntries(await loadAll(), ids));
   }
 
   @override

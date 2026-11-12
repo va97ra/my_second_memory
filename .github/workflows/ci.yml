@@ -1,0 +1,32 @@
+# Анализатор и тесты на каждый push и pull request.
+#
+# Раньше проверка держалась только на дисциплине. Версия Flutter закреплена:
+# новая может сменить правила анализатора, и CI упал бы не из-за кода.
+# Машина — Windows: на ней ведётся разработка и проверены все тесты.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+
+      - name: Dependencies
+        run: flutter pub get
+
+      - name: Analyzer
+        run: flutter analyze
+
+      - name: Tests
+        run: flutter test

@@ -130,16 +130,10 @@ class FeedHeader extends StatelessWidget {
           : Text(periodLabel!, maxLines: 2, overflow: TextOverflow.ellipsis),
     );
     if (periodLabel == null) return title;
-    // Свой прозрачный материал: без него волна нажатия уходит материалу
-    // `Scaffold` и рисуется поверх задника.
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        key: const ValueKey('feed_pick_date'),
-        onTap: onPickDate,
-        borderRadius: BorderRadius.circular(8),
-        child: title,
-      ),
+    return NotebookPressable(
+      key: const ValueKey('feed_pick_date'),
+      onTap: onPickDate,
+      child: title,
     );
   }
 }

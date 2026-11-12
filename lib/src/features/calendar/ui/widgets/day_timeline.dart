@@ -43,6 +43,14 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
   @override
   Widget build(BuildContext context) {
     final blocks = layOutDayTimeline(widget.items);
+    // Выбранная запись лежит поверх остальных: иначе наехавшая соседка закрыла
+    // бы и её саму, и флажки.
+    final stacked = [
+      for (final block in blocks)
+        if (block.item.id != _selectedId) block,
+      for (final block in blocks)
+        if (block.item.id == _selectedId) block,
+    ];
 
     return NotebookPaperFill(
       child: SingleChildScrollView(
@@ -64,12 +72,15 @@ class _DayTimelineState extends ConsumerState<DayTimeline> {
                   _draftKey = UniqueKey();
                 }),
               )),
-              for (final block in blocks)
+              for (final block in stacked)
                 DayTimelineEntry(
                   key: ValueKey(block.item.id),
                   block: block,
                   selected: block.item.id == _selectedId,
-                  onSelect: () => setState(() => _selectedId = block.item.id),
+                  onSelect: () => setState(() {
+                    _selectedId = block.item.id;
+                    _draftStart = null;
+                  }),
                   onOpen: () => context.pageTurnPush(
                       '/memory/item/${Uri.encodeComponent(block.item.id)}'),
                   onSave: (item) => ref

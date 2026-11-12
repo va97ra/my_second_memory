@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 
 import '../media/memory_image_preview.dart';
@@ -24,7 +25,7 @@ class MemoryCardImageThumbnail extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Material(
           color: Colors.transparent,
-          child: InkWell(
+          child: NotebookPressable(
             key: ValueKey('feed_image_$path'),
             onTap: () => openMemoryImageViewer(context, path),
             child: Stack(

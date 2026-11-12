@@ -15,6 +15,7 @@ class SyncRunner {
     required this.tombstones,
     required this.data,
     this.atRestCipher,
+    this.snapshot,
   });
 
   final SyncRemoteStore remote;
@@ -24,6 +25,9 @@ class SyncRunner {
   /// Ключ местного шифрования вложений на диске: он свой у каждого устройства
   /// и не тот, которым шифруется облако. Null — PIN не задан.
   final AppCipher? Function()? atRestCipher;
+
+  /// Облако, прочитанное прошлыми прогонами, см. [CloudSnapshot].
+  final CloudSnapshot? snapshot;
 
   Future<SyncRunResult> run(AppCipher cipher) async {
     // Всё читается до слияния: движку нужно и то, что лежит сейчас, и то, что
@@ -40,6 +44,7 @@ class SyncRunner {
       remote: remote,
       cipher: cipher,
       tombstones: tombstones,
+      snapshot: snapshot,
       // В вебе отдельных файлов нет: снимок лежит строкой внутри записи и
       // уезжает вместе с ней. Движок вложений там не просто лишний — он
       // счёл бы всё облако ничейным и вычистил бы его.

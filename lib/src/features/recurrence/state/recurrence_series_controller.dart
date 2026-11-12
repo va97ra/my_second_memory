@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ez_domain/ez_domain.dart';
 import '../../memory_items/memory_items.dart';
 import 'package:ez_data/ez_data.dart';
+import '../../../shared/state/media_cleanup.dart';
 import 'recurrence_exception_controller.dart';
 import 'recurrence_legacy_repair.dart';
 
@@ -12,7 +13,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     implements RecurrenceRepairHost {
   RecurrenceSeriesController(
       this._repository, this._exceptions, this._memoryItems, this._reminders,
-      [this._sync])
+      [this._sync, this._media])
       : super(const []) {
     _legacyRepair = RecurrenceLegacyRepair(
       host: this,
@@ -29,6 +30,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
   final MemoryItemsController _memoryItems;
   final ReminderScheduler _reminders;
   final SyncMutationObserver? _sync;
+  final MediaCleanup? _media;
   late final Future<void> _loadFuture;
   late final RecurrenceLegacyRepair _legacyRepair;
 
@@ -85,6 +87,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     // The series held the record, so hand it back a standalone row before the
     // series goes. Without this the record would have no representation left.
     final series = _find(seriesId);
+    final held = _mediaOf(seriesId);
     if (series != null) {
       final restored = item.copyWith(
         id: series.originItemId,
@@ -116,6 +119,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
       for (final series in state)
         if (series.id != seriesId) series
     ];
+    await _media?.release(held);
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -175,6 +179,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     if (currentId == null) return null;
     final current = _find(currentId);
     if (current == null) return null;
+    final held = _mediaOf(currentId);
     final now = DateTime.now();
     // Срез считается по исходной дате вхождения: перенесённое вхождение видно
     // на новой дате, но серия делится по той, откуда оно родом.
@@ -191,6 +196,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
       state = _replace(split.replacement);
       _sync?.recurrenceSeriesChanged();
       await _retireOriginRow(split.replacement);
+      await _media?.release(held);
       unawaited(_reconcileRecurringReminders());
       return split.replacement;
     }
@@ -205,6 +211,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     if (_exceptions.exceptions.any((item) => item.id == cutoffMarker)) {
       await _exceptions.delete(currentId, cutoff);
     }
+    await _media?.release(held);
     unawaited(_reconcileRecurringReminders());
     return split.replacement;
   }
@@ -218,6 +225,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     if (seriesId == null) return;
     final sourceDate = _sourceDateForItem(item, occurrenceDate);
     final series = _find(seriesId);
+    final held = _mediaOf(seriesId);
     // An occurrence override lives in exactly one place: the exception for its
     // source date. Nothing is materialized any more, so no persisted row can
     // disagree with the marker about what this occurrence is.
@@ -255,8 +263,11 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
       ),
     );
     if (hasLegacyRow) {
-      await _memoryItems.delete(normalized.id);
+      // The exception has taken the row's content, media included: retiring
+      // keeps the files that a plain delete would strip.
+      await _memoryItems.retireRow(normalized.id);
     }
+    await _media?.release(held);
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -282,9 +293,11 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
       return;
     }
     final sourceDate = _sourceDateForItem(item);
+    final held = {..._mediaOf(seriesId), ...item.mediaReferences};
     await deleteMiskeyedOverrides(item, sourceDate);
     await writeDeletionMarker(item, sourceDate);
     await _memoryItems.delete(item.id);
+    await _media?.release(held);
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -295,6 +308,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     // deleting only materialized memory rows cannot prevent a stale cloud
     // series from projecting them again after a crash.
     await _sync?.recurrenceSeriesDeleted(id, deletedAt);
+    final held = _mediaOf(id);
     for (final item in [..._memoryItems.state]) {
       if (item.seriesId == id) await _memoryItems.delete(item.id);
     }
@@ -304,6 +318,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
       for (final series in state)
         if (series.id != id) series
     ];
+    await _media?.release(held);
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -315,6 +330,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     await _loadFuture;
     final current = _find(id);
     if (current == null) return;
+    final held = _mediaOf(id);
     // A moved occurrence keeps its original date encoded in its id/exception.
     // Series boundaries must use that source date, not the visible destination.
     final cutoff = occurrence == null
@@ -342,6 +358,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
         await _exceptions.delete(id, exception.occurrenceDate);
       }
     }
+    await _media?.release(held);
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -407,6 +424,21 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
       // A later launch retries Android scheduling.
     }
   }
+
+  /// Вложения серии: шаблон и правки её дат. Берутся до операции, а
+  /// отпускаются после — уборка удалит из них только то, чем больше никто не
+  /// владеет, так что лишнее в списке ничего не стоит.
+  Set<String> _mediaOf(String seriesId) => mediaReferencesOf(
+        items: const [],
+        series: [
+          for (final series in state)
+            if (series.id == seriesId) series,
+        ],
+        exceptions: [
+          for (final exception in _exceptions.state)
+            if (exception.seriesId == seriesId) exception,
+        ],
+      );
 
   List<RecurrenceSeries> _replace(RecurrenceSeries value) => [
         for (final series in state)

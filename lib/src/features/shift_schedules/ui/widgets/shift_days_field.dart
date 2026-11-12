@@ -18,11 +18,8 @@ class ShiftDaysField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.number,
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      ),
+      // Поле лежит на листе и не закрывает бумагу.
+      decoration: InputDecoration(labelText: label, filled: false),
       onChanged: (_) => onChanged(),
     );
   }

@@ -23,9 +23,6 @@ class _Observer extends NoopSyncMutationObserver {
   }
 
   @override
-  Future<DateTime?> memoryDeletedAt(String id) async => deletedMemory[id];
-
-  @override
   Future<Map<String, DateTime>> memoryDeletions() async =>
       Map.unmodifiable(deletedMemory);
 
@@ -82,8 +79,8 @@ void main() {
     };
     final observer = _Observer(memoryDeletions, exceptionDeletions);
 
-    final memories =
-        MemoryItemsController(const LocalMemoryRepository(), null, null, observer);
+    final memories = MemoryItemsController(
+        const LocalMemoryRepository(), null, null, observer);
     final exceptions = RecurrenceExceptionController(
       const LocalRecurrenceExceptionRepository(),
       observer,

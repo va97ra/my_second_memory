@@ -2,14 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ez_data/ez_data.dart';
 
 void main() {
-  test('notification ids are stable, positive and record-specific', () {
-    final first = stableNotificationId('record-1');
-
-    expect(first, stableNotificationId('record-1'));
-    expect(first, greaterThanOrEqualTo(0));
-    expect(first, isNot(stableNotificationId('record-2')));
-  });
-
   test('reminder payload is decoded safely', () {
     expect(
       decodeReminderPayload(
@@ -19,5 +11,25 @@ void main() {
     );
     expect(decodeReminderPayload('not-json'), isNull);
     expect(decodeReminderPayload(null), isNull);
+  });
+
+  test('a pending notification is read with its source and fingerprint', () {
+    final pending = pendingReminderOf(
+      42,
+      '{"source":"recurrence_reminder","itemId":"a","fingerprint":17}',
+    );
+
+    expect(pending.notificationId, 42);
+    expect(pending.source, 'recurrence_reminder');
+    expect(pending.fingerprint, 17);
+  });
+
+  test('a payload from an older version has no fingerprint', () {
+    final pending = pendingReminderOf(
+      42,
+      '{"source":"memory_reminder","itemId":"a"}',
+    );
+
+    expect(pending.fingerprint, isNull);
   });
 }

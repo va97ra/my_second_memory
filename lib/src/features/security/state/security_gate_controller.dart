@@ -74,23 +74,26 @@ class SecurityGateController extends ChangeNotifier {
     setupBusy = true;
     problem = null;
     _notify();
-
-    await _session.setPin(pin);
-    setupBusy = false;
-    offerBiometrics = true;
-    _notify();
+    try {
+      await _session.setPin(pin);
+      offerBiometrics = true;
+    } finally {
+      setupBusy = false;
+      _notify();
+    }
   }
 
   /// Включает биометрию. Возвращает false, если устройство её не даёт.
   Future<bool> enableInitialBiometrics() async {
     biometricBusy = true;
     _notify();
-
-    final ok = await _session.setBiometricsEnabled(true);
-    biometricBusy = false;
-    offerBiometrics = false;
-    _notify();
-    return ok;
+    try {
+      return await _session.setBiometricsEnabled(true);
+    } finally {
+      biometricBusy = false;
+      offerBiometrics = false;
+      _notify();
+    }
   }
 
   Future<void> unlockWithPin(String pin) async {
@@ -117,11 +120,16 @@ class SecurityGateController extends ChangeNotifier {
     biometricBusy = true;
     problem = null;
     _notify();
-
-    final ok = await _session.unlockWithBiometrics();
-    biometricBusy = false;
-    problem = ok ? null : SecurityGateProblem.biometricsUnavailable;
-    _notify();
+    var ok = false;
+    try {
+      ok = await _session.unlockWithBiometrics();
+    } finally {
+      // Занятость снимается при любом исходе: иначе после ошибки кнопки замка
+      // молчали бы до перезапуска.
+      biometricBusy = false;
+      problem = ok ? null : SecurityGateProblem.biometricsUnavailable;
+      _notify();
+    }
   }
 
   void _notify() {

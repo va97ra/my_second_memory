@@ -31,12 +31,15 @@ class MediaSyncEngine {
   /// всегда едут в одном виде — зашифрованные ключом хранилища.
   final AppCipher? atRest;
 
-  Future<SyncRunResult> synchronize(List<MemoryItem> items) async {
-    final referenced = referencedNames(items);
+  /// [references] — все ссылки на вложения в слитых данных, см.
+  /// `mediaReferencesOf`.
+  Future<SyncRunResult> synchronize(Iterable<String> references) async {
+    final referenced = MediaStorage.storedNames(references);
     final remoteNames = await remote.listMediaNames();
     var downloaded = 0;
     var uploaded = 0;
     var failed = 0;
+    var missing = 0;
 
     for (final name in referenced) {
       try {
@@ -49,9 +52,13 @@ class MediaSyncEngine {
           );
           downloaded++;
         } else {
-          // Файла нет ни здесь, ни в облаке: запись ссылается на потерянное.
-          // Придумывать нечего, карточка и так покажет пустое место.
-          if (!await storage.exists(name)) continue;
+          // Файла нет ни здесь, ни в облаке: другое устройство ещё не
+          // дозалило его к приехавшей записи — или он потерян. Придумывать
+          // нечего, карточка покажет пустое место, а сверка повторится.
+          if (!await storage.exists(name)) {
+            missing++;
+            continue;
+          }
           await remote.uploadMedia(
             name,
             await vault.encryptBytes(
@@ -71,9 +78,9 @@ class MediaSyncEngine {
       }
     }
 
-    // В облаке осталось то, на что не ссылается ни одна запись, — значит,
-    // запись удалили. Список записей здесь уже слитый, то есть содержит и
-    // чужие; удаляется только по-настоящему ничьё.
+    // В облаке осталось то, на что не ссылаются данные, — значит, запись
+    // удалили. Ссылки здесь из уже слитых данных, то есть и чужие; удаляется
+    // только по-настоящему ничьё.
     final orphans = remoteNames.difference(referenced);
     await remote.deleteMedia(orphans);
 
@@ -84,17 +91,7 @@ class MediaSyncEngine {
       mediaDownloaded: downloaded,
       mediaUploaded: uploaded,
       mediaFailed: failed,
+      mediaMissing: missing,
     );
   }
-
-  /// Имена вложений, на которые ссылаются записи.
-  ///
-  /// Снимки, оставшиеся строкой внутри самой записи, сюда не попадают: они
-  /// уже уехали вместе с ней и отдельного файла у них нет.
-  static Set<String> referencedNames(List<MemoryItem> items) => {
-        for (final item in items)
-          for (final reference in item.mediaReferences)
-            if (!MediaStorage.isExternal(reference))
-              MediaStorage.referenceFor(reference),
-      };
 }

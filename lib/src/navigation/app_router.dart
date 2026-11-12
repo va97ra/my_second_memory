@@ -263,6 +263,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/settings/shifts/new',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          interceptBack: false,
+          child: const ShiftScheduleEditorScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/shifts/item/:id',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          interceptBack: false,
+          child: ShiftScheduleEditorScreen(
+            scheduleId: state.pathParameters['id'],
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/settings/backup',
         pageBuilder: (context, state) => pageTurnPage(
           context: context,

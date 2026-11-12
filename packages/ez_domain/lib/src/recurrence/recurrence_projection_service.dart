@@ -1,9 +1,13 @@
 import '../memory/memory_item.dart';
 import '../memory/memory_status.dart';
 import 'recurrence_occurrence_exception.dart';
+import 'recurrence_projection.dart';
 import 'recurrence_series.dart';
 import 'recurrence_dates.dart';
 
+/// Разовый вопрос к проекции, когда держать её незачем. Экран и состояние
+/// держат [RecurrenceProjection] и спрашивают её — так множества по всем
+/// данным строятся один раз на их изменение, а не на каждый вопрос.
 class RecurrenceProjectionService {
   const RecurrenceProjectionService();
 
@@ -13,101 +17,24 @@ class RecurrenceProjectionService {
     required List<RecurrenceSeries> series,
     required List<RecurrenceOccurrenceException> exceptions,
     required List<MemoryItem> persistedItems,
-  }) {
-    final rangeStart = dateOnly(start);
-    final rangeEnd = dateOnly(end);
-    final occurrenceIndex = RecurrenceOccurrenceIndex(
-      series: series,
-      exceptions: exceptions,
-    );
-    final enabledSeries = [
-      for (final entry in series)
-        if (entry.isEnabled) entry,
-    ];
-    if (enabledSeries.isEmpty) return const [];
-
-    final persistedKeys = <String>{
-      for (final item in persistedItems)
-        if (item.seriesId != null)
-          occurrenceKey(item.seriesId!, item.memoryDate),
-    };
-    final persistedIds = <String>{
-      for (final item in persistedItems) item.id,
-    };
-    final exceptionsByKey = {
-      for (final exception in exceptions)
-        occurrenceKey(exception.seriesId, exception.occurrenceDate): exception,
-    };
-    final result = <MemoryItem>[];
-    final enabledSeriesIds = <String>{};
-    for (final entry in enabledSeries) {
-      enabledSeriesIds.add(entry.id);
-      for (final date in recurrenceDatesInRange(entry, rangeStart, rangeEnd)) {
-        final key = occurrenceKey(entry.id, date);
-        if (persistedKeys.contains(key)) continue;
-        final exception = exceptionsByKey[key];
-        if (exception?.isSkipped == true) continue;
-        if (exception == null) {
-          result.add(occurrenceFromSeries(entry, date));
-        }
-      }
-    }
-    for (final exception in exceptions) {
-      final item = exception.item;
-      if (exception.isSkipped ||
-          item == null ||
-          occurrenceIndex.isSuppressedModified(exception) ||
-          !enabledSeriesIds.contains(exception.seriesId) ||
-          item.memoryDate.isBefore(rangeStart) ||
-          item.memoryDate.isAfter(rangeEnd) ||
-          persistedIds.contains(item.id)) {
-        continue;
-      }
-      result.add(item);
-    }
-    result.sort(compareOccurrences);
-    return result;
-  }
+  }) =>
+      RecurrenceProjection(
+        series: series,
+        exceptions: exceptions,
+        persistedItems: persistedItems,
+      ).itemsForRange(start, end);
 
   MemoryItem? itemById({
     required String id,
     required List<RecurrenceSeries> series,
     required List<RecurrenceOccurrenceException> exceptions,
     required List<MemoryItem> persistedItems,
-  }) {
-    final occurrenceIndex = RecurrenceOccurrenceIndex(
-      series: series,
-      exceptions: exceptions,
-    );
-    for (final item in persistedItems) {
-      if (item.id != id) continue;
-      return occurrenceIndex.isSkippedPersisted(item) ? null : item;
-    }
-    for (final exception in exceptions) {
-      if (exception.item?.id == id &&
-          !exception.isSkipped &&
-          !occurrenceIndex.isSuppressedModified(exception)) {
-        return exception.item;
-      }
-    }
-    for (final entry in series) {
-      final date = entry.originItemId == id
-          ? dateOnly(entry.startDate)
-          : occurrenceDateFromId(entry.id, id);
-      if (date == null || !isOccurrenceDate(entry, date)) continue;
-      final key = occurrenceKey(entry.id, date);
-      for (final exception in exceptions) {
-        if (occurrenceKey(exception.seriesId, exception.occurrenceDate) !=
-            key) {
-          continue;
-        }
-        if (exception.isSkipped) return null;
-        return exception.item;
-      }
-      return entry.isEnabled ? occurrenceFromSeries(entry, date) : null;
-    }
-    return null;
-  }
+  }) =>
+      RecurrenceProjection(
+        series: series,
+        exceptions: exceptions,
+        persistedItems: persistedItems,
+      ).itemById(id);
 }
 
 /// Resolves every stored representation back to the source occurrence. This

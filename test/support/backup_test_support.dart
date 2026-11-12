@@ -73,6 +73,9 @@ class FakeMemoryRepository implements MemoryRepository {
   Future<void> delete(String id) async {}
 
   @override
+  Future<void> deleteAll(List<String> ids) async {}
+
+  @override
   Future<void> replaceAll(List<MemoryItem> items) async {
     this.items = List.of(items);
   }
@@ -136,6 +139,24 @@ class FakeFinanceRepository implements FinanceRepository {
   Future<void> replaceAll(List<FinanceEntry> entries) async {
     this.entries = List.of(entries);
   }
+
+  @override
+  Future<void> upsertAll(List<FinanceEntry> incoming) async {
+    final byId = {
+      for (final entry in entries) entry.id: entry,
+      for (final entry in incoming) entry.id: entry,
+    };
+    entries = byId.values.toList();
+  }
+
+  @override
+  Future<void> deleteAll(List<String> ids) async {
+    final removed = ids.toSet();
+    entries = [
+      for (final entry in entries)
+        if (!removed.contains(entry.id)) entry,
+    ];
+  }
 }
 
 class FailOnceFinanceRepository extends FakeFinanceRepository {
@@ -187,6 +208,46 @@ class FakeRecurrenceRepository implements RecurrenceRepository {
   @override
   Future<void> replaceAll(List<RecurrenceSeries> series) async {
     this.series = List.of(series);
+  }
+
+  @override
+  Future<void> close() async {}
+}
+
+class FakeRecurrenceExceptionRepository
+    implements RecurrenceExceptionRepository {
+  FakeRecurrenceExceptionRepository(this.exceptions);
+
+  List<RecurrenceOccurrenceException> exceptions;
+
+  @override
+  Future<List<RecurrenceOccurrenceException>> loadAll() async =>
+      List.of(exceptions);
+
+  @override
+  Future<void> upsert(RecurrenceOccurrenceException exception) async {}
+
+  @override
+  Future<void> upsertAll(
+      List<RecurrenceOccurrenceException> exceptions) async {}
+
+  @override
+  Future<RecurrenceOccurrenceException> skip(
+    String seriesId,
+    DateTime occurrenceDate,
+  ) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> delete(String seriesId, DateTime occurrenceDate) async {}
+
+  @override
+  Future<void> deleteSeries(String seriesId) async {}
+
+  @override
+  Future<void> replaceAll(
+      List<RecurrenceOccurrenceException> exceptions) async {
+    this.exceptions = List.of(exceptions);
   }
 
   @override

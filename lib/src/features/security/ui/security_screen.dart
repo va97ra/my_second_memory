@@ -1,7 +1,9 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/ui/memory_card/sticker_paper.dart';
 import '../../../shared/ui/screen_chrome.dart';
 import '../state/security_provider.dart';
 import 'security_actions.dart';
@@ -35,18 +37,30 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
         hint: strings.securityPageHint,
         title: Text(strings.pinSecurity),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          SecuritySettingsCard(
-            session: ref.watch(securitySessionProvider),
-            pinController: _pinController,
-            message: _message,
-            onSavePin: _savePin,
-            onDisablePin: _disablePin,
-            onBiometricsChanged: _setBiometricsEnabled,
+      body: WarmGradientBackground(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            StickerPaper.gridEdge,
+            8,
+            StickerPaper.gridEdge,
+            24,
           ),
-        ],
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: SecuritySettingsCard(
+                  session: ref.watch(securitySessionProvider),
+                  pinController: _pinController,
+                  message: _message,
+                  onSavePin: _savePin,
+                  onDisablePin: _disablePin,
+                  onBiometricsChanged: _setBiometricsEnabled,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'shift_schedule_summary_line.dart';
 
-/// Содержимое карточки графика: название, рисунок и строки-пояснения.
+/// Содержимое карточки графика: название и строки-пояснения.
 class ShiftScheduleTileDetails extends StatelessWidget {
   const ShiftScheduleTileDetails({
     super.key,
@@ -21,7 +21,6 @@ class ShiftScheduleTileDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final colors = Theme.of(context).colorScheme;
-    final dateText = DateFormat.yMMMd(locale).format(schedule.startDate);
     final alarms = _alarmLabels(strings);
     final vacation = schedule.vacationToShow(DateTime.now());
 
@@ -30,19 +29,11 @@ class ShiftScheduleTileDetails extends StatelessWidget {
       children: [
         Text(
           schedule.organizationName,
-          maxLines: 1,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colors.onSurface,
                 fontWeight: FontWeight.w900,
-              ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          '${schedule.workDays}/${schedule.restDays} · $dateText',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
               ),
         ),
         if (alarms.isNotEmpty) ...[

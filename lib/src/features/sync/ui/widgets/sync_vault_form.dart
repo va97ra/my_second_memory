@@ -2,7 +2,7 @@ import 'package:ez_core/ez_core.dart';
 import 'package:flutter/material.dart';
 
 import 'sync_card.dart';
-import 'sync_error_text.dart';
+import 'sync_submit_block.dart';
 
 /// Пароль зашифрованного хранилища — или код восстановления вместо него.
 class SyncVaultForm extends StatelessWidget {
@@ -81,20 +81,12 @@ class SyncVaultForm extends StatelessWidget {
             onSubmitted: (_) => onSubmit(),
           ),
         ],
-        if (errorText != null) ...[
-          const SizedBox(height: 12),
-          SyncErrorText(errorText!),
-        ],
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: FilledButton.icon(
-            key: const ValueKey('sync_vault_submit'),
-            onPressed: busy ? null : onSubmit,
-            icon: const Icon(Icons.lock_open_rounded),
-            label: Text(strings.syncConnect),
-          ),
+        SyncSubmitBlock(
+          errorText: errorText,
+          buttonKey: const ValueKey('sync_vault_submit'),
+          onPressed: busy ? null : onSubmit,
+          icon: Icons.lock_open_rounded,
+          label: strings.syncConnect,
         ),
         if (vaultExists) ...[
           const SizedBox(height: 8),

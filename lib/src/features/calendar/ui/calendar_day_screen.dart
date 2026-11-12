@@ -78,7 +78,7 @@ class CalendarDayScreen extends ConsumerWidget {
       fallbackLocation: '/calendar',
       hint: AppStrings.of(context).dayPageHint,
       title: Text(
-        DateFormat.yMMMMEEEEd(locale).format(date),
+        toBeginningOfSentenceCase(DateFormat.yMMMMEEEEd(locale).format(date)),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(

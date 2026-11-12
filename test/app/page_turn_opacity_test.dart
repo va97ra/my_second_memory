@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -225,7 +226,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    router.push('/editor');
+    // push завершается, когда экран закроют, — ждать его здесь нельзя.
+    unawaited(router.push('/editor'));
     await tester.pumpAndSettle();
     expect(find.text('leave editor'), findsOneWidget);
 

@@ -8,6 +8,7 @@ import 'package:ezhednevnik_v2/src/features/security/security.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 
 import '../../support/widget_test_harness.dart';
 
@@ -145,7 +146,7 @@ void main() {
       (tester) async {
     await open(tester, [
       for (var i = 0; i < 120; i++)
-        item('i$i', DateTime(today.year, today.month, today.day + i)),
+        item('i$i', DateTime(today.year, today.month, today.day - i)),
     ]);
     await showAllDates(tester);
     final scroll = find.byKey(const ValueKey('feed_dated_scroll'));
@@ -225,13 +226,13 @@ void main() {
       await gesture.up();
       await tester.pumpAndSettle();
 
-      expect(dateOf(c, 'a'), DateTime(today.year, today.month, today.day + 2));
+      expect(dateOf(c, 'a'), DateTime(today.year, today.month, today.day - 2));
       expect(find.byType(FeedDayRailBubble), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }
 
-  testWidgets('выше по шкале — раньше, на своём дне ничего не меняется',
+  testWidgets('выше по шкале — позже, на своём дне ничего не меняется',
       (tester) async {
     final c = await open(tester, [item('a', today)]);
     await showAllDates(tester);
@@ -250,7 +251,7 @@ void main() {
     await tester.pump();
     await gesture.up();
     await tester.pumpAndSettle();
-    expect(dateOf(c, 'a'), DateTime(today.year, today.month, today.day - 1));
+    expect(dateOf(c, 'a'), DateTime(today.year, today.month, today.day + 1));
   });
 
   testWidgets('у края шкала едет дальше видимых дней', (tester) async {
@@ -271,7 +272,7 @@ void main() {
 
     final visibleDays = (800 - y) / cell;
     expect(
-      dateOf(c, 'a').difference(today).inDays,
+      today.difference(dateOf(c, 'a')).inDays,
       greaterThan(visibleDays.ceil() + 5),
     );
     expect(tester.takeException(), isNull);
@@ -286,10 +287,81 @@ void main() {
     expect(scale.indexAt(100), 0);
     expect(scale.indexAt(136), 1);
     expect(scale.indexAt(64), -1);
-    expect(scale.dayOf(1), DateTime(2026, 11, 1));
-    expect(scale.dayOf(-31), DateTime(2026, 9, 30));
+    expect(scale.dayOf(-1), DateTime(2026, 11, 1));
+    expect(scale.dayOf(31), DateTime(2026, 9, 30));
     scale.shift = 72;
     expect(scale.indexAt(100), 2);
     expect(scale.centerOf(2), 100);
+  });
+
+  testWidgets('в ленте чем позже день, тем выше, внутри дня утро выше вечера',
+      (tester) async {
+    final tomorrow = DateTime(today.year, today.month, today.day + 1);
+    final c = await open(tester, [
+      item('old', other),
+      item('evening', today, time: 1200),
+      item('morning', today, time: 480),
+      item('future', tomorrow),
+    ]);
+    await showAllDates(tester);
+
+    expect(
+      c.read(feedLayoutProvider).itemIds,
+      ['future', 'morning', 'evening', 'old'],
+    );
+  });
+
+  group('фокус на сегодняшнем дне', () {
+    final tomorrow = DateTime(today.year, today.month, today.day + 1);
+    final yesterday = DateTime(today.year, today.month, today.day - 1);
+    final scroll = find.byKey(const ValueKey('feed_dated_scroll'));
+
+    testWidgets('сверху экрана сегодня, будущее выше него, прошлое ниже',
+        (tester) async {
+      await open(tester, [
+        item('future', tomorrow),
+        item('now', today),
+        item('past', yesterday),
+      ]);
+      await showAllDates(tester);
+
+      final top = tester.getTopLeft(scroll).dy;
+      expect(tester.getRect(sticker('now')).top, greaterThanOrEqualTo(top));
+      // Над точкой отсчёта и за краем экрана: Flutter такое не находит.
+      expect(sticker('future'), findsNothing);
+      expect(
+        tester.getRect(sticker('past')).top,
+        greaterThan(tester.getRect(sticker('now')).bottom),
+      );
+
+      await tester.drag(scroll, const Offset(0, 300));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(sticker('future')).top, greaterThanOrEqualTo(top));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('в будущем записи дня идут в обычном порядке', (tester) async {
+      await open(tester, [
+        item('first', tomorrow, time: 480),
+        item('second', tomorrow, time: 1200),
+      ]);
+      await showAllDates(tester);
+      await tester.drag(scroll, const Offset(0, 300));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getRect(sticker('first')).left,
+        lessThan(tester.getRect(sticker('second')).left),
+      );
+    });
+
+    testWidgets('без записей на сегодня подпись дня всё равно на месте',
+        (tester) async {
+      final now = DateFormat.yMMMMEEEEd('ru').format(today);
+      await open(tester, [item('past', yesterday)]);
+      await showAllDates(tester);
+
+      expect(find.textContaining(now.substring(1)), findsOneWidget);
+    });
   });
 }

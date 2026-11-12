@@ -44,6 +44,8 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
       fireImmediately: true,
     );
     _lifecycleObserver = AppLifecycleListener(
+      onHide: () => ref.read(syncControllerProvider.notifier).appHidden(),
+      onShow: () => ref.read(syncControllerProvider.notifier).appShown(),
       onResume: () {
         ref.read(syncControllerProvider.notifier).schedule(Duration.zero);
       },

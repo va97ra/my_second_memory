@@ -24,7 +24,7 @@ class MemoryReminders {
   /// загрузка большого списка подвешивает первый экран.
   Future<void> scheduleAll(Iterable<MemoryItem> items) async {
     var scheduled = 0;
-    for (final item in items.where(hasFutureReminder)) {
+    for (final item in items.where((item) => wantsReminder(item))) {
       await schedule(item);
       if (++scheduled % 8 == 0) {
         await Future<void>.delayed(Duration.zero);
@@ -48,9 +48,3 @@ class MemoryReminders {
     }
   }
 }
-
-/// Напоминание имеет смысл только у живой записи и только пока его время не
-/// прошло.
-bool hasFutureReminder(MemoryItem item) =>
-    item.status == MemoryStatus.active &&
-    item.remindAt?.isAfter(DateTime.now()) == true;

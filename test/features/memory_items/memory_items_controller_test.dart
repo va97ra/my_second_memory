@@ -1,4 +1,3 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
@@ -88,7 +87,12 @@ void main() {
         );
     final repository = FakeMemoryRepository([item('first'), item('second')]);
     final mediaStorage = TrackingMediaStorage();
-    final controller = MemoryItemsController(repository, null, mediaStorage);
+    late final MemoryItemsController controller;
+    controller = MemoryItemsController(
+      repository,
+      null,
+      cleanupOver(mediaStorage, items: () => controller.state),
+    );
 
     await controller.load();
     await controller.delete('first');

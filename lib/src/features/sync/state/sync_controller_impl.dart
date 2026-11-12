@@ -48,11 +48,22 @@ class SyncController extends StateNotifier<SyncState> {
   final VoidCallback? _onMediaArrived;
   late final SyncScheduler _scheduler;
   final SyncVaultCrypto _vaultCrypto = const SyncVaultCrypto();
+
+  /// Облако, прочитанное прошлыми прогонами этого входа: следующий прогон
+  /// дочитывает только новое.
+  final _snapshot = CloudSnapshot();
   StreamSubscription<void>? _authSubscription;
   Future<void>? _activeSync;
   Future<void>? _activeAuthTransition;
   bool _loaded = false;
   bool _syncAgain = false;
+
+  /// Приложение в фоне: прогоны по таймеру и по сообщениям облака ждут,
+  /// пока его вернут, — свёрнутому приложению показывать нечего.
+  bool _hidden = false;
+
+  /// Идёт выход из аккаунта: новых прогонов нет, идущий доделывается.
+  bool _signingOut = false;
 
   Future<void> load() async {
     if (_loaded) return;
@@ -170,6 +181,7 @@ class SyncController extends StateNotifier<SyncState> {
   }
 
   Future<void> syncNow() {
+    if (_signingOut) return Future.value();
     final active = _activeSync;
     if (active != null) {
       _syncAgain = true;
@@ -190,6 +202,7 @@ class SyncController extends StateNotifier<SyncState> {
       _syncAgain = false;
       await _runSync();
     } while (_syncAgain &&
+        !_signingOut &&
         _canAccessLocalData() &&
         state.cipher != null &&
         _remote?.currentUserId != null);
@@ -198,11 +211,14 @@ class SyncController extends StateNotifier<SyncState> {
   Future<void> _runSync() async {
     state = state.copyWith(status: SyncStatus.syncing, clearError: true);
     try {
+      final userId = _remote?.currentUserId;
+      if (userId != null) await _tombstones.adoptSignedOut(userId);
       final result = await SyncRunner(
         remote: _remote!,
         tombstones: _tombstones,
         data: _data,
         atRestCipher: _atRestCipher,
+        snapshot: _snapshot,
       ).run(state.cipher!);
       state = state.copyWith(
         status: SyncStatus.ready,
@@ -228,31 +244,41 @@ class SyncController extends StateNotifier<SyncState> {
     schedule(Duration.zero);
   }
 
+  /// Удаление запоминается и без входа в аккаунт: тогда оно ждёт входа в
+  /// отдельном списке, см. [SyncTombstoneStore.adoptSignedOut].
   Future<void> recordDeletion(
     SyncEntityKind kind,
     String id,
     DateTime deletedAt,
   ) async {
-    final userId = _remote?.currentUserId;
-    if (userId == null) return;
-    await _tombstones.markDeleted(userId, id, deletedAt, kind: kind);
+    if (_remote == null) return;
+    await _tombstones.markDeleted(_deletionOwner, id, deletedAt, kind: kind);
     if (state.isConnected) schedule();
   }
 
-  Future<DateTime?> deletionTime(SyncEntityKind kind, String id) async {
-    final userId = _remote?.currentUserId;
-    if (userId == null) return null;
-    return (await _tombstones.read(userId, kind: kind))[id];
-  }
-
   Future<Map<String, DateTime>> deletionTimes(SyncEntityKind kind) async {
-    final userId = _remote?.currentUserId;
-    if (userId == null) return const {};
-    return _tombstones.read(userId, kind: kind);
+    if (_remote == null) return const {};
+    return _tombstones.read(_deletionOwner, kind: kind);
   }
 
+  String get _deletionOwner =>
+      _remote?.currentUserId ?? SyncTombstoneStore.signedOutOwner;
+
+  /// Выход дожидается идущего прогона: тот держит ключ, и уничтожить ключ
+  /// под ним значило бы оборвать прогон ошибкой, которая перезаписала бы
+  /// состояние «вышел».
   Future<void> signOut() async {
+    _signingOut = true;
+    try {
+      await _signOut();
+    } finally {
+      _signingOut = false;
+    }
+  }
+
+  Future<void> _signOut() async {
     _stopAutomaticSync();
+    await _activeSync;
     final userId = _remote?.currentUserId;
     final previousCipher = state.cipher;
     try {
@@ -270,6 +296,7 @@ class SyncController extends StateNotifier<SyncState> {
       }
     }
     state = const SyncState(status: SyncStatus.signedOut);
+    _snapshot.clear();
     previousCipher?.destroy();
   }
 
@@ -322,11 +349,36 @@ class SyncController extends StateNotifier<SyncState> {
       cipher: cipher,
       recoveryCode: recoveryCode,
     );
-    if (!identical(previousCipher, cipher)) previousCipher?.destroy();
+    if (!identical(previousCipher, cipher)) {
+      previousCipher?.destroy();
+      // Слепки в облаке зашифрованы ключом хранилища: с другим ключом
+      // прочитанное прежде читается заново.
+      _snapshot.clear();
+    }
     _startAutomaticSync();
   }
 
-  void _startAutomaticSync() => _scheduler.start(_remote?.watchChanges());
+  /// Приложение ушло в фон.
+  void appHidden() {
+    _hidden = true;
+    _stopAutomaticSync();
+  }
+
+  /// Приложение вернули: таймер и подписка на облако снова работают.
+  /// Сам прогон при возвращении запускает тот, кто следит за приложением.
+  void appShown() {
+    _hidden = false;
+    if (state.isConnected) _startAutomaticSync();
+  }
+
+  /// Сообщение облака о нашей же отправке новостей не несёт и прогона не
+  /// запускает.
+  void _startAutomaticSync() {
+    if (_hidden) return;
+    _scheduler.start(
+      _remote?.watchChanges().where((change) => !_snapshot.isOwnEcho(change)),
+    );
+  }
 
   void _stopAutomaticSync() => _scheduler.stop();
 

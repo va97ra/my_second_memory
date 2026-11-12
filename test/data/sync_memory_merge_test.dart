@@ -189,12 +189,12 @@ void main() {
     final stale = memoryItem('stale', 'Already deleted', updatedAt);
     var localItems = [stale];
     addTearDown(cipher.destroy);
-    remote.storedEntities['memory_item:stale'] = SyncRemoteEntity(
+    remote.seed(SyncRemoteEntity(
       kind: SyncEntityKind.memoryItem,
       entityId: stale.id,
       encryptedPayload: await cipher.encryptString(jsonEncode(stale.toJson())),
       updatedAt: updatedAt,
-    );
+    ));
     await tombstones.markDeleted('user', stale.id, deletedAt);
 
     await sync(

@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
-import 'day_timeline_geometry.dart';
-import 'day_timeline_handles.dart';
 
-/// An unsaved range owns its drag state until it is opened or replaced.
+import 'day_timeline_drag.dart';
+import 'day_timeline_frame.dart';
+import 'day_timeline_geometry.dart';
+
+/// Новая рамка: живёт, пока её не открыли или не заменили другой.
 class DayTimelineDraftFrame extends StatefulWidget {
-  const DayTimelineDraftFrame(
-      {super.key, required this.start, required this.onCreate});
+  const DayTimelineDraftFrame({
+    super.key,
+    required this.start,
+    required this.onCreate,
+  });
+
   final int start;
   final void Function(int start, int end) onCreate;
+
   @override
   State<DayTimelineDraftFrame> createState() => _DayTimelineDraftFrameState();
 }
@@ -15,72 +22,43 @@ class DayTimelineDraftFrame extends StatefulWidget {
 class _DayTimelineDraftFrameState extends State<DayTimelineDraftFrame> {
   late int _start = widget.start;
   late int _end = widget.start + 60;
-  int? _grabbed;
-  void _dragStart(double travelled) {
-    final anchor = _grabbed;
-    if (anchor == null) return;
-    final moved = dayTimelineMinutesAt(dayTimelineOffsetOf(anchor) + travelled);
-    if (moved < _end) setState(() => _start = moved);
-  }
 
-  void _dragEnd(double travelled) {
-    final anchor = _grabbed;
-    if (anchor == null) return;
-    final moved = dayTimelineMinutesAt(dayTimelineOffsetOf(anchor) + travelled);
-    if (moved > _start) setState(() => _end = moved);
+  void _carry(int anchor, double travelled) {
+    final length = _end - _start;
+    final moved = dayTimelineCarriedStart(anchor, travelled, length: length);
+    setState(() {
+      _start = moved;
+      _end = moved + length;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final start = _start;
-    final end = _end;
-    return Positioned(
-      top: dayTimelineOffsetOf(start),
-      left: dayTimelineGutterWidth,
-      right: 8,
-      height: dayTimelineOffsetOf(end) - dayTimelineOffsetOf(start),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => widget.onCreate(start, end),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: colors.primary, width: 2),
-                ),
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: Padding(
-                    // Слева на этой же высоте сидит верхняя точка: подпись
-                    // начинается за ней, иначе цифры оказываются под кружком.
-                    padding: const EdgeInsets.fromLTRB(38, 4, 8, 0),
-                    child: Text(
-                      formatDayTimelineRange(start, end),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colors.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned.fill(
-                child: DayTimelineHandles(
-              onGrabStart: () => _grabbed = start,
-              onGrabEnd: () => _grabbed = end,
-              onDragStart: _dragStart,
-              onDragEnd: _dragEnd,
-            )),
-          ],
+
+    return DayTimelineFrame(
+      start: _start,
+      end: _end,
+      showFlags: true,
+      showRange: true,
+      onDragStartEdge: (anchor, travelled) => setState(
+        () => _start = dayTimelineDraggedStart(anchor, travelled, end: _end),
+      ),
+      onDragEndEdge: (anchor, travelled) => setState(
+        () => _end = dayTimelineDraggedEnd(anchor, travelled, start: _start),
+      ),
+      onRelease: () {},
+      child: DayTimelineDrag(
+        minutes: _start,
+        onDrag: _carry,
+        onRelease: () {},
+        onTap: () => widget.onCreate(_start, _end),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.primary.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: colors.primary, width: 2),
+          ),
         ),
       ),
     );

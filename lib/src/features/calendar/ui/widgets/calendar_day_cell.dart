@@ -85,13 +85,13 @@ class CalendarDayCell extends ConsumerWidget {
         : shiftSchedules.isEmpty
             ? _inkOnPaper(colors, productionDay, highlight)
             : readableInkOn(Color(shiftSchedules.first.colorValue));
-    // У экранного стекла своя тонкая кромка. Дополнительная рамка нужна
-    // только бумажным плиткам блокнота.
+    // Рамка нужна только пустым плиткам видимого месяца: у остальных край
+    // задаёт заливка.
     final usesGradientBorder = isInVisibleMonth && items.isEmpty && !isToday;
 
     // Нажатие рисуется поверх плитки, а не под ней: `InkWell` снаружи
     // заливки отдаёт свою волну ближайшему материалу выше — материалу
-    // `Scaffold`, — и сквозь стеклянную плитку она проступает белым.
+    // `Scaffold`, — и проступает поверх страницы.
     final pressable = NotebookPressable(
       onTap: onTap,
       playClick: false,

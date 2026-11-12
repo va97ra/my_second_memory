@@ -8,13 +8,12 @@ import '../../../../navigation/page_turn_navigation.dart';
 import '../../../../shared/ui/memory_card/sticker_paper.dart';
 import '../../../../shared/ui/memory_card/sticker_strip.dart';
 import '../../state/accounts_controller.dart';
+import 'account_card_header.dart';
 import 'account_field_icons.dart';
 import 'account_info_line.dart';
 import 'account_password_row.dart';
-import 'account_row_button.dart';
 import 'account_tint.dart';
 import 'account_tint_strip.dart';
-import 'service_avatar.dart';
 
 /// Карточка аккаунта на той же бумаге, что и записки: сервис и его поля.
 /// Нажатие на карточку открывает её целиком, на букву — выбор цвета.
@@ -96,7 +95,7 @@ class _AccountCardState extends ConsumerState<AccountCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _Header(
+                AccountCardHeader(
                   account: account,
                   accent: accent,
                   picker: _picking
@@ -134,64 +133,4 @@ class _AccountCardState extends ConsumerState<AccountCard> {
         if (account.note.isNotEmpty)
           AccountInfoLine(icon: AccountFieldIcons.note, text: account.note),
       ];
-}
-
-/// Верх карточки: буква сервиса, рядом название или полоска выбора цвета.
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.account,
-    required this.accent,
-    required this.picker,
-    required this.onAvatarTap,
-  });
-
-  final AccountItem account;
-  final Color accent;
-  final Widget? picker;
-  final VoidCallback onAvatarTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SizedBox(
-      height: AccountInfoLine.heightOf(context),
-      child: Row(
-        children: [
-          Tooltip(
-            message: AppStrings.of(context).accountColor,
-            child: NotebookPressable(
-              key: ValueKey('account_color_${account.id}'),
-              onTap: onAvatarTap,
-              borderRadius: BorderRadius.circular(6),
-              child: SizedBox(
-                width: AccountRowButton.width,
-                height: double.infinity,
-                child: Center(
-                  child: ServiceAvatar(
-                    name: account.serviceName,
-                    color: accent,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 2),
-          Expanded(
-            child: picker ??
-                Text(
-                  account.serviceName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-    );
-  }
 }

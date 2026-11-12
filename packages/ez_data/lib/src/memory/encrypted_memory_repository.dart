@@ -99,15 +99,25 @@ class EncryptedMemoryRepository implements MemoryRepository {
   }
 
   @override
-  Future<void> delete(String id) async {
+  Future<void> delete(String id) => deleteAll([id]);
+
+  @override
+  Future<void> deleteAll(List<String> ids) async {
+    if (ids.isEmpty) return;
     final backend = this.backend;
     if (backend != null) {
-      await backend.deleteSecureEntity(entityKind, await _codec.lookupKey(id));
+      for (final id in ids) {
+        await backend.deleteSecureEntity(
+          entityKind,
+          await _codec.lookupKey(id),
+        );
+      }
       return;
     }
+    final removed = ids.toSet();
     await replaceAll([
       for (final item in await loadAll())
-        if (item.id != id) item,
+        if (!removed.contains(item.id)) item,
     ]);
   }
 

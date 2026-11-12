@@ -61,7 +61,7 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
 
   final FlutterLocalNotificationsPlugin _plugin;
   final _openedItems = StreamController<String>.broadcast();
-  bool _initialized = false;
+  Future<void>? _initialization;
 
   @override
   Stream<String> get openedItemIds => _openedItems.stream;
@@ -72,13 +72,21 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
       !kIsWeb &&
       defaultTargetPlatform == TargetPlatform.android;
 
+  /// Параллельные вызовы ждут одну и ту же инициализацию, а не идут дальше с
+  /// неготовым плагином. После отказа следующий вызов пробует заново.
   @override
   Future<void> initialize() async {
-    if (_initialized || !isSupported) {
-      return;
+    if (!isSupported) return;
+    final running = _initialization ??= _initialize();
+    try {
+      await running;
+    } catch (_) {
+      if (identical(_initialization, running)) _initialization = null;
+      rethrow;
     }
-    _initialized = true;
+  }
 
+  Future<void> _initialize() async {
     timezone_data.initializeTimeZones();
     try {
       final zoneName = await _notificationChannel.invokeMethod<String>(
@@ -174,11 +182,7 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
     await cancel(item.id);
 
     final remindAt = item.remindAt;
-    if (remindAt == null ||
-        item.status != MemoryStatus.active ||
-        !remindAt.isAfter(DateTime.now())) {
-      return;
-    }
+    if (remindAt == null || !wantsReminder(item)) return;
 
     // Мелодия и есть согласие на будильник. Не выбрали — придёт обычное
     // уведомление: звук будильника без спроса приложение не включает.
@@ -252,6 +256,7 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
           item.memoryDate.day,
         ).toIso8601String(),
       'notificationId': stableNotificationId(item.id),
+      'fingerprint': reminderFingerprint(item),
     });
     final body = item.plainBody.trim();
 
@@ -284,36 +289,26 @@ class NotificationService implements ReminderScheduler, ShiftAlarmScheduler {
   Future<void> reconcileRecurring(List<MemoryItem> items) =>
       _reconcileSource(items, ReminderSource.recurrence);
 
-  /// Приводит запланированные напоминания одного источника в соответствие со
-  /// списком: лишние снимает, недостающие ставит.
-  ///
-  /// Чужой источник не трогается: обычные записи и вхождения повторов
-  /// согласуются отдельно и не должны отменять напоминания друг друга.
+  /// Приводит расписание одного источника в соответствие со списком; что
+  /// снять и что поставить, решает [planReminders].
   Future<void> _reconcileSource(List<MemoryItem> items, String source) async {
     if (!isSupported) return;
     await initialize();
 
-    final wanted = {
-      for (final item in items)
-        if (wantsReminder(item)) stableNotificationId(item.id),
-    };
-    final alive = <int>{};
-    for (final notification in await _plugin.pendingNotificationRequests()) {
-      final payload = decodeReminderPayload(notification.payload);
-      if (payload?['source'] != source) continue;
-      if (wanted.contains(notification.id)) {
-        alive.add(notification.id);
-      } else {
-        await _plugin.cancel(notification.id);
-      }
+    final plan = planReminders(
+      source: source,
+      items: items,
+      pending: [
+        for (final request in await _plugin.pendingNotificationRequests())
+          pendingReminderOf(request.id, request.payload),
+      ],
+    );
+    for (final id in plan.cancel) {
+      await _plugin.cancel(id);
     }
 
     var scheduled = 0;
-    for (final item in items) {
-      if (!wantsReminder(item) ||
-          alive.contains(stableNotificationId(item.id))) {
-        continue;
-      }
+    for (final item in plan.schedule) {
       await schedule(item);
       // Планирование ходит на платформу. Без пауз длинный список подвешивает
       // интерфейс, поэтому каждые восемь напоминаний уступаем кадр.
@@ -479,13 +474,14 @@ Map<String, Object?>? decodeReminderPayload(String? payload) {
   }
 }
 
-int stableNotificationId(String value) {
-  var hash = 0x811C9DC5;
-  for (final byte in utf8.encode(value)) {
-    hash ^= byte;
-    hash = (hash * 0x01000193) & 0x7FFFFFFF;
-  }
-  return hash;
+/// Стоящее уведомление в том виде, в каком его понимает [planReminders].
+PendingReminder pendingReminderOf(int notificationId, String? payload) {
+  final data = decodeReminderPayload(payload);
+  return PendingReminder(
+    notificationId: notificationId,
+    source: data?['source'] as String?,
+    fingerprint: data?['fingerprint'] as int?,
+  );
 }
 
 @pragma('vm:entry-point')

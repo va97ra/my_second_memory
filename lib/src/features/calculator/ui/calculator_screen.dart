@@ -1,6 +1,5 @@
 import 'package:ez_core/ez_core.dart';
 import 'package:ez_design/ez_design.dart';
-import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -119,8 +118,8 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                                 wide: wideScientific,
                               )
                             : standardCalculatorLayout,
-                        selectedKeys: _selectedKeys(state),
-                        labels: _keyLabels(state, strings),
+                        selectedKeys: calculatorSelectedKeys(state),
+                        labels: calculatorKeyLabels(state, strings),
                         onKey: (key) => _input.handle(key, state),
                       ),
                     ),
@@ -153,39 +152,6 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
           ],
         ],
       );
-
-  String _functionLabel(String name, CalculatorState state) {
-    final base = state.hyperbolic ? '${name}h' : name;
-    return state.second ? '$base⁻¹' : base;
-  }
-
-  Set<String> _selectedKeys(CalculatorState state) => {
-        if (state.second) '2nd',
-        if (state.hyperbolic) 'Hyp',
-      };
-
-  /// Подписи, которые зависят от состояния или от языка. Постоянные знаки
-  /// живут в самой сетке.
-  ///
-  /// `π` больше не превращается в `e` по «2nd»: у `e` своя клавиша, и вторая
-  /// подпись плодила два одинаковых знака на одной клавиатуре. По той же
-  /// причине убрана отдельная клавиша `eˣ` — она повторяла `ln` при «2nd».
-  Map<String, String> _keyLabels(CalculatorState state, AppStrings strings) => {
-        'backspace': strings.calculatorBackspace,
-        if (state.scientific) ...{
-          'angle': switch (state.angleUnit) {
-            CalculatorAngleUnit.degrees => 'DEG',
-            CalculatorAngleUnit.radians => 'RAD',
-            CalculatorAngleUnit.gradians => 'GRAD',
-          },
-          'sin': _functionLabel('sin', state),
-          'cos': _functionLabel('cos', state),
-          'tan': _functionLabel('tan', state),
-          'ln': state.second ? 'eˣ' : 'ln',
-          'log': state.second ? '10ˣ' : 'log',
-          '10ˣ': state.second ? '2ˣ' : '10ˣ',
-        },
-      };
 }
 
 /// Высота всего, что стоит над клавиатурой: полоса режима, табло, ряд памяти

@@ -150,13 +150,6 @@ class _RiverpodSyncMutationObserver implements SyncMutationObserver {
   }
 
   @override
-  Future<DateTime?> memoryDeletedAt(String id) {
-    return ref
-        .read(syncControllerProvider.notifier)
-        .deletionTime(SyncEntityKind.memoryItem, id);
-  }
-
-  @override
   Future<Map<String, DateTime>> memoryDeletions() {
     return ref
         .read(syncControllerProvider.notifier)

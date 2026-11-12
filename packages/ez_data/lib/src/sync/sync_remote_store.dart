@@ -13,9 +13,14 @@ abstract interface class SyncRemoteStore {
   Future<SyncVaultProfile?> fetchVaultProfile();
   Future<void> createVaultProfile(SyncVaultProfile profile);
 
-  Future<List<SyncRemoteEntity>> fetchEntities();
+  /// Строки облака с ревизией больше [afterRevision], по возрастанию ревизии.
+  /// С нулём — все строки пользователя.
+  Future<List<SyncRemoteEntity>> fetchEntities({int afterRevision = 0});
   Future<void> applyEntities(List<SyncRemoteEntity> entities);
-  Stream<void> watchChanges();
+
+  /// Сообщения облака об изменённых строках: какая строка и в каком виде.
+  /// Null — облако сообщило об изменении, но не сказало, о каком.
+  Stream<SyncRemoteEntity?> watchChanges();
 
   /// Вложения лежат отдельно от записей: слепок записи — короткая строка, а
   /// снимок — мегабайты, и они не могут ездить в одной таблице, которую

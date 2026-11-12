@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:ez_data/ez_data.dart';
@@ -24,11 +25,15 @@ Future<SyncRunResult> sync({
   Future<void> Function(List<FinanceEntry>)? replaceFinanceEntries,
   List<SavedToolCalculation> toolCalculations = const [],
   Future<void> Function(List<SavedToolCalculation>)? replaceToolCalculations,
+  MediaSyncEngine? media,
+  CloudSnapshot? snapshot,
 }) {
   return AppSyncEngine(
     remote: remote,
     cipher: cipher,
     tombstones: tombstones,
+    media: media,
+    snapshot: snapshot,
   ).synchronize(
     memoryItems: memoryItems,
     replaceMemoryItems: replaceMemoryItems ?? (_) async {},
@@ -46,6 +51,18 @@ Future<SyncRunResult> sync({
     replaceToolCalculations: replaceToolCalculations ?? (_) async {},
   );
 }
+
+/// Запись в том виде, в каком её отправляет в облако другое устройство.
+Future<SyncRemoteEntity> encodedMemoryItem(
+  AppCipher cipher,
+  MemoryItem item,
+) async =>
+    SyncRemoteEntity(
+      kind: SyncEntityKind.memoryItem,
+      entityId: item.id,
+      encryptedPayload: await cipher.encryptString(jsonEncode(item.toJson())),
+      updatedAt: item.updatedAt,
+    );
 
 MemoryItem memoryItem(String id, String title, DateTime date) => MemoryItem(
       id: id,
@@ -120,19 +137,48 @@ class SyncRemote implements SyncRemoteStore {
   @override
   String? get currentUserId => 'user';
 
+  /// Ревизии раздаются, как на сервере: каждая записанная строка получает
+  /// следующий номер.
+  var _revision = 0;
+
+  /// Сколько строк вернуло каждое чтение облака.
+  final fetchedRows = <int>[];
+
+  /// Сколько раз отправляли изменения и сколько строк в каждой отправке.
+  final appliedBatches = <int>[];
+
   @override
   Future<void> applyEntities(List<SyncRemoteEntity> entities) async {
-    for (final entity in entities) {
-      storedEntities['${entity.kind.storageName}:${entity.entityId}'] = entity;
-    }
+    appliedBatches.add(entities.length);
+    entities.forEach(seed);
+  }
+
+  /// Кладёт строку в облако так, как её положил бы сервер, — со следующей
+  /// ревизией. Так тест готовит облако, не считая это отправкой.
+  void seed(SyncRemoteEntity entity) {
+    storedEntities['${entity.kind.storageName}:${entity.entityId}'] =
+        SyncRemoteEntity(
+      kind: entity.kind,
+      entityId: entity.entityId,
+      encryptedPayload: entity.encryptedPayload,
+      updatedAt: entity.updatedAt,
+      deletedAt: entity.deletedAt,
+      revision: ++_revision,
+    );
   }
 
   @override
   Future<void> createVaultProfile(SyncVaultProfile profile) async {}
 
   @override
-  Future<List<SyncRemoteEntity>> fetchEntities() async =>
-      storedEntities.values.toList();
+  Future<List<SyncRemoteEntity>> fetchEntities({int afterRevision = 0}) async {
+    final rows = [
+      for (final entity in storedEntities.values)
+        if (entity.revision > afterRevision) entity,
+    ]..sort((a, b) => a.revision.compareTo(b.revision));
+    fetchedRows.add(rows.length);
+    return rows;
+  }
 
   @override
   Future<SyncVaultProfile?> fetchVaultProfile() async => null;
@@ -147,5 +193,35 @@ class SyncRemote implements SyncRemoteStore {
   Stream<void> watchAuthenticatedSession() => const Stream.empty();
 
   @override
-  Stream<void> watchChanges() => const Stream.empty();
+  Stream<SyncRemoteEntity?> watchChanges() => const Stream.empty();
+}
+
+/// Вложения в памяти: настоящему хранилищу нужен каталог документов, которого
+/// в тесте нет.
+class FakeMediaStorage extends MediaStorage {
+  FakeMediaStorage(this.files);
+
+  final Map<String, Uint8List> files;
+  bool atRestUsed = false;
+
+  @override
+  Future<bool> exists(String reference) async =>
+      files.containsKey(MediaStorage.referenceFor(reference));
+
+  @override
+  Future<Uint8List> readPlainBytes(String reference, AppCipher? atRest) async {
+    final bytes = files[MediaStorage.referenceFor(reference)];
+    if (bytes == null) throw StateError('No file $reference');
+    return bytes;
+  }
+
+  @override
+  Future<void> writePlainBytes(
+    String reference,
+    Uint8List bytes,
+    AppCipher? atRest,
+  ) async {
+    if (atRest != null) atRestUsed = true;
+    files[MediaStorage.referenceFor(reference)] = bytes;
+  }
 }

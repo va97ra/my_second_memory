@@ -31,6 +31,25 @@ class SqliteFinanceRepository implements FinanceRepository {
     });
   }
 
+  @override
+  Future<void> upsertAll(List<FinanceEntry> entries) async {
+    if (entries.isEmpty) return;
+    await _database.batch((batch) {
+      batch.insertAllOnConflictUpdate(
+        _database.financeEntries,
+        [for (final entry in entries) _toCompanion(entry)],
+      );
+    });
+  }
+
+  @override
+  Future<void> deleteAll(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await (_database.delete(_database.financeEntries)
+          ..where((row) => row.id.isIn(ids)))
+        .go();
+  }
+
   FinanceEntriesCompanion _toCompanion(FinanceEntry entry) {
     return FinanceEntriesCompanion.insert(
       id: entry.id,

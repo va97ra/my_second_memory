@@ -5,11 +5,13 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/local_storage_test_support.dart';
+
 void main() {
   test('enabling and disabling PIN migrates finance and tool data', () async {
     SharedPreferences.setMockInitialValues({});
     final database = AppDatabase(NativeDatabase.memory());
-    final storage = _TestStorage(database);
+    final storage = TestLocalStorage(database);
     addTearDown(storage.close);
     final date = DateTime.utc(2026, 8, 30);
     await storage.financeRepository.replaceAll([
@@ -83,42 +85,4 @@ void main() {
       isEmpty,
     );
   });
-}
-
-class _TestStorage implements LocalStorageScope {
-  _TestStorage(this.database) {
-    memoryRepository = SqliteMemoryRepository(
-      database: database,
-      closeDatabase: false,
-    );
-    recurrenceRepository = SqliteRecurrenceRepository(database, false);
-    recurrenceExceptionRepository =
-        SqliteRecurrenceExceptionRepository(database, false);
-    financeRepository = SqliteFinanceRepository(database, false);
-    toolDataRepository = SqliteToolDataRepository(database, false);
-    secureEntityBackend = DriftSecureEntityBackend(database);
-  }
-
-  final AppDatabase database;
-
-  @override
-  late final MemoryRepository memoryRepository;
-
-  @override
-  late final RecurrenceRepository recurrenceRepository;
-
-  @override
-  late final RecurrenceExceptionRepository recurrenceExceptionRepository;
-
-  @override
-  late final FinanceRepository financeRepository;
-
-  @override
-  late final ToolDataRepository toolDataRepository;
-
-  @override
-  late final SecureEntityBackend secureEntityBackend;
-
-  @override
-  Future<void> close() => database.close();
 }

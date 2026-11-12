@@ -1,5 +1,5 @@
 /// Какой день на какой высоте шкалы. День записи стоит там, где её подняли, и
-/// шкала отсчитывает дни от него: выше раньше, ниже позже, как в самой ленте.
+/// шкала отсчитывает дни от него: выше позже, ниже раньше, как в самой ленте.
 class FeedDayScale {
   FeedDayScale({
     required this.ownDay,
@@ -19,5 +19,5 @@ class FeedDayScale {
   double centerOf(int index) => ownY + index * cellExtent - shift;
 
   DateTime dayOf(int index) =>
-      DateTime(ownDay.year, ownDay.month, ownDay.day + index);
+      DateTime(ownDay.year, ownDay.month, ownDay.day - index);
 }
