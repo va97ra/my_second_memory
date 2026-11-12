@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 
-import 'background_work.dart';
+import 'background_aes.dart';
 import 'password_key.dart';
 
 class AppCipher {
@@ -83,38 +83,30 @@ class AppCipher {
     return _openMedia(value, List<int>.of(_activeKeyBytes));
   }
 
-  // Статические, чтобы замыкание для изолята захватывало только данные, а
-  // не сам шифр.
   static Future<Uint8List> _sealMedia(
     List<int> value,
     List<int> key,
     List<int> nonce,
-  ) =>
-      inBackground(() async {
-        final box = await AesGcm.with256bits().encrypt(
-          value,
-          secretKey: SecretKey(key),
-          nonce: nonce,
-        );
-        return Uint8List(29 + box.cipherText.length)
-          ..[0] = 1
-          ..setRange(1, 13, box.nonce)
-          ..setRange(13, 29, box.mac.bytes)
-          ..setRange(29, 29 + box.cipherText.length, box.cipherText);
-      });
+  ) async {
+    final box = await aesGcmSeal(value, key: key, nonce: nonce);
+    return Uint8List(29 + box.cipherText.length)
+      ..[0] = 1
+      ..setRange(1, 13, box.nonce)
+      ..setRange(13, 29, box.mac.bytes)
+      ..setRange(29, 29 + box.cipherText.length, box.cipherText);
+  }
 
-  static Future<Uint8List> _openMedia(List<int> value, List<int> key) =>
-      inBackground(() async {
-        final clear = await AesGcm.with256bits().decrypt(
-          SecretBox(
-            value.sublist(29),
-            nonce: value.sublist(1, 13),
-            mac: Mac(value.sublist(13, 29)),
-          ),
-          secretKey: SecretKey(key),
-        );
-        return Uint8List.fromList(clear);
-      });
+  static Future<Uint8List> _openMedia(List<int> value, List<int> key) async {
+    final clear = await aesGcmOpen(
+      SecretBox(
+        value.sublist(29),
+        nonce: value.sublist(1, 13),
+        mac: Mac(value.sublist(13, 29)),
+      ),
+      key: key,
+    );
+    return Uint8List.fromList(clear);
+  }
 
   static List<int> randomSalt() => _randomBytes(16);
 

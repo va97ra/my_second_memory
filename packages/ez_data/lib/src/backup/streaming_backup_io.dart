@@ -3,13 +3,13 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:archive/archive_io.dart';
-import 'package:cryptography/cryptography.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'package:ez_domain/ez_domain.dart';
 
 import '../media/media_storage_io.dart';
+import '../security/background_aes.dart';
 import '../security/password_key.dart';
 
 Future<String?> createStreamingBackup({
@@ -36,7 +36,7 @@ Future<String?> createStreamingBackup({
   final mediaEntries = <Map<String, String>>[];
   var mediaIndex = 0;
   final salt = _randomBytes(16);
-  final secretKey = await _keyFromPassword(password, salt);
+  final key = await derivePasswordKey(password, salt);
 
   final references = mediaReferencesOf(
     items: memoryItems,
@@ -49,11 +49,8 @@ Future<String?> createStreamingBackup({
     if (source == null) continue;
     final archivePath = 'media/${mediaIndex++}.bin';
     final nonce = _randomBytes(12);
-    final box = await AesGcm.with256bits().encrypt(
-      await source.readAsBytes(),
-      secretKey: secretKey,
-      nonce: nonce,
-    );
+    final box =
+        await aesGcmSeal(await source.readAsBytes(), key: key, nonce: nonce);
     await File(p.join(staging.path, archivePath)).writeAsBytes(
       box.cipherText,
     );
@@ -80,11 +77,7 @@ Future<String?> createStreamingBackup({
     'mediaEntries': mediaEntries,
   }));
   final payloadNonce = _randomBytes(12);
-  final payloadBox = await AesGcm.with256bits().encrypt(
-    payload,
-    secretKey: secretKey,
-    nonce: payloadNonce,
-  );
+  final payloadBox = await aesGcmSeal(payload, key: key, nonce: payloadNonce);
   await File(p.join(staging.path, 'payload.bin')).writeAsBytes(
     payloadBox.cipherText,
   );
@@ -105,9 +98,6 @@ Future<String?> createStreamingBackup({
   await staging.delete(recursive: true);
   return output;
 }
-
-Future<SecretKey> _keyFromPassword(String password, List<int> salt) async =>
-    SecretKey(await derivePasswordKey(password, salt));
 
 List<int> _randomBytes(int length) {
   final random = Random.secure();

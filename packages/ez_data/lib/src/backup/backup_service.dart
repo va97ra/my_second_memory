@@ -16,6 +16,7 @@ import '../tools/tool_data_repository.dart';
 import 'backup_media_file.dart';
 import 'backup_media_store.dart';
 import 'streaming_backup.dart';
+import '../security/background_aes.dart';
 import '../security/password_key.dart';
 
 class BackupService {
@@ -80,10 +81,9 @@ class BackupService {
   Future<Uint8List> createEncryptedBackupZip(String password) async {
     final salt = _randomBytes(16);
     final nonce = _randomBytes(12);
-    final secretKey = await _keyFromPassword(password, salt);
-    final box = await AesGcm.with256bits().encrypt(
+    final box = await aesGcmSeal(
       utf8.encode(await createBackupJson()),
-      secretKey: secretKey,
+      key: await derivePasswordKey(password, salt),
       nonce: nonce,
     );
 
@@ -319,19 +319,19 @@ class BackupService {
     if (payloadFile == null) {
       throw const FormatException('Invalid backup archive');
     }
-    final secretKey = await _keyFromPassword(
+    final key = await derivePasswordKey(
       password,
       base64Decode(manifest['salt'] as String),
     );
     late final Map<String, Object?> payload;
     try {
-      final clearBytes = await AesGcm.with256bits().decrypt(
+      final clearBytes = await aesGcmOpen(
         SecretBox(
           payloadFile.content as List<int>,
           nonce: base64Decode(manifest['payloadNonce'] as String),
           mac: Mac(base64Decode(manifest['payloadMac'] as String)),
         ),
-        secretKey: secretKey,
+        key: key,
       );
       payload = Map<String, Object?>.from(
         jsonDecode(utf8.decode(clearBytes)) as Map,
@@ -339,7 +339,7 @@ class BackupService {
       return await _parseStreamingData(
         archive,
         payload,
-        encryptionKey: secretKey,
+        encryptionKey: key,
       );
     } on BackupPasswordException {
       rethrow;
@@ -351,7 +351,7 @@ class BackupService {
   Future<BackupRestoreData> _parseStreamingData(
     Archive archive,
     Map<String, Object?> manifest, {
-    SecretKey? encryptionKey,
+    List<int>? encryptionKey,
   }) async {
     final items = (manifest['memoryItems'] as List<dynamic>? ?? const [])
         .map((entry) => MemoryItem.fromJson(
@@ -492,21 +492,18 @@ class BackupService {
     final salt = base64Decode(manifest['salt'] as String);
     final nonce = base64Decode(manifest['nonce'] as String);
     final mac = Mac(base64Decode(manifest['mac'] as String));
-    final secretKey = await _keyFromPassword(password, salt);
+    final key = await derivePasswordKey(password, salt);
 
     try {
-      final clearBytes = await AesGcm.with256bits().decrypt(
+      final clearBytes = await aesGcmOpen(
         SecretBox(payloadFile.content as List<int>, nonce: nonce, mac: mac),
-        secretKey: secretKey,
+        key: key,
       );
       return utf8.decode(clearBytes);
     } catch (_) {
       throw const BackupPasswordException('Invalid backup password');
     }
   }
-
-  Future<SecretKey> _keyFromPassword(String password, List<int> salt) async =>
-      SecretKey(await derivePasswordKey(password, salt));
 
   List<int> _randomBytes(int length) {
     final random = Random.secure();

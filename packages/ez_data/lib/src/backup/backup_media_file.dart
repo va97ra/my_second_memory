@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:cryptography/cryptography.dart';
 import 'package:path/path.dart' as p;
 
+import '../security/background_aes.dart';
+
 /// Вложение, прочитанное из копии.
 ///
 /// Разбор копии файлов не пишет: на диск они ложатся только при самом
@@ -43,7 +45,7 @@ BackupMediaFile? _jsonMediaFile(Map<String, Object?> media) {
 Future<List<BackupMediaFile>> readStreamingBackupMedia({
   required List<dynamic> mediaEntries,
   required Map<String, List<int>> archiveFiles,
-  SecretKey? encryptionKey,
+  List<int>? encryptionKey,
 }) async {
   final files = <BackupMediaFile>[];
   for (final rawEntry in mediaEntries) {
@@ -52,13 +54,13 @@ Future<List<BackupMediaFile>> readStreamingBackupMedia({
     var bytes = archivePath == null ? null : archiveFiles[archivePath];
     if (archivePath == null || bytes == null) continue;
     if (encryptionKey != null) {
-      bytes = await AesGcm.with256bits().decrypt(
+      bytes = await aesGcmOpen(
         SecretBox(
           bytes,
           nonce: base64Decode(entry['nonce'] as String),
           mac: Mac(base64Decode(entry['mac'] as String)),
         ),
-        secretKey: encryptionKey,
+        key: encryptionKey,
       );
     }
     files.add(BackupMediaFile(
