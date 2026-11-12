@@ -18,6 +18,14 @@ class CalendarEventBar extends StatelessWidget {
   final String locale;
   final bool isMuted;
 
+  static const _verticalPadding = 1.0;
+
+  /// Высота полоски при таком масштабе шрифта системы: текст растёт вместе
+  /// с ним, поля — нет. Строку текста движок округляет вверх до целого.
+  static double extentFor(double textScale) =>
+      (OutlinedCalendarText.fontSize * textScale).ceilToDouble() +
+      _verticalPadding * 2;
+
   @override
   Widget build(BuildContext context) {
     final color = memoryAccentColor(item);
@@ -38,7 +46,10 @@ class CalendarEventBar extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 2,
+          vertical: _verticalPadding,
+        ),
         child: OutlinedCalendarText(text: text),
       ),
     );

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/foundation.dart';
 
+import 'calendar_event_bar.dart';
 import 'day_number.dart';
 
 /// Что помещается в ячейку дня при её нынешней высоте.
@@ -33,7 +34,14 @@ class CalendarDayCellLayout {
           DayNumber.todayCircleExtra +
           _headerGaps,
     );
-    final slots = ((height - header) / _eventSlotExtent).floor();
+    // Строка растёт со шрифтом так же, как полоска записи в ней: иначе при
+    // крупном шрифте строк насчитывалось больше, чем помещалось, и записи
+    // вылезали за низ ячейки.
+    final slot = math.max(
+      _eventSlotExtent,
+      CalendarEventBar.extentFor(textScale) + eventGap,
+    );
+    final slots = ((height - header) / slot).floor();
     final maxEvents = slots.clamp(0, _maxEventRows);
     // Праздник забирает одну строку: он относится ко всему дню и важнее
     // очередной записи в списке.
@@ -70,11 +78,15 @@ class CalendarDayCellLayout {
   /// Высота шапки с числом месяца.
   static const _headerExtent = 30.0;
 
-  /// Отступы над числом и под ним.
-  static const _headerGaps = 6.0;
+  /// Поля, которые не растут со шрифтом: 1,5 над числом, 3 под ним и 3 под
+  /// последней строкой.
+  static const _headerGaps = 7.5;
 
-  /// Высота одной строки содержимого.
+  /// Наименьшая высота строки содержимого.
   static const _eventSlotExtent = 12.0;
+
+  /// Просвет под каждой полоской записи.
+  static const eventGap = 1.0;
 
   /// Больше девяти строк ячейка не показывает даже на высоком экране: дальше
   /// это уже не обзор месяца, а список.

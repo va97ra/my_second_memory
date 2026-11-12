@@ -110,7 +110,7 @@ class CalendarDayCellBody extends StatelessWidget {
                         locale: locale,
                         isMuted: !isInVisibleMonth,
                       ),
-                      const SizedBox(height: 1),
+                      const SizedBox(height: CalendarDayCellLayout.eventGap),
                     ],
                     if (layout.showsOverflow && constraints.maxHeight >= 48)
                       _overflowLabel(context, layout.overflowCount),

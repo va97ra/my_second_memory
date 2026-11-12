@@ -6,11 +6,14 @@ class OutlinedCalendarText extends StatelessWidget {
 
   final String text;
 
+  /// Кегль до масштаба шрифта системы.
+  static const fontSize = 7.5;
+
   @override
   Widget build(BuildContext context) {
     const baseStyle = TextStyle(
       fontFamily: 'Manrope',
-      fontSize: 7.5,
+      fontSize: fontSize,
       fontWeight: FontWeight.w900,
       height: 1,
     );

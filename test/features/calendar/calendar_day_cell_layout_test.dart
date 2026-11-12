@@ -1,5 +1,7 @@
 import 'package:ez_domain/ez_domain.dart';
+import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/calendar_day_cell_body.dart';
 import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/calendar_day_cell_layout.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 MemoryItem _item(String id, {int? timeMinutes, DateTime? createdAt}) {
@@ -20,6 +22,8 @@ List<MemoryItem> _items(int count) =>
     [for (var i = 0; i < count; i++) _item('item-$i')];
 
 void main() {
+  _cellFitsAtAnyTextScale();
+
   test('a tall cell shows every record it has', () {
     final layout = CalendarDayCellLayout.forCell(
       height: 120,
@@ -104,5 +108,50 @@ void main() {
     ]);
 
     expect(sorted.map((item) => item.id), ['first', 'second']);
+  });
+}
+
+/// Ячейка рисуется ровно тем, что насчитал [CalendarDayCellLayout]: при
+/// любом шрифте системы содержимое не вылезает за её низ.
+void _cellFitsAtAnyTextScale() {
+  testWidgets('записи в ячейке не вылезают за край при крупном шрифте',
+      (tester) async {
+    for (final scale in const [1.0, 1.3, 2.0]) {
+      for (var count = 1; count <= 4; count++) {
+        for (var height = 40.0; height <= 120; height += 3.7) {
+          await tester.pumpWidget(
+            MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Center(
+                  child: SizedBox(
+                    width: 92,
+                    height: height,
+                    child: CalendarDayCellBody(
+                      date: DateTime(2026, 5, 20),
+                      locale: 'ru',
+                      isInVisibleMonth: true,
+                      isToday: true,
+                      items: _items(count),
+                      shiftSchedules: const [],
+                      holidays: const [],
+                      hasAlarm: false,
+                      foreground: Colors.black,
+                      todayColor: Colors.red,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+          expect(
+            tester.takeException(),
+            isNull,
+            reason: 'шрифт $scale, записей $count, высота $height',
+          );
+        }
+      }
+    }
   });
 }
