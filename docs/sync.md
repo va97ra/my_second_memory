@@ -135,7 +135,7 @@ perform pg_advisory_xact_lock(hashtextextended(current_user_id::text, 0));
 
 1. **Миграция с блокировкой** —
    `supabase/migrations/202611120001_sync_ordered_revisions.sql`, применяется
-   руками в консоли Supabase.
+   руками в консоли Supabase. Применена 12 ноября 2026.
 2. **Windows в трее тоже молчит.** Спрятанное окно получает `onHide`, и
    таймер стоит везде: показать окно — значит сразу синхронизироваться.
 
