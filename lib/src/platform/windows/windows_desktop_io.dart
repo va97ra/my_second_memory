@@ -68,10 +68,12 @@ class _WindowsDesktopPlatformIo
       _attached = true;
     }
     await windowManager.setPreventClose(true);
-    await windowManager.setTitleBarStyle(
-      TitleBarStyle.normal,
-      windowButtonVisibility: true,
-    );
+    // Окно — телефон в корпусе: системного заголовка нет, а всё вне корпуса
+    // прозрачно — видны скруглённые углы и кнопки сбоку. Свернуть, закрыть
+    // и перетащить окно можно за корпус.
+    await windowManager.setAsFrameless();
+    await windowManager.setBackgroundColor(const Color(0x00000000));
+    await windowManager.setHasShadow(false);
     await windowManager.setResizable(false);
     await windowManager.setMinimizable(true);
     await windowManager.setMaximizable(false);
@@ -215,6 +217,25 @@ class _WindowsDesktopPlatformIo
     if (!changed || actual != enabled) {
       throw StateError('Windows startup registration was not updated');
     }
+  }
+
+  @override
+  Future<void> minimizeWindow() async {
+    if (!isSupported) return;
+    await windowManager.minimize();
+  }
+
+  @override
+  Future<void> closeWindow() async {
+    if (!isSupported) return;
+    // Тот же путь, что у системного крестика: onWindowClose прячет окно.
+    await windowManager.close();
+  }
+
+  @override
+  Future<void> startWindowDrag() async {
+    if (!isSupported) return;
+    await windowManager.startDragging();
   }
 
   @override

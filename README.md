@@ -22,7 +22,7 @@ Local-first Flutter-приложение для личных записей, к�
 ## Платформы
 
 - Android: одна поставка `com.va97ra.ezhednevnikv2` с синхронизацией;
-- Windows desktop с tray-режимом и single-instance поведением;
+- Windows desktop с tray-режимом и single-instance поведением; окно — телефон в корпусе;
 - Web с локальным SharedPreferences-хранилищем;
 - SQLite-репозитории также подготовлены для остальных IO-платформ Flutter.
 

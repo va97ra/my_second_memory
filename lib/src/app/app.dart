@@ -11,7 +11,7 @@ import 'package:ez_design/ez_design.dart';
 import '../features/security/security.dart';
 import '../features/sync/sync.dart';
 import '../platform/windows/windows_desktop.dart';
-import '../platform/windows/windows_tray_frame.dart';
+import '../platform/windows/windows_phone_frame.dart';
 import 'app_shell.dart';
 import 'theme/app_content_font_controller.dart';
 import 'theme/app_theme_controller.dart';
@@ -180,7 +180,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
           // достаётся только странице. Замок закрывает и панели тоже.
           return AnnotatedRegion<SystemUiOverlayStyle>(
             value: overlayStyle,
-            child: WindowsTrayFrame(
+            child: WindowsPhoneFrame(
               child: SecurityGate(
                 child: AppShell(child: child ?? const SizedBox.shrink()),
               ),

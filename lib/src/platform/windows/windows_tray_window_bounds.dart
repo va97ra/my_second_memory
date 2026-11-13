@@ -1,7 +1,24 @@
 import 'dart:ui';
 
-const double windowsTrayWindowWidth = 420;
-const double windowsTrayWindowHeight = 900;
+/// Окно на Windows — телефон: экран приложения в корпусе. Экран того же
+/// размера, что был у окна без корпуса, корпус добавляется вокруг.
+const double windowsPhoneScreenWidth = 420;
+const double windowsPhoneScreenHeight = 868;
+
+/// Рамка корпуса вокруг экрана: по бокам, сверху (там камера и кнопки
+/// окна) и снизу.
+const double windowsPhoneBezelSide = 11;
+const double windowsPhoneBezelTop = 26;
+const double windowsPhoneBezelBottom = 14;
+
+/// Кнопки питания и громкости выступают за корпус справа.
+const double windowsPhoneSideButtonsOutset = 3;
+
+const double windowsTrayWindowWidth = windowsPhoneScreenWidth +
+    windowsPhoneBezelSide * 2 +
+    windowsPhoneSideButtonsOutset;
+const double windowsTrayWindowHeight =
+    windowsPhoneScreenHeight + windowsPhoneBezelTop + windowsPhoneBezelBottom;
 const double windowsTrayWindowMargin = 8;
 
 Rect calculateWindowsTrayWindowBounds(Rect workArea) {

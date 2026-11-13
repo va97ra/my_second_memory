@@ -648,6 +648,7 @@ class AppStrings {
         ? 'Слишком много неверных PIN. Повторите через $clock'
         : 'Too many wrong PINs. Try again in $clock';
   }
+
   String get biometricsUnavailable =>
       isRu ? 'Биометрия недоступна' : 'Biometrics unavailable';
   String get secureStorageStartFailed => isRu
@@ -661,6 +662,8 @@ class AppStrings {
   String get trayOpen => isRu ? 'Открыть' : 'Open';
   String get trayLock => isRu ? 'Заблокировать' : 'Lock';
   String get trayExit => isRu ? 'Выйти' : 'Exit';
+  String get windowMinimize => isRu ? 'Свернуть' : 'Minimize';
+  String get windowClose => isRu ? 'Закрыть' : 'Close';
   String get launchWithWindows =>
       isRu ? 'Запускать вместе с Windows' : 'Launch with Windows';
   String get launchWithWindowsSubtitle => isRu

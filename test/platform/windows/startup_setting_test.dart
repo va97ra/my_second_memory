@@ -40,6 +40,15 @@ class _SettingsWindowsPlatform implements WindowsDesktopPlatform {
   Future<void> detach() async {}
 
   @override
+  Future<void> minimizeWindow() async {}
+
+  @override
+  Future<void> closeWindow() async {}
+
+  @override
+  Future<void> startWindowDrag() async {}
+
+  @override
   Future<void> initialize(List<String> arguments) async {}
 
   @override

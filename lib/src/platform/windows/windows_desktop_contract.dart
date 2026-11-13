@@ -28,5 +28,15 @@ abstract class WindowsDesktopPlatform {
 
   Future<void> setLaunchAtStartupEnabled(bool enabled);
 
+  /// Свернуть окно на панель задач.
+  Future<void> minimizeWindow();
+
+  /// Закрыть окно, как крестиком: оно уходит в трей, приложение работает.
+  Future<void> closeWindow();
+
+  /// Начать перетаскивание окна: окно без системного заголовка таскают за
+  /// корпус.
+  Future<void> startWindowDrag();
+
   Future<void> detach();
 }

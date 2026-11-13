@@ -28,5 +28,14 @@ class _UnsupportedWindowsDesktopPlatform implements WindowsDesktopPlatform {
   Future<void> setLaunchAtStartupEnabled(bool enabled) async {}
 
   @override
+  Future<void> minimizeWindow() async {}
+
+  @override
+  Future<void> closeWindow() async {}
+
+  @override
+  Future<void> startWindowDrag() async {}
+
+  @override
   Future<void> detach() async {}
 }

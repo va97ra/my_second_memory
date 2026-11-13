@@ -9,7 +9,7 @@ void main() {
 
     final bounds = calculateWindowsTrayWindowBounds(workArea);
 
-    expect(bounds, const Rect.fromLTWH(1492, 132, 420, 900));
+    expect(bounds, const Rect.fromLTWH(1467, 124, 445, 908));
   });
 
   test('fits the window inside a small work area with an 8px margin', () {
