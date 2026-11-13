@@ -56,7 +56,7 @@ class _CurrencyConverterSheetState
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final rates = ref.watch(exchangeRatesProvider);
-    final known = rates.valueOrNull;
+    final known = rates.value;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         16,

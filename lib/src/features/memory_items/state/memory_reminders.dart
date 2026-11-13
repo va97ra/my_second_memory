@@ -10,11 +10,11 @@ import 'package:ez_domain/ez_domain.dart';
 class MemoryReminders {
   const MemoryReminders(this._scheduler);
 
-  final ReminderScheduler? _scheduler;
+  final ReminderScheduler _scheduler;
 
   Future<void> schedule(MemoryItem item) async {
     try {
-      await _scheduler?.schedule(item);
+      await _scheduler.schedule(item);
     } catch (_) {
       // Android вправе отказать в уведомлении; запись уже сохранена.
     }
@@ -34,7 +34,7 @@ class MemoryReminders {
 
   Future<void> cancel(String id) async {
     try {
-      await _scheduler?.cancel(id);
+      await _scheduler.cancel(id);
     } catch (_) {
       // Местные данные всё равно главнее расписания уведомлений.
     }
@@ -42,7 +42,7 @@ class MemoryReminders {
 
   Future<void> reconcile(List<MemoryItem> items) async {
     try {
-      await _scheduler?.reconcile(items);
+      await _scheduler.reconcile(items);
     } catch (_) {
       // Следующий запуск или следующая правка повторят пересборку.
     }

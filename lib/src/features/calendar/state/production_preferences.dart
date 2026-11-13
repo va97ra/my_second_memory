@@ -25,22 +25,25 @@ class ProductionPreferences {
           includeToday: includeToday ?? this.includeToday);
 }
 
-final productionPreferencesProvider = StateNotifierProvider<
-    ProductionPreferencesController,
-    ProductionPreferences>((ref) => ProductionPreferencesController());
+final productionPreferencesProvider =
+    NotifierProvider<ProductionPreferencesController, ProductionPreferences>(
+  ProductionPreferencesController.new,
+);
 
-class ProductionPreferencesController
-    extends StateNotifier<ProductionPreferences> {
-  ProductionPreferencesController() : super(const ProductionPreferences()) {
-    _load();
-  }
+class ProductionPreferencesController extends Notifier<ProductionPreferences> {
   static const storageKey = 'calendar_production_preferences_v1';
   bool _changed = false;
   Future<void> _writes = Future.value();
 
+  @override
+  ProductionPreferences build() {
+    _load();
+    return const ProductionPreferences();
+  }
+
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    if (!mounted || _changed) return;
+    if (!ref.mounted || _changed) return;
     try {
       final raw = prefs.getString(storageKey);
       if (raw == null) return;

@@ -49,7 +49,7 @@ class RecurrenceLegacyRepair {
     required RecurrenceRepository repository,
     required RecurrenceExceptionController exceptions,
     required MemoryItemsController memoryItems,
-    SyncMutationObserver? sync,
+    required SyncMutationObserver sync,
   })  : _host = host,
         _repository = repository,
         _exceptions = exceptions,
@@ -60,7 +60,7 @@ class RecurrenceLegacyRepair {
   final RecurrenceRepository _repository;
   final RecurrenceExceptionController _exceptions;
   final MemoryItemsController _memoryItems;
-  final SyncMutationObserver? _sync;
+  final SyncMutationObserver _sync;
 
   /// Полный набор проходов, выполняемый при загрузке.
   ///
@@ -132,7 +132,7 @@ class RecurrenceLegacyRepair {
     _host.replaceSeries([
       for (final series in _host.series) replacements[series.id] ?? series,
     ]);
-    _sync?.recurrenceSeriesChanged();
+    _sync.recurrenceSeriesChanged();
   }
 
   bool _looksLikeIncompleteInitialSave(
@@ -191,8 +191,7 @@ class RecurrenceLegacyRepair {
 
   Future<void> _restoreOriginOverrides() async {
     if (_host.series.isEmpty || _exceptions.exceptions.isEmpty) return;
-    final memoryDeletions =
-        await _sync?.memoryDeletions() ?? const <String, DateTime>{};
+    final memoryDeletions = await _sync.memoryDeletions();
     final itemsById = {
       for (final item in _memoryItems.items) item.id: item,
     };
@@ -291,8 +290,8 @@ class RecurrenceLegacyRepair {
       if (row == null || row.seriesId != series.id) continue;
       final startDate = dateOnly(series.startDate);
       final exceptionId = recurrenceExceptionId(series.id, startDate);
-      final hasMarker =
-          _exceptions.exceptions.any((exception) => exception.id == exceptionId);
+      final hasMarker = _exceptions.exceptions
+          .any((exception) => exception.id == exceptionId);
       if (hasMarker) continue;
       if (isUntouchedGeneratedOccurrence(
         row,
@@ -327,7 +326,6 @@ class RecurrenceLegacyRepair {
   }
 
   Future<void> _applyMemoryDeletionTombstones() async {
-    if (_sync == null) return;
     final memoryDeletions = await _sync.memoryDeletions();
     // A tombstone on the origin id only means its standalone row was
     // retired when the record became recurring. Deleting the first
@@ -359,8 +357,7 @@ class RecurrenceLegacyRepair {
 
   Future<void> _applySkippedOccurrenceDeletes() async {
     if (_exceptions.exceptions.isEmpty || _memoryItems.items.isEmpty) return;
-    final memoryDeletions =
-        await _sync?.memoryDeletions() ?? const <String, DateTime>{};
+    final memoryDeletions = await _sync.memoryDeletions();
     final occurrenceIndex = RecurrenceOccurrenceIndex(
       series: _host.series,
       exceptions: _exceptions.exceptions,
@@ -398,8 +395,7 @@ class RecurrenceLegacyRepair {
 
   Future<void> _migrateGeneratedCopies() async {
     final today = dateOnly(DateTime.now());
-    final memoryDeletions =
-        await _sync?.memoryDeletions() ?? const <String, DateTime>{};
+    final memoryDeletions = await _sync.memoryDeletions();
     // Every materialized occurrence is legacy now, past ones included: an
     // edited one becomes its exception, an untouched one goes back to being a
     // plain projection.
@@ -443,7 +439,8 @@ class RecurrenceLegacyRepair {
                               dateKey(item.memoryDate)))),
         );
         final hasModifiedCopy = existing != null && !existing.isSkipped;
-        final wasEdited = wasMoved || !isUntouchedGeneratedOccurrence(item, expected);
+        final wasEdited =
+            wasMoved || !isUntouchedGeneratedOccurrence(item, expected);
         if (!hasDeletionSkip && (hasModifiedCopy || wasEdited)) {
           final markerItem = existing != null &&
                   !item.updatedAt.isAfter(existing.updatedAt) &&

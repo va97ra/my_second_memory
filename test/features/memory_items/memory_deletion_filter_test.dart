@@ -3,6 +3,7 @@ import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_cont
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/memory_items_test_support.dart';
+import '../../support/provider_test_support.dart';
 
 /// Отметки удаления, которые считают свои чтения.
 class _CountingDeletions extends NoopSyncMutationObserver {
@@ -34,12 +35,9 @@ void main() {
 
   test('a thousand records read the deletions once', () async {
     final observer = _CountingDeletions(const {});
-    final controller = MemoryItemsController(
-      FakeMemoryRepository(const []),
-      null,
-      null,
-      observer,
-    );
+    final controller =
+        testContainer(memories: FakeMemoryRepository(const []), sync: observer)
+            .read(memoryItemsControllerProvider.notifier);
     await controller.load();
 
     await controller.replaceAll([
@@ -57,12 +55,9 @@ void main() {
       'stale': deletedAt,
       'revived': deletedAt,
     });
-    final controller = MemoryItemsController(
-      FakeMemoryRepository(const []),
-      null,
-      null,
-      observer,
-    );
+    final controller =
+        testContainer(memories: FakeMemoryRepository(const []), sync: observer)
+            .read(memoryItemsControllerProvider.notifier);
     await controller.load();
 
     await controller.replaceAll([

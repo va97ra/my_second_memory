@@ -195,7 +195,8 @@ void main() {
     expect(find.byKey(const ValueKey('feed_header_card')), findsWidgets);
   });
 
-  testWidgets('an image opens the fullscreen viewer from the editor', (tester) async {
+  testWidgets('an image opens the fullscreen viewer from the editor',
+      (tester) async {
     await tester.binding.setSurfaceSize(const Size(430, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 

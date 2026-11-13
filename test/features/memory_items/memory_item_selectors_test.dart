@@ -2,6 +2,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_item_selectors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/provider_test_support.dart';
 
 void main() {
   MemoryItem item(
@@ -84,9 +85,7 @@ void main() {
     final date = DateTime(2026, 8, 18);
     final first = item('first', date);
     final second = item('second', date);
-    final source = StateProvider<List<MemoryItem>>(
-      (ref) => [first, second],
-    );
+    final source = testValueProvider([first, second]);
     final container = ProviderContainer(
       overrides: [
         memoryItemsIndexProvider.overrideWith(
@@ -105,10 +104,10 @@ void main() {
     addTearDown(subscription.close);
     expect(notifications, 1);
 
-    container.read(source.notifier).state = [
+    container.read(source.notifier).set([
       first,
       second.copyWith(title: 'changed'),
-    ];
+    ]);
 
     expect(container.read(memoryItemByIdProvider('first')), same(first));
     expect(notifications, 1);
@@ -134,5 +133,4 @@ void main() {
       {'archived', 'archived-note'},
     );
   });
-
 }

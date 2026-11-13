@@ -3,8 +3,8 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final converterControllerProvider =
-    StateNotifierProvider<ConverterController, ConverterState>(
-  (ref) => ConverterController(),
+    NotifierProvider<ConverterController, ConverterState>(
+  ConverterController.new,
 );
 
 /// Сторона конвертера: слева то, что переводят, справа — во что.
@@ -98,8 +98,9 @@ class ConverterState {
       );
 }
 
-class ConverterController extends StateNotifier<ConverterState> {
-  ConverterController() : super(ConverterState.initial());
+class ConverterController extends Notifier<ConverterState> {
+  @override
+  ConverterState build() => ConverterState.initial();
 
   void setValue(ConverterSide side, String raw) =>
       state = state.copyWith(raw: raw, entry: side);

@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/recurrence_test_support.dart';
+import '../../support/provider_test_support.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_providers.dart';
 
 void main() {
   test('memory tombstone defeats stale moved markers downloaded from cloud',
@@ -58,25 +60,12 @@ void main() {
           encodeExceptions([modified, legacyDestinationSkip]),
     });
     final sync = DeletionObserver({moved.id: deletedAt});
-    final memories = MemoryItemsController(
-      const LocalMemoryRepository(),
-      null,
-      null,
-      sync,
-    );
-    final exceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-      sync,
-    );
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    final controller = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions,
-      memories,
-      reminders,
-      sync,
-    );
+    final container = testContainer(sync: sync);
+    final memories = container.read(memoryItemsControllerProvider.notifier);
+    final exceptions =
+        container.read(recurrenceExceptionControllerProvider.notifier);
+    final controller =
+        container.read(recurrenceSeriesControllerProvider.notifier);
 
     await controller.load();
 
@@ -131,23 +120,18 @@ void main() {
       LocalRecurrenceExceptionRepository.storageKey: '[]',
     });
 
-    Future<({
-      RecurrenceSeriesController controller,
-      RecurrenceExceptionController exceptions,
-      MemoryItemsController memories,
-    })> loadControllers() async {
-      final memories = MemoryItemsController(const LocalMemoryRepository());
-      final exceptions = RecurrenceExceptionController(
-        const LocalRecurrenceExceptionRepository(),
-      );
-      final reminders = NotificationService();
-      addTearDown(reminders.dispose);
-      final controller = RecurrenceSeriesController(
-        const LocalRecurrenceRepository(),
-        exceptions,
-        memories,
-        reminders,
-      );
+    Future<
+        ({
+          RecurrenceSeriesController controller,
+          RecurrenceExceptionController exceptions,
+          MemoryItemsController memories,
+        })> loadControllers() async {
+      final container = testContainer();
+      final memories = container.read(memoryItemsControllerProvider.notifier);
+      final exceptions =
+          container.read(recurrenceExceptionControllerProvider.notifier);
+      final controller =
+          container.read(recurrenceSeriesControllerProvider.notifier);
       await controller.load();
       return (
         controller: controller,

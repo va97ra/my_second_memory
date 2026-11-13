@@ -25,12 +25,9 @@ final accountRepositoryProvider = Provider<AccountRepository>((ref) {
 });
 
 final accountsControllerProvider =
-    StateNotifierProvider<AccountsController, List<AccountItem>>((ref) {
-  return AccountsController(
-    ref.watch(accountRepositoryProvider),
-    ref.watch(syncMutationObserverProvider),
-  );
-});
+    NotifierProvider<AccountsController, List<AccountItem>>(
+  AccountsController.new,
+);
 
 /// Один аккаунт по идентификатору: правка другого его карточку не трогает.
 final accountByIdProvider = Provider.family<AccountItem?, String>((ref, id) {
@@ -44,27 +41,32 @@ final accountByIdProvider = Provider.family<AccountItem?, String>((ref, id) {
   );
 });
 
-class AccountsController extends StateNotifier<List<AccountItem>> {
-  AccountsController(this._repository, [this._sync]) : super(const []) {
-    _loadFuture = _load();
-  }
-
-  final AccountRepository _repository;
-  final SyncMutationObserver? _sync;
+class AccountsController extends Notifier<List<AccountItem>> {
+  late final AccountRepository _repository;
+  late final SyncMutationObserver _sync;
   late final Future<void> _loadFuture;
   final _writes = SequentialTaskQueue();
+
+  @override
+  List<AccountItem> build() {
+    _repository = ref.watch(accountRepositoryProvider);
+    _sync = ref.watch(syncMutationObserverProvider);
+    _loadFuture = _load();
+    return const [];
+  }
 
   Future<void> load() => _loadFuture;
 
   Future<void> _load() async {
-    state = _sort(await _repository.loadAccounts());
+    final accounts = await _repository.loadAccounts();
+    if (ref.mounted) state = _sort(accounts);
   }
 
   Future<void> add(AccountItem account) async {
     await _loadFuture;
     state = _sort([...state, account.copyWith(updatedAt: DateTime.now())]);
     await _persist();
-    _sync?.accountsChanged();
+    _sync.accountsChanged();
   }
 
   Future<void> update(AccountItem account) async {
@@ -75,7 +77,7 @@ class AccountsController extends StateNotifier<List<AccountItem>> {
         if (existing.id == account.id) updated else existing,
     ]);
     await _persist();
-    _sync?.accountsChanged();
+    _sync.accountsChanged();
   }
 
   Future<void> delete(String id) async {
@@ -86,7 +88,7 @@ class AccountsController extends StateNotifier<List<AccountItem>> {
         if (account.id != id) account,
     ];
     await _persist();
-    await _sync?.accountDeleted(id, deletedAt);
+    await _sync.accountDeleted(id, deletedAt);
   }
 
   Future<void> _persist() {

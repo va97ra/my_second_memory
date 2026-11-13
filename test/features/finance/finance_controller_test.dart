@@ -5,14 +5,16 @@ import 'package:ezhednevnik_v2/src/features/finance/state/finance_month_ledger.d
 import 'package:ezhednevnik_v2/src/features/finance/state/finance_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/provider_test_support.dart';
 
 void main() {
   test('add, edit, month move and delete preserve all currency journals',
       () async {
     final repository = _FinanceRepository([]);
     final sync = _RecordingSyncObserver();
-    final controller = FinanceController(repository, sync);
-    addTearDown(controller.dispose);
+    final controller = testContainer(sync: sync, overrides: [
+      financeRepositoryProvider.overrideWithValue(repository)
+    ]).read(financeControllerProvider.notifier);
     await controller.load();
     final august = _entry('rub', '10', 'RUB', DateTime(2026, 8, 30));
     final usd = _entry('usd', '20', 'USD', DateTime(2026, 8, 30));
@@ -47,11 +49,9 @@ void main() {
 
   test('selected currency is restored locally', () async {
     SharedPreferences.setMockInitialValues({});
-    final first = FinanceCurrencyController();
-    addTearDown(first.dispose);
+    final first = testContainer().read(financeCurrencyProvider.notifier);
     await first.select('USD');
-    final second = FinanceCurrencyController();
-    addTearDown(second.dispose);
+    final second = testContainer().read(financeCurrencyProvider.notifier);
     await second.load();
 
     expect(second.state, 'USD');

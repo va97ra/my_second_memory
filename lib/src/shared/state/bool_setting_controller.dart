@@ -5,17 +5,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 /// До того как значение прочитано с диска, действует [initial]: экран уже
 /// строится, а чтение асинхронное.
-class BoolSettingController extends StateNotifier<bool> {
-  BoolSettingController({required this.storageKey, required bool initial})
-      : super(initial) {
-    _load(initial);
-  }
+class BoolSettingController extends Notifier<bool> {
+  BoolSettingController({required this.storageKey, required this.initial});
 
   final String storageKey;
+  final bool initial;
 
-  Future<void> _load(bool fallback) async {
+  @override
+  bool build() {
+    _load();
+    return initial;
+  }
+
+  Future<void> _load() async {
     final preferences = await SharedPreferences.getInstance();
-    state = preferences.getBool(storageKey) ?? fallback;
+    if (ref.mounted) state = preferences.getBool(storageKey) ?? initial;
   }
 
   Future<void> setEnabled(bool enabled) async {
@@ -25,11 +29,11 @@ class BoolSettingController extends StateNotifier<bool> {
 }
 
 /// Провайдер настройки-переключателя: ключ хранения и значение по умолчанию.
-StateNotifierProvider<BoolSettingController, bool> boolSettingProvider({
+NotifierProvider<BoolSettingController, bool> boolSettingProvider({
   required String storageKey,
   required bool initial,
 }) {
-  return StateNotifierProvider<BoolSettingController, bool>(
-    (ref) => BoolSettingController(storageKey: storageKey, initial: initial),
+  return NotifierProvider<BoolSettingController, bool>(
+    () => BoolSettingController(storageKey: storageKey, initial: initial),
   );
 }

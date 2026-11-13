@@ -46,4 +46,3 @@ void main() {
     expect(find.text('План на сегодня'), findsNothing);
   });
 }
-

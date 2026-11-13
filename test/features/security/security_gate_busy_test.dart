@@ -2,6 +2,7 @@ import 'package:ez_data/ez_data.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_gate_controller.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/provider_test_support.dart';
 
 /// Хранилище ключей, которое отказывает на любом шаге. Ошибка доходит до
 /// замка, и замок не должен остаться «занятым» навсегда: иначе кнопки
@@ -44,14 +45,15 @@ void main() {
   late SecurityGateController gate;
 
   setUp(() async {
-    session = SecuritySessionController(_FailingSecurityService());
+    session = testContainer(overrides: [
+      securityServiceProvider.overrideWithValue(_FailingSecurityService())
+    ]).read(securitySessionProvider.notifier);
     await session.load();
     gate = SecurityGateController(session);
   });
 
   tearDown(() {
     gate.dispose();
-    session.dispose();
   });
 
   test('a failed biometric unlock frees the lock and says why', () async {

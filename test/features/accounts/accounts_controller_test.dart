@@ -3,6 +3,7 @@ import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/accounts/state/accounts_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/provider_test_support.dart';
 
 void main() {
   test('accounts can be created edited and deleted in encrypted storage',
@@ -15,7 +16,9 @@ void main() {
     final repository = EncryptedAccountRepository(
       store: EncryptedJsonStore(cipher: cipher),
     );
-    final controller = AccountsController(repository);
+    final controller = testContainer(overrides: [
+      accountRepositoryProvider.overrideWithValue(repository)
+    ]).read(accountsControllerProvider.notifier);
     await Future<void>.delayed(Duration.zero);
     final now = DateTime(2026, 7, 7);
 

@@ -15,6 +15,7 @@ import 'src/shared/state/error_journal_provider.dart';
 import 'src/platform/windows/windows_desktop.dart';
 import 'src/app/theme/app_content_font_controller.dart';
 import 'src/app/theme/app_theme_controller.dart';
+import 'src/app/provider_retry.dart';
 
 Future<void> main(List<String> arguments) async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
@@ -45,8 +46,6 @@ Future<void> main(List<String> arguments) async {
   }
   final preferences = await SharedPreferences.getInstance();
   final initialStyle = AppThemeController.readInitialStyle(preferences);
-  final initialContentFont =
-      AppContentFontController.readInitialStyle(preferences);
   // Decode only what the first frame uses. The alternate notebook is warmed
   // once the current one is already visible.
   try {
@@ -58,6 +57,7 @@ Future<void> main(List<String> arguments) async {
   }
   runApp(
     ProviderScope(
+      retry: noProviderRetry,
       overrides: [
         syncBackendConfigProvider.overrideWithValue(syncConfig),
         errorJournalProvider.overrideWithValue(journal),
@@ -65,18 +65,10 @@ Future<void> main(List<String> arguments) async {
           (ref) => ref.watch(appSyncMutationObserverProvider),
         ),
         appThemeControllerProvider.overrideWith(
-          (ref) => AppThemeController(
-            initialStyle: initialStyle,
-            preferences: preferences,
-            loadOnStart: false,
-          ),
+          () => AppThemeController(preferences: preferences),
         ),
         appContentFontControllerProvider.overrideWith(
-          (ref) => AppContentFontController(
-            initialStyle: initialContentFont,
-            preferences: preferences,
-            loadOnStart: false,
-          ),
+          () => AppContentFontController(preferences: preferences),
         ),
       ],
       child: const EzhednevnikV2App(),
@@ -86,8 +78,7 @@ Future<void> main(List<String> arguments) async {
     unawaited(
       NotebookAssets.preloadDeferred(
         currentIsDark: brightnessOf(initialStyle) == Brightness.dark,
-      )
-          .catchError((_) {}),
+      ).catchError((_) {}),
     );
   });
 }

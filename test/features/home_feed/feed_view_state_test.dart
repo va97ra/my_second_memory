@@ -2,6 +2,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/home_feed/state/feed_layout_provider.dart';
 import 'package:ezhednevnik_v2/src/features/home_feed/state/feed_providers.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/provider_test_support.dart';
 
 void main() {
   test('«Все записи» и фильтры по виду показывают все даты', () {
@@ -23,12 +24,12 @@ void main() {
   });
 
   test('со всех дат «сегодня» и выбор дня возвращают на страницу дня', () {
-    final controller = FeedViewController(
-      initialState: FeedViewState(
-        anchorDate: DateTime(2026, 8, 22),
-        filter: FeedFilter.all,
-      ),
-    );
+    final controller = testContainer(overrides: [
+      feedViewProvider.overrideWithBuild((_, __) => FeedViewState(
+            anchorDate: DateTime(2026, 8, 22),
+            filter: FeedFilter.all,
+          ))
+    ]).read(feedViewProvider.notifier);
     final now = DateTime.now();
     expect(controller.state.showsPeriodOf(now), isFalse);
 
@@ -78,12 +79,12 @@ void main() {
   });
 
   test('page movement follows the period the filter opened', () {
-    final controller = FeedViewController(
-      initialState: FeedViewState(
-        anchorDate: DateTime(2028, 1, 31),
-        filter: FeedFilter.day,
-      ),
-    );
+    final controller = testContainer(overrides: [
+      feedViewProvider.overrideWithBuild((_, __) => FeedViewState(
+            anchorDate: DateTime(2028, 1, 31),
+            filter: FeedFilter.day,
+          ))
+    ]).read(feedViewProvider.notifier);
 
     controller.movePeriod(1);
     expect(controller.state.anchorDate, DateTime(2028, 2));
@@ -98,25 +99,24 @@ void main() {
   });
 
   test('monthly movement clamps to a day the month really has', () {
-    final controller = FeedViewController(
-      initialState: FeedViewState(
-        anchorDate: DateTime(2028, 1, 31),
-        filter: FeedFilter.recurringMonthly,
-      ),
-    );
+    final controller = testContainer(overrides: [
+      feedViewProvider.overrideWithBuild((_, __) => FeedViewState(
+            anchorDate: DateTime(2028, 1, 31),
+            filter: FeedFilter.recurringMonthly,
+          ))
+    ]).read(feedViewProvider.notifier);
 
     controller.movePeriod(1);
     expect(controller.state.anchorDate, DateTime(2028, 2, 29));
   });
 
-  test('search keeps its query only while open and starts empty each time',
-      () {
-    final controller = FeedViewController(
-      initialState: FeedViewState(
-        anchorDate: DateTime(2026, 10, 1),
-        filter: FeedFilter.day,
-      ),
-    );
+  test('search keeps its query only while open and starts empty each time', () {
+    final controller = testContainer(overrides: [
+      feedViewProvider.overrideWithBuild((_, __) => FeedViewState(
+            anchorDate: DateTime(2026, 10, 1),
+            filter: FeedFilter.day,
+          ))
+    ]).read(feedViewProvider.notifier);
 
     controller.search('счётчик');
     expect(controller.state.searchQuery, isEmpty);
@@ -132,18 +132,17 @@ void main() {
   });
 
   test('picking a day leaves the search', () {
-    final controller = FeedViewController(
-      initialState: FeedViewState(
-        anchorDate: DateTime(2026, 10, 1),
-        filter: FeedFilter.day,
-        search: const MemorySearchBar(isOpen: true, query: 'счётчик'),
-      ),
-    );
+    final controller = testContainer(overrides: [
+      feedViewProvider.overrideWithBuild((_, __) => FeedViewState(
+            anchorDate: DateTime(2026, 10, 1),
+            filter: FeedFilter.day,
+            search: const MemorySearchBar(isOpen: true, query: 'счётчик'),
+          ))
+    ]).read(feedViewProvider.notifier);
 
     controller.selectDate(DateTime(2026, 9, 3));
 
     expect(controller.state.searching, isFalse);
     expect(controller.state.searchQuery, isEmpty);
   });
-
 }

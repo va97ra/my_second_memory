@@ -7,9 +7,9 @@ import 'package:ezhednevnik_v2/src/features/calendar/ui/widgets/day_timeline.dar
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../../support/widget_test_harness.dart';
+import '../../support/provider_test_support.dart';
 
 ShiftSchedule schedule(String id, int start, {bool vacation = false}) =>
     ShiftSchedule(
@@ -31,15 +31,14 @@ void main() {
   useTestEnvironment();
   test('selected date chooses its own schedule and excludes vacation',
       () async {
-    final controller = ShiftSchedulesController(FakeShiftScheduleRepository([
-      schedule('Консалтинг', 3),
-      schedule('Яндекс', 4),
-    ]));
-    await controller.load();
-    final container = ProviderContainer(overrides: [
-      shiftSchedulesControllerProvider.overrideWith((ref) => controller),
+    final container = testContainer(overrides: [
+      shiftScheduleRepositoryProvider
+          .overrideWithValue(FakeShiftScheduleRepository([
+        schedule('Консалтинг', 3),
+        schedule('Яндекс', 4),
+      ]))
     ]);
-    addTearDown(container.dispose);
+    await container.read(shiftSchedulesControllerProvider.notifier).load();
     expect(container.read(dayShiftProgressProvider(DateTime(2026, 9, 18))),
         isEmpty);
     final tomorrow =
@@ -53,7 +52,9 @@ void main() {
             .schedule
             .id,
         'Яндекс');
-    await controller.update(schedule('Консалтинг', 3, vacation: true));
+    await container
+        .read(shiftSchedulesControllerProvider.notifier)
+        .update(schedule('Консалтинг', 3, vacation: true));
     final holiday =
         container.read(dayShiftProgressProvider(DateTime(2026, 9, 19))).single;
     expect(holiday.vacation, true);

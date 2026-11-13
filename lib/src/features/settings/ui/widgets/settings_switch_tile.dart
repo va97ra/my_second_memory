@@ -24,7 +24,7 @@ class SettingsSwitchTile extends ConsumerWidget {
   final Color color;
   final String title;
   final String? subtitle;
-  final StateNotifierProvider<BoolSettingController, bool> setting;
+  final NotifierProvider<BoolSettingController, bool> setting;
   final bool enabled;
 
   @override

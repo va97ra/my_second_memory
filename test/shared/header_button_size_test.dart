@@ -52,6 +52,7 @@ void main() {
         ))
         .where((box) => box.width == notebookHeaderSlot)
         .length;
-    expect(slots, greaterThanOrEqualTo(3), reason: 'назад, подсказка, действие');
+    expect(slots, greaterThanOrEqualTo(3),
+        reason: 'назад, подсказка, действие');
   });
 }

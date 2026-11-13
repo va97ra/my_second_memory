@@ -2,11 +2,11 @@ import 'package:drift/native.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_exception_controller.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_series_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ez_data/ez_data_io.dart';
+import '../../support/provider_test_support.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_providers.dart';
 
 void main() {
   test('PIN user: deleting one subscription occurrence persists the marker',
@@ -42,16 +42,15 @@ void main() {
     );
 
     final today = dateOnly(DateTime.now());
-    final memories = MemoryItemsController(memoryRepository);
-    final exceptions = RecurrenceExceptionController(exceptionRepository);
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    final controller = RecurrenceSeriesController(
-      seriesRepository,
-      exceptions,
-      memories,
-      reminders,
-    );
+    final container = testContainer(
+        memories: memoryRepository,
+        exceptions: exceptionRepository,
+        series: seriesRepository);
+    final memories = container.read(memoryItemsControllerProvider.notifier);
+    final exceptions =
+        container.read(recurrenceExceptionControllerProvider.notifier);
+    final controller =
+        container.read(recurrenceSeriesControllerProvider.notifier);
     await controller.load();
 
     final now = DateTime.now();
@@ -84,7 +83,8 @@ void main() {
     await controller.deleteOccurrence(occurrence);
 
     final kinds = await database
-        .customSelect('select kind, count(*) c from secure_entities group by kind')
+        .customSelect(
+            'select kind, count(*) c from secure_entities group by kind')
         .get();
     // ignore: avoid_print
     print('secure_entities: '

@@ -66,9 +66,9 @@ class FeedViewState {
   }
 }
 
-class FeedViewController extends StateNotifier<FeedViewState> {
-  FeedViewController({FeedViewState? initialState})
-      : super(initialState ?? FeedViewState.initial());
+class FeedViewController extends Notifier<FeedViewState> {
+  @override
+  FeedViewState build() => FeedViewState.initial();
 
   /// Фильтр, с которым можно показать один день.
   FeedFilter get _filterForOneDay =>
@@ -112,9 +112,7 @@ class FeedViewController extends StateNotifier<FeedViewState> {
   void selectDate(DateTime date) {
     final day = DateTime(date.year, date.month, date.day);
     final filter = _filterForOneDay;
-    if (state.anchorDate == day &&
-        filter == state.filter &&
-        !state.searching) {
+    if (state.anchorDate == day && filter == state.filter && !state.searching) {
       return;
     }
     state = state.copyWith(
@@ -125,9 +123,8 @@ class FeedViewController extends StateNotifier<FeedViewState> {
   }
 }
 
-final feedViewProvider =
-    StateNotifierProvider<FeedViewController, FeedViewState>(
-  (ref) => FeedViewController(),
+final feedViewProvider = NotifierProvider<FeedViewController, FeedViewState>(
+  FeedViewController.new,
 );
 
 DateTime _shiftMonth(DateTime anchor, int delta) {

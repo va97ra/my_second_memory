@@ -5,6 +5,24 @@ import 'package:ezhednevnik_v2/src/features/calendar/state/production_calendar_p
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../support/production_calendar_test_support.dart';
+import '../../support/provider_test_support.dart';
+
+/// Календарь года, как его держит экран: подписка не даёт провайдеру
+/// закрыться, пока тест смотрит на него.
+ProductionCalendarController _calendar(
+  ProductionCalendarRepository repository, {
+  void Function(ProductionCalendarState state)? onChange,
+}) {
+  final container = testContainer(overrides: [
+    productionCalendarRepositoryProvider.overrideWithValue(repository),
+  ]);
+  final subscription = container.listen(
+    productionCalendarProvider(2026),
+    (_, next) => onChange?.call(next),
+  );
+  addTearDown(subscription.close);
+  return container.read(productionCalendarProvider(2026).notifier);
+}
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -16,15 +34,12 @@ void main() {
     final repo = ProductionCalendarRepository(
         source: FakeProductionSource((_) =>
             fail ? Future.error(StateError('offline')) : pending.future));
-    final controller = ProductionCalendarController(repo, 2026);
-    addTearDown(controller.dispose);
-    expect(controller.state.calendar.day(DateTime(2026, 5, 8)),
-        ProductionDay.shortened);
     final ready = Completer<void>();
-    final remove = controller.addListener((s) {
+    final controller = _calendar(repo, onChange: (s) {
       if (s.cached != null && !ready.isCompleted) ready.complete();
     });
-    addTearDown(remove);
+    expect(controller.state.calendar.day(DateTime(2026, 5, 8)),
+        ProductionDay.shortened);
     pending.complete(productionFixture());
     await ready.future;
     expect(controller.state.failed, isFalse);
@@ -38,13 +53,10 @@ void main() {
     final source = FakeProductionSource((_) async => productionFixture());
     final repo = ProductionCalendarRepository(source: source);
     await repo.refresh(2026);
-    final controller = ProductionCalendarController(repo, 2026);
-    addTearDown(controller.dispose);
     final ready = Completer<void>();
-    final remove = controller.addListener((s) {
+    final controller = _calendar(repo, onChange: (s) {
       if (!s.loading && !ready.isCompleted) ready.complete();
     });
-    addTearDown(remove);
     await ready.future;
     expect(source.calls, 1);
     await controller.refresh();
@@ -52,11 +64,14 @@ void main() {
   });
   test('dispose during request does not publish late state', () async {
     final pending = Completer<String>();
-    final controller = ProductionCalendarController(
-        ProductionCalendarRepository(
-            source: FakeProductionSource((_) => pending.future)),
-        2026);
-    controller.dispose();
+    final container = testContainer(overrides: [
+      productionCalendarRepositoryProvider.overrideWithValue(
+          ProductionCalendarRepository(
+              source: FakeProductionSource((_) => pending.future))),
+    ]);
+    container.listen(productionCalendarProvider(2026), (_, __) {}).close();
+    // Последний слушатель ушёл: провайдер закрывается, пока запрос в пути.
+    await Future<void>.delayed(Duration.zero);
     pending.complete(productionFixture());
     await Future<void>.delayed(Duration.zero);
   });

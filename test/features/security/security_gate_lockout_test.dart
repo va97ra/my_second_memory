@@ -2,6 +2,7 @@ import 'package:ez_data/ez_data.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_gate_controller.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/provider_test_support.dart';
 
 /// Хранилище, в котором PIN всегда неверен, а ожидание назначает тест.
 class _LockingSecurityService extends SecurityService {
@@ -34,13 +35,14 @@ void main() {
 
   setUp(() async {
     service = _LockingSecurityService();
-    session = SecuritySessionController(service);
+    session = testContainer(
+            overrides: [securityServiceProvider.overrideWithValue(service)])
+        .read(securitySessionProvider.notifier);
     gate = SecurityGateController(session);
   });
 
   tearDown(() {
     gate.dispose();
-    session.dispose();
   });
 
   testWidgets('после череды ошибок замок говорит, сколько ждать, и отсчитывает',

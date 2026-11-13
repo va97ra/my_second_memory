@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/sync_test_support.dart';
+import '../../support/sync_controller_test_support.dart';
 
 /// Облако, которое держит чтение, пока тест его не отпустит.
 class _SlowRemote extends SyncRemote {
@@ -37,7 +38,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final date = DateTime.utc(2026, 11, 12, 9);
     final remote = _SlowRemote();
-    final controller = SyncController(
+    final harness = SyncHarness(
       remote: remote,
       keyStore: _KeyStore(),
       tombstones: MemoryTombstoneStore(),
@@ -46,7 +47,7 @@ void main() {
         replaceMemoryItems: (_) async {},
       ),
     );
-    addTearDown(controller.dispose);
+    final controller = harness.controller;
     await controller.load();
 
     final run = controller.syncNow();

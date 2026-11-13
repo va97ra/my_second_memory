@@ -13,8 +13,7 @@ void main() {
         ),
       );
 
-  double scale(WidgetTester tester) =>
-      tester
+  double scale(WidgetTester tester) => tester
       .widget<Transform>(find.byKey(const ValueKey('press_pulse')))
       .transform
       .storage[0];

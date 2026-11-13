@@ -79,9 +79,13 @@ void main() {
     final todayDecoration = todayContainer.decoration! as BoxDecoration;
     // Сегодня отмечено рамкой цвета отметки, а не подмесом в бумагу.
     final ring = (todayDecoration.border! as Border).top;
-    expect(ring.color, tester.widget<DayNumber>(
-      find.descendant(of: cell, matching: find.byType(DayNumber)),
-    ).todayColor);
+    expect(
+        ring.color,
+        tester
+            .widget<DayNumber>(
+              find.descendant(of: cell, matching: find.byType(DayNumber)),
+            )
+            .todayColor);
     expect(ring.width, greaterThan(2));
     final plainContainer = tester.widget<AnimatedContainer>(
       find

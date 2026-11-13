@@ -1,51 +1,22 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ez_data/ez_data.dart';
+import '../../../shared/state/encrypted_media_provider.dart';
+import '../../security/security.dart';
 import 'sync_data_sources.dart';
+import 'sync_providers.dart';
 import 'sync_runner.dart';
 import 'sync_scheduler.dart';
 import 'sync_state.dart';
 
-class SyncController extends StateNotifier<SyncState> {
-  SyncController({
-    required SyncRemoteStore? remote,
-    required SyncKeyStore keyStore,
-    required SyncTombstoneStore tombstones,
-    required SyncDataSources data,
-    AppCipher? Function()? atRestCipher,
-    VoidCallback? onMediaArrived,
-    bool Function()? canAccessLocalData,
-  })  : _remote = remote == null ? null : TimedSyncRemoteStore(remote),
-        _keyStore = keyStore,
-        _tombstones = tombstones,
-        _data = data,
-        _canAccessLocalData = canAccessLocalData ?? _alwaysAccessible,
-        _atRestCipher = atRestCipher,
-        _onMediaArrived = onMediaArrived,
-        super(remote == null
-            ? const SyncState.unconfigured()
-            : const SyncState(status: SyncStatus.loading)) {
-    _scheduler = SyncScheduler(
-      run: syncNow,
-      canRun: () => state.isConnected && _canAccessLocalData(),
-    );
-  }
-
-  final SyncRemoteStore? _remote;
-  final SyncKeyStore _keyStore;
-  final SyncTombstoneStore _tombstones;
-  final SyncDataSources _data;
-  final bool Function() _canAccessLocalData;
-  final AppCipher? Function()? _atRestCipher;
-
-  /// Приехали новые файлы вложений. Экран, который уже показал пустое место,
-  /// сам о них не узнает — его нужно попросить перечитать.
-  final VoidCallback? _onMediaArrived;
+class SyncController extends Notifier<SyncState> {
+  late final SyncRemoteStore? _remote;
+  late final SyncKeyStore _keyStore;
+  late final SyncTombstoneStore _tombstones;
+  late final SyncDataSources _data;
   late final SyncScheduler _scheduler;
   final SyncVaultCrypto _vaultCrypto = const SyncVaultCrypto();
 
@@ -64,6 +35,40 @@ class SyncController extends StateNotifier<SyncState> {
 
   /// Идёт выход из аккаунта: новых прогонов нет, идущий доделывается.
   bool _signingOut = false;
+
+  @override
+  SyncState build() {
+    final remote = ref.watch(syncRemoteStoreProvider);
+    _remote = remote == null ? null : TimedSyncRemoteStore(remote);
+    _keyStore = ref.watch(syncKeyStoreProvider);
+    _tombstones = ref.watch(syncTombstoneStoreProvider);
+    _data = ref.watch(syncDataSourcesProvider);
+    _scheduler = SyncScheduler(
+      run: syncNow,
+      canRun: () => state.isConnected && _canAccessLocalData(),
+    );
+    // Ключ хранилища стирается из памяти вместе с контроллером.
+    AppCipher? cipher;
+    listenSelf((_, next) => cipher = next.cipher);
+    ref.onDispose(() {
+      _stopAutomaticSync();
+      _authSubscription?.cancel();
+      cipher?.destroy();
+    });
+    return remote == null
+        ? const SyncState.unconfigured()
+        : const SyncState(status: SyncStatus.loading);
+  }
+
+  /// Локальные данные можно читать: замок открыт или его нет.
+  bool _canAccessLocalData() => ref.read(securitySessionProvider).canReadData;
+
+  /// Ключ, которым зашифрованы данные на устройстве, если он есть.
+  AppCipher? _atRestCipher() => ref.read(securitySessionProvider).cipher;
+
+  /// Приехали новые файлы вложений. Экран, который уже показал пустое место,
+  /// сам о них не узнает — его нужно попросить перечитать.
+  void _onMediaArrived() => ref.invalidate(mediaBytesProvider);
 
   Future<void> load() async {
     if (_loaded) return;
@@ -226,7 +231,7 @@ class SyncController extends StateNotifier<SyncState> {
         lastResult: result,
         clearError: true,
       );
-      if (result.mediaDownloaded > 0) _onMediaArrived?.call();
+      if (result.mediaDownloaded > 0) _onMediaArrived();
     } catch (error) {
       _setError(error);
     }
@@ -394,14 +399,4 @@ class SyncController extends StateNotifier<SyncState> {
     if (remote == null) throw StateError('Supabase is not configured');
     return remote;
   }
-
-  @override
-  void dispose() {
-    _stopAutomaticSync();
-    _authSubscription?.cancel();
-    state.cipher?.destroy();
-    super.dispose();
-  }
 }
-
-bool _alwaysAccessible() => true;

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
-import 'package:ezhednevnik_v2/src/shared/state/media_cleanup.dart';
 
 /// Поддельные хранилище, будильник и медиа для тестов записей.
 class FakeMemoryRepository implements MemoryRepository {
@@ -138,20 +137,3 @@ class TrackingMediaStorage extends MediaStorage {
     deleted.addAll(paths.where((path) => !usedPaths.contains(path)));
   }
 }
-
-/// Уборка, у которой владельцы файлов — записи из [items] и, если заданы,
-/// серии и правки дат: так её собирает провайдер в приложении.
-MediaCleanup cleanupOver(
-  MediaStorage storage, {
-  required List<MemoryItem> Function() items,
-  List<RecurrenceSeries> Function()? series,
-  List<RecurrenceOccurrenceException> Function()? exceptions,
-}) =>
-    MediaCleanup(
-      storage,
-      owned: () => mediaReferencesOf(
-        items: items(),
-        series: series?.call() ?? const [],
-        exceptions: exceptions?.call() ?? const [],
-      ),
-    );

@@ -3,12 +3,15 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 
 import '../../support/memory_items_test_support.dart';
+import '../../support/provider_test_support.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test('addAll persists generated records in one batch', () async {
     final date = DateTime(2026, 6, 30);
     final repository = FakeMemoryRepository(const []);
-    final controller = MemoryItemsController(repository);
+    final controller = testContainer(memories: repository)
+        .read(memoryItemsControllerProvider.notifier);
     final items = [
       for (var index = 0; index < 20; index++)
         MemoryItem(
@@ -40,7 +43,8 @@ void main() {
       updatedAt: date,
     );
     final repository = FakeMemoryRepository([item]);
-    final controller = MemoryItemsController(repository);
+    final controller = testContainer(memories: repository)
+        .read(memoryItemsControllerProvider.notifier);
 
     await controller.load();
     await controller.update(item.copyWith(body: 'Changed'));
@@ -61,7 +65,8 @@ void main() {
       updatedAt: date,
     );
     final repository = DelayedMemoryRepository([item]);
-    final controller = MemoryItemsController(repository);
+    final controller = testContainer(memories: repository)
+        .read(memoryItemsControllerProvider.notifier);
 
     await controller.load();
     final first = controller.update(item.copyWith(body: 'First'));
@@ -86,13 +91,13 @@ void main() {
           imagePaths: const ['/app/image_shared.jpg'],
         );
     final repository = FakeMemoryRepository([item('first'), item('second')]);
+    // Повторы лежат в настройках: уборка ждёт и их загрузки.
+    SharedPreferences.setMockInitialValues({});
     final mediaStorage = TrackingMediaStorage();
-    late final MemoryItemsController controller;
-    controller = MemoryItemsController(
-      repository,
-      null,
-      cleanupOver(mediaStorage, items: () => controller.state),
-    );
+    final controller = (await loadRecords(
+      testContainer(memories: repository, media: mediaStorage),
+    ))
+        .memories;
 
     await controller.load();
     await controller.delete('first');
@@ -122,7 +127,8 @@ void main() {
         updatedAt: date,
       ),
     ]);
-    final controller = MemoryItemsController(repository);
+    final controller = testContainer(memories: repository)
+        .read(memoryItemsControllerProvider.notifier);
 
     await controller.load();
     await controller.delete('delete');
@@ -143,7 +149,8 @@ void main() {
         updatedAt: date,
       ),
     ]);
-    final controller = MemoryItemsController(repository);
+    final controller = testContainer(memories: repository)
+        .read(memoryItemsControllerProvider.notifier);
 
     await controller.load();
     await controller.toggleDone('toggle');
@@ -170,7 +177,8 @@ void main() {
         status: MemoryStatus.archived,
       ),
     ]);
-    final controller = MemoryItemsController(repository);
+    final controller = testContainer(memories: repository)
+        .read(memoryItemsControllerProvider.notifier);
 
     await controller.load();
     await controller.restore('archived');
@@ -201,7 +209,8 @@ void main() {
       item('deleted', 'Delete while syncing'),
       item('remote-edit', 'Before remote edit'),
     ]);
-    final controller = MemoryItemsController(repository);
+    final controller = testContainer(memories: repository)
+        .read(memoryItemsControllerProvider.notifier);
     await controller.load();
     final baseline = [...controller.state];
 

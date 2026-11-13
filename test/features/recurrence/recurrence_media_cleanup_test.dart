@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/memory_items_test_support.dart';
+import '../../support/provider_test_support.dart';
 import '../../support/recurrence_test_support.dart';
 
 /// Б4 и Б5: файл удаляется, только когда на него не ссылается ни запись, ни
@@ -27,28 +28,12 @@ void main() {
           encodeExceptions([override]),
     });
     media = TrackingMediaStorage();
-    final cleanup = cleanupOver(
-      media,
-      items: () => memories.state,
-      series: () => series.state,
-      exceptions: () => exceptions.state,
-    );
-    memories =
-        MemoryItemsController(const LocalMemoryRepository(), null, cleanup);
-    exceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-    );
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    series = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions,
-      memories,
-      reminders,
-      null,
-      cleanup,
-    );
-    await series.load();
+    // Уборка та же, что в приложении: владельцев файлов она узнаёт из
+    // провайдеров записей, серий и правок дат.
+    final records = await loadRecords(testContainer(media: media));
+    memories = records.memories;
+    exceptions = records.exceptions;
+    series = records.series;
   }
 
   test('deleting a plain copy keeps the photo the series still shows',

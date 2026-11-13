@@ -5,13 +5,15 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/accounts/state/accounts_controller.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/provider_test_support.dart';
 
 void main() {
   test('an older account save cannot overwrite a concurrent sync merge',
       () async {
     final repository = _Accounts();
-    final controller = AccountsController(repository);
-    addTearDown(controller.dispose);
+    final controller = testContainer(overrides: [
+      accountRepositoryProvider.overrideWithValue(repository)
+    ]).read(accountsControllerProvider.notifier);
     await controller.load();
     final now = DateTime(2026);
     AccountItem account(String id) => AccountItem(
@@ -35,8 +37,9 @@ void main() {
   test('an older shift save cannot overwrite a concurrent sync merge',
       () async {
     final repository = _Shifts();
-    final controller = ShiftSchedulesController(repository);
-    addTearDown(controller.dispose);
+    final controller = testContainer(overrides: [
+      shiftScheduleRepositoryProvider.overrideWithValue(repository)
+    ]).read(shiftSchedulesControllerProvider.notifier);
     await controller.load();
     ShiftSchedule shift(String id) => ShiftSchedule(
         id: id,

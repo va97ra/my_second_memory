@@ -4,8 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../accounts/accounts.dart';
 import '../../memory_items/memory_items.dart';
 import '../../recurrence/recurrence.dart';
-import '../../../shared/state/encrypted_media_provider.dart';
-import '../../security/security.dart';
 import '../../shift_schedules/shift_schedules.dart';
 import '../../finance/finance.dart';
 import '../../tool_data/tool_data.dart';
@@ -29,102 +27,96 @@ final syncTombstoneStoreProvider =
     Provider<SyncTombstoneStore>((ref) => SyncTombstoneStore());
 
 final syncControllerProvider =
-    StateNotifierProvider<SyncController, SyncState>((ref) {
-  return SyncController(
-    remote: ref.watch(syncRemoteStoreProvider),
-    keyStore: ref.watch(syncKeyStoreProvider),
-    tombstones: ref.watch(syncTombstoneStoreProvider),
-    canAccessLocalData: () => ref.read(securitySessionProvider).canReadData,
-    atRestCipher: () => ref.read(securitySessionProvider).cipher,
-    onMediaArrived: () => ref.invalidate(mediaBytesProvider),
-    data: SyncDataSources(
-      readMemoryItems: () async {
-        await ref.read(memoryItemsControllerProvider.notifier).load();
-        return ref.read(memoryItemsControllerProvider);
-      },
-      replaceMemoryItems: (items) async {
-        await ref
-            .read(memoryItemsControllerProvider.notifier)
-            .replaceAll(items);
-        await ref
-            .read(recurrenceSeriesControllerProvider.notifier)
-            .reconcileOriginOverrides();
-      },
-      mergeMemoryItems: (items, baseline) async {
-        await ref
-            .read(memoryItemsControllerProvider.notifier)
-            .replaceAllFromSync(items, baseline: baseline);
-        await ref
-            .read(recurrenceSeriesControllerProvider.notifier)
-            .reconcileOriginOverrides();
-      },
-      readShiftSchedules: () async {
-        await ref.read(shiftSchedulesControllerProvider.notifier).load();
-        return ref.read(shiftSchedulesControllerProvider);
-      },
-      replaceShiftSchedules: (schedules) => ref
-          .read(shiftSchedulesControllerProvider.notifier)
-          .replaceAll(schedules),
-      mergeShiftSchedules: (schedules, baseline) => ref
-          .read(shiftSchedulesControllerProvider.notifier)
-          .replaceAllFromSync(schedules, baseline: baseline),
-      readAccounts: () async {
-        await ref.read(accountsControllerProvider.notifier).load();
-        return ref.read(accountsControllerProvider);
-      },
-      replaceAccounts: (accounts) =>
-          ref.read(accountsControllerProvider.notifier).replaceAll(accounts),
-      mergeAccounts: (accounts, baseline) => ref
-          .read(accountsControllerProvider.notifier)
-          .replaceAllFromSync(accounts, baseline: baseline),
-      readRecurrenceSeries: () async {
-        await ref.read(recurrenceSeriesControllerProvider.notifier).load();
-        return ref.read(recurrenceSeriesControllerProvider);
-      },
-      replaceRecurrenceSeries: (series) => ref
+    NotifierProvider<SyncController, SyncState>(SyncController.new);
+
+/// Откуда синхронизация берёт локальные данные и куда кладёт приехавшие:
+/// всё через контроллеры, чтобы экраны увидели перемену сразу.
+final syncDataSourcesProvider = Provider<SyncDataSources>((ref) {
+  return SyncDataSources(
+    readMemoryItems: () async {
+      await ref.read(memoryItemsControllerProvider.notifier).load();
+      return ref.read(memoryItemsControllerProvider);
+    },
+    replaceMemoryItems: (items) async {
+      await ref.read(memoryItemsControllerProvider.notifier).replaceAll(items);
+      await ref
           .read(recurrenceSeriesControllerProvider.notifier)
-          .replaceAll(series),
-      mergeRecurrenceSeries: (series, baseline) => ref
+          .reconcileOriginOverrides();
+    },
+    mergeMemoryItems: (items, baseline) async {
+      await ref
+          .read(memoryItemsControllerProvider.notifier)
+          .replaceAllFromSync(items, baseline: baseline);
+      await ref
           .read(recurrenceSeriesControllerProvider.notifier)
-          .replaceAllFromSync(series, baseline: baseline),
-      readRecurrenceExceptions: () async {
-        await ref.read(recurrenceExceptionControllerProvider.notifier).load();
-        return ref.read(recurrenceExceptionControllerProvider);
-      },
-      replaceRecurrenceExceptions: (exceptions) async {
-        await ref
-            .read(recurrenceExceptionControllerProvider.notifier)
-            .replaceAll(exceptions);
-        await ref
-            .read(recurrenceSeriesControllerProvider.notifier)
-            .reconcileOriginOverrides();
-      },
-      mergeRecurrenceExceptions: (exceptions, baseline) async {
-        await ref
-            .read(recurrenceExceptionControllerProvider.notifier)
-            .replaceAllFromSync(exceptions, baseline: baseline);
-        await ref
-            .read(recurrenceSeriesControllerProvider.notifier)
-            .reconcileOriginOverrides();
-      },
-      readFinanceEntries: () async {
-        await ref.read(financeControllerProvider.notifier).load();
-        return ref.read(financeControllerProvider);
-      },
-      replaceFinanceEntries: (entries) =>
-          ref.read(financeControllerProvider.notifier).replaceAll(entries),
-      mergeFinanceEntries: (entries, baseline) => ref
-          .read(financeControllerProvider.notifier)
-          .replaceAllFromSync(entries, baseline: baseline),
-      readToolCalculations: () async {
-        final tools = ref.read(toolDataControllerProvider.notifier);
-        await tools.load();
-        return tools.snapshot.calculations;
-      },
-      mergeToolCalculations: (items, baseline) => ref
-          .read(toolDataControllerProvider.notifier)
-          .replaceCalculationsFromSync(items, baseline: baseline),
-    ),
+          .reconcileOriginOverrides();
+    },
+    readShiftSchedules: () async {
+      await ref.read(shiftSchedulesControllerProvider.notifier).load();
+      return ref.read(shiftSchedulesControllerProvider);
+    },
+    replaceShiftSchedules: (schedules) => ref
+        .read(shiftSchedulesControllerProvider.notifier)
+        .replaceAll(schedules),
+    mergeShiftSchedules: (schedules, baseline) => ref
+        .read(shiftSchedulesControllerProvider.notifier)
+        .replaceAllFromSync(schedules, baseline: baseline),
+    readAccounts: () async {
+      await ref.read(accountsControllerProvider.notifier).load();
+      return ref.read(accountsControllerProvider);
+    },
+    replaceAccounts: (accounts) =>
+        ref.read(accountsControllerProvider.notifier).replaceAll(accounts),
+    mergeAccounts: (accounts, baseline) => ref
+        .read(accountsControllerProvider.notifier)
+        .replaceAllFromSync(accounts, baseline: baseline),
+    readRecurrenceSeries: () async {
+      await ref.read(recurrenceSeriesControllerProvider.notifier).load();
+      return ref.read(recurrenceSeriesControllerProvider);
+    },
+    replaceRecurrenceSeries: (series) => ref
+        .read(recurrenceSeriesControllerProvider.notifier)
+        .replaceAll(series),
+    mergeRecurrenceSeries: (series, baseline) => ref
+        .read(recurrenceSeriesControllerProvider.notifier)
+        .replaceAllFromSync(series, baseline: baseline),
+    readRecurrenceExceptions: () async {
+      await ref.read(recurrenceExceptionControllerProvider.notifier).load();
+      return ref.read(recurrenceExceptionControllerProvider);
+    },
+    replaceRecurrenceExceptions: (exceptions) async {
+      await ref
+          .read(recurrenceExceptionControllerProvider.notifier)
+          .replaceAll(exceptions);
+      await ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .reconcileOriginOverrides();
+    },
+    mergeRecurrenceExceptions: (exceptions, baseline) async {
+      await ref
+          .read(recurrenceExceptionControllerProvider.notifier)
+          .replaceAllFromSync(exceptions, baseline: baseline);
+      await ref
+          .read(recurrenceSeriesControllerProvider.notifier)
+          .reconcileOriginOverrides();
+    },
+    readFinanceEntries: () async {
+      await ref.read(financeControllerProvider.notifier).load();
+      return ref.read(financeControllerProvider);
+    },
+    replaceFinanceEntries: (entries) =>
+        ref.read(financeControllerProvider.notifier).replaceAll(entries),
+    mergeFinanceEntries: (entries, baseline) => ref
+        .read(financeControllerProvider.notifier)
+        .replaceAllFromSync(entries, baseline: baseline),
+    readToolCalculations: () async {
+      final tools = ref.read(toolDataControllerProvider.notifier);
+      await tools.load();
+      return tools.snapshot.calculations;
+    },
+    mergeToolCalculations: (items, baseline) => ref
+        .read(toolDataControllerProvider.notifier)
+        .replaceCalculationsFromSync(items, baseline: baseline),
   );
 });
 

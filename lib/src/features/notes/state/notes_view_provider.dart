@@ -30,8 +30,9 @@ class NotesViewState {
   }
 }
 
-class NotesViewController extends StateNotifier<NotesViewState> {
-  NotesViewController() : super(const NotesViewState());
+class NotesViewController extends Notifier<NotesViewState> {
+  @override
+  NotesViewState build() => const NotesViewState();
 
   void toggleSearch() => state = state.copyWith(search: state.search.toggled());
 
@@ -42,9 +43,8 @@ class NotesViewController extends StateNotifier<NotesViewState> {
       state = state.copyWith(filter: filter);
 }
 
-final notesViewProvider =
-    StateNotifierProvider<NotesViewController, NotesViewState>(
-  (ref) => NotesViewController(),
+final notesViewProvider = NotifierProvider<NotesViewController, NotesViewState>(
+  NotesViewController.new,
 );
 
 /// Какие фильтры предлагает окно записок: все, в работе, выполненные и только

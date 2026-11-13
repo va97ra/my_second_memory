@@ -7,10 +7,7 @@ import 'package:ez_data/ez_data.dart';
 import '../../security/security.dart';
 import 'recurrence_exception_controller.dart';
 import 'recurrence_series_controller.dart';
-import '../../sync/sync.dart';
 import '../../../app/local_storage_scope_provider.dart';
-import '../../../shared/state/media_cleanup_provider.dart';
-import '../../../shared/state/notification_providers.dart';
 
 final plainRecurrenceRepositoryProvider = Provider<RecurrenceRepository>((ref) {
   return ref.watch(localStorageScopeProvider).recurrenceRepository;
@@ -52,24 +49,14 @@ final recurrenceExceptionRepositoryProvider =
   return plain;
 });
 
-final recurrenceExceptionControllerProvider = StateNotifierProvider<
-    RecurrenceExceptionController, List<RecurrenceOccurrenceException>>((ref) {
-  return RecurrenceExceptionController(
-    ref.watch(recurrenceExceptionRepositoryProvider),
-    ref.watch(syncMutationObserverProvider),
-  );
-});
+final recurrenceExceptionControllerProvider = NotifierProvider<
+    RecurrenceExceptionController, List<RecurrenceOccurrenceException>>(
+  RecurrenceExceptionController.new,
+);
 
 final recurrenceSeriesControllerProvider =
-    StateNotifierProvider<RecurrenceSeriesController, List<RecurrenceSeries>>(
-  (ref) => RecurrenceSeriesController(
-    ref.watch(recurrenceRepositoryProvider),
-    ref.watch(recurrenceExceptionControllerProvider.notifier),
-    ref.watch(memoryItemsControllerProvider.notifier),
-    ref.watch(notificationServiceProvider),
-    ref.watch(syncMutationObserverProvider),
-    ref.watch(mediaCleanupProvider),
-  ),
+    NotifierProvider<RecurrenceSeriesController, List<RecurrenceSeries>>(
+  RecurrenceSeriesController.new,
 );
 
 final recurrenceLoadProvider = FutureProvider<void>((ref) {

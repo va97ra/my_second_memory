@@ -22,9 +22,6 @@ void main() {
     final restored = ToolDataSnapshot.fromJson(original.toJson());
 
     expect(restored.calculations.single.version, 1);
-    expect(
-        restored.calculations.single.payload, isA<SavedConversionPayload>());
+    expect(restored.calculations.single.payload, isA<SavedConversionPayload>());
   });
-
-
 }

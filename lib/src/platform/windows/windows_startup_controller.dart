@@ -7,24 +7,34 @@ final windowsDesktopPlatformProvider = Provider<WindowsDesktopPlatform>(
 );
 
 final windowsStartupControllerProvider =
-    StateNotifierProvider<WindowsStartupController, AsyncValue<bool>>((ref) {
-  return WindowsStartupController(ref.watch(windowsDesktopPlatformProvider));
-});
+    NotifierProvider<WindowsStartupController, AsyncValue<bool>>(
+  WindowsStartupController.new,
+);
 
-class WindowsStartupController extends StateNotifier<AsyncValue<bool>> {
-  WindowsStartupController(this._platform) : super(const AsyncLoading()) {
-    load();
+class WindowsStartupController extends Notifier<AsyncValue<bool>> {
+  late final WindowsDesktopPlatform _platform;
+
+  @override
+  AsyncValue<bool> build() {
+    _platform = ref.watch(windowsDesktopPlatformProvider);
+    if (!_platform.isSupported) return const AsyncData(false);
+    _read();
+    return const AsyncLoading();
   }
 
-  final WindowsDesktopPlatform _platform;
-
+  /// Перечитывает, включён ли автозапуск: его могли поменять мимо приложения.
   Future<void> load() async {
     if (!_platform.isSupported) {
       state = const AsyncData(false);
       return;
     }
     state = const AsyncLoading();
-    state = await AsyncValue.guard(_platform.isLaunchAtStartupEnabled);
+    await _read();
+  }
+
+  Future<void> _read() async {
+    final enabled = await AsyncValue.guard(_platform.isLaunchAtStartupEnabled);
+    if (ref.mounted) state = enabled;
   }
 
   Future<bool> setEnabled(bool enabled) async {

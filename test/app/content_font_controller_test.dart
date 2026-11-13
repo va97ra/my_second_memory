@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ezhednevnik_v2/src/app/theme/app_content_font_controller.dart';
+import '../support/provider_test_support.dart';
 
 void main() {
   test('content font choice is saved and restored', () async {
     SharedPreferences.setMockInitialValues({});
 
-    final controller = AppContentFontController();
+    final controller =
+        testContainer().read(appContentFontControllerProvider.notifier);
     await controller.setStyle(AppContentFontStyle.lifehack);
 
     expect(controller.state, AppContentFontStyle.lifehack);
@@ -18,7 +20,8 @@ void main() {
       'lifehack',
     );
 
-    final restored = AppContentFontController();
+    final restored =
+        testContainer().read(appContentFontControllerProvider.notifier);
     await Future<void>.delayed(Duration.zero);
     expect(restored.state, AppContentFontStyle.lifehack);
   });

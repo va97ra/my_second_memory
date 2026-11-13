@@ -13,7 +13,8 @@ void main() {
 
   test('неоформленный текст хранится как был', () {
     expect(StyledText.unstyled('Купить хлеб').toStored(), 'Купить хлеб');
-    expect(StyledText.parse('Купить <хлеб> & соль').plain, 'Купить <хлеб> & соль',
+    expect(
+        StyledText.parse('Купить <хлеб> & соль').plain, 'Купить <хлеб> & соль',
         reason: 'без метки в начале это просто текст, а не разметка');
   });
 
@@ -29,7 +30,8 @@ void main() {
   });
 
   test('знаки разметки внутри текста не ломают его', () {
-    final text = StyledText.unstyled('a < b & c > d').restyle(0, 1, (_) => bold);
+    final text =
+        StyledText.unstyled('a < b & c > d').restyle(0, 1, (_) => bold);
     expect(StyledText.parse(text.toStored()).plain, 'a < b & c > d');
   });
 
@@ -39,8 +41,10 @@ void main() {
     expect(edited.plain.substring(runs.first.start, runs.first.end), 'хлеб');
     expect(runs.first.mark, bold);
     final typed = styled().edited('Купить хлеба и молоко');
-    expect(typed.plain.substring(typed.runs().first.start, typed.runs().first.end),
-        'хлеба', reason: 'дописанное к жирному слову — тоже жирное');
+    expect(
+        typed.plain.substring(typed.runs().first.start, typed.runs().first.end),
+        'хлеба',
+        reason: 'дописанное к жирному слову — тоже жирное');
   });
 
   test('края без пробелов, оформление на месте', () {

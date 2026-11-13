@@ -2,12 +2,15 @@ import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ezhednevnik_v2/src/features/tool_data/tool_data.dart';
+import '../../support/provider_test_support.dart';
+import 'package:ezhednevnik_v2/src/features/tool_data/state/tool_data_controller.dart';
 
 void main() {
-  test('calculations can be saved, changed and deleted',
-      () async {
+  test('calculations can be saved, changed and deleted', () async {
     final repository = _ToolRepository();
-    final controller = ToolDataController(repository);
+    final controller = testContainer(overrides: [
+      toolDataRepositoryProvider.overrideWithValue(repository)
+    ]).read(toolDataControllerProvider.notifier);
     final date = DateTime.utc(2026, 8, 30);
     final calculation = SavedToolCalculation(
       id: 'conversion-1',
@@ -25,7 +28,6 @@ void main() {
     await controller.saveCalculation(calculation);
     await controller.renameCalculation(calculation.id, 'Замер');
     expect(repository.snapshot.calculations.single.name, 'Замер');
-
 
     await controller.deleteCalculation(calculation.id);
     expect(repository.snapshot.calculations, isEmpty);

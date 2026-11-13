@@ -1,12 +1,12 @@
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_exception_controller.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_series_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/recurrence_test_support.dart';
+import '../../support/provider_test_support.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_providers.dart';
 
 void main() {
   test('load repairs stale yearly and monthly templates from their origins',
@@ -85,25 +85,12 @@ void main() {
       LocalRecurrenceExceptionRepository.storageKey: '[]',
     });
     final sync = DeletionObserver({});
-    final memories = MemoryItemsController(
-      const LocalMemoryRepository(),
-      null,
-      null,
-      sync,
-    );
-    final exceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-      sync,
-    );
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    final controller = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions,
-      memories,
-      reminders,
-      sync,
-    );
+    final container = testContainer(sync: sync);
+    final memories = container.read(memoryItemsControllerProvider.notifier);
+    final exceptions =
+        container.read(recurrenceExceptionControllerProvider.notifier);
+    final controller =
+        container.read(recurrenceSeriesControllerProvider.notifier);
 
     await controller.load();
 
@@ -219,25 +206,12 @@ void main() {
           encodeExceptions([existingException]),
     });
     final sync = DeletionObserver({});
-    final memories = MemoryItemsController(
-      const LocalMemoryRepository(),
-      null,
-      null,
-      sync,
-    );
-    final exceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-      sync,
-    );
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    final controller = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions,
-      memories,
-      reminders,
-      sync,
-    );
+    final container = testContainer(sync: sync);
+    final memories = container.read(memoryItemsControllerProvider.notifier);
+    final exceptions =
+        container.read(recurrenceExceptionControllerProvider.notifier);
+    final controller =
+        container.read(recurrenceSeriesControllerProvider.notifier);
 
     await controller.load();
 
@@ -296,18 +270,9 @@ void main() {
       LocalRecurrenceRepository.storageKey: encodeSeries([series]),
       LocalRecurrenceExceptionRepository.storageKey: '[]',
     });
-    final memories = MemoryItemsController(const LocalMemoryRepository());
-    final exceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-    );
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    final controller = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions,
-      memories,
-      reminders,
-    );
+    final container = testContainer();
+    final controller =
+        container.read(recurrenceSeriesControllerProvider.notifier);
 
     await controller.load();
 

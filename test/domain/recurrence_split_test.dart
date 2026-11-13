@@ -62,7 +62,8 @@ void main() {
 
   test('editing a later occurrence ends the old series a day before', () {
     final current = _series();
-    final june = _record(id: 'series_20260610', memoryDate: DateTime(2026, 6, 10));
+    final june =
+        _record(id: 'series_20260610', memoryDate: DateTime(2026, 6, 10));
 
     final split = splitSeriesForFutureEdit(
       current: current,
@@ -99,8 +100,7 @@ void main() {
     expect(split.replacement.startDate, DateTime(2026, 6, 15));
   });
 
-  test('the subscription term follows only a monthly payment subscription',
-      () {
+  test('the subscription term follows only a monthly payment subscription', () {
     final term = DateTime(2026, 9, 10);
     final subscription = _series(
       subscriptionEndDate: term,

@@ -33,41 +33,39 @@ final memoryRepositoryProvider = Provider<MemoryRepository>((ref) {
 });
 
 final memoryItemsControllerProvider =
-    StateNotifierProvider<MemoryItemsController, List<MemoryItem>>((ref) {
-  return MemoryItemsController(
-    ref.watch(memoryRepositoryProvider),
-    ref.watch(notificationServiceProvider),
-    ref.watch(mediaCleanupProvider),
-    ref.watch(syncMutationObserverProvider),
-  );
-});
+    NotifierProvider<MemoryItemsController, List<MemoryItem>>(
+  MemoryItemsController.new,
+);
 
 final memoryItemsLoadProvider = FutureProvider<void>((ref) {
   return ref.watch(memoryItemsControllerProvider.notifier).load();
 });
 
-class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
-  MemoryItemsController(
-    this._repository, [
-    ReminderScheduler? reminders,
-    this._media,
-    this._sync,
-  ])  : _reminders = MemoryReminders(reminders),
-        super(const []) {
-    _loadFuture = _load();
-  }
-
-  final MemoryRepository _repository;
-  final MemoryReminders _reminders;
-  final MediaCleanup? _media;
-  final SyncMutationObserver? _sync;
+class MemoryItemsController extends Notifier<List<MemoryItem>> {
+  late final MemoryRepository _repository;
+  late final MemoryReminders _reminders;
+  late final SyncMutationObserver _sync;
   late final Future<void> _loadFuture;
   final _writes = SequentialTaskQueue();
 
+  @override
+  List<MemoryItem> build() {
+    _repository = ref.watch(memoryRepositoryProvider);
+    _reminders = MemoryReminders(ref.watch(notificationServiceProvider));
+    _sync = ref.watch(syncMutationObserverProvider);
+    _loadFuture = _load();
+    return const [];
+  }
+
   Future<void> load() => _loadFuture;
+
+  /// Уборка берётся в момент удаления, а не при сборке: она сама читает
+  /// записи, серии и правки дат, и подписка на неё замкнула бы круг.
+  MediaCleanup get _media => ref.read(mediaCleanupProvider);
 
   Future<void> _load() async {
     final items = await _repository.loadAll();
+    if (!ref.mounted) return;
     state = _sort(items);
     unawaited(_reminders.reconcile(state));
   }
@@ -82,7 +80,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     await _loadFuture;
     state = _sort([...state, item]);
     await _writes.add(() => _repository.upsert(item));
-    _sync?.memoryChanged();
+    _sync.memoryChanged();
     if (wantsReminder(item)) unawaited(_reminders.schedule(item));
   }
 
@@ -95,7 +93,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     };
     state = _sort(itemsById.values.toList());
     await _writes.add(() => _repository.upsertAll(items));
-    _sync?.memoryChanged();
+    _sync.memoryChanged();
     unawaited(_reminders.scheduleAll(items));
   }
 
@@ -107,9 +105,9 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
         if (existing.id == item.id) item else existing,
     ]);
     await _writes.add(() => _repository.upsert(item));
-    _sync?.memoryChanged();
+    _sync.memoryChanged();
     if (previous != null) {
-      await _media?.afterUpdate(previous: previous, current: item);
+      await _media.afterUpdate(previous: previous, current: item);
     }
     if (wantsReminder(item)) {
       unawaited(_reminders.schedule(item));
@@ -131,7 +129,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     final archived = _findById(id);
     if (archived != null) {
       await _writes.add(() => _repository.upsert(archived));
-      _sync?.memoryChanged();
+      _sync.memoryChanged();
     }
     unawaited(_reminders.cancel(id));
   }
@@ -149,7 +147,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     final restored = _findById(id);
     if (restored != null) {
       await _writes.add(() => _repository.upsert(restored));
-      _sync?.memoryChanged();
+      _sync.memoryChanged();
       if (wantsReminder(restored)) unawaited(_reminders.schedule(restored));
     }
   }
@@ -170,7 +168,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     final updated = _findById(id);
     if (updated != null) {
       await _writes.add(() => _repository.upsert(updated));
-      _sync?.memoryChanged();
+      _sync.memoryChanged();
     }
     if (updated == null || updated.status != MemoryStatus.active) {
       unawaited(_reminders.cancel(id));
@@ -186,14 +184,14 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     // Persist the cloud deletion before removing the local row. If the app is
     // interrupted between these writes, the next sync can still finish the
     // deletion instead of downloading the stale cloud copy again.
-    await _sync?.memoryDeleted(id, deletedAt);
+    await _sync.memoryDeleted(id, deletedAt);
     state = [
       for (final item in state)
         if (item.id != id) item,
     ];
     await _writes.add(() => _repository.delete(id));
     if (removed != null) {
-      await _media?.release(removed.mediaReferences);
+      await _media.release(removed.mediaReferences);
     }
     unawaited(_reminders.cancel(id));
   }
@@ -205,7 +203,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   Future<void> retireRow(String id) async {
     await _loadFuture;
     if (!state.any((item) => item.id == id)) return;
-    await _sync?.memoryDeleted(id, DateTime.now());
+    await _sync.memoryDeleted(id, DateTime.now());
     state = [
       for (final item in state)
         if (item.id != id) item,
@@ -267,8 +265,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
   ) async {
     // Отметки читаются одним разом: каждое чтение разбирает весь список, и
     // по разу на запись это тысячи разборов на одно слияние.
-    final deletions =
-        await _sync?.memoryDeletions() ?? const <String, DateTime>{};
+    final deletions = await _sync.memoryDeletions();
     return items.where((item) {
       final deletedAt = deletions[item.id];
       return deletedAt == null || item.updatedAt.isAfter(deletedAt);
@@ -313,7 +310,7 @@ class MemoryItemsController extends StateNotifier<List<MemoryItem>> {
     if (removedIds.isEmpty) return;
     final deletedAt = DateTime.now();
     for (final id in removedIds) {
-      await _sync?.memoryDeleted(id, deletedAt);
+      await _sync.memoryDeleted(id, deletedAt);
     }
     state = _sort([
       for (final item in state)

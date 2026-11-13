@@ -60,7 +60,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ежемесячный информер'), findsNothing);
     expect(find.text('Ежегодный информер'), findsOneWidget);
-
   });
 
   testWidgets('feed marks a projected occurrence done through its series',

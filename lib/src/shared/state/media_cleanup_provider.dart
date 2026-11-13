@@ -14,7 +14,9 @@ final mediaStorageProvider = Provider<MediaStorage>((ref) => MediaStorage());
 ///
 /// Списки читаются в момент уборки, а не при сборке провайдера: контроллеры
 /// записей и повторов сами пользуются уборкой, и подписка на них отсюда
-/// замкнула бы круг.
+/// замкнула бы круг. По той же причине контроллеры не подписаны на уборку, а
+/// берут её, когда удаляют: подписка с любой стороны делает из двух чтений
+/// круг зависимостей.
 final Provider<MediaCleanup> mediaCleanupProvider = Provider((ref) {
   return MediaCleanup(
     ref.watch(mediaStorageProvider),

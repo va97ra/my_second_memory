@@ -2,12 +2,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/shift_schedules/state/shift_schedules_controller.dart';
+import '../../support/provider_test_support.dart';
+import 'package:ezhednevnik_v2/src/shared/state/notification_providers.dart';
 
 void main() {
   test('schedule changes reconcile shift alarms', () async {
     final repository = _ScheduleRepository();
     final alarms = _AlarmScheduler();
-    final controller = ShiftSchedulesController(repository, alarms);
+    final controller = testContainer(overrides: [
+      shiftScheduleRepositoryProvider.overrideWithValue(repository),
+      shiftAlarmSchedulerProvider.overrideWithValue(alarms)
+    ]).read(shiftSchedulesControllerProvider.notifier);
     await controller.load();
     final schedule = ShiftSchedule(
       id: 'work',
@@ -69,7 +74,9 @@ void main() {
         ),
       ];
 
-    final controller = ShiftSchedulesController(repository);
+    final controller = testContainer(overrides: [
+      shiftScheduleRepositoryProvider.overrideWithValue(repository)
+    ]).read(shiftSchedulesControllerProvider.notifier);
     await controller.load();
 
     expect(controller.state, hasLength(1));
@@ -102,7 +109,9 @@ void main() {
         ),
       ];
 
-    final controller = ShiftSchedulesController(repository);
+    final controller = testContainer(overrides: [
+      shiftScheduleRepositoryProvider.overrideWithValue(repository)
+    ]).read(shiftSchedulesControllerProvider.notifier);
     await controller.load();
 
     expect(controller.state, hasLength(2));
@@ -132,7 +141,9 @@ void main() {
         ),
       ];
 
-    final controller = ShiftSchedulesController(repository);
+    final controller = testContainer(overrides: [
+      shiftScheduleRepositoryProvider.overrideWithValue(repository)
+    ]).read(shiftSchedulesControllerProvider.notifier);
     await controller.load();
 
     expect(controller.state, hasLength(2));

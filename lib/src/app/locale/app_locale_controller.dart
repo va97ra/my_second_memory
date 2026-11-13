@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final appLocaleControllerProvider =
-    StateNotifierProvider<AppLocaleController, Locale>(
-  (ref) => AppLocaleController(),
-);
+    NotifierProvider<AppLocaleController, Locale>(AppLocaleController.new);
 
-class AppLocaleController extends StateNotifier<Locale> {
-  AppLocaleController() : super(const Locale('ru'));
+class AppLocaleController extends Notifier<Locale> {
+  @override
+  Locale build() => const Locale('ru');
 
   void setRussian() => state = const Locale('ru');
 

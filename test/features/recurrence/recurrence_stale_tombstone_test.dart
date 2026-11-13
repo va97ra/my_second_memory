@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_exception_controller.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_series_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/provider_test_support.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_providers.dart';
 
 /// Reproduces the exact stored state of the stuck subscription: the origin item
 /// is alive, its series starts on the same day, there is no skip marker left,
@@ -79,21 +79,12 @@ void main() {
     };
     final observer = _Observer(memoryDeletions, exceptionDeletions);
 
-    final memories = MemoryItemsController(
-        const LocalMemoryRepository(), null, null, observer);
-    final exceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-      observer,
-    );
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    final controller = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions,
-      memories,
-      reminders,
-      observer,
-    );
+    final container = testContainer(sync: observer);
+    final memories = container.read(memoryItemsControllerProvider.notifier);
+    final exceptions =
+        container.read(recurrenceExceptionControllerProvider.notifier);
+    final controller =
+        container.read(recurrenceSeriesControllerProvider.notifier);
     await controller.load();
 
     final visible = const RecurrenceProjectionService().itemsForRange(
@@ -126,21 +117,12 @@ void main() {
     );
 
     // Restart.
-    final memories2 = MemoryItemsController(
-        const LocalMemoryRepository(), null, null, observer);
-    final exceptions2 = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-      observer,
-    );
-    final reminders2 = NotificationService();
-    addTearDown(reminders2.dispose);
-    final controller2 = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions2,
-      memories2,
-      reminders2,
-      observer,
-    );
+    final container2 = testContainer(sync: observer);
+    final memories2 = container2.read(memoryItemsControllerProvider.notifier);
+    final exceptions2 =
+        container2.read(recurrenceExceptionControllerProvider.notifier);
+    final controller2 =
+        container2.read(recurrenceSeriesControllerProvider.notifier);
     await controller2.load();
 
     final after = const RecurrenceProjectionService().itemsForRange(
@@ -190,21 +172,11 @@ void main() {
 
     final exceptionDeletions = <String, DateTime>{};
     final observer = _Observer(<String, DateTime>{}, exceptionDeletions);
-    final memories = MemoryItemsController(
-        const LocalMemoryRepository(), null, null, observer);
-    final exceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-      observer,
-    );
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    final controller = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions,
-      memories,
-      reminders,
-      observer,
-    );
+    final container = testContainer(sync: observer);
+    final exceptions =
+        container.read(recurrenceExceptionControllerProvider.notifier);
+    final controller =
+        container.read(recurrenceSeriesControllerProvider.notifier);
     await controller.load();
 
     final projected = occurrenceFromSeries(controller.state.single, day);

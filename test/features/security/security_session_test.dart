@@ -1,6 +1,7 @@
 import 'package:ez_data/ez_data.dart';
 import 'package:ezhednevnik_v2/src/features/security/state/security_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/provider_test_support.dart';
 
 class _SessionSecurityService extends SecurityService {
   @override
@@ -26,7 +27,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('lock clears only the in-memory unlock session', () async {
-    final controller = SecuritySessionController(_SessionSecurityService());
+    final controller = testContainer(overrides: [
+      securityServiceProvider.overrideWithValue(_SessionSecurityService())
+    ]).read(securitySessionProvider.notifier);
     await controller.load();
     expect(await controller.unlockWithPin('1234'), isTrue);
     final firstCipher = controller.state.cipher!;
@@ -43,11 +46,12 @@ void main() {
     expect(await controller.unlockWithPin('1234'), isTrue);
     expect(controller.state.isUnlocked, isTrue);
     expect(controller.state.cipher, isNot(same(firstCipher)));
-    controller.dispose();
   });
 
   test('wrong pin does not replace an unlocked session', () async {
-    final controller = SecuritySessionController(_SessionSecurityService());
+    final controller = testContainer(overrides: [
+      securityServiceProvider.overrideWithValue(_SessionSecurityService())
+    ]).read(securitySessionProvider.notifier);
     await controller.load();
     await controller.unlockWithPin('1234');
     final cipher = controller.state.cipher!;
@@ -57,6 +61,5 @@ void main() {
     expect(controller.state.isUnlocked, isTrue);
     expect(controller.state.cipher, same(cipher));
     expect(cipher.isDestroyed, isFalse);
-    controller.dispose();
   });
 }

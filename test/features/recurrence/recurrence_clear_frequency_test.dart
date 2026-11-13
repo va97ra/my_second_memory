@@ -7,6 +7,8 @@ import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_exceptio
 import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_series_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/provider_test_support.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_providers.dart';
 
 const _seriesId = 'series';
 const _originId = 'origin';
@@ -29,18 +31,12 @@ class _Stack {
 }
 
 Future<_Stack> _launch() async {
-  final memories = MemoryItemsController(const LocalMemoryRepository());
-  final exceptions = RecurrenceExceptionController(
-    const LocalRecurrenceExceptionRepository(),
-  );
-  final reminders = NotificationService();
-  addTearDown(reminders.dispose);
-  final controller = RecurrenceSeriesController(
-    const LocalRecurrenceRepository(),
-    exceptions,
-    memories,
-    reminders,
-  );
+  final container = testContainer();
+  final memories = container.read(memoryItemsControllerProvider.notifier);
+  final exceptions =
+      container.read(recurrenceExceptionControllerProvider.notifier);
+  final controller =
+      container.read(recurrenceSeriesControllerProvider.notifier);
   await controller.load();
   return _Stack(memories, exceptions, controller);
 }
@@ -115,10 +111,12 @@ void main() {
       () async {
     seed();
     final app = await _launch();
-    final third = app.projected(
-      DateTime(2026, 5, 12),
-      DateTime(2026, 5, 12),
-    ).single;
+    final third = app
+        .projected(
+          DateTime(2026, 5, 12),
+          DateTime(2026, 5, 12),
+        )
+        .single;
 
     await app.controller.clearFrequency(third);
 
@@ -137,7 +135,9 @@ void main() {
     seed();
     final app = await _launch();
     await app.controller.saveOccurrenceOverride(
-      app.projected(DateTime(2026, 4, 12), DateTime(2026, 4, 12)).single
+      app
+          .projected(DateTime(2026, 4, 12), DateTime(2026, 4, 12))
+          .single
           .copyWith(title: 'Интернет со скидкой'),
       occurrenceDate: DateTime(2026, 4, 12),
     );

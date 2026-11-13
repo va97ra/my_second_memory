@@ -112,12 +112,7 @@ void main() {
             shiftScheduleRepositoryProvider.overrideWithValue(
               FakeShiftScheduleRepository(),
             ),
-            appThemeControllerProvider.overrideWith(
-              (ref) => AppThemeController(
-                initialStyle: style,
-                loadOnStart: false,
-              ),
-            ),
+            appThemeControllerProvider.overrideWithBuild((_, __) => style),
           ],
           child: const EzhednevnikV2App(),
         ),

@@ -33,7 +33,7 @@ class FinanceScreen extends ConsumerWidget {
               month: month,
               onCurrency: (value) =>
                   ref.read(financeCurrencyProvider.notifier).select(value),
-              onMonthDelta: (delta) => _changeMonth(ref, month, delta),
+              onMonthDelta: (delta) => _changeMonth(ref, delta),
               onConverter: () => showCurrencyConverterSheet(
                 context,
                 ledgerCurrency: currency,
@@ -101,9 +101,8 @@ class FinanceScreen extends ConsumerWidget {
     );
   }
 
-  void _changeMonth(WidgetRef ref, DateTime month, int offset) {
-    ref.read(financeMonthProvider.notifier).state =
-        DateTime(month.year, month.month + offset);
+  void _changeMonth(WidgetRef ref, int offset) {
+    ref.read(financeMonthProvider.notifier).shift(offset);
   }
 
   Future<void> _edit(BuildContext context, WidgetRef ref, FinanceEntryKind kind,

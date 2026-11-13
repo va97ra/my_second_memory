@@ -26,7 +26,8 @@ final shiftScheduleRepositoryProvider =
 });
 
 /// Один график по идентификатору.
-final shiftScheduleByIdProvider = Provider.family<ShiftSchedule?, String>((ref, id) {
+final shiftScheduleByIdProvider =
+    Provider.family<ShiftSchedule?, String>((ref, id) {
   return ref.watch(
     shiftSchedulesControllerProvider.select((schedules) {
       for (final schedule in schedules) {
@@ -38,25 +39,25 @@ final shiftScheduleByIdProvider = Provider.family<ShiftSchedule?, String>((ref, 
 });
 
 final shiftSchedulesControllerProvider =
-    StateNotifierProvider<ShiftSchedulesController, List<ShiftSchedule>>((ref) {
-  return ShiftSchedulesController(
-    ref.watch(shiftScheduleRepositoryProvider),
-    ref.watch(shiftAlarmSchedulerProvider),
-    ref.watch(syncMutationObserverProvider),
-  );
-});
+    NotifierProvider<ShiftSchedulesController, List<ShiftSchedule>>(
+  ShiftSchedulesController.new,
+);
 
-class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
-  ShiftSchedulesController(this._repository, [this._alarms, this._sync])
-      : super(const []) {
-    _loadFuture = _load();
-  }
-
-  final ShiftScheduleRepository _repository;
-  final ShiftAlarmScheduler? _alarms;
-  final SyncMutationObserver? _sync;
+class ShiftSchedulesController extends Notifier<List<ShiftSchedule>> {
+  late final ShiftScheduleRepository _repository;
+  late final ShiftAlarmScheduler _alarms;
+  late final SyncMutationObserver _sync;
   late final Future<void> _loadFuture;
   final _writes = SequentialTaskQueue();
+
+  @override
+  List<ShiftSchedule> build() {
+    _repository = ref.watch(shiftScheduleRepositoryProvider);
+    _alarms = ref.watch(shiftAlarmSchedulerProvider);
+    _sync = ref.watch(syncMutationObserverProvider);
+    _loadFuture = _load();
+    return const [];
+  }
 
   Future<void> load() => _loadFuture;
 
@@ -77,6 +78,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
     if (needsTimestampMigration || deduplication.duplicateIds.isNotEmpty) {
       await _repository.saveSchedules(schedules);
     }
+    if (!ref.mounted) return;
     state = _sort(schedules);
     unawaited(_safeReconcileAlarms());
   }
@@ -88,7 +90,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
       schedule.copyWith(updatedAt: DateTime.now()),
     ]).schedules);
     await _persist();
-    _sync?.shiftSchedulesChanged();
+    _sync.shiftSchedulesChanged();
     await _safeReconcileAlarms(force: true);
   }
 
@@ -100,7 +102,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
         if (existing.id == schedule.id) updated else existing,
     ]).schedules);
     await _persist();
-    _sync?.shiftSchedulesChanged();
+    _sync.shiftSchedulesChanged();
     await _safeReconcileAlarms(force: true);
   }
 
@@ -118,7 +120,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
           schedule,
     ]).schedules);
     await _persist();
-    _sync?.shiftSchedulesChanged();
+    _sync.shiftSchedulesChanged();
     await _safeReconcileAlarms(force: true);
   }
 
@@ -130,7 +132,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
         if (schedule.id != id) schedule,
     ];
     await _persist();
-    await _sync?.shiftScheduleDeleted(id, deletedAt);
+    await _sync.shiftScheduleDeleted(id, deletedAt);
     await _safeReconcileAlarms(force: true);
   }
 
@@ -172,7 +174,7 @@ class ShiftSchedulesController extends StateNotifier<List<ShiftSchedule>> {
 
   Future<void> _safeReconcileAlarms({bool force = false}) async {
     try {
-      await _alarms?.reconcileShiftAlarms(state, force: force);
+      await _alarms.reconcileShiftAlarms(state, force: force);
     } catch (_) {
       // The schedule remains saved if Android rejects an exact alarm.
     }

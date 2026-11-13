@@ -8,13 +8,28 @@ import 'package:ez_data/ez_data.dart';
 import '../../../shared/state/media_cleanup.dart';
 import 'recurrence_exception_controller.dart';
 import 'recurrence_legacy_repair.dart';
+import 'recurrence_providers.dart';
+import '../../sync/sync.dart';
+import '../../../shared/state/media_cleanup_provider.dart';
+import '../../../shared/state/notification_providers.dart';
 
-class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
+class RecurrenceSeriesController extends Notifier<List<RecurrenceSeries>>
     implements RecurrenceRepairHost {
-  RecurrenceSeriesController(
-      this._repository, this._exceptions, this._memoryItems, this._reminders,
-      [this._sync, this._media])
-      : super(const []) {
+  late final RecurrenceRepository _repository;
+  late final RecurrenceExceptionController _exceptions;
+  late final MemoryItemsController _memoryItems;
+  late final ReminderScheduler _reminders;
+  late final SyncMutationObserver _sync;
+  late final Future<void> _loadFuture;
+  late final RecurrenceLegacyRepair _legacyRepair;
+
+  @override
+  List<RecurrenceSeries> build() {
+    _repository = ref.watch(recurrenceRepositoryProvider);
+    _exceptions = ref.watch(recurrenceExceptionControllerProvider.notifier);
+    _memoryItems = ref.watch(memoryItemsControllerProvider.notifier);
+    _reminders = ref.watch(notificationServiceProvider);
+    _sync = ref.watch(syncMutationObserverProvider);
     _legacyRepair = RecurrenceLegacyRepair(
       host: this,
       repository: _repository,
@@ -23,22 +38,20 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
       sync: _sync,
     );
     _loadFuture = _load();
+    return const [];
   }
-
-  final RecurrenceRepository _repository;
-  final RecurrenceExceptionController _exceptions;
-  final MemoryItemsController _memoryItems;
-  final ReminderScheduler _reminders;
-  final SyncMutationObserver? _sync;
-  final MediaCleanup? _media;
-  late final Future<void> _loadFuture;
-  late final RecurrenceLegacyRepair _legacyRepair;
 
   Future<void> load() => _loadFuture;
 
+  /// Уборка берётся в момент удаления, а не при сборке: она сама читает
+  /// записи, серии и правки дат, и подписка на неё замкнула бы круг.
+  MediaCleanup get _media => ref.read(mediaCleanupProvider);
+
   Future<void> _load() async {
     await Future.wait([_memoryItems.load(), _exceptions.load()]);
-    state = await _repository.loadAll();
+    final series = await _repository.loadAll();
+    if (!ref.mounted) return;
+    state = series;
     await _legacyRepair.runOnLoad();
     unawaited(_reconcileRecurringReminders());
   }
@@ -57,7 +70,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     );
     await _repository.upsert(series);
     state = _replace(series);
-    _sync?.recurrenceSeriesChanged();
+    _sync.recurrenceSeriesChanged();
     // Write the series before retiring the row, so an interruption can never
     // leave the record with no representation at all.
     await _retireOriginRow(series);
@@ -83,7 +96,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     // Make the cloud deletion durable before removing the local series. If
     // the process is interrupted during the local cleanup, the next sync must
     // finish the deletion instead of downloading the live cloud row again.
-    await _sync?.recurrenceSeriesDeleted(seriesId, now);
+    await _sync.recurrenceSeriesDeleted(seriesId, now);
     // The series held the record, so hand it back a standalone row before the
     // series goes. Without this the record would have no representation left.
     final series = _find(seriesId);
@@ -119,7 +132,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
       for (final series in state)
         if (series.id != seriesId) series
     ];
-    await _media?.release(held);
+    await _media.release(held);
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -133,7 +146,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     );
     await _repository.upsert(updated);
     state = _replace(updated);
-    _sync?.recurrenceSeriesChanged();
+    _sync.recurrenceSeriesChanged();
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -165,7 +178,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     );
     await _repository.upsert(updated);
     state = _replace(updated);
-    _sync?.recurrenceSeriesChanged();
+    _sync.recurrenceSeriesChanged();
     unawaited(_reconcileRecurringReminders());
     return updated;
   }
@@ -194,16 +207,16 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     if (!split.splits) {
       await _repository.upsert(split.replacement);
       state = _replace(split.replacement);
-      _sync?.recurrenceSeriesChanged();
+      _sync.recurrenceSeriesChanged();
       await _retireOriginRow(split.replacement);
-      await _media?.release(held);
+      await _media.release(held);
       unawaited(_reconcileRecurringReminders());
       return split.replacement;
     }
 
     await _repository.upsertAll([split.ended!, split.replacement]);
     state = [..._replace(split.ended!), split.replacement];
-    _sync?.recurrenceSeriesChanged();
+    _sync.recurrenceSeriesChanged();
     await _retireOriginRow(split.replacement);
     // Переопределение на дате среза принадлежало прежней серии; новая серия
     // начинается с самой правки, и старая отметка только спорила бы с ней.
@@ -211,7 +224,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     if (_exceptions.exceptions.any((item) => item.id == cutoffMarker)) {
       await _exceptions.delete(currentId, cutoff);
     }
-    await _media?.release(held);
+    await _media.release(held);
     unawaited(_reconcileRecurringReminders());
     return split.replacement;
   }
@@ -267,7 +280,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
       // keeps the files that a plain delete would strip.
       await _memoryItems.retireRow(normalized.id);
     }
-    await _media?.release(held);
+    await _media.release(held);
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -297,7 +310,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     await deleteMiskeyedOverrides(item, sourceDate);
     await writeDeletionMarker(item, sourceDate);
     await _memoryItems.delete(item.id);
-    await _media?.release(held);
+    await _media.release(held);
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -307,7 +320,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     // Persist the series tombstone first. Future occurrences are virtual, so
     // deleting only materialized memory rows cannot prevent a stale cloud
     // series from projecting them again after a crash.
-    await _sync?.recurrenceSeriesDeleted(id, deletedAt);
+    await _sync.recurrenceSeriesDeleted(id, deletedAt);
     final held = _mediaOf(id);
     for (final item in [..._memoryItems.state]) {
       if (item.seriesId == id) await _memoryItems.delete(item.id);
@@ -318,7 +331,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
       for (final series in state)
         if (series.id != id) series
     ];
-    await _media?.release(held);
+    await _media.release(held);
     unawaited(_reconcileRecurringReminders());
   }
 
@@ -342,7 +355,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
     );
     await _repository.upsert(updated);
     state = _replace(updated);
-    _sync?.recurrenceSeriesChanged();
+    _sync.recurrenceSeriesChanged();
     for (final item in [..._memoryItems.state]) {
       if (item.seriesId == id &&
           !_sourceDateForItem(item, item.memoryDate).isBefore(cutoff)) {
@@ -358,7 +371,7 @@ class RecurrenceSeriesController extends StateNotifier<List<RecurrenceSeries>>
         await _exceptions.delete(id, exception.occurrenceDate);
       }
     }
-    await _media?.release(held);
+    await _media.release(held);
     unawaited(_reconcileRecurringReminders());
   }
 

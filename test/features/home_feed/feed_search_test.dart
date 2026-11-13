@@ -94,5 +94,4 @@ void main() {
     expect(c.read(feedLayoutProvider).itemIds, ['fence']);
     expect(tester.takeException(), isNull);
   });
-
 }

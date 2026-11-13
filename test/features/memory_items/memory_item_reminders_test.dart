@@ -3,6 +3,8 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
 
 import '../../support/memory_items_test_support.dart';
+import '../../support/provider_test_support.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test('reminder is scheduled and cancelled with record lifecycle', () async {
@@ -18,7 +20,8 @@ void main() {
     );
     final repository = FakeMemoryRepository([item]);
     final reminders = FakeReminderScheduler();
-    final controller = MemoryItemsController(repository, reminders);
+    final controller = testContainer(memories: repository, reminders: reminders)
+        .read(memoryItemsControllerProvider.notifier);
 
     await controller.load();
     await controller.update(item.copyWith(title: 'Новая встреча'));
@@ -56,10 +59,10 @@ void main() {
       remindAt: now.subtract(const Duration(days: 1)),
     );
     final reminders = FakeReminderScheduler();
-    final controller = MemoryItemsController(
-      FakeMemoryRepository([ahead, passed]),
-      reminders,
-    );
+    final controller = testContainer(
+            memories: FakeMemoryRepository([ahead, passed]),
+            reminders: reminders)
+        .read(memoryItemsControllerProvider.notifier);
     await controller.load();
 
     await controller.restore('ahead');
@@ -90,13 +93,14 @@ void main() {
         VoiceNote(reference: 'voice.m4a', durationSeconds: 4),
       ],
     );
+    // Повторы лежат в настройках: уборка ждёт и их загрузки.
+    SharedPreferences.setMockInitialValues({});
     final media = TrackingMediaStorage();
-    late final MemoryItemsController controller;
-    controller = MemoryItemsController(
-      FakeMemoryRepository([item]),
-      FakeReminderScheduler(),
-      cleanupOver(media, items: () => controller.state),
-    );
+    final controller = (await loadRecords(testContainer(
+      memories: FakeMemoryRepository([item]),
+      media: media,
+    )))
+        .memories;
     await controller.load();
 
     await controller.archive('with-media');
@@ -121,7 +125,8 @@ void main() {
     );
     final repository = FakeMemoryRepository(const []);
     final reminders = FakeReminderScheduler();
-    final controller = MemoryItemsController(repository, reminders);
+    final controller = testContainer(memories: repository, reminders: reminders)
+        .read(memoryItemsControllerProvider.notifier);
 
     await controller.load();
     await controller.add(note);

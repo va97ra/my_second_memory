@@ -83,7 +83,8 @@ void main() {
     await open(tester, const Size(360, 800));
 
     final cardRect = tester.getRect(card('n1'));
-    final strip = tester.getRect(find.byKey(const ValueKey('memory_sticker_strip_n1')));
+    final strip =
+        tester.getRect(find.byKey(const ValueKey('memory_sticker_strip_n1')));
     expect(strip.top, closeTo(cardRect.top, 1));
     expect(strip.width, closeTo(cardRect.width, 2));
     expect(
@@ -178,7 +179,8 @@ void main() {
     expect(find.text('Новая мысль'), findsOneWidget);
   });
 
-  testWidgets('шапка та же: поиск сужает карточки, записка с датой не находится',
+  testWidgets(
+      'шапка та же: поиск сужает карточки, записка с датой не находится',
       (tester) async {
     await open(tester, const Size(360, 800));
 

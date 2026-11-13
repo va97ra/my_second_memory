@@ -21,33 +21,32 @@ final toolDataRepositoryProvider = Provider<ToolDataRepository>((ref) {
 });
 
 final toolDataControllerProvider =
-    StateNotifierProvider<ToolDataController, AsyncValue<ToolDataSnapshot>>(
-        (ref) {
-  return ToolDataController(
-    ref.watch(toolDataRepositoryProvider),
-    ref.watch(syncMutationObserverProvider),
-  );
-});
+    NotifierProvider<ToolDataController, AsyncValue<ToolDataSnapshot>>(
+  ToolDataController.new,
+);
 
-class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
-  ToolDataController(this._repository, [this._sync])
-      : super(const AsyncValue.loading()) {
-    _loadFuture = _load();
-  }
-
-  final ToolDataRepository _repository;
-  final SyncMutationObserver? _sync;
+class ToolDataController extends Notifier<AsyncValue<ToolDataSnapshot>> {
+  late final ToolDataRepository _repository;
+  late final SyncMutationObserver _sync;
   late final Future<void> _loadFuture;
+
+  @override
+  AsyncValue<ToolDataSnapshot> build() {
+    _repository = ref.watch(toolDataRepositoryProvider);
+    _sync = ref.watch(syncMutationObserverProvider);
+    _loadFuture = _load();
+    return const AsyncValue.loading();
+  }
 
   Future<void> load() => _loadFuture;
 
   /// То, что лежит сейчас. Пока загрузка не кончилась — пусто, а не null:
   /// инструменты обязаны открываться и без сохранённых расчётов.
-  ToolDataSnapshot get snapshot =>
-      state.valueOrNull ?? const ToolDataSnapshot();
+  ToolDataSnapshot get snapshot => state.value ?? const ToolDataSnapshot();
 
   Future<void> _load() async {
-    state = await AsyncValue.guard(_repository.load);
+    final snapshot = await AsyncValue.guard(_repository.load);
+    if (ref.mounted) state = snapshot;
   }
 
   Future<void> saveCalculation(SavedToolCalculation calculation) async {
@@ -60,7 +59,7 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
           if (item.id != calculation.id) item,
       ],
     ));
-    _sync?.toolCalculationsChanged();
+    _sync.toolCalculationsChanged();
   }
 
   Future<void> deleteCalculation(String id) async {
@@ -73,7 +72,7 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
           if (item.id != id) item,
       ],
     ));
-    await _sync?.toolCalculationDeleted(id, deletedAt);
+    await _sync.toolCalculationDeleted(id, deletedAt);
   }
 
   Future<void> renameCalculation(String id, String name) async {
@@ -89,10 +88,8 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
             item,
       ],
     ));
-    _sync?.toolCalculationsChanged();
+    _sync.toolCalculationsChanged();
   }
-
-
 
   /// Замена расчётов приехавшим. Наблюдателю об этом не сообщают: правка
   /// пришла от него самого, и обратный вызов запустил бы прогон по кругу.
@@ -116,10 +113,6 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
     ));
   }
 
-
-
-
-
   Future<void> _save(ToolDataSnapshot next) async {
     final previous = state;
     state = AsyncValue.data(next);
@@ -136,7 +129,8 @@ class ToolDataController extends StateNotifier<AsyncValue<ToolDataSnapshot>> {
 /// в начало сама; после слияния порядок восстанавливают по времени, иначе
 /// приехавшее с другого устройства встаёт посреди списка.
 List<T> _newestFirst<T>(List<T> items, DateTime Function(T) updatedAtOf) {
-  final sorted = [...items]
-    ..sort((first, second) => updatedAtOf(second).compareTo(updatedAtOf(first)));
+  final sorted = [
+    ...items
+  ]..sort((first, second) => updatedAtOf(second).compareTo(updatedAtOf(first)));
   return List<T>.unmodifiable(sorted);
 }

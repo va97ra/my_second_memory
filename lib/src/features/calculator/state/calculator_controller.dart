@@ -2,9 +2,9 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final calculatorControllerProvider =
-    StateNotifierProvider<CalculatorController, CalculatorState>((ref) {
-  return CalculatorController();
-});
+    NotifierProvider<CalculatorController, CalculatorState>(
+  CalculatorController.new,
+);
 
 class CalculatorState {
   const CalculatorState({
@@ -47,8 +47,9 @@ class CalculatorState {
   }
 }
 
-class CalculatorController extends StateNotifier<CalculatorState> {
-  CalculatorController() : super(const CalculatorState());
+class CalculatorController extends Notifier<CalculatorState> {
+  @override
+  CalculatorState build() => const CalculatorState();
 
   static const _engine = CalculatorEngine();
 

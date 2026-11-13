@@ -2,6 +2,7 @@ import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/finance/state/finance_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../support/provider_test_support.dart';
 
 /// Хранилище операций, которое считает полные перезаписи.
 class _CountingFinanceRepository implements FinanceRepository {
@@ -61,8 +62,9 @@ void main() {
     final repository = _CountingFinanceRepository([
       for (var index = 0; index < 500; index++) entry(index),
     ]);
-    final controller = FinanceController(repository);
-    addTearDown(controller.dispose);
+    final controller = testContainer(overrides: [
+      financeRepositoryProvider.overrideWithValue(repository)
+    ]).read(financeControllerProvider.notifier);
     await controller.load();
     return (controller, repository);
   }

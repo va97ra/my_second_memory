@@ -2,31 +2,38 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ez_data/ez_data.dart';
+import '../../sync/sync.dart';
+import 'recurrence_providers.dart';
 
 class RecurrenceExceptionController
-    extends StateNotifier<List<RecurrenceOccurrenceException>> {
-  RecurrenceExceptionController(this._repository, [this._sync])
-      : super(const []) {
-    _loadFuture = _load();
-  }
-
-  final RecurrenceExceptionRepository _repository;
-  final SyncMutationObserver? _sync;
+    extends Notifier<List<RecurrenceOccurrenceException>> {
+  late final RecurrenceExceptionRepository _repository;
+  late final SyncMutationObserver _sync;
   late final Future<void> _loadFuture;
+
+  @override
+  List<RecurrenceOccurrenceException> build() {
+    _repository = ref.watch(recurrenceExceptionRepositoryProvider);
+    _sync = ref.watch(syncMutationObserverProvider);
+    _loadFuture = _load();
+    return const [];
+  }
 
   Future<void> load() => _loadFuture;
 
   /// Отметки, лежащие в хранилище прямо сейчас.
   List<RecurrenceOccurrenceException> get exceptions => state;
 
-
-  Future<void> _load() async => state = await _repository.loadAll();
+  Future<void> _load() async {
+    final exceptions = await _repository.loadAll();
+    if (ref.mounted) state = exceptions;
+  }
 
   Future<void> upsert(RecurrenceOccurrenceException exception) async {
     await _loadFuture;
     await _repository.upsert(exception);
     state = _replace(exception);
-    _sync?.recurrenceExceptionsChanged();
+    _sync.recurrenceExceptionsChanged();
   }
 
   Future<void> upsertAll(
@@ -40,14 +47,14 @@ class RecurrenceExceptionController
       for (final item in state) replacements.remove(item.id) ?? item,
       ...replacements.values,
     ];
-    _sync?.recurrenceExceptionsChanged();
+    _sync.recurrenceExceptionsChanged();
   }
 
   Future<void> skip(String seriesId, DateTime occurrenceDate) async {
     await _loadFuture;
     final exception = await _repository.skip(seriesId, occurrenceDate);
     state = _replace(exception);
-    _sync?.recurrenceExceptionsChanged();
+    _sync.recurrenceExceptionsChanged();
   }
 
   Future<void> delete(String seriesId, DateTime occurrenceDate) async {
@@ -56,7 +63,7 @@ class RecurrenceExceptionController
     final deletedAt = DateTime.now();
     // Persist the cloud tombstone before the local delete so an interruption
     // cannot resurrect the exception on the next synchronization.
-    await _sync?.recurrenceExceptionDeleted(id, deletedAt);
+    await _sync.recurrenceExceptionDeleted(id, deletedAt);
     await _repository.delete(seriesId, occurrenceDate);
     state = [
       for (final item in state)
@@ -72,7 +79,7 @@ class RecurrenceExceptionController
     ];
     final deletedAt = DateTime.now();
     for (final id in deletedIds) {
-      await _sync?.recurrenceExceptionDeleted(id, deletedAt);
+      await _sync.recurrenceExceptionDeleted(id, deletedAt);
     }
     await _repository.deleteSeries(seriesId);
     state = [

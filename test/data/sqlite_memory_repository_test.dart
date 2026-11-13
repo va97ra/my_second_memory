@@ -19,8 +19,7 @@ void main() {
     expect(items, isEmpty);
   });
 
-  test('database upgrade from schema 12 keeps the single voice note',
-      () async {
+  test('database upgrade from schema 12 keeps the single voice note', () async {
     SharedPreferences.setMockInitialValues({});
     final directory = await Directory.systemTemp.createTemp('memory_v12_');
     addTearDown(() => directory.delete(recursive: true));
@@ -52,8 +51,7 @@ void main() {
 
     final database = AppDatabase(NativeDatabase(file));
     addTearDown(database.close);
-    final restored =
-        await SqliteMemoryRepository(database: database).loadAll();
+    final restored = await SqliteMemoryRepository(database: database).loadAll();
 
     expect(restored.single.voiceNotes, const [
       VoiceNote(reference: 'voice_old.m4a', durationSeconds: 9),
@@ -112,8 +110,8 @@ void main() {
       endMinutes: 16 * 60,
     );
 
-    final restored = MemoryItem.fromJson(jsonDecode(jsonEncode(item.toJson()))
-        as Map<String, Object?>);
+    final restored = MemoryItem.fromJson(
+        jsonDecode(jsonEncode(item.toJson())) as Map<String, Object?>);
 
     expect(restored.endMinutes, 16 * 60);
   });

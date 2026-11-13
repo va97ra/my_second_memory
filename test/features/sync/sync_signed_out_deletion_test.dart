@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/sync_test_support.dart';
+import '../../support/sync_controller_test_support.dart';
 
 /// Облако, в которое входят и из которого выходят по ходу теста.
 class _AccountRemote extends SyncRemote {
@@ -31,7 +32,7 @@ void main() {
     final deletedAt = date.add(const Duration(hours: 1));
     final remote = _AccountRemote();
     var local = <MemoryItem>[memoryItem('kept', 'Оставили', date)];
-    final controller = SyncController(
+    final harness = SyncHarness(
       remote: remote,
       keyStore: _KeyStore(),
       tombstones: SyncTombstoneStore(),
@@ -40,7 +41,7 @@ void main() {
         replaceMemoryItems: (items) async => local = items,
       ),
     );
-    addTearDown(controller.dispose);
+    final controller = harness.controller;
     await controller.load();
     expect(controller.state.status, SyncStatus.signedOut);
 

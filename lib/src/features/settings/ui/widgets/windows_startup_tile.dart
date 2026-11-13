@@ -19,7 +19,7 @@ class WindowsStartupTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppStrings.of(context);
-    final enabled = state.valueOrNull;
+    final enabled = state.value;
 
     return SettingsTile(
       key: const ValueKey('settings_windows_startup'),

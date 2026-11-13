@@ -225,12 +225,7 @@ Future<void> _openFinance(
         ),
         financeRepositoryProvider.overrideWithValue(repository),
         if (style != null)
-          appThemeControllerProvider.overrideWith(
-            (ref) => AppThemeController(
-              initialStyle: style,
-              loadOnStart: false,
-            ),
-          ),
+          appThemeControllerProvider.overrideWithBuild((_, __) => style),
       ],
       child: const EzhednevnikV2App(),
     ),

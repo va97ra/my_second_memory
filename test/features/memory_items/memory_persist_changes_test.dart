@@ -3,6 +3,7 @@ import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_cont
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/memory_items_test_support.dart';
+import '../../support/provider_test_support.dart';
 
 /// О3: после слияния в хранилище уходит только разница. Переписывать всю
 /// таблицу ради одной правки дорого, а при PIN это ещё и новое шифрование
@@ -24,7 +25,8 @@ void main() {
 
   Future<(MemoryItemsController, FakeMemoryRepository)> loaded() async {
     final repository = FakeMemoryRepository(List.of(thousand));
-    final controller = MemoryItemsController(repository);
+    final controller = testContainer(memories: repository)
+        .read(memoryItemsControllerProvider.notifier);
     await controller.load();
     return (controller, repository);
   }

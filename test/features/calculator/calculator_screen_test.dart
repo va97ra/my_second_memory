@@ -122,10 +122,12 @@ void main() {
       findsNothing,
     );
     final key = _gridKeys().first;
-    final surface = find.descendant(
-      of: key,
-      matching: find.byType(AnimatedContainer),
-    ).first;
+    final surface = find
+        .descendant(
+          of: key,
+          matching: find.byType(AnimatedContainer),
+        )
+        .first;
     final decoration =
         tester.widget<AnimatedContainer>(surface).decoration as BoxDecoration;
     expect(decoration.boxShadow, isNotEmpty);
@@ -314,12 +316,7 @@ Future<void> _openCalculator(
           FakeShiftScheduleRepository(),
         ),
         if (style != null)
-          appThemeControllerProvider.overrideWith(
-            (ref) => AppThemeController(
-              initialStyle: style,
-              loadOnStart: false,
-            ),
-          ),
+          appThemeControllerProvider.overrideWithBuild((_, __) => style),
       ],
       child: const EzhednevnikV2App(),
     ),

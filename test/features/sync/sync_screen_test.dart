@@ -60,7 +60,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          syncControllerProvider.overrideWith((ref) => controller),
+          syncControllerProvider.overrideWith(() => controller),
         ],
         child: MaterialApp(
           locale: const Locale('ru'),
@@ -102,7 +102,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          syncControllerProvider.overrideWith((ref) => controller),
+          syncControllerProvider.overrideWith(() => controller),
         ],
         child: const MaterialApp(
           locale: Locale('ru'),
@@ -127,18 +127,14 @@ void main() {
 
 class _TestSyncController extends SyncController {
   _TestSyncController({
-    SyncState initialState = const SyncState(status: SyncStatus.signedOut),
-  }) : super(
-          remote: null,
-          keyStore: SyncKeyStore(),
-          tombstones: SyncTombstoneStore(),
-          data: SyncDataSources(
-            readMemoryItems: () async => <MemoryItem>[],
-            replaceMemoryItems: (_) async {},
-          ),
-        ) {
-    state = initialState;
-  }
+    this.initialState = const SyncState(status: SyncStatus.signedOut),
+  });
+
+  final SyncState initialState;
+
+  /// Экран проверяют без облака: состояние задаёт тест, а не вход.
+  @override
+  SyncState build() => initialState;
 
   int googleSignInCalls = 0;
   int signOutCalls = 0;

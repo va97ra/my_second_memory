@@ -24,12 +24,9 @@ final financeRepositoryProvider = Provider<FinanceRepository>((ref) {
 });
 
 final financeControllerProvider =
-    StateNotifierProvider<FinanceController, List<FinanceEntry>>((ref) {
-  return FinanceController(
-    ref.watch(financeRepositoryProvider),
-    ref.watch(syncMutationObserverProvider),
-  );
-});
+    NotifierProvider<FinanceController, List<FinanceEntry>>(
+  FinanceController.new,
+);
 
 /// Одна операция по идентификатору: правка другой её карточку не трогает.
 final financeEntryByIdProvider =
@@ -63,13 +60,9 @@ final financeSummaryProvider = Provider<FinanceSummary>((ref) {
   return ref.watch(financeMonthLedgerProvider).summary;
 });
 
-class FinanceController extends StateNotifier<List<FinanceEntry>> {
-  FinanceController(this._repository, [this._sync]) : super(const []) {
-    _loadFuture = _load();
-  }
-
-  final FinanceRepository _repository;
-  final SyncMutationObserver? _sync;
+class FinanceController extends Notifier<List<FinanceEntry>> {
+  late final FinanceRepository _repository;
+  late final SyncMutationObserver _sync;
 
   /// Записи в хранилище идут по одной и в том порядке, в каком сделаны
   /// правки: в хранилище уходит разница, и две правки одной операции,
@@ -77,17 +70,26 @@ class FinanceController extends StateNotifier<List<FinanceEntry>> {
   final _writes = SequentialTaskQueue();
   late final Future<void> _loadFuture;
 
+  @override
+  List<FinanceEntry> build() {
+    _repository = ref.watch(financeRepositoryProvider);
+    _sync = ref.watch(syncMutationObserverProvider);
+    _loadFuture = _load();
+    return const [];
+  }
+
   Future<void> load() => _loadFuture;
 
   Future<void> _load() async {
-    state = _sorted(await _repository.loadAll());
+    final entries = await _repository.loadAll();
+    if (ref.mounted) state = _sorted(entries);
   }
 
   Future<void> add(FinanceEntry entry) async {
     await _loadFuture;
     state = _sorted([...state, entry]);
     await _writes.add(() => _repository.upsertAll([entry]));
-    _sync?.financeEntriesChanged();
+    _sync.financeEntriesChanged();
   }
 
   Future<void> update(FinanceEntry entry) async {
@@ -97,7 +99,7 @@ class FinanceController extends StateNotifier<List<FinanceEntry>> {
         if (current.id == entry.id) entry else current,
     ]);
     await _writes.add(() => _repository.upsertAll([entry]));
-    _sync?.financeEntriesChanged();
+    _sync.financeEntriesChanged();
   }
 
   Future<void> delete(String id) async {
@@ -108,7 +110,7 @@ class FinanceController extends StateNotifier<List<FinanceEntry>> {
         if (entry.id != id) entry
     ];
     await _writes.add(() => _repository.deleteAll([id]));
-    await _sync?.financeEntryDeleted(id, deletedAt);
+    await _sync.financeEntryDeleted(id, deletedAt);
   }
 
   Future<void> replaceAll(List<FinanceEntry> entries) async {

@@ -6,48 +6,49 @@ import 'package:ez_data/ez_data.dart';
 import 'package:ezhednevnik_v2/src/features/sync/state/sync_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/sync_controller_test_support.dart';
 
 void main() {
   testWidgets(
       'a stalled fetch times out and its late result cannot resume sync',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
-    var localDataAvailable = false;
     final remote = _BlockingConnectedRemoteStore();
-    final controller = SyncController(
+    final harness = SyncHarness(
       remote: remote,
       keyStore: _ConnectedKeyStore(),
       tombstones: _RecordingTombstoneStore(),
-      canAccessLocalData: () => localDataAvailable,
       data: SyncDataSources(
         readMemoryItems: () async => [],
         replaceMemoryItems: (_) async {},
       ),
+      localDataAvailable: false,
     );
+    final controller = harness.controller;
     await controller.load();
-    localDataAvailable = true;
+    harness.localDataAvailable = true;
     final run = controller.syncNow();
     await remote.firstFetchStarted.future;
     await tester.pump(const Duration(seconds: 31));
     expect(controller.state.status, SyncStatus.error);
     expect(controller.state.error, contains('TimeoutException'));
     await run;
-    localDataAvailable = false;
+    harness.localDataAvailable = false;
     remote.releaseFirstFetch.complete();
     await tester.pump();
     expect(controller.state.status, SyncStatus.error);
-    localDataAvailable = true;
+    harness.localDataAvailable = true;
     await controller.syncNow();
     expect(controller.state.status, SyncStatus.ready);
     expect(remote.fetchEntitiesCalls, 2);
-    controller.dispose();
+    harness.dispose();
     remote.dispose();
   });
 
   test('Google OAuth callback advances a signed-out session to vault setup',
       () async {
     final remote = _OAuthRemoteStore();
-    final controller = SyncController(
+    final harness = SyncHarness(
       remote: remote,
       keyStore: _EmptyKeyStore(),
       tombstones: SyncTombstoneStore(),
@@ -56,8 +57,9 @@ void main() {
         replaceMemoryItems: (_) async {},
       ),
     );
+    final controller = harness.controller;
     addTearDown(() {
-      controller.dispose();
+      harness.dispose();
       remote.dispose();
     });
 
@@ -79,26 +81,25 @@ void main() {
   test('encrypted records wait for PIN unlock before synchronization',
       () async {
     SharedPreferences.setMockInitialValues({});
-    var localDataAvailable = false;
     final remote = _ConnectedRemoteStore();
-    final controller = SyncController(
+    final harness = SyncHarness(
       remote: remote,
       keyStore: _ConnectedKeyStore(),
       tombstones: SyncTombstoneStore(),
-      canAccessLocalData: () => localDataAvailable,
       data: SyncDataSources(
         readMemoryItems: () async => <MemoryItem>[],
         replaceMemoryItems: (_) async {},
       ),
+      localDataAvailable: false,
     );
-    addTearDown(controller.dispose);
+    final controller = harness.controller;
 
     await controller.load();
     await Future<void>.delayed(const Duration(milliseconds: 150));
     expect(controller.state.status, SyncStatus.ready);
     expect(remote.fetchEntitiesCalls, 0);
 
-    localDataAvailable = true;
+    harness.localDataAvailable = true;
     controller.localDataAvailabilityChanged(true);
     await Future<void>.delayed(const Duration(milliseconds: 20));
 
@@ -109,7 +110,7 @@ void main() {
   test('deletion is recorded while the sync cipher is still loading', () async {
     final remote = _ConnectedRemoteStore();
     final tombstones = _RecordingTombstoneStore();
-    final controller = SyncController(
+    final harness = SyncHarness(
       remote: remote,
       keyStore: _EmptyKeyStore(),
       tombstones: tombstones,
@@ -118,8 +119,9 @@ void main() {
         replaceMemoryItems: (_) async {},
       ),
     );
+    final controller = harness.controller;
     addTearDown(() {
-      controller.dispose();
+      harness.dispose();
       remote.dispose();
     });
 
@@ -138,24 +140,24 @@ void main() {
 
   test('sync requested during an active run performs a second run', () async {
     SharedPreferences.setMockInitialValues({});
-    var localDataAvailable = false;
     final remote = _BlockingConnectedRemoteStore();
-    final controller = SyncController(
+    final harness = SyncHarness(
       remote: remote,
       keyStore: _ConnectedKeyStore(),
       tombstones: SyncTombstoneStore(),
-      canAccessLocalData: () => localDataAvailable,
       data: SyncDataSources(
         readMemoryItems: () async => <MemoryItem>[],
         replaceMemoryItems: (_) async {},
       ),
+      localDataAvailable: false,
     );
+    final controller = harness.controller;
     addTearDown(() {
-      controller.dispose();
+      harness.dispose();
       remote.dispose();
     });
     await controller.load();
-    localDataAvailable = true;
+    harness.localDataAvailable = true;
 
     final firstRun = controller.syncNow();
     await remote.firstFetchStarted.future;

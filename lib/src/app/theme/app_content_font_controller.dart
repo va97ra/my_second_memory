@@ -3,19 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final appContentFontControllerProvider =
-    StateNotifierProvider<AppContentFontController, AppContentFontStyle>(
-  (ref) => AppContentFontController(),
+    NotifierProvider<AppContentFontController, AppContentFontStyle>(
+  AppContentFontController.new,
 );
 
-class AppContentFontController extends StateNotifier<AppContentFontStyle> {
-  AppContentFontController({
-    AppContentFontStyle initialStyle = AppContentFontStyle.manrope,
-    SharedPreferences? preferences,
-    bool loadOnStart = true,
-  })  : _preferences = preferences,
-        super(initialStyle) {
-    if (loadOnStart) _load();
-  }
+/// Шрифт записей. Как и тема, он известен сразу, если настройки уже
+/// прочитаны ([preferences]); иначе до чтения действует Manrope.
+class AppContentFontController extends Notifier<AppContentFontStyle> {
+  AppContentFontController({SharedPreferences? preferences})
+      : _preferences = preferences;
 
   static const storageKey = 'app_content_font_v1';
   SharedPreferences? _preferences;
@@ -24,9 +20,17 @@ class AppContentFontController extends StateNotifier<AppContentFontStyle> {
     return AppContentFontStyle.fromStorage(preferences.getString(storageKey));
   }
 
+  @override
+  AppContentFontStyle build() {
+    final preferences = _preferences;
+    if (preferences != null) return readInitialStyle(preferences);
+    _load();
+    return AppContentFontStyle.manrope;
+  }
+
   Future<void> _load() async {
-    final preferences = _preferences ??= await SharedPreferences.getInstance();
-    state = readInitialStyle(preferences);
+    final preferences = _preferences = await SharedPreferences.getInstance();
+    if (ref.mounted) state = readInitialStyle(preferences);
   }
 
   Future<void> setStyle(AppContentFontStyle style) async {

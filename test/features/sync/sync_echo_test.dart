@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/sync_test_support.dart';
+import '../../support/sync_controller_test_support.dart';
 
 /// Облако, чьи сообщения об изменениях отправляет сам тест.
 class _AnnouncingRemote extends SyncRemote {
@@ -38,7 +39,7 @@ void main() {
   testWidgets('an echo of our own upload does not start a run', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final remote = _AnnouncingRemote();
-    final controller = SyncController(
+    final harness = SyncHarness(
       remote: remote,
       keyStore: _KeyStore(),
       tombstones: MemoryTombstoneStore(),
@@ -47,6 +48,7 @@ void main() {
         replaceMemoryItems: (_) async {},
       ),
     );
+    final controller = harness.controller;
     await controller.load();
     await tester.pump(const Duration(seconds: 1));
     expect(remote.storedEntities, hasLength(1));
@@ -66,14 +68,14 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(remote.fetches, fetchesAfterUpload + 1);
-    controller.dispose();
+    harness.dispose();
     await remote.changes.close();
   });
 
   testWidgets('a hidden app does not sync by the clock', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final remote = _AnnouncingRemote();
-    final controller = SyncController(
+    final harness = SyncHarness(
       remote: remote,
       keyStore: _KeyStore(),
       tombstones: MemoryTombstoneStore(),
@@ -82,6 +84,7 @@ void main() {
         replaceMemoryItems: (_) async {},
       ),
     );
+    final controller = harness.controller;
     await controller.load();
     await tester.pump(const Duration(seconds: 1));
     final fetchesBefore = remote.fetches;
@@ -96,7 +99,7 @@ void main() {
     await tester.pump(const Duration(minutes: 2, seconds: 1));
 
     expect(remote.fetches, greaterThan(fetchesBefore));
-    controller.dispose();
+    harness.dispose();
     await remote.changes.close();
   });
 }

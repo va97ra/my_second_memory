@@ -2,23 +2,27 @@ import 'package:ez_design/ez_design.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ezhednevnik_v2/src/app/theme/app_theme_controller.dart';
+import '../support/provider_test_support.dart';
 
 void main() {
   test('removed screen themes fall back to the dark theme', () async {
     SharedPreferences.setMockInitialValues(
         {AppThemeController.storageKey: 'cyberpunk'});
     final preferences = await SharedPreferences.getInstance();
-    expect(
-        AppThemeController.readInitialStyle(preferences), AppThemeStyle.notebookDark);
-    final controller = AppThemeController(preferences: preferences);
-    addTearDown(controller.dispose);
+    expect(AppThemeController.readInitialStyle(preferences),
+        AppThemeStyle.notebookDark);
+    final controller = testContainer(overrides: [
+      appThemeControllerProvider
+          .overrideWith(() => AppThemeController(preferences: preferences))
+    ]).read(appThemeControllerProvider.notifier);
     await Future<void>.delayed(Duration.zero);
     expect(controller.state, AppThemeStyle.notebookDark);
   });
   test('theme choice is saved and restored', () async {
     SharedPreferences.setMockInitialValues({});
 
-    final controller = AppThemeController();
+    final controller =
+        testContainer().read(appThemeControllerProvider.notifier);
     await controller.setStyle(AppThemeStyle.notebookDark);
 
     expect(controller.state, AppThemeStyle.notebookDark);
@@ -27,7 +31,7 @@ void main() {
       'notebookDark',
     );
 
-    final restored = AppThemeController();
+    final restored = testContainer().read(appThemeControllerProvider.notifier);
     await Future<void>.delayed(Duration.zero);
     expect(restored.state, AppThemeStyle.notebookDark);
   });
@@ -35,7 +39,8 @@ void main() {
   test('legacy light theme choice migrates to the light notebook', () async {
     SharedPreferences.setMockInitialValues({'app_light_theme_v1': true});
 
-    final controller = AppThemeController();
+    final controller =
+        testContainer().read(appThemeControllerProvider.notifier);
     await Future<void>.delayed(Duration.zero);
 
     expect(controller.state, AppThemeStyle.notebookLight);

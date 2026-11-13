@@ -1,12 +1,12 @@
 import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_exception_controller.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_series_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/recurrence_test_support.dart';
+import '../../support/provider_test_support.dart';
+import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_providers.dart';
 
 void main() {
   test('origin override marker prevents metadata edits becoming a template',
@@ -38,18 +38,12 @@ void main() {
       LocalRecurrenceRepository.storageKey: encodeSeries([series]),
       LocalRecurrenceExceptionRepository.storageKey: '[]',
     });
-    final memories = MemoryItemsController(const LocalMemoryRepository());
-    final exceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-    );
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    final controller = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions,
-      memories,
-      reminders,
-    );
+    final container = testContainer();
+    final memories = container.read(memoryItemsControllerProvider.notifier);
+    final exceptions =
+        container.read(recurrenceExceptionControllerProvider.notifier);
+    final controller =
+        container.read(recurrenceSeriesControllerProvider.notifier);
     await controller.load();
 
     await controller.saveOccurrenceOverride(
@@ -67,19 +61,11 @@ void main() {
     expect(exceptions.state.single.item?.birthYear, 1991);
     expect(memories.state, isEmpty);
 
-    final reloadedMemories =
-        MemoryItemsController(const LocalMemoryRepository());
-    final reloadedExceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-    );
-    final reloadedReminders = NotificationService();
-    addTearDown(reloadedReminders.dispose);
-    final reloaded = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      reloadedExceptions,
-      reloadedMemories,
-      reloadedReminders,
-    );
+    final reloadedContainer = testContainer();
+    final reloadedExceptions =
+        reloadedContainer.read(recurrenceExceptionControllerProvider.notifier);
+    final reloaded =
+        reloadedContainer.read(recurrenceSeriesControllerProvider.notifier);
     await reloaded.load();
 
     expect(reloaded.state.single.template.birthYear, isNull);
@@ -130,18 +116,12 @@ void main() {
       LocalRecurrenceExceptionRepository.storageKey:
           encodeExceptions([exception]),
     });
-    final memories = MemoryItemsController(const LocalMemoryRepository());
-    final exceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-    );
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    final controller = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions,
-      memories,
-      reminders,
-    );
+    final container = testContainer();
+    final memories = container.read(memoryItemsControllerProvider.notifier);
+    final exceptions =
+        container.read(recurrenceExceptionControllerProvider.notifier);
+    final controller =
+        container.read(recurrenceSeriesControllerProvider.notifier);
 
     await controller.load();
 
@@ -206,18 +186,12 @@ void main() {
       LocalRecurrenceRepository.storageKey: encodeSeries([series]),
       LocalRecurrenceExceptionRepository.storageKey: '[]',
     });
-    final memories = MemoryItemsController(const LocalMemoryRepository());
-    final exceptions = RecurrenceExceptionController(
-      const LocalRecurrenceExceptionRepository(),
-    );
-    final reminders = NotificationService();
-    addTearDown(reminders.dispose);
-    final controller = RecurrenceSeriesController(
-      const LocalRecurrenceRepository(),
-      exceptions,
-      memories,
-      reminders,
-    );
+    final container = testContainer();
+    final memories = container.read(memoryItemsControllerProvider.notifier);
+    final exceptions =
+        container.read(recurrenceExceptionControllerProvider.notifier);
+    final controller =
+        container.read(recurrenceSeriesControllerProvider.notifier);
     await controller.load();
     final remoteItem = template.copyWith(
       title: 'Значение с другого устройства',

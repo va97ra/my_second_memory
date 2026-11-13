@@ -1,12 +1,9 @@
-import 'package:ez_data/ez_data.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_editor_draft.dart';
 import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_editor_saver.dart';
-import 'package:ezhednevnik_v2/src/features/memory_items/state/memory_items_controller.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_exception_controller.dart';
-import 'package:ezhednevnik_v2/src/features/recurrence/state/recurrence_series_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/provider_test_support.dart';
 
 MemoryEditorDraft _draft({
   required DateTime savedAt,
@@ -43,34 +40,11 @@ MemoryEditorDraft _draft({
   );
 }
 
-class _Controllers {
-  _Controllers(this.memories, this.series, this.exceptions);
+Future<Records> _controllers() => loadRecords(testContainer());
 
-  final MemoryItemsController memories;
-  final RecurrenceSeriesController series;
-  final RecurrenceExceptionController exceptions;
-
+extension on Records {
   MemoryEditorSaver get saver =>
       MemoryEditorSaver(items: memories, series: series);
-}
-
-Future<_Controllers> _controllers() async {
-  final memories = MemoryItemsController(const LocalMemoryRepository());
-  await memories.load();
-  final exceptions = RecurrenceExceptionController(
-    const LocalRecurrenceExceptionRepository(),
-  );
-  await exceptions.load();
-  final reminders = NotificationService();
-  addTearDown(reminders.dispose);
-  final series = RecurrenceSeriesController(
-    const LocalRecurrenceRepository(),
-    exceptions,
-    memories,
-    reminders,
-  );
-  await series.load();
-  return _Controllers(memories, series, exceptions);
 }
 
 void main() {
