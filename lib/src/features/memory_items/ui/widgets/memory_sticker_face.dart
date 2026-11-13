@@ -30,7 +30,7 @@ class MemoryStickerFace extends StatelessWidget {
     final content = MemoryStickerContent(item: item);
     return PressPulse(
       child: StickerPaper(
-        accent: memoryAccentColor(item),
+        accent: memoryAccentColor(AppThemeColors.of(context), item),
         lifted: lifted,
         strip: MemoryStickerStrip(
           key: ValueKey('memory_sticker_strip_${item.id}'),

@@ -14,6 +14,7 @@ import 'src/features/sync/sync.dart';
 import 'src/shared/state/error_journal_provider.dart';
 import 'src/platform/windows/windows_desktop.dart';
 import 'src/app/theme/app_content_font_controller.dart';
+import 'src/app/theme/app_theme_colors_controller.dart';
 import 'src/app/theme/app_theme_controller.dart';
 import 'src/app/provider_retry.dart';
 
@@ -66,6 +67,9 @@ Future<void> main(List<String> arguments) async {
         ),
         appThemeControllerProvider.overrideWith(
           () => AppThemeController(preferences: preferences),
+        ),
+        appThemeColorsControllerProvider.overrideWith(
+          () => AppThemeColorsController(preferences: preferences),
         ),
         appContentFontControllerProvider.overrideWith(
           () => AppContentFontController(preferences: preferences),

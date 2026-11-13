@@ -1,4 +1,5 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
@@ -24,16 +25,15 @@ class MemoryStickerStrip extends StatelessWidget {
 
   String get _stampLabel => switch (stamp) {
         StickerStamp.created => memoryCreatedLabel(item),
-        StickerStamp.time => item.timeMinutes == null
-            ? ''
-            : formatMinutesOfDay(item.timeMinutes!),
+        StickerStamp.time =>
+          item.timeMinutes == null ? '' : formatMinutesOfDay(item.timeMinutes!),
         StickerStamp.dayAndTime => memoryDayAndTimeLabel(item),
       };
 
   @override
   Widget build(BuildContext context) {
     return StickerStrip(
-      accent: memoryAccentColor(item),
+      accent: memoryAccentColor(AppThemeColors.of(context), item),
       label: '${memoryKindLabel(context, item)} $_stampLabel'.trim(),
       trailingLabel: memoryDoneLabel(context, item),
     );

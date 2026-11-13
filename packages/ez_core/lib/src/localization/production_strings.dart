@@ -58,13 +58,14 @@ extension ProductionStrings on AppStrings {
       ? 'Россия · пятидневка · федеральные нормы'
       : 'Russia · five-day week · federal rules';
   String get productionLegend => isRu
-      ? 'Розовые ячейки — выходные; янтарные со * — дни короче на час. Слева — номера недель ISO. Личные смены и региональные праздники учитываются отдельно.'
-      : 'Pink cells: days off; amber cells with *: one hour shorter. ISO week numbers are on the left. Personal shifts and regional holidays are separate.';
+      ? 'Залитые ячейки — выходные; со * — дни короче на час. Слева — номера недель ISO. Личные смены и региональные праздники учитываются отдельно.'
+      : 'Filled cells: days off; cells with *: one hour shorter. ISO week numbers are on the left. Personal shifts and regional holidays are separate.';
   String calendarWeek(int number, int year) =>
       isRu ? 'Неделя $number, $year год' : 'Week $number, $year';
   String get productionUnknown => isRu
       ? 'Данные за этот год недоступны.'
       : 'Data for this year is unavailable.';
+
   /// Короткая подпись для водяного знака на закрашенной плитке дня. Рабочему
   /// дню она не нужна: он не закрашен.
   String? productionDayStamp(String kind) => switch (kind) {

@@ -1,5 +1,4 @@
 import 'package:ez_core/ez_core.dart';
-import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
@@ -35,7 +34,7 @@ class ShiftAlarmEditorCard extends StatelessWidget {
       children: [
         ShiftEditorRow(
           icon: Icons.alarm_rounded,
-          color: AppPalette.accent,
+          color: Theme.of(context).colorScheme.primary,
           title: title,
           subtitle: subtitle,
           lit: alarm.isEnabled,

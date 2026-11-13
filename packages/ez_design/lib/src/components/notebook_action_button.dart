@@ -45,7 +45,7 @@ class NotebookActionButton extends StatelessWidget {
                 : const [AppPalette.silverRaised, AppPalette.silverDeep],
           ),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppPalette.magentaLight, width: 1.2),
+          border: Border.all(color: visuals.primaryTop, width: 1.2),
           boxShadow: !enabled
               ? const []
               : [

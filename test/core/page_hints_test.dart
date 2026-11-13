@@ -16,6 +16,7 @@ void main() {
         s.securityPageHint,
         s.syncPageHint,
         s.backupPageHint,
+        s.themePageHint,
         s.shiftsPageHint,
         s.holidayPageHint,
         s.calculatorPageHint,

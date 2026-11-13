@@ -5,7 +5,8 @@ import 'package:ez_design/ez_design.dart';
 
 /// Выбор вида записи.
 class TypePickerRow extends StatelessWidget {
-  const TypePickerRow({super.key, 
+  const TypePickerRow({
+    super.key,
     required this.type,
     required this.label,
     required this.selected,
@@ -19,7 +20,7 @@ class TypePickerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = memoryTypeColor(type);
+    final color = memoryTypeColor(AppThemeColors.of(context), type);
 
     final row = Material(
       color: selected

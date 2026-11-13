@@ -93,7 +93,7 @@ class CalendarWeekdayRow extends StatelessWidget {
       label,
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
             color: index >= 5
-                ? AppPalette.weekend
+                ? AppThemeColors.of(context)[AppColorRole.weekend]
                 : Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w900,
             letterSpacing: spacing,

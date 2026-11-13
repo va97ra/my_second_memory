@@ -38,7 +38,6 @@ class AppearanceSettingsSection extends ConsumerWidget {
             style: style,
             selected: style == current,
             isRu: isRu,
-            onTap: () => _setTheme(ref, style),
           ),
         SettingsTile(
           icon: Icons.font_download_rounded,
@@ -75,17 +74,6 @@ class AppearanceSettingsSection extends ConsumerWidget {
   void _toggleLocale(WidgetRef ref, bool isRu) {
     final controller = ref.read(appLocaleControllerProvider.notifier);
     isRu ? controller.setEnglish() : controller.setRussian();
-  }
-
-  Future<void> _setTheme(WidgetRef ref, AppThemeStyle style) async {
-    try {
-      await NotebookAssets.preloadCurrent(
-        dark: brightnessOf(style) == Brightness.dark,
-      );
-    } catch (_) {
-      // Без картинок бумаги тема останется плоским цветом.
-    }
-    await ref.read(appThemeControllerProvider.notifier).setStyle(style);
   }
 
   Future<void> _pickFont(

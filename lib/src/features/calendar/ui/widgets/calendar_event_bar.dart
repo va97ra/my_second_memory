@@ -1,4 +1,5 @@
 import 'package:ez_core/ez_core.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
@@ -28,7 +29,7 @@ class CalendarEventBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = memoryAccentColor(item);
+    final color = memoryAccentColor(AppThemeColors.of(context), item);
     final colors = Theme.of(context).colorScheme;
     final barColor = isMuted ? color.withValues(alpha: 0.48) : color;
     final title = _recordTitle(item, locale);

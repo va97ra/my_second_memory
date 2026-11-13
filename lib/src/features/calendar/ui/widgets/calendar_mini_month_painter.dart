@@ -5,6 +5,7 @@ import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/ui/memory_card/memory_item_presentation.dart';
+import '../../../../shared/ui/shift_schedule_color.dart';
 import '../../state/calendar_month_data.dart';
 import 'calendar_day_cell_layout.dart';
 import 'calendar_day_cell_surface.dart';
@@ -28,7 +29,7 @@ class CalendarMiniMonthPainter extends CustomPainter {
     required this.today,
     required this.colors,
     required this.palette,
-    required this.todayColor,
+    required this.themeColors,
     required this.numberStyle,
   });
 
@@ -39,7 +40,9 @@ class CalendarMiniMonthPainter extends CustomPainter {
   final DateTime today;
   final ColorScheme colors;
   final AppSurfacePalette palette;
-  final Color todayColor;
+
+  /// Цвета темы страницы: сегодня, выходные, графики и виды записей.
+  final AppThemeColors themeColors;
   final TextStyle numberStyle;
 
   static const _gap = 1.0;
@@ -73,7 +76,7 @@ class CalendarMiniMonthPainter extends CustomPainter {
       isInVisibleMonth: true,
       isToday: isToday,
       hasItems: dayData.items.isNotEmpty,
-      todayColor: todayColor,
+      themeColors: themeColors,
       dayOff: highlight && (productionDay?.isDayOff ?? false),
       shortened: highlight && productionDay == ProductionDay.shortened,
     );
@@ -93,6 +96,7 @@ class CalendarMiniMonthPainter extends CustomPainter {
 
     final ink = calendarDayInk(
       colors,
+      themeColors,
       isInVisibleMonth: true,
       shifts: dayData.shifts,
       productionDay: productionDay,
@@ -153,7 +157,7 @@ class CalendarMiniMonthPainter extends CustomPainter {
       }
       canvas.drawRect(
         Rect.fromLTWH(part.left, part.top, part.width, header),
-        Paint()..color = Color(schedule.colorValue),
+        Paint()..color = shiftScheduleColor(themeColors, schedule),
       );
     }
   }
@@ -194,7 +198,7 @@ class CalendarMiniMonthPainter extends CustomPainter {
       if (y > limit) break;
       canvas.drawRect(
         Rect.fromLTWH(cell.left + inset, y, cell.width - inset * 2, stripe),
-        Paint()..color = memoryAccentColor(item),
+        Paint()..color = memoryAccentColor(themeColors, item),
       );
       y += stripe + math.max(0.6, stripe * 0.5);
     }
@@ -226,6 +230,6 @@ class CalendarMiniMonthPainter extends CustomPainter {
       old.today != today ||
       old.colors != colors ||
       old.palette != palette ||
-      old.todayColor != todayColor ||
+      old.themeColors != themeColors ||
       old.numberStyle != numberStyle;
 }

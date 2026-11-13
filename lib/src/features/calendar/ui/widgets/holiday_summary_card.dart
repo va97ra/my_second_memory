@@ -40,15 +40,15 @@ class HolidaySummaryCard extends StatelessWidget {
                 children: [
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      color: AppPalette.accent.withValues(alpha: 0.16),
+                      color: colors.primary.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 38,
                       height: 38,
                       child: Icon(
                         Icons.celebration_rounded,
-                        color: AppPalette.accent,
+                        color: colors.primary,
                       ),
                     ),
                   ),

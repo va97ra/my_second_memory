@@ -22,23 +22,26 @@ IconData memoryTypeIcon(MemoryType type) => switch (type) {
       MemoryType.payment => Icons.payments_rounded,
     };
 
-Color memoryTypeColor(MemoryType type) => switch (type) {
-      MemoryType.task => AppPalette.cyan,
-      MemoryType.note => AppPalette.amber,
-      MemoryType.voiceNote => AppPalette.magenta,
-      MemoryType.event => AppPalette.violet,
-      MemoryType.person => AppPalette.turquoise,
-      MemoryType.habit => AppPalette.turquoise,
-      MemoryType.goal => AppPalette.orange,
-      MemoryType.project => AppPalette.indigo,
-      MemoryType.purchase => AppPalette.magenta,
-      // Крафтовая папка. Серым документ быть не может: серый означает
-      // «выполнено» — см. [memoryDoneColor].
-      MemoryType.document => AppPalette.amberDeep,
-      MemoryType.place => AppPalette.danger,
-      MemoryType.birthday => AppPalette.magentaLight,
-      MemoryType.payment => AppPalette.turquoise,
+/// Какой цвет темы у вида записи: цвет выбирают в карточке темы.
+AppColorRole memoryTypeColorRole(MemoryType type) => switch (type) {
+      MemoryType.task => AppColorRole.task,
+      MemoryType.note => AppColorRole.note,
+      MemoryType.voiceNote => AppColorRole.voiceNote,
+      MemoryType.event => AppColorRole.event,
+      MemoryType.person => AppColorRole.person,
+      MemoryType.habit => AppColorRole.habit,
+      MemoryType.goal => AppColorRole.goal,
+      MemoryType.project => AppColorRole.project,
+      MemoryType.purchase => AppColorRole.purchase,
+      MemoryType.document => AppColorRole.document,
+      MemoryType.place => AppColorRole.place,
+      MemoryType.birthday => AppColorRole.birthday,
+      MemoryType.payment => AppColorRole.payment,
     };
+
+/// Цвет вида записи в теме [colors].
+Color memoryTypeColor(AppThemeColors colors, MemoryType type) =>
+    colors[memoryTypeColorRole(type)];
 
 /// Цвет выполненной записи, один для всех видов.
 ///
@@ -47,8 +50,8 @@ Color memoryTypeColor(MemoryType type) => switch (type) {
 const memoryDoneColor = AppPalette.done;
 
 /// Цвет, которым помечена запись: цвет её вида, пока она не выполнена.
-Color memoryAccentColor(MemoryItem item) =>
-    item.isDone ? memoryDoneColor : memoryTypeColor(item.type);
+Color memoryAccentColor(AppThemeColors colors, MemoryItem item) =>
+    item.isDone ? memoryDoneColor : memoryTypeColor(colors, item.type);
 
 /// Цвет заголовка записи: выполненная пишется приглушённо, как и её цвет.
 Color memoryTitleColor(ColorScheme colors, MemoryItem item) =>

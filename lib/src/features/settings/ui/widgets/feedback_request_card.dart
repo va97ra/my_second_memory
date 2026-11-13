@@ -20,9 +20,9 @@ class FeedbackRequestCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SettingsIconPlate(
+            SettingsIconPlate(
               icon: Icons.rate_review_rounded,
-              color: AppPalette.accent,
+              color: colors.primary,
             ),
             const SizedBox(width: 10),
             Expanded(

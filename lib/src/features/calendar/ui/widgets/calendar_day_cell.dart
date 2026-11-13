@@ -62,8 +62,10 @@ class CalendarDayCell extends ConsumerWidget {
   ) {
     final colors = Theme.of(context).colorScheme;
     final palette = AppSurfacePalette.of(context);
+    final themeColors = AppThemeColors.of(context);
     final foreground = calendarDayInk(
       colors,
+      themeColors,
       isInVisibleMonth: isInVisibleMonth,
       shifts: shiftSchedules,
       productionDay: productionDay,
@@ -118,7 +120,7 @@ class CalendarDayCell extends ConsumerWidget {
             isInVisibleMonth: isInVisibleMonth,
             isToday: isToday,
             hasItems: items.isNotEmpty,
-            todayColor: todayColor,
+            themeColors: themeColors,
           ).decoration(context, colors, palette),
           child: pressable,
         ),

@@ -19,9 +19,8 @@ class SettingsToggle extends StatelessWidget {
       height: 20,
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: value
-            ? AppPalette.accent
-            : colors.onSurface.withValues(alpha: 0.22),
+        color:
+            value ? colors.primary : colors.onSurface.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(10),
       ),
       child: AnimatedAlign(

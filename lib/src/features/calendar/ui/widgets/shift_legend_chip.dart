@@ -1,5 +1,8 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../shared/ui/shift_schedule_color.dart';
 
 /// График смен в шапке календаря: его цвет, название и рисунок.
 class ShiftLegendChip extends StatelessWidget {
@@ -9,7 +12,7 @@ class ShiftLegendChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Color(schedule.colorValue);
+    final color = shiftScheduleColor(AppThemeColors.of(context), schedule);
     final colors = Theme.of(context).colorScheme;
 
     return DecoratedBox(

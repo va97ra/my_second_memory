@@ -41,7 +41,7 @@ class DayTimelineCardBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ColoredBox(
-          color: memoryAccentColor(item),
+          color: memoryAccentColor(AppThemeColors.of(context), item),
           child: const SizedBox(width: _stripWidth),
         ),
         Expanded(

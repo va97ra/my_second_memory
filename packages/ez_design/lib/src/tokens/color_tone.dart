@@ -1,11 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
-/// Цвет графика, разобранный на две ручки: оттенок и светлоту.
+/// Цвет, разобранный на две ручки: оттенок и светлоту.
 ///
-/// Пикер показывает две полосы, а хранится один `Color` — перевод между ними
+/// Пикер показывает полосы, а хранится один `Color` — перевод между ними
 /// живёт здесь, чтобы виджет только рисовал и не считал.
-class ShiftColorTone {
-  const ShiftColorTone({required this.hue, required this.tone});
+@immutable
+class ColorTone {
+  const ColorTone({required this.hue, required this.tone});
 
   /// Насыщенность и яркость самой яркой точки шкалы: середина полосы
   /// светлоты.
@@ -16,15 +18,15 @@ class ShiftColorTone {
   ///
   /// У серого оттенка нет, поэтому он читается как красный: иначе ручка
   /// прыгала бы в случайное место шкалы.
-  factory ShiftColorTone.fromColor(Color color) {
+  factory ColorTone.fromColor(Color color) {
     final hsv = HSVColor.fromColor(color);
     final hue = hsv.saturation < 0.02 ? 0.0 : hsv.hue;
     if (hsv.value >= _baseValue) {
       final light = _unit((hsv.saturation - 0.08) / (_baseSaturation - 0.08));
-      return ShiftColorTone(hue: hue, tone: light * 0.5);
+      return ColorTone(hue: hue, tone: light * 0.5);
     }
     final dark = _unit((_baseValue - hsv.value) / (_baseValue - 0.24));
-    return ShiftColorTone(hue: hue, tone: 0.5 + dark * 0.5);
+    return ColorTone(hue: hue, tone: 0.5 + dark * 0.5);
   }
 
   /// Оттенок, 0..360.
@@ -45,11 +47,11 @@ class ShiftColorTone {
 
   Color get thumbColor => HSVColor.fromAHSV(1, hue, 0.86, 0.96).toColor();
 
-  ShiftColorTone withHuePosition(double position) =>
-      ShiftColorTone(hue: _unit(position) * 360, tone: tone);
+  ColorTone withHuePosition(double position) =>
+      ColorTone(hue: _unit(position) * 360, tone: tone);
 
-  ShiftColorTone withTonePosition(double position) =>
-      ShiftColorTone(hue: hue, tone: _unit(position));
+  ColorTone withTonePosition(double position) =>
+      ColorTone(hue: hue, tone: _unit(position));
 
   Color colorAtTone(double value) {
     if (value <= 0.5) {

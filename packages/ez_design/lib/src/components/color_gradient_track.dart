@@ -14,6 +14,7 @@ class ColorGradientTrack extends StatelessWidget {
     required this.onChanged,
     required this.onDecrease,
     required this.onIncrease,
+    this.onChangeEnd,
   });
 
   final String semanticLabel;
@@ -23,6 +24,9 @@ class ColorGradientTrack extends StatelessWidget {
   final ValueChanged<double> onChanged;
   final VoidCallback onDecrease;
   final VoidCallback onIncrease;
+
+  /// Палец отпустили: значение окончательное и его можно сохранять.
+  final VoidCallback? onChangeEnd;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +51,8 @@ class ColorGradientTrack extends StatelessWidget {
             onTapDown: (details) => update(details.localPosition),
             onHorizontalDragStart: (details) => update(details.localPosition),
             onHorizontalDragUpdate: (details) => update(details.localPosition),
+            onTapUp: (_) => onChangeEnd?.call(),
+            onHorizontalDragEnd: (_) => onChangeEnd?.call(),
             child: SizedBox(
               height: 34,
               child: Stack(

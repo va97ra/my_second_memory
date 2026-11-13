@@ -109,8 +109,6 @@ class ShiftScheduleForm {
   ShiftScheduleForm withStartDate(DateTime value) =>
       copyWith(startDate: _dateOnly(value));
 
-  ShiftScheduleForm withColorValue(int value) => copyWith(colorValue: value);
-
   ShiftScheduleForm withEnabled(bool value) => copyWith(isEnabled: value);
 
   ShiftScheduleForm withAlarms(List<ShiftAlarm> value) =>

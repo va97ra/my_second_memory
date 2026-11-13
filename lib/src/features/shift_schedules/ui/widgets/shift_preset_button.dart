@@ -30,7 +30,7 @@ class ShiftPresetButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppPalette.accent
+                ? colors.primary
                 : colors.onSurface.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -41,9 +41,7 @@ class ShiftPresetButton extends StatelessWidget {
               label,
               maxLines: 1,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: isSelected
-                    ? readableInkOn(AppPalette.accent)
-                    : colors.onSurface,
+                color: isSelected ? colors.onPrimary : colors.onSurface,
                 fontWeight: FontWeight.w800,
               ),
             ),

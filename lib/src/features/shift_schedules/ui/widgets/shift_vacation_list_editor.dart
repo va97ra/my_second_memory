@@ -1,5 +1,4 @@
 import 'package:ez_core/ez_core.dart';
-import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
@@ -38,7 +37,7 @@ class ShiftVacationListEditor extends StatelessWidget {
         ShiftEditorRow(
           key: const ValueKey('add_shift_vacation'),
           icon: Icons.add_rounded,
-          color: AppPalette.accent,
+          color: Theme.of(context).colorScheme.primary,
           title: strings.addVacation,
           subtitle: vacations.isEmpty ? strings.noVacations : null,
           onTap: () => _add(context),

@@ -71,7 +71,10 @@ class _ShiftScheduleEditorScreenState
                     constraints: const BoxConstraints(maxWidth: 640),
                     child: ListenableBuilder(
                       listenable: _draft.updates,
-                      builder: (context, _) => ShiftEditorCards(draft: _draft),
+                      builder: (context, _) => ShiftEditorCards(
+                        draft: _draft,
+                        scheduleId: widget.scheduleId,
+                      ),
                     ),
                   ),
                 ),

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../shared/ui/memory_card/sticker_paper.dart';
 import '../../../../shared/ui/memory_card/sticker_strip.dart';
+import '../../../../shared/ui/shift_schedule_color.dart';
 import '../../../settings/settings.dart';
 import '../../state/shift_schedules_controller.dart';
 import 'shift_schedule_menu.dart';
@@ -39,8 +40,9 @@ class ShiftScheduleTile extends ConsumerWidget {
     final schedule = ref.watch(shiftScheduleByIdProvider(scheduleId));
     if (schedule == null) return const SizedBox.shrink();
     final strings = AppStrings.of(context);
-    final accent =
-        schedule.isEnabled ? Color(schedule.colorValue) : AppPalette.done;
+    final accent = schedule.isEnabled
+        ? shiftScheduleColor(AppThemeColors.of(context), schedule)
+        : AppPalette.done;
 
     return PressPulse(
       child: StickerPaper(

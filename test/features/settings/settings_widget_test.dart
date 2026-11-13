@@ -86,23 +86,8 @@ void main() {
     await tester.pumpAndSettle();
     await closeCard();
 
-    await openCard('color');
-    final hueTrack = find.byKey(const ValueKey('shift_color_hue'));
-    final toneTrack = find.byKey(const ValueKey('shift_color_tone'));
-    expect(hueTrack, findsOneWidget);
-    expect(toneTrack, findsOneWidget);
-    final hueRect = tester.getRect(hueTrack);
-    final toneRect = tester.getRect(toneTrack);
-    await tester.tapAt(Offset(
-      hueRect.left + hueRect.width * 0.72,
-      hueRect.center.dy,
-    ));
-    await tester.tapAt(Offset(
-      toneRect.left + toneRect.width * 0.38,
-      toneRect.center.dy,
-    ));
-    await tester.pumpAndSettle();
-    await closeCard();
+    // Цвета в редакторе нет: его выбирают в карточке темы.
+    expect(find.byKey(const ValueKey('shift_tile_color')), findsNothing);
 
     await openCard('vacations');
     await tester.tap(find.byKey(const ValueKey('add_shift_vacation')));
@@ -147,9 +132,10 @@ void main() {
     expect(shiftRepository.savedSchedules.single.organizationName, 'Завод');
     expect(shiftRepository.savedSchedules.single.workDays, 2);
     expect(shiftRepository.savedSchedules.single.restDays, 2);
+    // Новый график получает исходный цвет; тема меняет его у себя.
     expect(
       shiftRepository.savedSchedules.single.colorValue,
-      isNot(const Color(0xFF2F7DD1).toARGB32()),
+      const Color(0xFF2F7DD1).toARGB32(),
     );
     expect(shiftRepository.savedSchedules.single.vacations, hasLength(1));
     expect(shiftRepository.savedSchedules.single.vacations.single.durationDays,

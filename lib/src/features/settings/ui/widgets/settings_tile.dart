@@ -52,7 +52,7 @@ class SettingsTile extends StatelessWidget {
         child: NotebookPressable(
           onTap: enabled ? onTap : null,
           child: NotebookCardSurface(
-            borderColor: selected ? AppPalette.accent : null,
+            borderColor: selected ? colors.primary : null,
             child: Padding(
               padding: const EdgeInsets.all(9),
               child: Column(

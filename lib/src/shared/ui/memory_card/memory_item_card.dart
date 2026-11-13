@@ -35,7 +35,7 @@ class MemoryItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Выполненная запись сереет целиком — полоса вида, кромка и заголовок,
     // — а бумага остаётся бумагой: сделанное дело листок не перекрашивает.
-    final accent = memoryAccentColor(item);
+    final accent = memoryAccentColor(AppThemeColors.of(context), item);
     return MemoryCardPaper(
       cardKey: ValueKey('memory_card_${item.id}'),
       variantKey: item.id,

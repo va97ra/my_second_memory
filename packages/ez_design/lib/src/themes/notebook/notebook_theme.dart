@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../tokens/accent_shades.dart';
 import '../../tokens/app_palette.dart';
+import '../../tokens/readable_ink.dart';
 
 import '../../components/press_pulse_theme.dart';
+import '../app_theme_colors.dart';
 import '../surface_palette.dart';
 import '../app_theme.dart';
 import 'notebook_assets.dart';
@@ -11,7 +14,8 @@ import 'notebook_visuals.dart';
 /// Every colour that separates the light notebook from the dark one.
 ///
 /// Both notebooks are the same object under different light, so the shapes,
-/// textures and terracotta accent stay put and only these values move.
+/// textures stay put and only these values move. The accent is the reader's:
+/// it comes with [AppThemeColors].
 @immutable
 class _NotebookColors {
   const _NotebookColors({
@@ -88,9 +92,6 @@ class _NotebookColors {
   final double? paperGrainScale;
   final String leatherAsset;
 }
-
-const _primary = AppPalette.accent;
-const _primaryDark = AppPalette.magentaDeep;
 
 /// The colour of a sheet of the notebook. Cards and calendar day cells keep it
 /// in both themes: they are loose paper lying on the book, not the book.
@@ -173,10 +174,18 @@ const _darkColors = _NotebookColors(
   leatherAsset: NotebookAssets.darkLeather,
 );
 
-ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
+/// Блокнот одной светлоты. [colors] — выбор человека для этой темы; лист
+/// бумаги в тёмной теме собирается светлым, но с цветами тёмной.
+ThemeData buildNotebookTheme({
+  Brightness brightness = Brightness.light,
+  AppThemeColors? colors,
+}) {
   final c = brightness == Brightness.light ? _lightColors : _darkColors;
-  const primary = _primary;
-  const primaryDark = _primaryDark;
+  final themeColors = colors ?? AppThemeColors(brightness);
+  final primary = themeColors[AppColorRole.accent];
+  final onPrimary = readableInkOn(primary);
+  final shades = AccentShades.of(primary);
+  final primaryDark = shades.deep;
   final ink = c.ink;
   final mutedInk = c.mutedInk;
   final paper = c.paper;
@@ -202,9 +211,9 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
     ink: ink,
     mutedInk: mutedInk,
     line: c.line,
-    primaryTop: AppPalette.magentaLight,
+    primaryTop: shades.light,
     primaryBottom: primaryDark,
-    primaryShadow: AppPalette.magentaShadow,
+    primaryShadow: shades.shadow,
     blue: c.blue,
     green: c.green,
     teal: c.teal,
@@ -220,9 +229,9 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
   final scheme = base.colorScheme.copyWith(
     brightness: brightness,
     primary: primary,
-    onPrimary: Colors.white,
-    primaryContainer: AppPalette.magentaTint,
-    onPrimaryContainer: AppPalette.magentaInk,
+    onPrimary: onPrimary,
+    primaryContainer: shades.tint,
+    onPrimaryContainer: shades.ink,
     secondary: c.blue,
     onSecondary: Colors.white,
     secondaryContainer: const Color(0xFFC5E2FF),
@@ -251,7 +260,7 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
       }
       return primary;
     }),
-    foregroundColor: WidgetStateProperty.all(Colors.white),
+    foregroundColor: WidgetStateProperty.all(onPrimary),
     shadowColor: WidgetStateProperty.all(visuals.primaryShadow),
     elevation: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.disabled)) {
@@ -263,7 +272,7 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
       return BorderSide(
         color: states.contains(WidgetState.pressed)
             ? visuals.primaryShadow
-            : AppPalette.magentaLight,
+            : shades.light,
         width: 1.2,
       );
     }),
@@ -287,7 +296,7 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
     // рисуются своими градиентами и на этот цвет не смотрят.
     canvasColor: paper,
     disabledColor: c.disabled,
-    extensions: [palette, visuals],
+    extensions: [palette, visuals, themeColors],
     appBarTheme: base.appBarTheme.copyWith(foregroundColor: ink),
     dividerTheme: DividerThemeData(
       color: c.outlineVariant,
@@ -343,7 +352,7 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
           return states.contains(WidgetState.selected) ? primary : raisedPaper;
         }),
         foregroundColor: WidgetStateProperty.resolveWith((states) {
-          return states.contains(WidgetState.selected) ? Colors.white : ink;
+          return states.contains(WidgetState.selected) ? onPrimary : ink;
         }),
         side: WidgetStateProperty.all(BorderSide(color: border)),
         shape: WidgetStateProperty.all(
@@ -369,7 +378,7 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: _primary, width: 1.6),
+        borderSide: BorderSide(color: primary, width: 1.6),
       ),
     ),
     navigationBarTheme: base.navigationBarTheme.copyWith(
@@ -381,7 +390,7 @@ ThemeData buildNotebookTheme({Brightness brightness = Brightness.light}) {
       indicatorColor: primary,
       iconTheme: WidgetStateProperty.resolveWith((states) {
         return IconThemeData(
-          color: states.contains(WidgetState.selected) ? Colors.white : ink,
+          color: states.contains(WidgetState.selected) ? onPrimary : ink,
           size: 22,
         );
       }),

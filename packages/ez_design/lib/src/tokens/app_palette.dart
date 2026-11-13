@@ -5,11 +5,7 @@ import 'package:flutter/painting.dart';
 abstract final class AppPalette {
   // Сочные: выбор владельца от 4 ноября 2026.
   static const magenta = Color(0xFFFF2E93);
-  static const magentaDeep = Color(0xFFC4146B);
   static const magentaLight = Color(0xFFFF5CAC);
-  static const magentaShadow = Color(0xFF7A0B43);
-  static const magentaTint = Color(0xFFFFD1E6);
-  static const magentaInk = Color(0xFF4D0429);
   static const cyan = Color(0xFF00E5FF);
   static const amber = Color(0xFFFFB000);
   static const amberDeep = Color(0xFF9A5B00);
@@ -19,18 +15,13 @@ abstract final class AppPalette {
   static const orange = Color(0xFFFF7A00);
   static const indigo = Color(0xFF3D5BFF);
 
-  // Смысл: экран спрашивает, что это значит, а не какого оно цвета.
-  static const accent = magenta;
+  // Смысл: экран спрашивает, что это значит, а не какого оно цвета. Цвета,
+  // которые человек выбирает сам, — акцент, выходные, сегодня, виды записей, —
+  // живут не здесь, а в `AppThemeColors`: у каждой темы свои.
   static const account = indigo;
-  static const weekend = magenta;
-  static const shortenedDay = amber;
 
   /// Водяной знак на закрашенной плитке дня: темнее её заливки, но не спорит с числом.
   static const dayStamp = Color(0x33000000);
-  static const today = cyan;
-
-  /// Отметка сегодня на светлой коже: голубой на ней теряется.
-  static const todayOnLight = indigo;
   static const success = Color(0xFF12A150);
   static const successTint = Color(0xFFBFE8C9);
   static const danger = Color(0xFFFF3B55);

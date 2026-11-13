@@ -2,13 +2,12 @@ import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../shared/ui/shift_schedule_color.dart';
 import 'calendar_day_cell.dart';
 
 /// Цвет отметки сегодняшнего дня: рамка ячейки и кружок под числом.
 Color calendarTodayColor(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark
-        ? AppPalette.today
-        : AppPalette.todayOnLight;
+    AppThemeColors.of(context)[AppColorRole.today];
 
 /// Чернила числа и значков дня — одни для большой ячейки и для миниатюры года.
 ///
@@ -16,20 +15,23 @@ Color calendarTodayColor(BuildContext context) =>
 /// по её светлоте, иначе на светлом графике белое число пропадает. Без смены
 /// число стоит на бумаге дня, а выходной и сокращённый залиты чистым цветом.
 Color calendarDayInk(
-  ColorScheme colors, {
+  ColorScheme colors,
+  AppThemeColors themeColors, {
   required bool isInVisibleMonth,
   required List<ShiftSchedule> shifts,
   required ProductionDay? productionDay,
   required bool highlight,
 }) {
   if (!isInVisibleMonth) return colors.onSurface.withValues(alpha: 0.38);
-  if (shifts.isNotEmpty) return readableInkOn(Color(shifts.first.colorValue));
+  if (shifts.isNotEmpty) {
+    return readableInkOn(shiftScheduleColor(themeColors, shifts.first));
+  }
   if (!highlight) return colors.onSurface;
   if (productionDay == ProductionDay.shortened) {
-    return readableInkOn(AppPalette.shortenedDay);
+    return readableInkOn(themeColors[AppColorRole.shortenedDay]);
   }
   return productionDay?.isDayOff ?? false
-      ? readableInkOn(AppPalette.weekend)
+      ? readableInkOn(themeColors[AppColorRole.weekend])
       : colors.onSurface;
 }
 
@@ -43,7 +45,7 @@ class CalendarDayCellSurface {
     required this.isInVisibleMonth,
     required this.isToday,
     required this.hasItems,
-    required this.todayColor,
+    required this.themeColors,
     this.dayOff = false,
     this.shortened = false,
   });
@@ -52,13 +54,14 @@ class CalendarDayCellSurface {
   final bool isToday;
   final bool hasItems;
 
-  /// Цвет отметки сегодня. Приходит снаружи: ячейка лежит на листке светлой темы,
-  /// и своя тема ей не подскажет, на какой странице она лежит.
-  final Color todayColor;
+  /// Цвета темы страницы: ими отмечены сегодня, выходной и сокращённый день.
+  final AppThemeColors themeColors;
   final bool dayOff;
   final bool shortened;
 
   bool get _ringsToday => isToday && isInVisibleMonth;
+
+  Color get todayColor => themeColors[AppColorRole.today];
 
   BoxDecoration decoration(
     BuildContext context,
@@ -106,7 +109,7 @@ class CalendarDayCellSurface {
   /// говорит только о том, рабочий ли это день.
   Color paper(AppSurfacePalette palette) {
     if (!isInVisibleMonth) return Colors.transparent;
-    return productionDaySurface(palette.calendarTile,
+    return productionDaySurface(palette.calendarTile, themeColors,
         dayOff: dayOff, shortened: shortened);
   }
 }

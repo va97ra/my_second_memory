@@ -15,6 +15,7 @@ import '../platform/windows/windows_phone_frame.dart';
 import 'app_shell.dart';
 import 'theme/app_content_font_controller.dart';
 import 'theme/app_theme_controller.dart';
+import 'theme/app_theme_data_provider.dart';
 import 'locale/app_locale_controller.dart';
 import '../shared/state/notification_providers.dart';
 
@@ -138,7 +139,7 @@ class _EzhednevnikV2AppState extends ConsumerState<EzhednevnikV2App> {
     final themeStyle = ref.watch(appThemeControllerProvider);
     final contentFont = ref.watch(appContentFontControllerProvider);
     final brightness = brightnessOf(themeStyle);
-    final baseTheme = buildNotebookTheme(brightness: brightness);
+    final baseTheme = ref.watch(appThemeDataProvider(themeStyle));
     final selectedTheme = baseTheme.copyWith(
       extensions: [
         ...baseTheme.extensions.values,

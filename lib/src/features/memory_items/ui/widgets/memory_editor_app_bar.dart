@@ -101,14 +101,15 @@ class MemoryEditorAppBar extends StatelessWidget
         // меняется редко, а место занимал постоянно. У записки вид тоже
         // есть и виден в ленте, поэтому кнопка нужна и ей.
         IconButton(
-            key: const ValueKey('memory_type_picker'),
-            tooltip: strings.recordType,
-            iconSize: 22,
-            style: notebookIconButtonStyle(),
-            onPressed: () => _pickType(context),
+          key: const ValueKey('memory_type_picker'),
+          tooltip: strings.recordType,
+          iconSize: 22,
+          style: notebookIconButtonStyle(),
+          onPressed: () => _pickType(context),
           icon: Icon(
             memoryTypeIcon(controller.form.type),
-            color: memoryTypeColor(controller.form.type),
+            color: memoryTypeColor(
+                AppThemeColors.of(context), controller.form.type),
           ),
         ),
         // У новой записки нечего ни повторять, ни удалять: меню ей незачем.

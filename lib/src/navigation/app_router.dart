@@ -1,3 +1,4 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -279,6 +280,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           interceptBack: false,
           child: ShiftScheduleEditorScreen(
             scheduleId: state.pathParameters['id'],
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/theme/:style',
+        pageBuilder: (context, state) => pageTurnPage(
+          context: context,
+          state: state,
+          backFallback: '/settings',
+          child: ThemeScreen(
+            style: AppThemeStyle.fromStorage(state.pathParameters['style']) ??
+                AppThemeStyle.notebookLight,
           ),
         ),
       ),

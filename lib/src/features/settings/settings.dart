@@ -4,6 +4,7 @@
 library;
 
 export 'ui/settings_screen.dart';
+export 'ui/theme_screen.dart';
 export 'ui/widgets/settings_chevron.dart';
 export 'ui/widgets/settings_icon_plate.dart';
 export 'ui/widgets/settings_section.dart';

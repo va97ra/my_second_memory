@@ -92,7 +92,7 @@ class CalendarMiniMonth extends StatelessWidget {
                 today: today,
                 colors: theme.colorScheme,
                 palette: AppSurfacePalette.of(context),
-                todayColor: calendarTodayColor(context),
+                themeColors: AppThemeColors.of(context),
                 numberStyle: theme.textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ) ??

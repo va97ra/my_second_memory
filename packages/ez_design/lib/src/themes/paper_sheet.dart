@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/content_typography.dart';
-import 'notebook/notebook_theme.dart';
+import 'notebook/loose_paper_theme.dart';
 import 'notebook/notebook_visuals.dart';
-
-/// Светлый блокнот, собранный один раз, — та самая бумага.
-final ThemeData _paperTheme = buildNotebookTheme(brightness: Brightness.light);
 
 /// Лист бумаги внутри любой темы.
 ///
@@ -18,8 +14,8 @@ final ThemeData _paperTheme = buildNotebookTheme(brightness: Brightness.light);
 /// в нём, само берёт чернила, границы и линейку бумаги — их не нужно
 /// передавать вниз по одному.
 ///
-/// Шрифт содержимого переносится через границу: он принадлежит читателю, а не
-/// теме.
+/// Шрифт содержимого и выбранные цвета переносятся через границу: они
+/// принадлежат читателю, а не теме.
 class PaperSheet extends StatelessWidget {
   const PaperSheet({required this.child, super.key});
 
@@ -42,17 +38,9 @@ class PaperSheet extends StatelessWidget {
     if (notebook && theme.brightness == Brightness.light) {
       return _PaperPage(notebook: true, child: child);
     }
-    final content = theme.extension<AppContentTypography>();
     return _PaperPage(
       notebook: notebook,
-      child: Theme(
-        data: content == null
-            ? _paperTheme
-            : _paperTheme.copyWith(
-                extensions: [..._paperTheme.extensions.values, content],
-              ),
-        child: child,
-      ),
+      child: Theme(data: loosePaperTheme(theme), child: child),
     );
   }
 }

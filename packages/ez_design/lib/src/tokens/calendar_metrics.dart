@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 
-import 'app_palette.dart';
+import '../themes/app_theme_colors.dart';
 
 const calendarWeekNumberWidth = 24.0;
 const calendarGridSpacing = 2.0;
 
-/// Заливка дня: выходные и сокращённые дни отмечены чистым цветом.
+/// Заливка дня: выходные и сокращённые дни отмечены своим цветом темы.
 Color productionDaySurface(
-  Color base, {
+  Color base,
+  AppThemeColors colors, {
   required bool dayOff,
   required bool shortened,
 }) {
-  if (shortened) return AppPalette.shortenedDay;
-  return dayOff ? AppPalette.weekend : base;
+  if (shortened) return colors[AppColorRole.shortenedDay];
+  return dayOff ? colors[AppColorRole.weekend] : base;
 }

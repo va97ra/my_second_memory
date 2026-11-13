@@ -248,6 +248,14 @@ class AppStrings {
           'account, encrypted. The synchronization password differs from the '
           'PIN and is known only to you.';
 
+  String get themePageHint => isRu
+      ? 'Нажмите на образец и подберите ему цвет, яркость и прозрачность. '
+          'У каждой темы цвета свои, и график смен здесь появится, когда он '
+          'заведён.'
+      : 'Tap a sample and set its colour, brightness and opacity. Each theme '
+          'keeps its own colours, and a shift schedule appears here once it '
+          'exists.';
+
   String get backupPageHint => isRu
       ? 'Копия сохраняется одним файлом в папку «Загрузки» под паролем, '
           'который вы придумываете. Тот же пароль понадобится, чтобы её '
@@ -292,10 +300,10 @@ class AppStrings {
   String get calendarPageHint => isRu
       ? 'Нажмите число для открытия дня, название месяца — для производственного календаря. '
           'Листайте вбок по месяцам, вверх и вниз по годам, сведите два пальца — откроется весь год; '
-          'цветная шапка — смена, розовый фон — выходной, янтарный и * — сокращённый день.'
+          'цветная шапка — смена, залитый день — выходной, * — сокращённый день.'
       : 'Tap a date to open the day or the month name for working-day totals. '
           'Swipe sideways for months, vertically for years, pinch for the whole year; '
-          'a coloured cap is a shift, an underlined date is a day off, * is a shortened day.';
+          'a coloured cap is a shift, a filled date is a day off, * is a shortened day.';
   String get accounts => isRu ? 'Аккаунты' : 'Accounts';
   String get account => isRu ? 'Аккаунт' : 'Account';
   String get accountColor => isRu ? 'Цвет карточки' : 'Card color';
@@ -323,7 +331,8 @@ class AppStrings {
   String get notes => isRu ? 'Записки' : 'Notes';
   String get noteCard => isRu ? 'Записка' : 'Note';
   String get newNote => isRu ? 'Новая записка' : 'New note';
-  String get moveToDay => isRu ? 'Перенести на другой день' : 'Move to another day';
+  String get moveToDay =>
+      isRu ? 'Перенести на другой день' : 'Move to another day';
   String get notesPageHint => isRu
       ? 'Плюс внизу заводит новую записку, нажатие открывает её. Квадратик в '
           'углу отмечает выполненной, долгое нажатие открывает меню.'
@@ -554,7 +563,6 @@ class AppStrings {
   String get customSchedule => isRu ? 'Свой' : 'Custom';
   String get shiftAlarm => isRu ? 'Будильник' : 'Alarm';
   String get scheduleSettings => isRu ? 'График' : 'Schedule';
-  String get scheduleColor => isRu ? 'Цвет' : 'Color';
   String get reminders => isRu ? 'Напоминания' : 'Reminders';
   String get vacations => isRu ? 'Отпуска' : 'Vacations';
   String get vacation => isRu ? 'Отпуск' : 'Vacation';

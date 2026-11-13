@@ -1,5 +1,8 @@
+import 'package:ez_design/ez_design.dart';
 import 'package:ez_domain/ez_domain.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../shared/ui/shift_schedule_color.dart';
 
 import '../../state/calendar_month_data.dart';
 import 'vacation_ribbon.dart';
@@ -50,7 +53,12 @@ class ShiftMarks extends StatelessWidget {
                   left: 0,
                   right: 0,
                   height: headerHeight,
-                  child: ColoredBox(color: Color(schedule.colorValue)),
+                  child: ColoredBox(
+                    color: shiftScheduleColor(
+                      AppThemeColors.of(context),
+                      schedule,
+                    ),
+                  ),
                 ),
               ],
             ),

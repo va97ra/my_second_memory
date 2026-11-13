@@ -28,8 +28,7 @@ class MemoryCardContent extends StatelessWidget {
     final text = item.title.trim().isNotEmpty
         ? styledMemoryTitle(item)
         : StyledText.parse(item.body);
-    final voiceNote =
-        item.voiceNotes.isEmpty ? null : item.voiceNotes.first;
+    final voiceNote = item.voiceNotes.isEmpty ? null : item.voiceNotes.first;
     final hasAudio = voiceNote != null;
     final colors = Theme.of(context).colorScheme;
     final typography = AppContentTypography.of(context);
@@ -68,7 +67,8 @@ class MemoryCardContent extends StatelessWidget {
                     Text(
                       memoryAmountLabel(item.amountMinor!),
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: memoryAccentColor(item),
+                            color: memoryAccentColor(
+                                AppThemeColors.of(context), item),
                             fontWeight: FontWeight.w900,
                           ),
                     ),

@@ -4,11 +4,13 @@
 /// только рисовать. Всё, что зависит от данных пользователя, живёт в
 /// приложении и передаётся сюда параметрами.
 library;
+
 export 'src/themes/writing_paper.dart';
 export 'src/tokens/app_palette.dart';
 export 'src/tokens/app_textures.dart';
 export 'src/tokens/calendar_metrics.dart';
 
+export 'src/components/color_gradient_track.dart';
 export 'src/components/empty_state.dart';
 export 'src/components/keyboard_inset_padding.dart';
 export 'src/components/labeled_divider.dart';
@@ -33,10 +35,12 @@ export 'src/components/page_turn/page_turn_geometry.dart'
 export 'src/components/torn_paper_shape_border.dart';
 export 'src/components/warm_gradient_background.dart';
 export 'src/themes/app_theme.dart';
+export 'src/themes/app_theme_colors.dart';
 export 'src/themes/app_theme_style.dart';
 export 'src/themes/notebook/notebook_assets.dart';
 export 'src/themes/notebook/notebook_background.dart';
 export 'src/themes/notebook/notebook_leather_surface.dart';
+export 'src/themes/notebook/loose_paper_theme.dart';
 export 'src/themes/notebook/notebook_paper_island.dart';
 export 'src/themes/notebook/notebook_theme.dart';
 export 'src/themes/notebook/notebook_visuals.dart';
@@ -45,3 +49,5 @@ export 'src/themes/surface_palette.dart';
 export 'src/themes/surface_textures.dart';
 export 'src/tokens/content_typography.dart';
 export 'src/tokens/readable_ink.dart';
+export 'src/tokens/accent_shades.dart';
+export 'src/tokens/color_tone.dart';

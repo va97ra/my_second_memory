@@ -7,7 +7,6 @@ import '../../../../shared/ui/memory_card/sticker_paper.dart';
 import '../../../settings/settings.dart';
 import '../../state/shift_editor_draft.dart';
 import 'shift_alarms_editor.dart';
-import 'shift_color_picker.dart';
 import 'shift_editor_sheet.dart';
 import 'shift_name_band.dart';
 import 'shift_schedule_pattern_fields.dart';
@@ -15,16 +14,22 @@ import 'shift_vacation_list_editor.dart';
 
 /// Содержимое редактора графика: полоса с названием и карточки настроек.
 class ShiftEditorCards extends StatelessWidget {
-  const ShiftEditorCards({super.key, required this.draft});
+  const ShiftEditorCards({super.key, required this.draft, this.scheduleId});
 
   final ShiftEditorDraft draft;
+
+  /// У нового графика id ещё нет, и цвет у него пока только свой.
+  final String? scheduleId;
 
   @override
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final locale = Localizations.localeOf(context).languageCode;
     final form = draft.form;
-    final accent = Color(form.colorValue);
+    final own = Color(form.colorValue);
+    final id = scheduleId;
+    // Цвет графика выбирают в карточке темы, а здесь он только виден.
+    final accent = id == null ? own : AppThemeColors.of(context).shift(id, own);
     const chevron = SettingsChevron();
 
     void open(String title, WidgetBuilder editor) => showShiftEditorSheet(
@@ -60,14 +65,6 @@ class ShiftEditorCards extends StatelessWidget {
               onTap: () => open(strings.scheduleSettings, _patternEditor),
             ),
             SettingsTile(
-              key: const ValueKey('shift_tile_color'),
-              icon: Icons.palette_rounded,
-              color: accent,
-              title: strings.scheduleColor,
-              trailing: chevron,
-              onTap: () => open(strings.scheduleColor, _colorEditor),
-            ),
-            SettingsTile(
               key: const ValueKey('shift_tile_enabled'),
               icon: Icons.power_settings_new_rounded,
               color: AppPalette.turquoise,
@@ -90,7 +87,7 @@ class ShiftEditorCards extends StatelessWidget {
             SettingsTile(
               key: const ValueKey('shift_tile_alarms'),
               icon: Icons.alarm_rounded,
-              color: AppPalette.accent,
+              color: Theme.of(context).colorScheme.primary,
               title: strings.shiftAlarm,
               subtitle: draft.alarmsLabel(strings),
               lit: draft.enabledAlarms.isNotEmpty,
@@ -122,12 +119,6 @@ class ShiftEditorCards extends StatelessWidget {
         onPreset: draft.applyPreset,
         onToggleManual: () => draft.form = draft.form.toggleManualSchedule(),
         onDaysChanged: draft.syncDays,
-      );
-
-  Widget _colorEditor(BuildContext context) => ShiftColorPicker(
-        color: Color(draft.form.colorValue),
-        onChanged: (color) =>
-            draft.form = draft.form.withColorValue(color.toARGB32()),
       );
 
   Widget _vacationsEditor(BuildContext context) => ShiftVacationListEditor(

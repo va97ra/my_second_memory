@@ -23,11 +23,12 @@ class FeedDayRailDay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
     final locale = Localizations.localeOf(context).languageCode;
     final ink = active
-        ? readableInkOn(AppPalette.accent)
+        ? theme.colorScheme.onPrimary
         : day.weekday >= DateTime.saturday
-            ? AppPalette.weekend
+            ? AppThemeColors.of(context)[AppColorRole.weekend]
             : theme.colorScheme.onSurface;
     // Первое число подписано месяцем: по нему видно, что месяц сменился.
     final caption = day.day == 1
@@ -47,9 +48,9 @@ class FeedDayRailDay extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: active
-                ? AppPalette.accent
+                ? accent
                 : own
-                    ? AppPalette.accent.withValues(alpha: 0.16)
+                    ? accent.withValues(alpha: 0.16)
                     : null,
             borderRadius: BorderRadius.circular(6),
             border: today == null ? null : Border.all(color: today, width: 1.5),

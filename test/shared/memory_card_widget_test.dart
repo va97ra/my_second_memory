@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ez_domain/ez_domain.dart';
+import 'package:ez_design/ez_design.dart';
 import 'package:ezhednevnik_v2/src/shared/ui/memory_card/memory_card_type_rail.dart';
 import 'package:ezhednevnik_v2/src/shared/ui/memory_card/memory_item_card.dart';
 import 'package:ezhednevnik_v2/src/shared/ui/memory_card/memory_item_presentation.dart';
@@ -99,16 +100,23 @@ void main() {
             find.byKey(ValueKey('memory_card_type_$id')))
         .color;
     expect(railOf('done'), memoryDoneColor);
-    expect(railOf('waiting'), memoryTypeColor(MemoryType.task));
+    expect(
+      railOf('waiting'),
+      memoryTypeColor(const AppThemeColors(Brightness.light), MemoryType.task),
+    );
     expect(tester.takeException(), isNull);
   });
 
   // Серый занят «выполненным»: вид записи, окрашенный в серое, читался бы
   // сделанным, ещё не начавшись. Так было с документом.
   test('no record type is grey', () {
-    for (final type in MemoryType.values) {
-      final saturation = HSLColor.fromColor(memoryTypeColor(type)).saturation;
-      expect(saturation, greaterThan(0.4), reason: '$type');
+    for (final brightness in Brightness.values) {
+      final colors = AppThemeColors(brightness);
+      for (final type in MemoryType.values) {
+        final saturation =
+            HSLColor.fromColor(memoryTypeColor(colors, type)).saturation;
+        expect(saturation, greaterThan(0.4), reason: '$brightness $type');
+      }
     }
   });
 }
