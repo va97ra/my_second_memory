@@ -95,7 +95,10 @@ class SupabaseSyncRemoteStore implements SyncRemoteStore {
           )
           .eq('user_id', userId)
           .gt('revision', after)
-          .order('revision')
+          // В postgrest по умолчанию порядок обратный. Курсор встаёт на
+          // последнюю строку страницы, и только по возрастанию это самая
+          // новая ревизия: иначе страница перечитывается заново.
+          .order('revision', ascending: true)
           .limit(_entityPageSize);
       if (rows.isEmpty) break;
       for (final row in rows) {

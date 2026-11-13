@@ -11,8 +11,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 const _maxRows = 1000;
 
 /// Таблица `sync_entities` одного пользователя за PostgREST: понимает
-/// `revision=gt.N`, `offset` и `limit` и, как настоящий сервер, не отдаёт за
-/// раз больше [maxRows] строк.
+/// `revision=gt.N`, `order`, `offset` и `limit` и, как настоящий сервер, не
+/// отдаёт за раз больше [maxRows] строк. Порядок — тот, что попросили:
+/// `order=revision.desc` даёт строки от новых к старым.
 class _Cloud {
   _Cloud(int count, {this.maxRows = _maxRows})
       : rows = [
@@ -27,6 +28,9 @@ class _Cloud {
   void Function(int answered)? afterAnswer;
   var _answered = 0;
 
+  /// Сколько запросов ушло в облако.
+  int get requests => _answered;
+
   late final client = MockClient((request) async {
     final url = request.url;
     if (request.method != 'GET' ||
@@ -40,8 +44,11 @@ class _Cloud {
     final offset = int.tryParse(query['offset'] ?? '') ?? 0;
     final asked = int.tryParse(query['limit'] ?? '');
     final limit = asked == null || asked > maxRows ? maxRows : asked;
+    final descending = query['order']?.startsWith('revision.desc') == true;
     final page = (rows.where((row) => row.revision > after).toList()
-          ..sort((a, b) => a.revision.compareTo(b.revision)))
+          ..sort((a, b) => descending
+              ? b.revision.compareTo(a.revision)
+              : a.revision.compareTo(b.revision)))
         .skip(offset)
         .take(limit);
     final body = jsonEncode([
@@ -55,7 +62,8 @@ class _Cloud {
           'revision': row.revision,
         },
     ]);
-    afterAnswer?.call(++_answered);
+    _answered++;
+    afterAnswer?.call(_answered);
     return http.Response(
       body,
       200,
@@ -100,6 +108,18 @@ void main() {
       entities.map((entity) => entity.revision),
       orderedEquals(_revisions(1, 2500)),
     );
+  });
+
+  test('each page moves the cursor past all of its rows', () async {
+    // Курсор, вставший не на последнюю ревизию страницы, перечитывает её
+    // снова и снова: 139 строк превращались в 139 запросов и таймаут.
+    final cloud = _Cloud(2500);
+    final store = await _signedInStore(cloud);
+
+    await store.fetchEntities();
+
+    // Три полные-неполные страницы и пустая в конце.
+    expect(cloud.requests, 4);
   });
 
   test('a cloud that fits exactly into whole pages is read to the end',
